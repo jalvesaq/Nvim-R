@@ -158,7 +158,7 @@ syn match rParenError "[\]}]" contained
 
 " Source list of R functions. The list is produced by the Vim-R-plugin
 " http://www.vim.org/scripts/script.php?script_id=2628
-runtime r-plugin/functions.vim
+runtime ftplugin/R/functions.vim
 
 syn match rDollar display contained "\$"
 syn match rDollar display contained "@"
