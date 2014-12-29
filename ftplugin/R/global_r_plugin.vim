@@ -46,7 +46,7 @@ function SetExeCmd()
     if exists("g:R_exe") && exists("g:R_quit")
         let b:rplugin_R = g:R_exe
         if exists("g:R_args")
-            let b:rplugin_r_args = g:R_args
+            let b:rplugin_r_args = join(g:R_args)
         else
             let b:rplugin_r_args = " "
         endif

@@ -322,13 +322,6 @@ edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of LaTeX
 code (see |Nvim-R-latex-box| for details).
 
 
-------------------------------------------------------------------------------
-3.4.3 Add buttons to GVim~
-
-Please read |Nvim-R-toolbar| if you want to add R buttons to GVim's tool
-bar.
-
-
 ==============================================================================
 								  *Nvim-R-use*
 4. Use~
@@ -1358,13 +1351,13 @@ Example:
 6.7. Arguments to R~
 
 Set this option in your |nvimrc| if you want to pass command line arguments to
-R at the startup. Example:
+R at the startup. The value of this variable must be a |List|. Example:
 >
-   let R_args = "--sdi --no-save --quiet"
+   let R_args = ['--no-save', '--quiet']
 <
-On Linux, there is no default value for |R_args|. On Windows, the
-default value is "--sdi", but you may change it to "--mdi" if you do not like
-the SDI style of the graphical user interface.
+On Linux, there is no default value for |R_args|. On Windows, the default
+value is ['--sdi'], but you may change it to ['--mdi'] if you do not like the
+SDI style of the graphical user interface.
 
 
 ------------------------------------------------------------------------------
@@ -1570,9 +1563,7 @@ to a .txt one:
    let R_never_unmake_menu = 1
 <
 When this option is enabled all menu items are created regardless of the file
-type. If you have added R related tool bar buttons (see |Nvim-R-toolbar|)
-the buttons also are created at the plugin startup and kept while you go to
-different file type buffers.
+type.
 
 
 ------------------------------------------------------------------------------

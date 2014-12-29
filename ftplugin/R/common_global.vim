@@ -282,7 +282,7 @@ function RCompleteArgs()
                 else
                     let msg = msg . ')'
                 endif
-                call g:SendToVimCom("\x08" . $NVIMR_ID . msg, "I")
+                call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
                 if g:rplugin_nvimcomport > 0
                     let g:rplugin_lastev = ReadEvalReply()
@@ -659,9 +659,7 @@ function StartR_TmuxSplit(rcmd)
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)
     endif
-    if WaitVimComStart()
-        call g:SendToVimCom("\005B Update OB [StartR]")
-    endif
+    call WaitVimComStart()
 endfunction
 
 
@@ -718,9 +716,7 @@ function StartR_ExternalTerm(rcmd)
         return
     endif
     let g:SendCmdToR = function('SendCmdToR_Term')
-    if WaitVimComStart()
-        call g:SendToVimCom("\005B Update OB [StartR]")
-    endif
+    call WaitVimComStart()
 endfunction
 
 function IsSendCmdToRFake()
@@ -738,8 +734,6 @@ endfunction
 " Start R
 function StartR(whatr)
     let $NVIMR_SVRNM = "Neovim_" . g:rplugin_myport
-    let g:SendToVimCom = function("SendToVimCom_Neovim")
-
     call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
@@ -754,12 +748,13 @@ function StartR(whatr)
     endif
 
     if a:whatr =~ "vanilla"
-        let b:rplugin_r_args = "--vanilla"
+        let b:rplugin_r_args = ["--vanilla"]
     else
         if a:whatr =~ "custom"
             call inputsave()
-            let b:rplugin_r_args = input('Enter parameters for R: ')
+            let r_args = input('Enter parameters for R: ')
             call inputrestore()
+            let b:rplugin_r_args = split(r_args)
         endif
     endif
 
@@ -767,6 +762,11 @@ function StartR(whatr)
         call StartR_Neovim()
         return
     endif
+
+    " Only jobstart() needs arguments as list
+    let tmp = join(b:rplugin_r_args)
+    unlet b:rplugin_r_args
+    let b:rplugin_r_args = tmp
 
     if g:R_applescript
         call StartR_OSX()
@@ -803,8 +803,6 @@ function StartR(whatr)
                         call g:SendCmdToR("\014")
                     endif
                     call VimExprToOB('ResetVimComPort()')
-                    call g:SendToVimCom("\005G .GlobalEnv [Restarting R]")
-                    call g:SendToVimCom("\005L Libraries [Restarting()]")
                 endif
                 return
             elseif IsSendCmdToRFake()
@@ -818,7 +816,7 @@ function StartR(whatr)
         endif
     endif
 
-    if b:rplugin_r_args == " "
+    if b:rplugin_r_args == ""
         let rcmd = b:rplugin_R
     else
         let rcmd = b:rplugin_R . " " . b:rplugin_r_args
@@ -833,12 +831,7 @@ function StartR(whatr)
         call StartR_ExternalTerm(rcmd)
         if g:R_restart && bufloaded(b:objbrtitle)
             call WaitVimComStart()
-            call g:SendToVimCom("\002" . g:rplugin_myport)
-            call g:SendToVimCom("\005G .GlobalEnv [Restarting R]")
-            call g:SendToVimCom("\005L Libraries [Restarting()]")
-            if exists("*UpdateOB")
-                call UpdateOB("GlobalEnv")
-            endif
+            call SendToNvimcom("\002" . g:rplugin_myport)
         endif
     endif
 
@@ -974,11 +967,6 @@ function StartObjBrowser_Tmux()
     " Force Neovim to update the window size
     mode
 
-    call g:SendToVimCom("\005G GlobalEnv [OB StartObjBrowser_Tmux]")
-    sleep 50m
-    call g:SendToVimCom("\005L Libraries [OB StartObjBrowser_Tmux]")
-    sleep 50m
-
     " Don't start the Object Browser if it already exists
     if IsExternalOBRunning()
         return
@@ -1007,7 +995,6 @@ function StartObjBrowser_Tmux()
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
                 \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_TmuxOB")',
-                \ 'let g:SendToVimCom = function("SendToVimCom_Neovim")',
                 \ 'let g:rplugin_clt_job = jobstart("nvimcom", "' . g:rplugin_nvimcom_home . "/bin/nvimclient" . '", ["' . g:rplugin_nvimcomport . '"])',
                 \ 'let g:rplugin_srv_job = jobstart("udpsvr", "' . g:rplugin_nvimcom_home . "/bin/nvimserver" . '")',
                 \ 'autocmd JobActivity udpsvr call ROnJobActivity()'], objbrowserfile)
@@ -1074,8 +1061,6 @@ endfunction
 function StartObjBrowser_Vim()
     let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Vim")
 
-    call g:SendToVimCom("\002" . g:rplugin_myport)
-
     " Either load or reload the Object Browser
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
@@ -1108,9 +1093,7 @@ function StartObjBrowser_Vim()
         unlet g:tmp_objbrtitle
         unlet g:tmp_tmuxsname
         unlet g:tmp_curbufname
-        call g:SendToVimCom("\005B Update OB [OB init GVIM]")
-        sleep 50m
-        call UpdateOB("GlobalEnv")
+        call SendToNvimcom("\002" . g:rplugin_myport)
     endif
 endfunction
 
@@ -1168,37 +1151,10 @@ function RBrOpenCloseLs_Vim(status)
         endif
     endif
 
-    " Avoid possibly freezing cross messages between Vim and R
-    if exists("g:rplugin_curview") && v:servername != ""
-        call g:SendToVimCom("\005Stop updating info [RBrOpenCloseLs()]")
-        let stt = a:status
-    else
-        let stt = a:status + 2
-    endif
-
-    let switchedbuf = 0
-    if buflisted("Object_Browser") && g:rplugin_curbuf != "Object_Browser"
-        let savesb = &switchbuf
-        set switchbuf=useopen,usetab
-        sil noautocmd sb Object_Browser
-        let switchedbuf = 1
-    endif
-
-    call g:SendToVimCom("\007" . stt)
+    call SendToNvimcom("\007" . stt)
 
     if g:rplugin_lastrpl == "R is busy."
         call RWarningMsg("R is busy.")
-    endif
-
-    if switchedbuf
-        exe "sil noautocmd sb " . g:rplugin_curbuf
-        exe "set switchbuf=" . savesb
-    endif
-    if exists("g:rplugin_curview")
-        call UpdateOB("both")
-        if v:servername != ""
-            call g:SendToVimCom("\002" . v:servername)
-        endif
     endif
 endfunction
 
@@ -1217,10 +1173,44 @@ function RBrOpenCloseLs_TmuxVim(status)
         endif
     endif
 
-    call g:SendToVimCom("\007" . a:status)
+    call SendToNvimcom("\007" . a:status)
 
     if g:rplugin_lastrpl == "R is busy."
         call RWarningMsg("R is busy.")
+    endif
+endfunction
+
+function RBrOpenCloseLs_TmuxNeovim(status)
+    " TODO: Discover real value of curview
+    let curview = "GlobalEnv"
+
+    if a:status == 1 && curview == "libraries"
+        if curview == "libraries"
+            echohl WarningMsg
+            echon "GlobalEnv command only."
+            sleep 1
+            echohl Normal
+            normal! :<Esc>
+            return
+        endif
+    endif
+    call SendToNvimcom("\007" . a:status)
+endfunction
+
+function SendToNvimcom(cmd)
+    if g:rplugin_clt_job == 0
+        call RWarningMsg("nvimcom client not running.")
+        return
+    endif
+    call jobsend(g:rplugin_clt_job, a:cmd . "\n")
+endfunction
+
+function RSetNeovimPort(p)
+    let g:rplugin_myport = a:p
+    if &filetype == "rbrowser" && g:rplugin_do_tmux_split
+        call SendToNvimcom("\002" . a:p)
+    else
+        call SendToNvimcom("\001" . a:p)
     endif
 endfunction
 
@@ -1233,7 +1223,7 @@ function RBrOpenCloseLs_TmuxOB(status)
         normal! :<Esc>
         return
     endif
-    call g:SendToVimCom("\007" . a:status)
+    call SendToNvimcom("\007" . a:status)
 endfunction
 
 function RFormatCode() range
@@ -1252,7 +1242,7 @@ function RFormatCode() range
         let wco = 180
     endif
     call delete(g:rplugin_tmpdir . "/eval_reply")
-    call g:SendToVimCom("\x08" . $NVIMR_ID . 'formatR::tidy_source("' . g:rplugin_tmpdir . '/unformatted_code", file = "' . g:rplugin_tmpdir . '/formatted_code", width.cutoff = ' . wco . ')', "I")
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'formatR::tidy_source("' . g:rplugin_tmpdir . '/unformatted_code", file = "' . g:rplugin_tmpdir . '/formatted_code", width.cutoff = ' . wco . ')')
     let g:rplugin_lastev = ReadEvalReply()
     if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "UNKNOWN" || g:rplugin_lastev =~ "^Error" || g:rplugin_lastev == "INVALID" || g:rplugin_lastev == "ERROR" || g:rplugin_lastev == "EMPTY" || g:rplugin_lastev == "No reply"
         call RWarningMsg(g:rplugin_lastev)
@@ -1271,7 +1261,7 @@ function RInsert(cmd)
 
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/Rinsert")
-    call g:SendToVimCom("\x08" . $NVIMR_ID . 'capture.output(' . a:cmd . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:cmd . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
     let g:rplugin_lastev = ReadEvalReply()
     if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "UNKNOWN" || g:rplugin_lastev =~ "^Error" || g:rplugin_lastev == "INVALID" || g:rplugin_lastev == "ERROR" || g:rplugin_lastev == "EMPTY" || g:rplugin_lastev == "No reply"
         call RWarningMsg(g:rplugin_lastev)
@@ -2085,7 +2075,7 @@ function AskRDoc(rkeyword, package, getclass)
         let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, ' . classfor . ')'
     endif
 
-    call g:SendToVimCom("\x08" . $NVIMR_ID . rcmd, "I")
+    call SendToNvimcom("\x08" . $NVIMR_ID . rcmd)
 endfunction
 
 " This function is called by nvimcom
@@ -2101,7 +2091,7 @@ function ShowRDoc(rkeyword)
         let chn = input(msg . "Please, select one of them: ")
         if chn > 0 && chn < (len(msgs) - 1)
             call delete(g:rplugin_tmpdir . "/eval_reply")
-            call g:SendToVimCom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.help("' . msgs[-1] . '", ' . g:rplugin_htw . 'L, package="' . msgs[chn] . '")')
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.help("' . msgs[-1] . '", ' . g:rplugin_htw . 'L, package="' . msgs[chn] . '")')
         endif
         return
     endif
@@ -2789,9 +2779,8 @@ function SetRPath()
     if !executable(b:rplugin_R)
         call RWarningMsgInp("R executable not found: '" . b:rplugin_R . "'")
     endif
-    if !exists("g:R_args")
-        let b:rplugin_r_args = " "
-    else
+    let b:rplugin_r_args = []
+    if exists("g:R_args")
         let b:rplugin_r_args = g:R_args
     endif
 endfunction
@@ -2811,7 +2800,7 @@ function BuildROmniList()
 
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/eval_reply")
-    call g:SendToVimCom("\x08" . $NVIMR_ID . omnilistcmd, "I")
+    call SendToNvimcom("\x08" . $NVIMR_ID . omnilistcmd)
     if g:rplugin_nvimcomport == 0
         sleep 500m
         return
@@ -3026,13 +3015,12 @@ unlet obpllen
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
     if &filetype == "rbrowser"
-        call g:SendToVimCom("\002" . a:p)
-        call g:SendToVimCom("\005B Update OB [RSetMyPort]")
+        call SendToNvimcom("\002" . a:p)
     endif
 endfunction
 
 function SendObjPortToVimCom(p)
-    call g:SendToVimCom("\002" . a:p)
+    call SendToNvimcom("\002" . a:p)
 endfunction
 
 function ROnJobActivity()
@@ -3290,6 +3278,7 @@ elseif executable("python")
 endif
 
 function GetRandomNumber(width)
+    let randnum = "NotRandom" . substitute(expand("%"), '\W', '', 'g')
     if g:rplugin_py_exec != "none"
         let pycode = ["import os, sys, base64",
                     \ "sys.stdout.write(base64.b64encode(os.urandom(" . a:width . ")).decode())" ]
@@ -3312,10 +3301,7 @@ if &filetype == "rbrowser"
     endif
 else
     let $NVIMR_SECRET = GetRandomNumber(16)
-    let $NVIMR_ID = substitute(g:rplugin_firstbuffer . GetRandomNumber(16), '\W', '', 'g')
-    if strlen($NVIMR_ID) > 64
-        let $NVIMR_ID = substitute($NVIMR_ID, '.*\(...............................................................\)', '\1', '')
-    endif
+    let $NVIMR_ID = GetRandomNumber(16)
 endif
 
 let g:rplugin_obsname = toupper(substitute(substitute(expand("%:r"), '\W', '', 'g'), "_", "", "g"))

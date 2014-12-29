@@ -23,9 +23,7 @@ function StartR_OSX()
         lcd -
     endif
     let g:SendCmdToR = function('SendCmdToR_OSX')
-    if WaitVimComStart()
-        call g:SendToVimCom("\005B Update OB [StartR]")
-    endif
+    WaitVimComStart()
 endfunction
 
 function SendCmdToR_OSX(cmd)

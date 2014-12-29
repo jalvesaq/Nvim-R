@@ -122,7 +122,7 @@ function SendCmdToR_Neovim(...)
     sbuffer R_Output
     if winwidth(0) != b:winwidth
         let b:winwidth = winwidth(0)
-        call g:SendToVimCom("\x08" . $NVIMR_ID . "options(width=" . b:winwidth . ")", "I")
+        call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . b:winwidth . ")")
     endif
     if a:0 == 1
         call setline("$", getline("$") . a:1)
@@ -180,15 +180,6 @@ function EnterRCmd()
     call SendCmdToR_Neovim(lin, 0)
 endfunction
 
-function RSetNeovimPort(p)
-    let g:rplugin_myport = a:p
-    if &filetype == "rbrowser" && g:rplugin_do_tmux_split
-        call g:SendToVimCom("\002" . a:p)
-    else
-        call g:SendToVimCom("\001" . a:p)
-    endif
-endfunction
-
 function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
@@ -242,33 +233,9 @@ function StartR_Neovim()
 
     let savedterm = $TERM
     let $TERM="NeovimTerm"
-    let g:rplugin_rjob = jobstart("Rjob", 'R', ['--no-readline', '--interactive'], 'su')
+    let rargs = b:rplugin_r_args + ['--no-readline', '--interactive']
+    let g:rplugin_rjob = jobstart("Rjob", 'R', rargs, 'su')
     exe 'let $TERM="' . savedterm . '"'
     call WaitVimComStart()
-endfunction
-
-function SendToVimCom_Neovim(...)
-    if g:rplugin_clt_job == 0
-        call RWarningMsg("nvimcom client not running.")
-        return
-    endif
-    call jobsend(g:rplugin_clt_job, a:1 . "\n")
-endfunction
-
-function RBrOpenCloseLs_TmuxNeovim(status)
-    " TODO: Discover real value of curview
-    let curview = "GlobalEnv"
-
-    if a:status == 1 && curview == "libraries"
-        if curview == "libraries"
-            echohl WarningMsg
-            echon "GlobalEnv command only."
-            sleep 1
-            echohl Normal
-            normal! :<Esc>
-            return
-        endif
-    endif
-    call g:SendToVimCom("\007" . a:status)
 endfunction
 
