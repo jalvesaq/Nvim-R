@@ -28,7 +28,7 @@ let g:rplugin_new_libs = 0
 
 " syntax/r.vim may have being called before ftplugin/r.vim
 if !exists("g:rplugin_compldir")
-    runtime ftplugin/R/setcompldir.vim
+    runtime R/setcompldir.vim
 endif
 
 

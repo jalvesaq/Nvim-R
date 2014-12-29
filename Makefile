@@ -68,19 +68,19 @@ deb:
 	  - ftplugin/rrst_rplugin.vim\n\
 	  - ftplugin/rrst.vim\n\
 	  - ftplugin/r.vim\n\
-	  - ftplugin/R/common_buffer.vim\n\
-	  - ftplugin/R/common_global.vim\n\
-	  - ftplugin/R/functions.vim\n\
-	  - ftplugin/R/global_r_plugin.vim\n\
-	  - ftplugin/R/gui_running.vim\n\
-	  - ftplugin/R/nvimbuffer.vim\n\
-	  - ftplugin/R/osx.vim\n\
-	  - ftplugin/R/rmd.snippets\n\
-	  - ftplugin/R/r.snippets\n\
-	  - ftplugin/R/setcompldir.vim\n\
-	  - ftplugin/R/synctex_evince_backward.py\n\
-	  - ftplugin/R/synctex_evince_forward.py\n\
-	  - ftplugin/R/synctex_okular_backward.sh\n\
+	  - R/common_buffer.vim\n\
+	  - R/common_global.vim\n\
+	  - R/functions.vim\n\
+	  - R/global_r_plugin.vim\n\
+	  - R/gui_running.vim\n\
+	  - R/nvimbuffer.vim\n\
+	  - R/osx.vim\n\
+	  - R/rmd.snippets\n\
+	  - R/r.snippets\n\
+	  - R/setcompldir.vim\n\
+	  - R/synctex_evince_backward.py\n\
+	  - R/synctex_evince_forward.py\n\
+	  - R/synctex_okular_backward.sh\n\
 	  - indent/rhelp.vim\n\
 	  - indent/rmd.vim\n\
 	  - indent/rnoweb.vim\n\

@@ -1,5 +1,5 @@
 
-runtime ftplugin/R/common_global.vim
+runtime R/common_global.vim
 if exists("g:rplugin_failed")
     finish
 endif
@@ -42,7 +42,7 @@ function JuliaSourceLines(lines, e)
 endfunction
 
 function SetExeCmd()
-    runtime ftplugin/R/common_buffer.vim
+    runtime R/common_buffer.vim
     if exists("g:R_exe") && exists("g:R_quit")
         let b:rplugin_R = g:R_exe
         if exists("g:R_args")

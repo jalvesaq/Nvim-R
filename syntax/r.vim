@@ -3,7 +3,7 @@
 " Maintainer:	      Jakson Aquino <jalvesaq@gmail.com>
 " Former Maintainers: Vaidotas Zemlys <zemlys@gmail.com>
 " 		      Tom Payne <tom@tompayne.org>
-" Last Change:	      Thu Dec 25, 2014  09:36PM
+" Last Change:	      Mon Dec 29, 2014  08:43AM
 " Filenames:	      *.R *.r *.Rhistory *.Rt
 "
 " NOTE: The highlighting of R functions is defined in the
@@ -19,7 +19,7 @@
 
 if exists("b:current_syntax")
   if has("nvim")
-    runtime ftplugin/R/functions.vim
+    runtime R/functions.vim
   endif
   finish
 endif
@@ -158,7 +158,7 @@ syn match rParenError "[\]}]" contained
 
 " Source list of R functions. The list is produced by the Vim-R-plugin
 " http://www.vim.org/scripts/script.php?script_id=2628
-runtime ftplugin/R/functions.vim
+runtime R/functions.vim
 
 syn match rDollar display contained "\$"
 syn match rDollar display contained "@"

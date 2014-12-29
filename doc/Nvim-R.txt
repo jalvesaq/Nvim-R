@@ -2099,7 +2099,6 @@ syntax/rmd.vim
 syntax/rout.vim
 syntax/rrst.vim
 syntax/r.vim
-ftplugin/R
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
 ftplugin/rhelp_rplugin.vim
@@ -2112,20 +2111,19 @@ ftplugin/r_rplugin.vim
 ftplugin/rrst_rplugin.vim
 ftplugin/rrst.vim
 ftplugin/r.vim
-ftplugin/R/common_buffer.vim
-ftplugin/R/common_global.vim
-ftplugin/R/functions.vim
-ftplugin/R/global_r_plugin.vim
-ftplugin/R/gui_running.vim
-ftplugin/R/nvimbuffer.vim
-ftplugin/R/osx.vim
-ftplugin/R/rcomplete.vim
-ftplugin/R/rmd.snippets
-ftplugin/R/r.snippets
-ftplugin/R/setcompldir.vim
-ftplugin/R/synctex_evince_backward.py
-ftplugin/R/synctex_evince_forward.py
-ftplugin/R/synctex_okular_backward.sh
+R/common_buffer.vim
+R/common_global.vim
+R/functions.vim
+R/global_r_plugin.vim
+R/gui_running.vim
+R/osx.vim
+R/rcomplete.vim
+R/rmd.snippets
+R/r.snippets
+R/setcompldir.vim
+R/synctex_evince_backward.py
+R/synctex_evince_forward.py
+R/synctex_okular_backward.sh
 
 
 ==============================================================================
@@ -2185,12 +2183,12 @@ in your R script. The plugin may be downloaded from:
    http://www.vim.org/scripts/script.php?script_id=2540
 
 The snipMate plugin does not come with snippets for R, but you can copy the
-files r.snippets and rmd.snippets that ship with the Nvim-R (look at the
-ftplugin/R directory) to the snippets directory. The files have only a few
-snippets, but they will help you to get started. If you usually edit rnoweb
-files, you may also want to create an rnoweb.snippets by concatenating both
-tex.snippets and r.snippets. If you edit R documentation, you may want to
-create an rhelp.snippets
+files r.snippets and rmd.snippets that ship with the Nvim-R (look at the R
+directory) to the snippets directory. The files have only a few snippets, but
+they will help you to get started. If you usually edit rnoweb files, you may
+also want to create an rnoweb.snippets by concatenating both tex.snippets and
+r.snippets. If you edit R documentation, you may want to create an
+rhelp.snippets
 
 
 ------------------------------------------------------------------------------
@@ -2460,7 +2458,7 @@ on top" or a similar option provided by your desktop manager.
 The Nvim-R is a file type plugin. If you want its functionality
 available for all file types, then put in your |nvimrc|:
 >
-   runtime ftplugin/R/global_r_plugin.vim
+   runtime R/global_r_plugin.vim
 <
 You will then be able to type <LocalLeader>rf to start and <LocalLeader>rq to
 quit different command line interpreters and <LocalLeader>d, l, ss, bb, etc to
@@ -2646,7 +2644,7 @@ See also |R_in_buffer|.
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2014-12-26)
+0.9.0 (2014-12-29)
 
  * First release.
 

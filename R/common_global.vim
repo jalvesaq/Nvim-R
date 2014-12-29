@@ -2905,7 +2905,7 @@ command Rhistory :call ShowRhistory()
 "==========================================================================
 
 if !exists("g:rplugin_compldir")
-    runtime ftplugin/R/setcompldir.vim
+    runtime R/setcompldir.vim
 endif
 
 
@@ -3315,19 +3315,19 @@ if &filetype != "rbrowser"
 endif
 
 if has("win32") || has("win64")
-    runtime ftplugin/R/windows.vim
+    runtime R/windows.vim
     let g:rplugin_has_icons = len(globpath(&rtp, "bitmaps/RStart.bmp")) > 0
 else
     call SetRPath()
     let g:rplugin_has_icons = len(globpath(&rtp, "bitmaps/RStart.png")) > 0
 endif
 if has("gui_running")
-    runtime ftplugin/R/gui_running.vim
+    runtime R/gui_running.vim
 endif
 if g:R_applescript
-    runtime ftplugin/R/osx.vim
+    runtime R/osx.vim
 endif
-runtime ftplugin/R/nvimbuffer.vim
+runtime R/nvimbuffer.vim
 
 if exists("g:R_permanent_libs")
     call RWarningMsgInp("The option 'R_permanent_libs' was renamed to 'R_start_libs'. Please, rename it in your nvimrc too.")
