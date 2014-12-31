@@ -1,4 +1,8 @@
 
+if !has("nvim")
+    finish
+endif
+
 " Only source this once
 if exists("*RmFromRLibList")
     if len(g:rplugin_lists_to_load) > 0

@@ -32,6 +32,7 @@ vimball:
 	# Update the version date in doc/Nvim-R.txt header and in the news
 	sed -i -e "s/^Version: [0-9].[0-9].[0-9].[0-9]/Version: $(PLUGINVERSION)/" doc/Nvim-R.txt
 	sed -i -e "s/^$(PLUGINVERSION) (201[0-9]-[0-9][0-9]-[0-9][0-9])$$/$(PLUGINVERSION) ($(PLUGINRELEASEDATE))/" doc/Nvim-R.txt
+	sed -i -e "s/^let g:Nvim_R_version =.*/let g:Nvim_R_version = '$(PLUGINVERSION)'/" r-plugin/common_global.vim
 	nvim -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
 	mv Nvim-R.vmb /tmp
 

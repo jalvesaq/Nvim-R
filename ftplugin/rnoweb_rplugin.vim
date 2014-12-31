@@ -133,7 +133,7 @@ endfunction
 
 " Sweave and compile the current buffer content
 function! RMakePDF(bibtex, knit)
-    if g:rplugin_nvimcomport == 0
+    if g:rplugin_nvimcom_port == 0
         call RWarningMsg("The nvimcom package is required to make and open the PDF.")
     endif
     update

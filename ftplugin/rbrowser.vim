@@ -7,11 +7,9 @@
 if exists("b:did_ftplugin") || !has("nvim")
     finish
 endif
+let b:did_ftplugin = 1
 
 let g:rplugin_upobcnt = 0
-
-" Don't load another plugin for this buffer
-let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -315,14 +313,21 @@ function! MakeRBrowserMenu()
     call RBrowserMenu()
 endfunction
 
-function! ObBrBufUnload()
-    if exists("g:rplugin_editor_sname")
-        call system("tmux select-pane -t " . g:rplugin_nvim_pane)
+function! SourceObjBrLines()
+    exe "source " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/objbrowserInit"
+endfunction
+
+function! OnOBBufUnload()
+    call SendToNvimcom("\004Stop updating info [OB BufUnload].")
+    if b:rplugin_extern_ob
+        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . "unlet g:rplugin_ob_port\n")
     endif
 endfunction
 
-function! SourceObjBrLines()
-    exe "source " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/objbrowserInit"
+" Called by Neovim editor in another Tmux pane
+function! ExternOBQuit()
+    call OnOBBufUnload()
+    quit
 endfunction
 
 nmap <buffer><silent> <CR> :call RBrowserDoubleClick()<CR>
@@ -341,9 +346,9 @@ if has("gui_running")
 endif
 
 au BufEnter <buffer> stopinsert
+au BufUnload <buffer> call OnOBBufUnload()
 
 if g:R_tmux_ob
-    au BufUnload <buffer> call ObBrBufUnload()
     " Fix problems caused by some plugins
     if exists("g:loaded_surround") && mapcheck("ds", "n") != ""
         nunmap ds
@@ -351,8 +356,6 @@ if g:R_tmux_ob
     if exists("g:loaded_showmarks ")
         autocmd! ShowMarks
     endif
-else
-    au BufUnload <buffer> call SendToNvimcom("\004Stop updating info [OB BufUnload].")
 endif
 
 let s:envstring = tolower($LC_MESSAGES . $LC_ALL . $LANG)

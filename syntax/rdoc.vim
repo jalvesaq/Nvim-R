@@ -20,8 +20,8 @@ exec "syn sync minlines=" . rdoc_minlines . " maxlines=" . rdoc_maxlines
 syn match  rdocTitle	      "^[A-Z].*:$"
 syn match  rdocTitle "^\S.*R Documentation$"
 syn match rdocFunction "\([A-Z]\|[a-z]\|\.\|_\)\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)*" contained
-syn region rdocStringS  start="â" end="â" contains=rdocFunction transparent keepend
-syn region rdocStringS  start="" end="" contains=rdocFunction transparent keepend
+syn region rdocStringS  start="\%u2018" end="\%u2019" contains=rdocFunction transparent keepend
+syn region rdocStringS  start="\%x91" end="\%x92" contains=rdocFunction transparent keepend
 syn region rdocStringD  start='"' skip='\\"' end='"'
 syn match rdocURL `\v<(((https?|ftp|gopher)://|(mailto|file|news):)[^'	<>"]+|(www|web|w3)[a-z0-9_-]*\.[a-z0-9._-]+\.[^'  <>"]+)[a-zA-Z0-9/]`
 syn keyword rdocNote		note Note NOTE note: Note: NOTE: Notes Notes:

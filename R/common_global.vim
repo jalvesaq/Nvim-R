@@ -284,7 +284,7 @@ function RCompleteArgs()
                 endif
                 call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
-                if g:rplugin_nvimcomport > 0
+                if g:rplugin_nvimcom_port > 0
                     let g:rplugin_lastev = ReadEvalReply()
                     if g:rplugin_lastev != "NOT_EXISTS" && g:rplugin_lastev != "NO_ARGS" && g:rplugin_lastev != "R is busy." && g:rplugin_lastev != "NOANSWER" && g:rplugin_lastev != "INVALID" && g:rplugin_lastev != "" && g:rplugin_lastev != "No reply"
                         let args = []
@@ -609,10 +609,9 @@ function TmuxActivePane()
 endfunction
 
 function StartR_TmuxSplit(rcmd)
-    let g:rplugin_nvim_pane = TmuxActivePane()
+    let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
-                \ 'set-environment VIM_PANE ' . g:rplugin_nvim_pane ,
                 \ 'set-environment NVIMR_SVRNM ' . $NVIMR_SVRNM ,
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ]
@@ -642,7 +641,7 @@ function StartR_TmuxSplit(rcmd)
         return
     endif
     let g:rplugin_rconsole_pane = TmuxActivePane()
-    let rlog = system("tmux select-pane -t " . g:rplugin_nvim_pane)
+    let rlog = system("tmux select-pane -t " . g:rplugin_editor_pane)
     if v:shell_error
         call RWarningMsg(rlog)
         return
@@ -664,7 +663,7 @@ endfunction
 
 
 function StartR_ExternalTerm(rcmd)
-    if $DISPLAY == "" && !has("gui_macvim") && !has("nvim")
+    if $DISPLAY == "" && !g:rplugin_is_darwin
         call RWarningMsg("Start 'tmux' before Vim. The X Window system is required to run R in an external terminal.")
         return
     endif
@@ -764,9 +763,7 @@ function StartR(whatr)
     endif
 
     " Only jobstart() needs arguments as list
-    let tmp = join(b:rplugin_r_args)
-    unlet b:rplugin_r_args
-    let b:rplugin_r_args = tmp
+    let b:rplugin_r_args_str = join(b:rplugin_r_args)
 
     if g:R_applescript
         call StartR_OSX()
@@ -797,12 +794,12 @@ function StartR(whatr)
                 let g:R_ca_ck = 0
                 call g:SendCmdToR(g:rplugin_last_rcmd)
                 let g:R_ca_ck = ca_ck
+                if WaitVimComStart()
+                    sleep 100m
+                    call g:SendCmdToR("\014")
+                endif
                 if IsExternalOBRunning()
-                    if WaitVimComStart()
-                        sleep 100m
-                        call g:SendCmdToR("\014")
-                    endif
-                    call VimExprToOB('ResetVimComPort()')
+                    call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . 'let g:rplugin_nvimcom_port = ' . g:rplugin_nvimcom_port . "\n")
                 endif
                 return
             elseif IsSendCmdToRFake()
@@ -816,10 +813,10 @@ function StartR(whatr)
         endif
     endif
 
-    if b:rplugin_r_args == ""
+    if b:rplugin_r_args_str == ""
         let rcmd = b:rplugin_R
     else
-        let rcmd = b:rplugin_R . " " . b:rplugin_r_args
+        let rcmd = b:rplugin_R . " " . b:rplugin_r_args_str
     endif
 
     if g:rplugin_do_tmux_split
@@ -891,12 +888,12 @@ function WaitVimComStart()
     sleep 100m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        let g:rplugin_nvimcom_version = vr[0]
+        let nvimcom_version = vr[0]
         let g:rplugin_nvimcom_home = vr[1]
-        let g:rplugin_nvimcomport = vr[2]
+        let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if g:rplugin_nvimcom_version != "0.9.0"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.0.')
+        if nvimcom_version != "0.9.1"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.1.')
             sleep 1
         endif
         if g:rplugin_clt_job
@@ -914,7 +911,7 @@ function WaitVimComStart()
             let nvs = g:rplugin_nvimcom_home . "/bin/nvimserver"
         endif
         if filereadable(nvc)
-            let g:rplugin_clt_job = jobstart('nvimcom', nvc, [g:rplugin_nvimcomport])
+            let g:rplugin_clt_job = jobstart('nvimcom', nvc)
             autocmd JobActivity nvimcom call ROnJobActivity()
         else
             call RWarningMsg('Application "' . nvc . '" not found.")
@@ -930,9 +927,7 @@ function WaitVimComStart()
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
 
         if g:rplugin_do_tmux_split
-            " Environment variables persists across Tmux windows.
-            " Leave a hint (to nvimcom) that R was not started by Vim:
-            "call system("tmux set-environment NVIMR_TMPDIR None")
+            call system("tmux set-environment NVIMR_TMPDIR None")
         endif
         return 1
     else
@@ -953,7 +948,7 @@ function IsExternalOBRunning()
 endfunction
 
 function ResetVimComPort()
-    let g:rplugin_nvimcomport = 0
+    let g:rplugin_nvimcom_port = 0
 endfunction
 
 function StartObjBrowser_Tmux()
@@ -975,11 +970,9 @@ function StartObjBrowser_Tmux()
     let objbrowserfile = g:rplugin_tmpdir . "/objbrowserInit"
     let tmxs = " "
 
-    let myservername = g:rplugin_myport
-
     call writefile([
-                \ 'let g:rplugin_editor_sname = ' . myservername,
-                \ 'let g:rplugin_nvim_pane = "' . g:rplugin_nvim_pane . '"',
+                \ 'let g:rplugin_editor_port = ' . g:rplugin_myport,
+                \ 'let g:rplugin_editor_pane = "' . g:rplugin_editor_pane . '"',
                 \ 'let g:rplugin_rconsole_pane = "' . g:rplugin_rconsole_pane . '"',
                 \ 'let $NVIMR_ID = "' . $NVIMR_ID . '"',
                 \ 'let showmarks_enable = 0',
@@ -987,6 +980,7 @@ function StartObjBrowser_Tmux()
                 \ 'let b:rscript_buffer = "' . bufname("%") . '"',
                 \ 'set filetype=rbrowser',
                 \ 'let g:rplugin_nvimcom_home = "' . g:rplugin_nvimcom_home . '"',
+                \ 'let g:rplugin_nvimcom_port = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let b:objbrtitle = "' . b:objbrtitle . '"',
                 \ 'let b:rplugin_extern_ob = 1',
                 \ 'set shortmess=atI',
@@ -994,9 +988,9 @@ function StartObjBrowser_Tmux()
                 \ 'set laststatus=0',
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
-                \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_TmuxOB")',
-                \ 'let g:rplugin_clt_job = jobstart("nvimcom", "' . g:rplugin_nvimcom_home . "/bin/nvimclient" . '", ["' . g:rplugin_nvimcomport . '"])',
-                \ 'let g:rplugin_srv_job = jobstart("udpsvr", "' . g:rplugin_nvimcom_home . "/bin/nvimserver" . '")',
+                \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
+                \ 'let g:rplugin_clt_job = jobstart("nvimcom", "' . g:rplugin_nvimcom_home . '/bin/nvimclient")',
+                \ 'let g:rplugin_srv_job = jobstart("udpsvr", "' . g:rplugin_nvimcom_home . '/bin/nvimserver")',
                 \ 'autocmd JobActivity udpsvr call ROnJobActivity()'], objbrowserfile)
 
     if g:R_objbr_place =~ "left"
@@ -1006,7 +1000,7 @@ function StartObjBrowser_Tmux()
             let panw = substitute(panw, '.*[0-9]: \[\([0-9]*\)x[0-9]*.\{-}' . g:rplugin_rconsole_pane . '\>.*', '\1', "")
         else
             " Get the Vim width
-            let panw = substitute(panw, '.*[0-9]: \[\([0-9]*\)x[0-9]*.\{-}' . g:rplugin_nvim_pane . '\>.*', '\1', "")
+            let panw = substitute(panw, '.*[0-9]: \[\([0-9]*\)x[0-9]*.\{-}' . g:rplugin_editor_pane . '\>.*', '\1', "")
         endif
         let panewidth = panw - g:R_objbr_w
         " Just to be safe: If the above code doesn't work as expected
@@ -1020,16 +1014,10 @@ function StartObjBrowser_Tmux()
     if g:R_objbr_place =~ "console"
         let obpane = g:rplugin_rconsole_pane
     else
-        let obpane = g:rplugin_nvim_pane
+        let obpane = g:rplugin_editor_pane
     endif
 
-    if has("clientserver")
-        let obsname = "--servername " . g:rplugin_obsname
-    else
-        let obsname = " "
-    endif
-
-    let cmd = "tmux split-window -h -l " . panewidth . " -t " . obpane . ' "nvim ' . obsname . " -c 'source " . substitute(objbrowserfile, ' ', '\\ ', 'g') . "'" . '"'
+    let cmd = "tmux split-window -h -l " . panewidth . " -t " . obpane . ' "nvim ' . " -c 'source " . substitute(objbrowserfile, ' ', '\\ ', 'g') . "'" . '"'
     let rlog = system(cmd)
     if v:shell_error
         let rlog = substitute(rlog, '\n', ' ', 'g')
@@ -1040,7 +1028,7 @@ function StartObjBrowser_Tmux()
     endif
 
     let g:rplugin_ob_pane = TmuxActivePane()
-    let rlog = system("tmux select-pane -t " . g:rplugin_nvim_pane)
+    let rlog = system("tmux select-pane -t " . g:rplugin_editor_pane)
     if v:shell_error
         call RWarningMsg(rlog)
         return 0
@@ -1050,7 +1038,7 @@ function StartObjBrowser_Tmux()
         if g:R_objbr_place =~ "console"
             call system("tmux swap-pane -d -s " . g:rplugin_rconsole_pane . " -t " . g:rplugin_ob_pane)
         else
-            call system("tmux swap-pane -d -s " . g:rplugin_nvim_pane . " -t " . g:rplugin_ob_pane)
+            call system("tmux swap-pane -d -s " . g:rplugin_editor_pane . " -t " . g:rplugin_ob_pane)
         endif
     endif
     " Force Neovim to update the window size
@@ -1059,7 +1047,7 @@ function StartObjBrowser_Tmux()
 endfunction
 
 function StartObjBrowser_Vim()
-    let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Vim")
+    let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")
 
     " Either load or reload the Object Browser
     let savesb = &switchbuf
@@ -1085,6 +1073,7 @@ function StartObjBrowser_Vim()
         let &splitright = l:sr
         sil exe "vertical resize " . g:R_objbr_w
         sil set filetype=rbrowser
+        let b:rplugin_extern_ob = 0
 
         " Inheritance of some local variables
         let g:rplugin_tmuxsname = g:tmp_tmuxsname
@@ -1123,32 +1112,22 @@ function RObjBrowser()
     return
 endfunction
 
-function VimExprToOB(msg)
-    if IsExternalOBRunning()
-        let slog = system("tmux set-buffer ':call " . a:msg . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_ob_pane)
-        if v:shell_error
-            call RWarningMsg(slog)
-        endif
-        return "NoVimServer"
+function RBrOpenCloseLs_Nvim(status)
+    if !exists("g:rplugin_curview")
+        return
     endif
-    return "NoOBRunning"
-endfunction
-
-function RBrOpenCloseLs_Vim(status)
-    if a:status == 1
-        if exists("g:rplugin_curview")
-            let curview = g:rplugin_curview
-        else
-            let curview = "GlobalEnv"
-        endif
-        if curview == "libraries"
-            echohl WarningMsg
-            echon "GlobalEnv command only."
-            sleep 1
-            echohl Normal
-            normal! :<Esc>
-            return
-        endif
+    if a:status == 1 && g:rplugin_curview == "libraries"
+        echohl WarningMsg
+        echon "GlobalEnv command only."
+        sleep 1
+        echohl Normal
+        normal! :<Esc>
+        return
+    endif
+    if g:rplugin_curview == "GlobalEnv"
+        let stt = a:status
+    else
+        let stt = a:status + 2
     endif
 
     call SendToNvimcom("\007" . stt)
@@ -1158,43 +1137,10 @@ function RBrOpenCloseLs_Vim(status)
     endif
 endfunction
 
-function RBrOpenCloseLs_TmuxVim(status)
-    if a:status == 1
-        if IsExternalOBRunning() && has("clientserver") && $DISPLAY != "" && serverlist() =~ "\\<" . g:rplugin_obsname . "\n"
-            let curview = remote_expr(g:rplugin_obsname, 'g:rplugin_curview')
-            if curview == "libraries"
-                echohl WarningMsg
-                echon "GlobalEnv command only."
-                sleep 1
-                echohl Normal
-                normal! :<Esc>
-                return
-            endif
-        endif
-    endif
-
-    call SendToNvimcom("\007" . a:status)
-
-    if g:rplugin_lastrpl == "R is busy."
-        call RWarningMsg("R is busy.")
-    endif
-endfunction
-
 function RBrOpenCloseLs_TmuxNeovim(status)
-    " TODO: Discover real value of curview
-    let curview = "GlobalEnv"
-
-    if a:status == 1 && curview == "libraries"
-        if curview == "libraries"
-            echohl WarningMsg
-            echon "GlobalEnv command only."
-            sleep 1
-            echohl Normal
-            normal! :<Esc>
-            return
-        endif
+    if exists("g:rplugin_ob_port")
+        call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . 'call RBrOpenCloseLs_Nvim(' . a:status . ')' . "\n")
     endif
-    call SendToNvimcom("\007" . a:status)
 endfunction
 
 function SendToNvimcom(cmd)
@@ -1202,32 +1148,21 @@ function SendToNvimcom(cmd)
         call RWarningMsg("nvimcom client not running.")
         return
     endif
-    call jobsend(g:rplugin_clt_job, a:cmd . "\n")
+    call jobsend(g:rplugin_clt_job, g:rplugin_nvimcom_port . ' ' . a:cmd . "\n")
 endfunction
 
-function RSetNeovimPort(p)
+function RSetMyPort(p)
     let g:rplugin_myport = a:p
     if &filetype == "rbrowser" && g:rplugin_do_tmux_split
         call SendToNvimcom("\002" . a:p)
+        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . 'let g:rplugin_ob_port = ' . g:rplugin_myport . "\n")
     else
         call SendToNvimcom("\001" . a:p)
     endif
 endfunction
 
-function RBrOpenCloseLs_TmuxOB(status)
-    if a:status == 1 && g:rplugin_curview == "libraries"
-        echohl WarningMsg
-        echon "GlobalEnv command only."
-        sleep 1
-        echohl Normal
-        normal! :<Esc>
-        return
-    endif
-    call SendToNvimcom("\007" . a:status)
-endfunction
-
 function RFormatCode() range
-    if g:rplugin_nvimcomport == 0
+    if g:rplugin_nvimcom_port == 0
         return
     endif
 
@@ -1255,7 +1190,7 @@ function RFormatCode() range
 endfunction
 
 function RInsert(cmd)
-    if g:rplugin_nvimcomport == 0
+    if g:rplugin_nvimcom_port == 0
         return
     endif
 
@@ -1819,9 +1754,8 @@ endfunction
 
 function CloseExternalOB()
     if IsExternalOBRunning()
-        call system("tmux kill-pane -t " . g:rplugin_ob_pane)
+        call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . "call ExternOBQuit()\n")
         unlet g:rplugin_ob_pane
-        sleep 250m
     endif
 endfunction
 
@@ -1838,7 +1772,7 @@ function ClearRInfo()
     call delete(g:rplugin_tmpdir . "/rconsole_hwnd_" . $NVIMR_SECRET)
     let g:SendCmdToR = function('SendCmdToR_fake')
     let g:rplugin_r_pid = 0
-    let g:rplugin_nvimcomport = 0
+    let g:rplugin_nvimcom_port = 0
 
     if g:rplugin_do_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux set automatic-rename on")
@@ -2191,7 +2125,7 @@ function RSetPDFViewer()
             let g:rplugin_pdfviewer = "okular"
         else
             let g:rplugin_pdfviewer = "none"
-            if has("gui_macvim") || has("gui_mac") || has("mac") || has("macunix")
+            if g:rplugin_is_darwin
                 if $R_PDFVIEWER == ""
                     let pdfvl = ["open"]
                 else
@@ -2372,20 +2306,14 @@ function RAction(rcmd)
                         let pkg = ""
                     endif
                     if b:rplugin_extern_ob
-                        if g:rplugin_nvim_pane == "none"
-                            call RWarningMsg("Cmd not available.")
-                        else
-                            if g:rplugin_editor_sname == "" || has("nvim")
-                                let slog = system("tmux set-buffer '" . "\<C-\>\<C-N>" . ':call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)' . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_nvim_pane . " && tmux select-pane -t " . g:rplugin_nvim_pane)
-                                if v:shell_error
-                                    call RWarningMsg(slog)
-                                endif
-                            endif
+                        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . 'call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)' . "\n")
+                        let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
+                        if v:shell_error
+                            call RWarningMsg(slog)
                         endif
-                    else
-                        call AskRDoc(rkeyword, pkg, 0)
+                        return
                     endif
-                    return
+                    sbuffer R_Output
                 endif
                 call AskRDoc(rkeyword, "", 1)
             endif
@@ -2801,7 +2729,7 @@ function BuildROmniList()
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call SendToNvimcom("\x08" . $NVIMR_ID . omnilistcmd)
-    if g:rplugin_nvimcomport == 0
+    if g:rplugin_nvimcom_port == 0
         sleep 500m
         return
     endif
@@ -2937,16 +2865,7 @@ if !isdirectory(g:rplugin_tmpdir)
     call mkdir(g:rplugin_tmpdir, "p", 0700)
 endif
 
-" Old name of R_assign option
-if exists("g:R_underscore")
-    " 07/mar/2014:
-    call RWarningMsgInp("The option R_underscore is deprecated. Use R_assign instead.")
-endif
-
-if exists("g:R_openpdf_quietly")
-    " 25/oct/2014
-    call RWarningMsgInp("The option R_openpdf_quietly is deprecated.")
-endif
+let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
 " Variables whose default value is fixed
 call RSetDefaultValue("g:R_allnames",          0)
@@ -3012,13 +2931,6 @@ endfor
 unlet objbrplace
 unlet obpllen
 
-function RSetMyPort(p)
-    let g:rplugin_myport = a:p
-    if &filetype == "rbrowser"
-        call SendToNvimcom("\002" . a:p)
-    endif
-endfunction
-
 function SendObjPortToVimCom(p)
     call SendToNvimcom("\002" . a:p)
 endfunction
@@ -3029,7 +2941,7 @@ function ROnJobActivity()
             if cmd == ""
                 continue
             endif
-            if cmd =~ "^call " || cmd  =~ "^let "
+            if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
                 exe cmd
             else
                 call RWarningMsg("[JobActivity] Unknown command: " . cmd)
@@ -3055,7 +2967,7 @@ if has('gui_running')
     let g:rplugin_do_tmux_split = 0
 endif
 
-if has("gui_macvim") || has("gui_mac") || has("mac") || has("macunix")
+if g:rplugin_is_darwin
     let g:rplugin_r64app = 0
     if isdirectory("/Applications/R64.app")
         call RSetDefaultValue("g:R_applescript", 1)
@@ -3160,7 +3072,7 @@ endif
 if !exists("g:R_term")
     let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'terminal',
                 \ 'Eterm', 'rxvt', 'urxvt', 'aterm', 'roxterm', 'terminator', 'lxterminal']
-    if has("mac") || has("macvim") || has("gui_macvim")
+    if g:rplugin_is_darwin
         let s:terminals = ['/Applications/Utilities/iTerm.app/Contents/MacOS/iTerm',
                     \ '/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal',
                     \ 'xterm'] + s:terminals
@@ -3251,23 +3163,18 @@ endif
 
 let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_running_objbr = 0
-let g:rplugin_newliblist = 0
-let g:rplugin_ob_warn_shown = 0
 let g:rplugin_clt_job = 0
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
-let g:rplugin_nvimcomport = 0
+let g:rplugin_nvimcom_port = 0
 let g:rplugin_nvimcom_home = ""
-let g:rplugin_nvimcom_version = 0
 let g:rplugin_lastrpl = ""
 let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
-let g:rplugin_hasRSFbutton = 0
 let g:rplugin_tmuxsname = "VimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
-let g:rplugin_synctexpid = 0
 let g:rplugin_zathura_pid = {}
 
 let g:rplugin_py_exec = "none"
@@ -3304,8 +3211,6 @@ else
     let $NVIMR_ID = GetRandomNumber(16)
 endif
 
-let g:rplugin_obsname = toupper(substitute(substitute(expand("%:r"), '\W', '', 'g'), "_", "", "g"))
-
 let g:rplugin_docfile = g:rplugin_tmpdir . "/Rdoc"
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
@@ -3316,10 +3221,8 @@ endif
 
 if has("win32") || has("win64")
     runtime R/windows.vim
-    let g:rplugin_has_icons = len(globpath(&rtp, "bitmaps/RStart.bmp")) > 0
 else
     call SetRPath()
-    let g:rplugin_has_icons = len(globpath(&rtp, "bitmaps/RStart.png")) > 0
 endif
 if has("gui_running")
     runtime R/gui_running.vim

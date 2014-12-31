@@ -544,7 +544,7 @@ simply pressing `q`.
 
 You can source all .R files in a directory with the Normal mode command
 :RSourceDir, which accepts an optional argument (the directory to be sourced).
-								    *:Rinsert*
+								     *Rinsert*
 The command  :Rinsert <cmd>  inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
 and pasting the output R from its console to Nvim. For example, to insert the
@@ -670,9 +670,9 @@ have their classes recognized in the GlobalEnv view.
 4.5. Commenting and uncommenting lines~
 
 You can toggle the state of a line as either commented or uncommented by
-typing <LocalLeader>xx. The string used to comment the line will be "# ",
-"## " or "### ", depending on the values of |R_indent_commented| and
-|r_indent_ess_comments|.
+typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
+" or "### ", depending on the values of R_indent_commented and
+r_indent_ess_comments (see |r_indenting|).
 
 You can also add the string "# " to the beginning of a line by typing
 <LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
@@ -706,7 +706,7 @@ in a buffer (see |:s| and |pattern-overview|).
 
 
 ------------------------------------------------------------------------------
-								 *:RBuildTags*
+								  *RBuildTags*
 4.6. Build a tags file to jump to function definitions~
 
 Nvim can jump to functions defined in other files if you press CTRL-] over the
@@ -831,7 +831,7 @@ you have to type <C-a><C-a>.
 
 You do not need to copy code from Nvim to R because you can use the plugin's
 shortcuts to send the code. For pasting the output of R commands into Nvim's
-buffer, you can use the command |:Rinsert|. If you want to copy text from an
+buffer, you can use the command :|Rinsert|. If you want to copy text from an
 application running inside the Tmux to another application also running in
 Tmux, as explained in the previous subsection, you can enter in Tmux
 copy/scroll mode, select the text, copy it, switch to the other application
@@ -1402,8 +1402,7 @@ file is open in a new split window, put in your |nvimrc|:
 <
 
 ------------------------------------------------------------------------------
-						       *R_indent_commented*
-						       *r_indent_ess_comments*
+								 *r_indenting*
 6.11. Indent commented lines~
 
 You can type <LocalLeader>xx to comment out a line or selected lines. If the
@@ -2646,6 +2645,6 @@ See also |R_in_buffer|.
 
 0.9.0 (2014-12-29)
 
- * First release.
+ * First release (initial code extracted from the Vim-R-plugin).
 
 vim:tw=78:ts=8:ft=help:norl
