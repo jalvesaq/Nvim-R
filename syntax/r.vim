@@ -3,7 +3,7 @@
 " Maintainer:	      Jakson Aquino <jalvesaq@gmail.com>
 " Former Maintainers: Vaidotas Zemlys <zemlys@gmail.com>
 " 		      Tom Payne <tom@tompayne.org>
-" Last Change:	      Tue Dec 30, 2014  11:10PM
+" Last Change:	      Wed Dec 31, 2014  12:45AM
 " Filenames:	      *.R *.r *.Rhistory *.Rt
 "
 " NOTE: The highlighting of R functions is defined in
@@ -158,11 +158,11 @@ syn match rParenError "[\]}]" contained
 
 " Source list of R functions produced by a filetype plugin (if installed)
 if has("nvim")
-  " Vim-R-plugin
-  runtime r-plugin/functions.vim
-else
   " Nvim-R
   runtime R/functions.vim
+else
+  " Vim-R-plugin
+  runtime r-plugin/functions.vim
 endif
 
 syn match rDollar display contained "\$"
