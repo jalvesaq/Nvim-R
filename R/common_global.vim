@@ -2313,7 +2313,6 @@ function RAction(rcmd)
                         endif
                         return
                     endif
-                    sbuffer R_Output
                 endif
                 call AskRDoc(rkeyword, "", 1)
             endif
