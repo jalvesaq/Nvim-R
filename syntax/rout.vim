@@ -59,11 +59,11 @@ syn match routDate "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][-0-9]"
 syn match routDate "[0-9][0-9][-/][0-9][0-9][-/][0-9][0-9][0-9][-0-9]"
 syn match routDate "[0-9][0-9]:[0-9][0-9]:[0-9][-0-9]"
 
-if !exists("g:R_routmorecolors")
-    let g:R_routmorecolors = 0
+if !exists("g:Rout_more_colors")
+    let g:Rout_more_colors = 0
 endif
 
-if g:R_routmorecolors
+if g:Rout_more_colors
     syn include @routR syntax/r.vim
     syn region routColoredR start="^> " end='$' contains=@routR keepend
     syn region routColoredR start="^+ " end='$' contains=@routR keepend
@@ -144,7 +144,7 @@ if v:lang =~ "^tr"
 endif
 
 " Define the default highlighting.
-if g:R_routmorecolors == 0
+if g:Rout_more_colors == 0
     hi def link routInput	Comment
 endif
 
