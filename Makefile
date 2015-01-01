@@ -32,7 +32,6 @@ vimball:
 	# Update the version date in doc/Nvim-R.txt header and in the news
 	sed -i -e "s/^Version: [0-9].[0-9].[0-9].[0-9]/Version: $(PLUGINVERSION)/" doc/Nvim-R.txt
 	sed -i -e "s/^$(PLUGINVERSION) (201[0-9]-[0-9][0-9]-[0-9][0-9])$$/$(PLUGINVERSION) ($(PLUGINRELEASEDATE))/" doc/Nvim-R.txt
-	sed -i -e "s/^let g:Nvim_R_version =.*/let g:Nvim_R_version = '$(PLUGINVERSION)'/" r-plugin/common_global.vim
 	nvim -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
 	mv Nvim-R.vmb /tmp
 
@@ -59,14 +58,14 @@ deb:
 	  - doc/Nvim-R.txt\n\
 	  - ftplugin/rbrowser.vim\n\
 	  - ftplugin/rdoc.vim\n\
-	  - ftplugin/rhelp_rplugin.vim\n\
+	  - ftplugin/rhelp_nvimr.vim\n\
 	  - ftplugin/rhelp.vim\n\
-	  - ftplugin/rmd_rplugin.vim\n\
+	  - ftplugin/rmd_nvimr.vim\n\
 	  - ftplugin/rmd.vim\n\
-	  - ftplugin/rnoweb_rplugin.vim\n\
+	  - ftplugin/rnoweb_nvimr.vim\n\
 	  - ftplugin/rnoweb.vim\n\
-	  - ftplugin/r_rplugin.vim\n\
-	  - ftplugin/rrst_rplugin.vim\n\
+	  - ftplugin/r_nvimr.vim\n\
+	  - ftplugin/rrst_nvimr.vim\n\
 	  - ftplugin/rrst.vim\n\
 	  - ftplugin/r.vim\n\
 	  - R/common_buffer.vim\n\

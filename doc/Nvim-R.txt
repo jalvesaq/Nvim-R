@@ -90,20 +90,18 @@ For screenshots see: http://www.lepem.ufc.br/jaa/Nvim-R.html
 							 *Nvim-R-installation*
 3. Installation~
 
-The installation instructions are split in four sections:
+The installation process is described in three sections:
 
-   1. Instructions specific for Unix/Linux/OSX
-   2. Instructions specific for Windows
-   3. Troubleshooting
-   4. Optional steps
+   1. Installation instructions
+   2. Troubleshooting
+   3. Optional steps
 
 ------------------------------------------------------------------------------
-3.1. Instructions for Unix (Linux, OS X, etc.)~
+3.1. Installation instructions~
 
-If you are using Windows, jump to section 3.2.
-
-If you are an unexperienced Nvim user, start a terminal emulator and type in
-it: `vimtutor`<Enter>
+If you are an unexperienced Vim or Neovim user, start a terminal emulator and
+type in it: `vimtutor`<Enter>
+On Windows, look for the GVim Tutor application.
 
 Before installing the plugin, you should install its dependencies:
 
@@ -115,68 +113,82 @@ Before installing the plugin, you should install its dependencies:
 
    nvimcom (development version): https://github.com/jalvesaq/nvimcom
 
+   Additional dependencies for editing Rnoweb documents~
+
+   latexmk:       Automate the compilation of LaTeX documents.
+                  See examples in |R_latexcmd|.
+
+   PDF viewer with SyncTeX support and capable of automatically reloading
+   documents. This is required only if you edit Rnoweb files.
+      On Linux and other Unixes systems: Evince, Zathura or Okular.
+      On OS X: Skim
+      On Windows: SumatraPDF
+
+   Additional dependencies on Unix (Linux, OS X, etc.)~
+
    Tmux >= 1.8:   http://tmux.sourceforge.net
                   Tmux is necessary to send commands from Nvim to R Console.
-		  It is optional if you are using Neovim.
+		  It is not required on OS X if you prefer to use R.app than
+		  to run R in a terminal emulator.
 
    wmctrl:     http://tomas.styblo.name/wmctrl/
                Required for better SyncTeX support under X Server.
-
-
-   Suggests:~
+	       Not required on OS X.
 
    colorout:      http://www.lepem.ufc.br/jaa/colorout.html
                   Colorizes the R output.
-		  Not required if you will run R as a Neovim job. See
-		  |R_in_buffer|.
+		  Not required if you will run R.app or run R as a Neovim job.
+		  See |R_in_buffer|.
 
    setwidth:      An R package that can be installed with the command
                   `install.packages("setwidth")`.
                   The library setwidth adjusts the value of `options("width")`
                   whenever the terminal is resized.
-		  Not required if you will run R as a Neovim job. See
-		  |R_in_buffer|.
+		  Not required if you will run R.app or run R as a Neovim job.
+		  See |R_in_buffer|.
 
    ncurses-term:  http://invisible-island.net/ncurses
 		  Might be necessary if you want support for 256 colors at the
 		  terminal emulator.
 
-   latexmk:       Automate the compilation of LaTeX documents.
-                  See examples in |R_latexcmd|.
-
    Note: Nvim, R, Tmux, ncurses-term and latexmk are already packaged for most
    GNU/Linux distributions and other Unix variants. Unfortunately their
    installation instructions vary widely and are beyond the scope of this
-   documentation.
+   document.
 
-Put the following lines in your `~/Rprofile`:
+Put the following lines in your `~/Rprofile` (you don't need `colorout` and
+`setwidth` if you either are on Windows or will run R.app on OS X):
 >
    if(interactive()){
-       library(colorout)
-       library(setwidth)
-       options(nvimcom.verbose = 1) # optional
+       library(colorout) # For colorized output in terminal emulators
+       library(setwidth) # For automatic update of options("width")
+       options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
        library(nvimcom)
    }
 <
-You need to activate plugins and indentation according to 'filetype'. You
-should have at least the following options at the top or at near the very top
-of your |nvimrc| (but below `set` `runtimepath`, if you have set it):
+If you do not know where your .Rprofile is, do the following command in R
+Console to open it:
+>
+   edit(file = "~/.Rprofile")
+<
+You may want to improve the configuration of your |nvimrc| for a better use of
+the plugin. You need to activate plugins and indentation according to
+'filetype'. You should have at least the following options at the top or at
+near the very top of your |nvimrc| (but below `set` `runtimepath`, if you have
+set it):
 >
    set nocompatible
    syntax enable
    filetype plugin on
    filetype indent on
 <
-Download the latest version of the plugin from:
+Please, see |Nvim-R-nvimrc-setup| for more suggestions of configuration.
+
+Now, download the latest version of `Nvim-R.vmb` from
 
     http://www.lepem.ufc.br/jaa/Nvim-R.html
 
-Start a terminal emulator, go to the directory where you have downloaded the
-plugin and type:
->
-   nvim Nvim-R.vmb
-<
-Then, in Nvim, type:
+Load the Nvim-R.vmb in Neovim and type:
 >
    :so %
 <
@@ -193,20 +205,23 @@ The plugin is installed and will be activated next time that you start to edit
 an R script. But you still can improve the plugin performance if you do
 additional configuration mentioned in the paragraphs below.
 
-If you start either GVim or Nvim in a terminal emulator the plugin will start R
-in a external terminal emulator. If you start Nvim inside of a Tmux session,
-the plugin will split the Tmux window in two and start R in the other pane.
+On Windows, by default, Nvim-R will run Rgui.
 
-The recommended way of running the plugin on Linux is running Nvim inside a
-Tmux session. Please, read |Nvim-R-tmux| for details.
+On Linux and other systems with X Server running, Nvim will start R in an
+external terminal emulator. If you start Nvim inside of a Tmux session, the
+plugin will split the Tmux window in two and start R in the other pane.
 
-The Nvim configuration also may be improved. See some tips at
-|Nvim-R-nvimrc-setup|.
+On Mac OS X the plugin will use AppleScript to send commands to the R Console
+application unless |R_applescript| = 0. Some users have reported more luck
+with iTerm than with the default Mac OS X terminal emulator.
 
-Note: On Mac OS X, in both Nvim and GVim, the plugin will use AppleScript to
-send commands to the R Console application unless |R_applescript| = 0.
-Some users have reported more luck with iTerm than with the default Mac OS X
-terminal emulator.
+The most efficient way of running the plugin on Linux, Mac OS X or other Unix
+system is running Nvim inside a Tmux session because: 1) you will get
+colorized output; 2) Nvim and R will be in he same window (the terminal
+window) split in two panes; 3) you can press <C-a>z to get Nvim, R or the
+Object Browser temporarily using the full terminal window; 4) it is the only
+way of using the plugin remotely through ssh. Please, read |Nvim-R-tmux| for
+details.
 
 If you want to uninstall the plugin, do
 >
@@ -214,73 +229,7 @@ If you want to uninstall the plugin, do
 <
 
 ------------------------------------------------------------------------------
-3.2. Instructions for Windows ~
-
-Before installing the plugin, you should install several external
-dependencies:
-
-    * R's version must be >= 3.0.0: http://www.r-project.org/
-
-    * nvimcom = 1.2-0: http://www.lepem.ufc.br/jaa/nvimcom.html
-
-      Note: If you cannot build nvimcom yourself, you will want to
-      download and install the zip file.
-
-    * Nvim: https://github.com/neovim/neovim
-
-    * Sumatra PDF (only if you write Rnoweb code).
-
-Add the following lines to your `Rprofile`:
->
-   options(nvimcom.verbose = 1)
-   library(nvimcom)
-<
-If you do not know where your .Rprofile is, do the following command in R
-Console to open it:
->
-   edit(file = "~/.Rprofile")
-<
-You may want to improve the configuration of your |nvimrc| for a better use of
-the plugin. Please, see |Nvim-R-nvimrc-setup|.
-
-Now, download the latest version of `Nvim-R.vmb` from
-
-    http://www.lepem.ufc.br/jaa/Nvim-R.html
-
-and open the directory where you have downloaded it, right click on it and
-choose "Edit with Nvim".
->
-Then, in Nvim, type:
->
-   :so %
-<
-Press <Enter> and the plugin will be installed (because the plugin has many
-files, you have to press the space bar a few times to finish the
-installation). You should, then, quit Nvim.
-
-Note: If you need to install the plugin in a non default directory, do
-`:UseVimball` `[path]`. In this case, the configuration of Nvim's 'runtimepath'
-must be done before the command "filetype on" in both the system and the user
-|nvimrc| files, otherwise, some file types might not be correctly recognized.
-
-Start GVim again and edit an R script. You can right click a .R file and
-choose "Edit with Nvim" or create a new one with the Normal mode command:
->
-   :e example.R
-<
-If R does not start and you get an error message instead, you may want to
-set the path to your Rgui.exe in your |nvimrc|, for example (please adapt to
-your installation)
->
-   let R_path = 'C:\\Program Files\\R\\R-3.1.2\\bin\\i386'
-<
-If you want to uninstall the plugin, do
->
-   :RmVimball Nvim-R
-<
-
-------------------------------------------------------------------------------
-3.3. Troubleshooting (if the plugin doesn't work)~
+3.2. Troubleshooting (if the plugin doesn't work)~
 
 Note: The <LocalLeader> is '\' by default.
 
@@ -293,6 +242,10 @@ pressing <LocalLeader>rf should start R.
 Did you see warning messages but they disappeared before you have had time to
 read them? Type the command |:messages| in Normal mode to see them again.
 
+If R does not start with the <LocalLeader>rf command and you get an error
+message instead, you may want to set the path to the R executable (see
+|R_path|).
+
 Are you using Debian, Ubuntu or other Debian based Linux distribution? If yes,
 you may prefer to install the Debian package available at:
 
@@ -304,16 +257,16 @@ loaded), or R was not started by Nvim.
 
 
 ------------------------------------------------------------------------------
-3.4. Optional steps~
+3.3. Optional steps~
 
-3.4.1 Customize the plugin~
+3.3.1 Customize the plugin~
 
 Please, read the section |Nvim-R-options|. Emacs/ESS users should read the
 section Indenting setup (|Nvim-R-indenting|) of this document.
 
 
 ------------------------------------------------------------------------------
-3.4.2 Install additional plugins~
+3.3.2 Install additional plugins~
 
 You may be interested in installing additional general plugins to get
 functionality not provided by this file type plugin. ShowMarks and snipMate
@@ -1076,7 +1029,7 @@ is running:
 |R_path|              Directory where R is
 |R_args|              Arguments to pass to R
 |R_start_libs|        Objects for omnicompletion and syntax highlight
-|R_routmorecolors|    More syntax highlighting in R output
+|Rout_more_colors|    More syntax highlighting in R output
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_notmuxconf|        Don't use a specially built Tmux config file
@@ -1376,7 +1329,7 @@ value of R_start_libs:
 <
 
 ------------------------------------------------------------------------------
-							    *R_routmorecolors*
+							    *Rout_more_colors*
 6.9. More colorful syntax highlight of .Rout files~
 
 By default, the R commands in .Rout files are highlighted with the color of
@@ -1386,7 +1339,7 @@ comments, and only the output of commands has some of its elements highlighted
 If you prefer that R commands in the R output are highlighted as they are in R
 scripts, put the following in your |nvimrc|:
 >
-   let R_routmorecolors = 1
+   let Rout_more_colors = 1
 <
 
 ------------------------------------------------------------------------------
@@ -2100,14 +2053,14 @@ syntax/rrst.vim
 syntax/r.vim
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
-ftplugin/rhelp_rplugin.vim
+ftplugin/rhelp_nvimr.vim
 ftplugin/rhelp.vim
-ftplugin/rmd_rplugin.vim
+ftplugin/rmd_nvimr.vim
 ftplugin/rmd.vim
-ftplugin/rnoweb_rplugin.vim
+ftplugin/rnoweb_nvimr.vim
 ftplugin/rnoweb.vim
-ftplugin/r_rplugin.vim
-ftplugin/rrst_rplugin.vim
+ftplugin/r_nvimr.vim
+ftplugin/rrst_nvimr.vim
 ftplugin/rrst.vim
 ftplugin/r.vim
 R/common_buffer.vim
@@ -2643,7 +2596,7 @@ See also |R_in_buffer|.
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2014-12-29)
+0.9.0 (2014-12-31)
 
  * First release (initial code extracted from the Vim-R-plugin).
 
