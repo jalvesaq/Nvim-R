@@ -85,9 +85,9 @@ function! RMakeRmd(t)
         let rmddir = substitute(rnwdir, '\\', '/', 'g')
     endif
     if a:t == "default"
-        let rcmd = 'vim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
+        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
     else
-        let rcmd = 'vim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
+        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
     endif
     if (g:R_openhtml  == 0 && a:t == "html_document") || (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation"))
         let rcmd .= ", view = FALSE"
