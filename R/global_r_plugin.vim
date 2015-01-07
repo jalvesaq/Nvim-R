@@ -46,7 +46,7 @@ function SetExeCmd()
     if exists("g:R_exe") && exists("g:R_quit")
         let b:rplugin_R = g:R_exe
         if exists("g:R_args")
-            let b:rplugin_r_args = join(g:R_args)
+            let b:rplugin_r_args = g:R_args
         else
             let b:rplugin_r_args = " "
         endif
@@ -54,28 +54,28 @@ function SetExeCmd()
         let b:SourceLines = function("SourceNotDefined")
     elseif &filetype == "julia"
         let b:rplugin_R = "julia"
-        let b:rplugin_r_args = " "
+        let b:rplugin_r_args = [" "]
         let b:quit_command = "quit()"
         let b:SourceLines = function("JuliaSourceLines")
         call RCreateMaps("ni", '<Plug>RSendFile',     'aa', ':call JuliaSourceLines(getline(1, "$"), "silent")')
     elseif &filetype == "python"
         let b:rplugin_R = "python"
-        let b:rplugin_r_args = " "
+        let b:rplugin_r_args = [" "]
         let b:quit_command = "quit()"
         let b:SourceLines = function("SourceNotDefined")
     elseif &filetype == "haskell"
         let b:rplugin_R = "ghci"
-        let b:rplugin_r_args = " "
+        let b:rplugin_r_args = [" "]
         let b:quit_command = ":quit"
         let b:SourceLines = function("SourceNotDefined")
     elseif &filetype == "ruby"
         let b:rplugin_R = "irb"
-        let b:rplugin_r_args = " "
+        let b:rplugin_r_args = [" "]
         let b:quit_command = "quit"
         let b:SourceLines = function("SourceNotDefined")
     elseif &filetype == "lisp"
         let b:rplugin_R = "clisp"
-        let b:rplugin_r_args = " "
+        let b:rplugin_r_args = [" "]
         let b:quit_command = "(quit)"
         let b:SourceLines = function("SourceNotDefined")
     endif
