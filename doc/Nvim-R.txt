@@ -1689,6 +1689,13 @@ higher value for the variable in your |nvimrc|. Example:
 <
 Note: You should have the line  `library(nvimcom)`  in your `~/.Rprofile`.
 
+If you are using the plugin as a global plugin for a REPL different than R
+(python, julia, etc), you can set |R_nvimcom_wait| to a negative number to
+skip this step:
+>
+   let R_nvimcom_wait = -1
+<
+
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
@@ -2427,6 +2434,11 @@ your |nvimrc|:
 >
    let R_never_unmake_menu = 1
 <
+Lastly, you may turn off nvimcom waiting with the |R_nvimcom_wait| option:
+>
+   let R_nvimcom_wait = -1
+<
+
 
 ------------------------------------------------------------------------------
 9.18. Disable syntax highlight of R functions~
