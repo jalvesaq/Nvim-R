@@ -871,6 +871,9 @@ function OpenRScratch()
 endfunction
 
 function WaitVimComStart()
+    if g:R_nvimcom_wait < 0
+        return 0
+    endif
     if g:R_nvimcom_wait < 300
         g:R_nvimcom_wait = 300
     endif
