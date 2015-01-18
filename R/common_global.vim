@@ -696,12 +696,24 @@ function StartR_ExternalTerm(rcmd)
 
     call system("tmux has-session -t " . g:rplugin_tmuxsname)
     if v:shell_error
-        if g:rplugin_termcmd =~ "gnome-terminal" || g:rplugin_termcmd =~ "xfce4-terminal" || g:rplugin_termcmd =~ "terminal" || g:rplugin_termcmd =~ "iterm"
-            let opencmd = printf("%s 'tmux -2 %s new-session -s %s \"%s\"' &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+        if g:rplugin_is_darwin
+            let rcmd = 'TERM=screen-256color ' . rcmd
+            let opencmd = printf("tmux -2 %s new-session -s %s '%s'", tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
+            call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
+            let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         else
-            let opencmd = printf("%s tmux -2 %s new-session -s %s \"%s\" &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            if g:rplugin_termcmd =~ "gnome-terminal" || g:rplugin_termcmd =~ "xfce4-terminal" || g:rplugin_termcmd =~ "terminal" || g:rplugin_termcmd =~ "iterm"
+                let opencmd = printf("%s 'tmux -2 %s new-session -s %s \"%s\"' &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            else
+                let opencmd = printf("%s tmux -2 %s new-session -s %s \"%s\" &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            endif
         endif
     else
+        if g:rplugin_is_darwin
+            call RWarningMsg("Tmux session with R is already running")
+            return
+        endif
         if g:rplugin_termcmd =~ "gnome-terminal" || g:rplugin_termcmd =~ "xfce4-terminal" || g:rplugin_termcmd =~ "terminal" || g:rplugin_termcmd =~ "iterm"
             let opencmd = printf("%s 'tmux -2 %s attach-session -d -t %s' &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
         else
@@ -2119,24 +2131,18 @@ function RSetPDFViewer()
         " Try to guess what PDF viewer is used:
         if has("win32") || has("win64")
             let g:rplugin_pdfviewer = "sumatra"
+        elseif g:rplugin_is_darwin
+            let g:rplugin_pdfviewer = "skim"
         elseif executable("evince")
             let g:rplugin_pdfviewer = "evince"
         elseif executable("okular")
             let g:rplugin_pdfviewer = "okular"
         else
             let g:rplugin_pdfviewer = "none"
-            if g:rplugin_is_darwin
-                if $R_PDFVIEWER == ""
-                    let pdfvl = ["open"]
-                else
-                    let pdfvl = [$R_PDFVIEWER, "open"]
-                endif
+            if $R_PDFVIEWER == ""
+                let pdfvl = ["xdg-open"]
             else
-                if $R_PDFVIEWER == ""
-                    let pdfvl = ["xdg-open"]
-                else
-                    let pdfvl = [$R_PDFVIEWER, "xdg-open"]
-                endif
+                let pdfvl = [$R_PDFVIEWER, "xdg-open"]
             endif
             " List from R configure script:
             let pdfvl += ["evince", "okular", "zathura", "xpdf", "gv", "gnome-gv", "ggv", "kpdf", "gpdf", "kghostview,", "acroread", "acroread4"]
@@ -2234,13 +2240,15 @@ function ROpenPDF(path)
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             return
         elseif g:rplugin_pdfviewer == "sumatra" && (g:rplugin_sumatra_path != "" || FindSumatra())
-            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -inverse-search "gvim --servername ' . v:servername . " --remote-expr SyncTeX_backward('%f',%l)" . '" "' . basenm . '.pdf"'
+            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -inverse-search "vim --servername ' . v:servername . " --remote-expr SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             return
+        elseif g:rplugin_pdfviewer == "skim"
+            call system(g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
         else
             let pcmd = g:rplugin_pdfviewer . " '" . pdfpath . "' 2>/dev/null >/dev/null &"
+            call system(pcmd)
         endif
-        call system(pcmd)
         if g:rplugin_has_wmctrl
             call system("wmctrl -a '" . basenm . ".pdf'")
         endif
@@ -2692,6 +2700,7 @@ function RVimLeave()
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/rconsole_hwnd_" . $NVIMR_SECRET)
+    call delete(g:rplugin_tmpdir . "/openR'")
 endfunction
 
 function SetRPath()
@@ -2850,7 +2859,11 @@ else
         let g:rplugin_tmpdir = substitute(g:rplugin_tmpdir, "\\", "/", "g")
     else
         if isdirectory($TMPDIR)
-            let g:rplugin_tmpdir = $TMPDIR . "/r-plugin-" . g:rplugin_userlogin
+            if $TMPDIR =~ "/$"
+                let g:rplugin_tmpdir = $TMPDIR . "r-plugin-" . g:rplugin_userlogin
+            else
+                let g:rplugin_tmpdir = $TMPDIR . "/r-plugin-" . g:rplugin_userlogin
+            endif
         elseif isdirectory("/tmp")
             let g:rplugin_tmpdir = "/tmp/r-plugin-" . g:rplugin_userlogin
         else
@@ -2873,7 +2886,7 @@ call RSetDefaultValue("g:R_assign",            1)
 call RSetDefaultValue("g:R_assign_map",    "'_'")
 call RSetDefaultValue("g:R_rnowebchunk",       1)
 call RSetDefaultValue("g:R_strict_rst",        1)
-call RSetDefaultValue("g:R_openpdf",           0)
+call RSetDefaultValue("g:R_openpdf",           2)
 call RSetDefaultValue("g:R_synctex",           1)
 call RSetDefaultValue("g:R_openhtml",          0)
 call RSetDefaultValue("g:R_nvim_wd",           0)
@@ -2976,6 +2989,9 @@ if g:rplugin_is_darwin
     else
         call RSetDefaultValue("g:R_applescript", 0)
     endif
+    if !exists("g:macvim_skim_app_path")
+        let g:macvim_skim_app_path = '/Applications/Skim.app'
+    endif
 else
     let g:R_applescript = 0
 endif
@@ -3034,12 +3050,6 @@ if !has("win32") && !has("win64") && !has("gui_win32") && !has("gui_win64") && !
     unlet s:tmuxversion
 endif
 
-if executable("latexmk")
-    let g:rplugin_has_latexmk = 1
-else
-    let g:rplugin_has_latexmk = 0
-endif
-
 " Start with an empty list of objects in the workspace
 let g:rplugin_globalenvlines = []
 
@@ -3064,20 +3074,13 @@ if exists("g:R_term")
         let g:R_term = "xterm"
     endif
 endif
-if has("win32") || has("win64") || g:R_applescript || g:rplugin_do_tmux_split || g:R_in_buffer
+if has("win32") || has("win64") || g:rplugin_is_darwin || g:rplugin_do_tmux_split || g:R_in_buffer
     " No external terminal emulator will be called, so any value is good
     let g:R_term = "xterm"
 endif
 if !exists("g:R_term")
-    let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'terminal',
-                \ 'Eterm', 'rxvt', 'urxvt', 'aterm', 'roxterm', 'terminator', 'lxterminal']
-    if g:rplugin_is_darwin
-        let s:terminals = ['/Applications/Utilities/iTerm.app/Contents/MacOS/iTerm',
-                    \ '/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal',
-                    \ 'xterm'] + s:terminals
-    else
-        let s:terminals += ['xterm']
-    endif
+    let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'terminal', 'Eterm',
+                \ 'rxvt', 'urxvt', 'aterm', 'roxterm', 'terminator', 'lxterminal', 'xterm']
     for s:term in s:terminals
         if executable(s:term)
             let g:R_term = s:term

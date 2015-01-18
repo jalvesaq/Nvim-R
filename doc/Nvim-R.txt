@@ -81,7 +81,7 @@ Nvim-R (see |R_source|).
       - Send commands with the object under cursor as argument.
       - Call R's `help()` with the object under cursor as argument.
       - Syntax highlighting of the Object Browser.
-  * SyncTeX support on Linux.
+  * SyncTeX support.
   * Most of the plugin's behavior is customizable.
 
 For screenshots see: http://www.lepem.ufc.br/jaa/Nvim-R.html
@@ -99,13 +99,9 @@ The installation process is described in three sections:
 ------------------------------------------------------------------------------
 3.1. Installation instructions~
 
-If you are an unexperienced Vim or Neovim user, start a terminal emulator and
-type in it: `vimtutor`<Enter>
-On Windows, look for the GVim Tutor application.
-
 Before installing the plugin, you should install its dependencies:
 
-   Depends:~
+   Main dependencies:~
 
    Neovim (development version): https://github.com/neovim/neovim
 
@@ -113,7 +109,7 @@ Before installing the plugin, you should install its dependencies:
 
    nvimcom (development version): https://github.com/jalvesaq/nvimcom
 
-   Additional dependencies for editing Rnoweb documents~
+   Additional dependencies for editing Rnoweb documents:~
 
    latexmk:       Automate the compilation of LaTeX documents.
                   See examples in |R_latexcmd|.
@@ -121,35 +117,35 @@ Before installing the plugin, you should install its dependencies:
    PDF viewer with SyncTeX support and capable of automatically reloading
    documents. This is required only if you edit Rnoweb files.
       On Linux and other Unixes systems: Evince, Zathura or Okular.
-      On OS X: Skim
-      On Windows: SumatraPDF
+      On OS X: Skim.
+      On Windows: SumatraPDF.
 
-   Additional dependencies on Unix (Linux, OS X, etc.)~
+   Additional dependencies on Unix (Linux, OS X, etc.):~
 
    Tmux >= 1.8:   http://tmux.sourceforge.net
-                  Tmux is necessary to send commands from Nvim to R Console.
-		  It is not required on OS X if you prefer to use R.app than
-		  to run R in a terminal emulator.
+		  Tmux is necessary to send commands from Nvim to R running in
+		  a terminal emulator.
+		  (Not required if running R as a Neovim job (see |R_in_buffer|)
+		  or using the combination MacVim + R.app)
 
-   wmctrl:     http://tomas.styblo.name/wmctrl/
-               Required for better SyncTeX support under X Server.
-	       Not required on OS X.
+   colorout:     http://www.lepem.ufc.br/jaa/colorout.html
+                 Colorizes the R output in terminal emulators.
+		 (Not required if |R_in_buffer| or MacVim + R.app)
 
-   colorout:      http://www.lepem.ufc.br/jaa/colorout.html
-                  Colorizes the R output.
-		  Not required if you will run R.app or run R as a Neovim job.
-		  See |R_in_buffer|.
+   setwidth:     An R package that can be installed with the command
+                 `install.packages("setwidth")`.
+                 The library setwidth adjusts the value of `options("width")`
+                 whenever the terminal is resized.
+		 (Not required if |R_in_buffer| or MacVim + R.app)
 
-   setwidth:      An R package that can be installed with the command
-                  `install.packages("setwidth")`.
-                  The library setwidth adjusts the value of `options("width")`
-                  whenever the terminal is resized.
-		  Not required if you will run R.app or run R as a Neovim job.
-		  See |R_in_buffer|.
+   wmctrl:       http://tomas.styblo.name/wmctrl/
+                 Required for better SyncTeX support under X Server.
+		 (Not required on OS X)
 
-   ncurses-term:  http://invisible-island.net/ncurses
-		  Might be necessary if you want support for 256 colors at the
-		  terminal emulator.
+   ncurses-term: http://invisible-island.net/ncurses
+		 Might be necessary if you want support for 256 colors at the
+		 terminal emulator.
+		 (Not required if using MacVim + R.app)
 
    Note: Nvim, R, Tmux, ncurses-term and latexmk are already packaged for most
    GNU/Linux distributions and other Unix variants. Unfortunately their
@@ -202,28 +198,7 @@ must be done before the command "filetype on" in both the system and the user
 |nvimrc| files, otherwise, some file types might not be correctly recognized.
 
 The plugin is installed and will be activated next time that you start to edit
-an R script. But you still can improve the plugin performance if you do
-additional configuration mentioned in the paragraphs below.
-
-On Windows, by default, Nvim-R will run Rgui.
-
-On Linux and other systems with X Server running, Nvim will start R in an
-external terminal emulator. If you start Nvim inside of a Tmux session, the
-plugin will split the Tmux window in two and start R in the other pane.
-
-On Mac OS X the plugin will use AppleScript to send commands to the R Console
-application unless |R_applescript| = 0. Some users have reported more luck
-with iTerm than with the default Mac OS X terminal emulator.
-
-The most efficient way of running the plugin on Linux, Mac OS X or other Unix
-system is running Nvim inside a Tmux session because: 1) you will get
-colorized output; 2) Nvim and R will be in he same window (the terminal
-window) split in two panes; 3) you can press <C-a>z to get Nvim, R or the
-Object Browser temporarily using the full terminal window; 4) it is the only
-way of using the plugin remotely through ssh. Please, read |Nvim-R-tmux| for
-details.
-
-If you want to uninstall the plugin, do
+an R script. If you want to uninstall the plugin, do
 >
    :RmVimball Nvim-R
 <
@@ -278,6 +253,25 @@ code (see |Nvim-R-latex-box| for details).
 ==============================================================================
 								  *Nvim-R-use*
 4. Use~
+
+On Windows, by default, Nvim-R will run Rgui.
+
+On Linux and other systems with X Server running, Nvim will start R in an
+external terminal emulator. If you start Nvim inside of a Tmux session, the
+plugin will split the Tmux window in two and start R in the other pane.
+
+On Mac OS X the plugin will use AppleScript to send commands to the R Console
+application unless |R_applescript| = 0. Some users have reported more luck
+with iTerm than with the default Mac OS X terminal emulator.
+
+The most efficient way of running the plugin on Linux, Mac OS X or other Unix
+system is running Nvim inside a Tmux session because: 1) you get colorized
+output; 2) Nvim and R run in he same window (the terminal window) split in two
+panes; 3) you can press <C-a>z to get Nvim, R or the Object Browser
+temporarily using the full terminal window; 4) it is the better way of using
+the plugin remotely through ssh (the alternative is to enable the option
+|R_in_buffer|). Please, read |Nvim-R-tmux| for tips on how to use Tmux.
+
 
 4.1. Key bindings~
 
@@ -366,7 +360,6 @@ Command
   --------------------------------------------------------
   . Sweave (cur file)                                  \sw
   . Sweave and PDF (cur file)                          \sp
-  . Sweave and PDF (cur file, verbose) (Windows)       \sv
   . Sweave, BibTeX and PDF (cur file) (Linux/Unix)     \sb
   --------------------------------------------------------
   . Knit (cur file)                                    \kn
@@ -374,7 +367,6 @@ Command
   . Knit, BibTeX and PDF (cur file) (Linux/Unix)       \kb
   . Knit and Beamer PDF (cur file) (only .Rmd)         \kl
   . Knit and HTML (cur file, verbose) (only .Rmd)      \kh
-  . Knit and PDF (cur file, verbose) (Windows)         \kv
   . Spin (cur file) (only .R)                          \ks
   --------------------------------------------------------
   . Open PDF (cur file)                                \op
@@ -586,8 +578,7 @@ them.
 You have to do <LocalLeader>ro to start the Object Browser. The Object Browser
 has two views: .GlobalEnv and Libraries. If you press <Enter> on the first
 line of the Object Browser it will toggle the view between the objects in
-.GlobalEnv and the currently loaded libraries. The Object Browser requires the
-|+conceal| feature to correctly align list items.
+.GlobalEnv and the currently loaded libraries.
 
 In the .GlobalEnv view, if an object has the attribute "label", it will also
 be displayed. Please, see the R help for package nvimcom for some options
@@ -935,14 +926,10 @@ The nvimcom library is started with the state `busy`.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-SyncTeX-win*
-							  *Nvim-R-SyncTeX-mac*
-5.8. SyncTeX support is a Linux only feature~
+5.8. SyncTeX on Windows~
 
-There is no SyncTeX support for Windows and Mac OS X. Both Sumatra (Windows)
-and Skim (Mac OS X) have support for SyncTeX, but the Nvim-R is not
-ready to communicate with them. If you can, please write the necessary code to
-support Skim and revise the already partially written code for Sumatra submit
-it as a push request on github: https://github.com/jalvesaq/Nvim-R
+On Windows, backward search with Sumatra pop ups a console window (`vim`
+running the required --remote-expr command) which quickly disappears.
 
 
 ------------------------------------------------------------------------------
@@ -1042,6 +1029,7 @@ is running:
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
 |R_maxdeparse|        Argument to R `source()` function
 |R_latexcmd|          Command to run on .tex files
+|R_latexmk|           Define wether `latexmk` should be run
 |R_sweaveargs|        Arguments do `Sweave()`
 |R_rmd_environment|   Environment in which to save evaluated rmd code
 |R_never_unmake_menu| Do not unmake the menu when switching buffers
@@ -1067,6 +1055,9 @@ is running:
 ------------------------------------------------------------------------------
 								      *R_term*
 6.1. Terminal emulator (Linux/Unix only)~
+
+Note: The options of this section are ignored on Mac OS X, where the command
+`open` is called to run the default application used to run shell scripts.
 
 The plugin uses the first terminal emulator that it finds in the following
 list:
@@ -1106,6 +1097,13 @@ The last argument must be the one which precedes the command to be executed.
 
 Note: This feature depends the pull request:
 https://github.com/neovim/neovim/pull/1584
+
+Note: On Unix, there is no advantage of running R as a Neovim job over running
+R in a Tmux session. On Windows, there is the advantage of getting R output
+colorized.
+
+Note: Neovim for Windows is not available yet. See:
+https://github.com/neovim/neovim/issues/1749
 
 If you are running Neovim and want to try this experimental feature, put in
 your |nvimrc|:
@@ -1164,6 +1162,14 @@ put in your |nvimrc|:
 >
    let rout_follow_colorscheme = 1
 <
+Known bugs~
+
+   - If you delete part of a prompt question, the plugin will not recognize
+     what remained of the prompt and will send the remaining characters as
+     part of the line sent to R when you press <Enter>.
+
+   - The debug() function does not work properly.
+
 
 ------------------------------------------------------------------------------
 							       *R_rnowebchunk*
@@ -1476,20 +1482,28 @@ Example:
 								*R_latexcmd*
 6.17. LaTeX command~
 
-On Windows, the nvimcom package calls `tools::texi2dvi()` to build the pdf
-from the generated .tex file. On Linux/Unix, by default, it calls
+To produce a pdf document from the .tex file generated by either `Sweave()` or
+`knit()` command, if R_latexmk = 1 and both `latexmk` and `perl`
+(which is required to run `latexmk`) are installed and in the path, the nvimcom
+package calls:
 >
    latexmk -pdflatex="pdflatex -file-line-error -synctex=1" -pdf
 <
-to produce a pdf document from the .tex file generated by either `Sweave()` or
-`knit()` command. If `latexmk` is not installed, it calls `pdflatex`. You can
-use the option R_latexcmd to change this behavior. Examples:
+Otherwise, it calls:
 >
+   pdflatex -file-line-error -synctex=1
+<
+You can use the options R_latexcmd and R_latexmk to change
+this behavior. Examples:
+>
+   let R_latexmk = 0
    let R_latexcmd = "latex"
    let R_latexcmd = 'latexmk -pdf -pdflatex="xelatex %O -synctex=1 %S"'
 <
+By default, R_latexmk is 0 on Windows and 1 on other systems.
 If you want to pass arguments do the `Sweave()` function, set the value of the
 R_sweaveargs variable.
+
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*
@@ -1836,9 +1850,23 @@ to press <LocalLeader>gp again.
 
 
 ------------------------------------------------------------------------------
+6.33.4 Skim with MacNvim configuration~
+
+You have to configure Skim to call MacNvim during backward searches.
+In Skim click in the drop down menu and fill the fields:
+>
+   Skim
+   Settings
+   Sync
+   Preset: Custom
+   Command: /path/to/MacNvim/mvim
+   Arguments: --remote-expr "SyncTeX_backward('%file', %line)"
+<
+
+------------------------------------------------------------------------------
 							       *R_nvim_window*
 							       *R_synctex*
-6.32.4 Configuring the PDF editor and Nvim's window title~
+6.33.4 Configuring the PDF editor and Nvim's window title~
 
 If SyncTeX does not work (see above), you may try to set in your |nvimrc| the
 values of |R_pdfviewer| and R_nvim_window.
@@ -1865,10 +1893,6 @@ To completely disable SyncTeX support, put in your |nvimrc|:
 >
    let R_synctex = 0
 <
-
-There is no support for Windows and Mac OS X. See |Nvim-R-SyncTeX-win| and
-|Nvim-R-SyncTeX-mac|.
-
 
 ==============================================================================
 							 *Nvim-R-key-bindings*

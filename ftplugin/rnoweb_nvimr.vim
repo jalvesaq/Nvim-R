@@ -13,6 +13,19 @@ endif
 " after the global ones:
 runtime R/common_buffer.vim
 
+if has("win32") || has("win64")
+    call RSetDefaultValue("g:R_latexmk", 0)
+else
+    call RSetDefaultValue("g:R_latexmk", 1)
+endif
+if !exists("g:rplugin_has_latexmk")
+  if g:R_latexcmd && executable("latexmk") && executable("perl")
+    let g:rplugin_has_latexmk = 1
+  else
+    let g:rplugin_has_latexmk = 0
+  endif
+endif
+
 function! RWriteChunk()
     if getline(".") =~ "^\\s*$" && RnwIsInRCode(0) == 0
         call setline(line("."), "<<>>=")
