@@ -132,7 +132,6 @@ call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
 " Only .Rmd files use these functions:
 call RCreateMaps("nvi", '<Plug>RKnit',          'kn', ':call RKnit()')
 call RCreateMaps("nvi", '<Plug>RMakeRmd',       'kr', ':call RMakeRmd("default")')
-call RCreateMaps("nvi", '<Plug>RMakeAll',       'ka', ':call RMakeRmd("all")')
 call RCreateMaps("nvi", '<Plug>RMakePDFK',      'kp', ':call RMakeRmd("pdf_document")')
 call RCreateMaps("nvi", '<Plug>RMakePDFKb',     'kl', ':call RMakeRmd("beamer_presentation")')
 call RCreateMaps("nvi", '<Plug>RMakeHTML',      'kh', ':call RMakeRmd("html_document")')

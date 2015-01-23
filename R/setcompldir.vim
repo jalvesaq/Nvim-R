@@ -54,7 +54,7 @@ elseif isdirectory(expand("~/.cache"))
 elseif isdirectory(expand("~/Library/Caches"))
     let g:rplugin_compldir = expand("~/Library/Caches/Nvim-R")
 else
-    let g:rplugin_compldir = g:rplugin_uservimfiles . "/r-plugin/objlist/"
+    let g:rplugin_compldir = g:rplugin_uservimfiles . "/R/objlist/"
 endif
 
 " Create the directory if it doesn't exist yet

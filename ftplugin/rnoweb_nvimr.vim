@@ -19,11 +19,11 @@ else
     call RSetDefaultValue("g:R_latexmk", 1)
 endif
 if !exists("g:rplugin_has_latexmk")
-  if g:R_latexcmd && executable("latexmk") && executable("perl")
-    let g:rplugin_has_latexmk = 1
-  else
-    let g:rplugin_has_latexmk = 0
-  endif
+    if g:R_latexmk && executable("latexmk") && executable("perl")
+        let g:rplugin_has_latexmk = 1
+    else
+        let g:rplugin_has_latexmk = 0
+    endif
 endif
 
 function! RWriteChunk()
@@ -89,12 +89,12 @@ endfunction
 
 
 " Because this function delete files, it will not be documented.
-" If you want to try it, put in your vimrc:
+" If you want to try it, put in your nvimrc:
 "
 " let R_rm_knit_cache = 1
 "
 " If don't want to answer the question about deleting files, and
-" if you trust this code more than I do, put in your vimrc:
+" if you trust this code more than I do, put in your nvimrc:
 "
 " let R_ask_rm_knitr_cache = 0
 "
@@ -174,10 +174,6 @@ function! RMakePDF(bibtex, knit)
 
     if a:bibtex == "bibtex"
         let pdfcmd = pdfcmd . ", bibtex = TRUE"
-    endif
-
-    if a:bibtex == "verbose"
-        let pdfcmd = pdfcmd . ", quiet = FALSE"
     endif
 
     if g:R_openpdf == 0
@@ -443,8 +439,12 @@ function! SyncTeX_backward(fname, ln)
     let rnwbn = substitute(rnwf, '.*/', '', '')
     let rnwf = substitute(rnwf, '^\./', '', '')
 
-    if GoToBuf(rnwbn, rnwf, basedir, rnwln) && g:rplugin_has_wmctrl
-        call system("wmctrl -xa " . g:R_nvim_window)
+    if GoToBuf(rnwbn, rnwf, basedir, rnwln)
+        if g:rplugin_has_wmctrl
+            call system("wmctrl -xa " . g:R_nvim_window)
+        elseif has("gui_running")
+            call foreground()
+        endif
     endif
 endfunction
 
@@ -545,7 +545,7 @@ function! SyncTeX_forward(...)
     if !filereadable(basenm . ".synctex.gz")
         call RWarningMsg('SyncTeX forward cannot be done because the file "' . basenm . '.synctex.gz" is missing.')
         if g:R_latexcmd != "default" && g:R_latexcmd !~ "synctex"
-            call RWarningMsg('Note: The string "-synctex=1" is not in your R_latexcmd. Please check your vimrc.')
+            call RWarningMsg('Note: The string "-synctex=1" is not in your R_latexcmd. Please check your nvimrc.')
         endif
         exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
         return
@@ -577,12 +577,11 @@ function! SyncTeX_forward(...)
         call system("wmctrl -a '" . basenm . ".pdf'")
     elseif g:rplugin_pdfviewer == "sumatra"
         if g:rplugin_sumatra_path != "" || FindSumatra()
-            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "gvim --servername ' . v:servername . " --remote-expr SyncTeX_backward('%f',%l)" . '" "' . basenm . '.pdf"'
+            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "vim --servername ' . v:servername . " --remote-expr SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
         endif
     elseif g:rplugin_pdfviewer == "skim"
-        " This command is based on Skim wiki (not tested)
-        call system("/Applications/Skim.app/Contents/SharedSupport/displayline " . texln . " '" . basenm . ".pdf' '" . basenm . ".tex' 2> /dev/null >/dev/null &")
-        " Now, add the command to raise Skim window (AppleScript)?
+        " This command is based on macvim-skim
+        call system(g:macvim_skim_app_path . '/Contents/SharedSupport/displayline -r ' . texln . ' "' . basenm . '.pdf" "' . basenm . '.tex" 2> /dev/null >/dev/null &')
     else
         call RWarningMsg('SyncTeX support for "' . g:rplugin_pdfviewer . '" not implemented.')
     endif

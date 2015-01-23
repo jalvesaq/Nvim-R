@@ -1847,7 +1847,12 @@ of Okular will be started.
 ------------------------------------------------------------------------------
 6.32.3 Zathura configuration~
 
-Zathura (version >= 0.3.1) is also supported. If the terminal emulator is not
+No configuration should be required if Evince is not installed. If evince is
+installed, put in your |vimrc|:
+>
+   let vimrplugin_pdfviewer = "zathura"
+<
+Zathura (version >= 0.3.1) is supported. If the terminal emulator is not
 raised during backward search (from PDF to Nvim), you have to set the value of
 |R_nvim_window|, as explained below.
 
@@ -1871,9 +1876,15 @@ In Skim click in the drop down menu and fill the fields:
 <
 
 ------------------------------------------------------------------------------
+6.33.5 Sumatra configuration (Windows)~
+
+No configuration is required.
+
+
+------------------------------------------------------------------------------
 							       *R_nvim_window*
 							       *R_synctex*
-6.33.4 Configuring the PDF editor and Nvim's window title~
+6.33.6 Configuring the PDF editor and Nvim's window title~
 
 If SyncTeX does not work (see above), you may try to set in your |nvimrc| the
 values of |R_pdfviewer| and R_nvim_window.
@@ -2632,7 +2643,7 @@ See also |R_in_buffer|.
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2014-12-31)
+0.9.0 (2015-01-23)
 
  * First release (initial code extracted from the Vim-R-plugin).
 

@@ -59,12 +59,6 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
-if v:version < 704
-    call RWarningMsgInp("The Nvim-R requires Vim >= 7.4.")
-    let g:rplugin_failed = 1
-    finish
-endif
-
 " Set default value of some variables:
 function RSetDefaultValue(var, val)
     if !exists(a:var)
@@ -658,13 +652,13 @@ function StartR_TmuxSplit(rcmd)
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)
     endif
-    call WaitVimComStart()
+    call WaitNvimcomStart()
 endfunction
 
 
 function StartR_ExternalTerm(rcmd)
     if $DISPLAY == "" && !g:rplugin_is_darwin
-        call RWarningMsg("Start 'tmux' before Vim. The X Window system is required to run R in an external terminal.")
+        call RWarningMsg("Start 'tmux' before Nvim. The X Window system is required to run R in an external terminal.")
         return
     endif
 
@@ -727,17 +721,17 @@ function StartR_ExternalTerm(rcmd)
         return
     endif
     let g:SendCmdToR = function('SendCmdToR_Term')
-    call WaitVimComStart()
+    call WaitNvimcomStart()
 endfunction
 
 function IsSendCmdToRFake()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-	if exists("g:maplocalleader")
-	    call RWarningMsg("As far as I know, R is already running. Did you quit it from within Vim (" . g:maplocalleader . "rq if not remapped)?")
-	else
-	    call RWarningMsg("As far as I know, R is already running. Did you quit it from within Vim (\\rq if not remapped)?")
-	endif
-	return 1
+        if exists("g:maplocalleader")
+            call RWarningMsg("As far as I know, R is already running. Did you quit it from within Nvim (" . g:maplocalleader . "rq if not remapped)?")
+        else
+            call RWarningMsg("As far as I know, R is already running. Did you quit it from within Nvim (\\rq if not remapped)?")
+        endif
+        return 1
     endif
     return 0
 endfunction
@@ -806,7 +800,7 @@ function StartR(whatr)
                 let g:R_ca_ck = 0
                 call g:SendCmdToR(g:rplugin_last_rcmd)
                 let g:R_ca_ck = ca_ck
-                if WaitVimComStart()
+                if WaitNvimcomStart()
                     sleep 100m
                     call g:SendCmdToR("\014")
                 endif
@@ -820,7 +814,7 @@ function StartR(whatr)
         else
             if g:R_restart
                 call RQuit("restartR")
-                call ResetVimComPort()
+                let g:rplugin_nvimcom_port = 0
             endif
         endif
     endif
@@ -839,7 +833,7 @@ function StartR(whatr)
         endif
         call StartR_ExternalTerm(rcmd)
         if g:R_restart && bufloaded(b:objbrtitle)
-            call WaitVimComStart()
+            call WaitNvimcomStart()
             call SendToNvimcom("\002" . g:rplugin_myport)
         endif
     endif
@@ -882,7 +876,7 @@ function OpenRScratch()
     startinsert
 endfunction
 
-function WaitVimComStart()
+function WaitNvimcomStart()
     if g:R_nvimcom_wait < 0
         return 0
     endif
@@ -962,10 +956,6 @@ function IsExternalOBRunning()
     return 0
 endfunction
 
-function ResetVimComPort()
-    let g:rplugin_nvimcom_port = 0
-endfunction
-
 function StartObjBrowser_Tmux()
     if b:rplugin_extern_ob
         " This is the Object Browser
@@ -1014,7 +1004,7 @@ function StartObjBrowser_Tmux()
             " Get the R Console width:
             let panw = substitute(panw, '.*[0-9]: \[\([0-9]*\)x[0-9]*.\{-}' . g:rplugin_rconsole_pane . '\>.*', '\1', "")
         else
-            " Get the Vim width
+            " Get the Nvim width
             let panw = substitute(panw, '.*[0-9]: \[\([0-9]*\)x[0-9]*.\{-}' . g:rplugin_editor_pane . '\>.*', '\1', "")
         endif
         let panewidth = panw - g:R_objbr_w
@@ -1061,7 +1051,7 @@ function StartObjBrowser_Tmux()
     return
 endfunction
 
-function StartObjBrowser_Vim()
+function StartObjBrowser_Nvim()
     let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")
 
     " Either load or reload the Object Browser
@@ -1120,7 +1110,7 @@ function RObjBrowser()
         if g:R_tmux_ob
             call StartObjBrowser_Tmux()
         else
-            call StartObjBrowser_Vim()
+            call StartObjBrowser_Nvim()
         endif
     endif
     let g:rplugin_running_objbr = 0
@@ -1146,10 +1136,6 @@ function RBrOpenCloseLs_Nvim(status)
     endif
 
     call SendToNvimcom("\007" . stt)
-
-    if g:rplugin_lastrpl == "R is busy."
-        call RWarningMsg("R is busy.")
-    endif
 endfunction
 
 function RBrOpenCloseLs_TmuxNeovim(status)
@@ -1223,18 +1209,14 @@ endfunction
 function SendLineToRAndInsertOutput()
     let lin = getline(".")
     call RInsert("print(" . lin . ")")
-    if g:rplugin_lastrpl == "R is busy." || g:rplugin_lastrpl == "UNKNOWN" || g:rplugin_lastrpl =~ "^Error" || g:rplugin_lastrpl == "INVALID" || g:rplugin_lastrpl == "ERROR" || g:rplugin_lastrpl == "EMPTY" || g:rplugin_lastrpl == "No reply"
-        return
-    else
-        let curpos = getpos(".")
-        " comment the output
-        let ilines = readfile(substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert")
-        for iln in ilines
-            call RSimpleCommentLine("normal", "c")
-            normal! j
-        endfor
-        call setpos(".", curpos)
-    endif
+    let curpos = getpos(".")
+    " comment the output
+    let ilines = readfile(substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert")
+    for iln in ilines
+        call RSimpleCommentLine("normal", "c")
+        normal! j
+    endfor
+    call setpos(".", curpos)
 endfunction
 
 " Function to send commands
@@ -1322,15 +1304,15 @@ function RSourceLines(lines, e)
     if &filetype == "rmd"
         let lines = map(copy(lines), 'substitute(v:val, "^\\`\\`\\?", "", "")')
     endif
-    call writefile(lines, b:rsource)
+    call writefile(lines, g:rplugin_rsource)
     if a:e == "echo"
         if exists("g:R_maxdeparse")
-            let rcmd = 'base::source("' . b:rsource . '", echo=TRUE, max.deparse=' . g:R_maxdeparse . ')'
+            let rcmd = 'base::source("' . g:rplugin_rsource . '", echo=TRUE, max.deparse=' . g:R_maxdeparse . ')'
         else
-            let rcmd = 'base::source("' . b:rsource . '", echo=TRUE)'
+            let rcmd = 'base::source("' . g:rplugin_rsource . '", echo=TRUE)'
         endif
     else
-        let rcmd = 'base::source("' . b:rsource . '")'
+        let rcmd = 'base::source("' . g:rplugin_rsource . '")'
     endif
     let ok = g:SendCmdToR(rcmd)
     return ok
@@ -1989,7 +1971,7 @@ function RGetClassFor(rkeyword)
     return classfor
 endfunction
 
-" Show R's help doc in Vim's buffer
+" Show R's help doc in Nvim's buffer
 " (based  on pydoc plugin)
 function AskRDoc(rkeyword, package, getclass)
     if filewritable(g:rplugin_docfile)
@@ -2140,6 +2122,8 @@ function RSetPDFViewer()
             let g:rplugin_pdfviewer = "evince"
         elseif executable("okular")
             let g:rplugin_pdfviewer = "okular"
+        elseif executable("zathura")
+            let g:rplugin_pdfviewer = "zathura"
         else
             let g:rplugin_pdfviewer = "none"
             if $R_PDFVIEWER == ""
@@ -2148,7 +2132,7 @@ function RSetPDFViewer()
                 let pdfvl = [$R_PDFVIEWER, "xdg-open"]
             endif
             " List from R configure script:
-            let pdfvl += ["evince", "okular", "zathura", "xpdf", "gv", "gnome-gv", "ggv", "kpdf", "gpdf", "kghostview,", "acroread", "acroread4"]
+            let pdfvl += ["xpdf", "gv", "gnome-gv", "ggv", "kpdf", "gpdf", "kghostview,", "acroread", "acroread4"]
             for prog in pdfvl
                 if executable(prog)
                     let g:rplugin_pdfviewer = prog
@@ -2177,7 +2161,7 @@ function RSetPDFViewer()
         endif
     endif
 
-    " Try to guess the title of the window where Vim is running:
+    " Try to guess the title of the window where Nvim is running:
     if has("gui_running")
         call RSetDefaultValue("g:R_nvim_window", "'GVim'")
     elseif g:rplugin_pdfviewer == "evince"
@@ -2685,10 +2669,7 @@ function RBufEnter()
 endfunction
 
 function RVimLeave()
-    if exists("b:rsource")
-        " b:rsource only exists if the filetype of the last buffer is .R*
-        call delete(b:rsource)
-    endif
+    call delete(g:rplugin_rsource)
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/formatted_code")
     call delete(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
@@ -2853,24 +2834,24 @@ if exists("g:R_tmpdir")
 else
     if has("win32") || has("win64")
         if isdirectory($TMP)
-            let g:rplugin_tmpdir = $TMP . "/r-plugin-" . g:rplugin_userlogin
+            let g:rplugin_tmpdir = $TMP . "/NvimR-" . g:rplugin_userlogin
         elseif isdirectory($TEMP)
-            let g:rplugin_tmpdir = $TEMP . "/r-plugin-" . g:rplugin_userlogin
+            let g:rplugin_tmpdir = $TEMP . "/Nvim-R-" . g:rplugin_userlogin
         else
-            let g:rplugin_tmpdir = g:rplugin_uservimfiles . "/r-plugin/tmp"
+            let g:rplugin_tmpdir = g:rplugin_uservimfiles . "/R/tmp"
         endif
         let g:rplugin_tmpdir = substitute(g:rplugin_tmpdir, "\\", "/", "g")
     else
         if isdirectory($TMPDIR)
             if $TMPDIR =~ "/$"
-                let g:rplugin_tmpdir = $TMPDIR . "r-plugin-" . g:rplugin_userlogin
+                let g:rplugin_tmpdir = $TMPDIR . "Nvim-R-" . g:rplugin_userlogin
             else
-                let g:rplugin_tmpdir = $TMPDIR . "/r-plugin-" . g:rplugin_userlogin
+                let g:rplugin_tmpdir = $TMPDIR . "/Nvim-R-" . g:rplugin_userlogin
             endif
         elseif isdirectory("/tmp")
-            let g:rplugin_tmpdir = "/tmp/r-plugin-" . g:rplugin_userlogin
+            let g:rplugin_tmpdir = "/tmp/Nvim-R-" . g:rplugin_userlogin
         else
-            let g:rplugin_tmpdir = g:rplugin_uservimfiles . "/r-plugin/tmp"
+            let g:rplugin_tmpdir = g:rplugin_uservimfiles . "/R/tmp"
         endif
     endif
 endif
@@ -2879,6 +2860,9 @@ let $NVIMR_TMPDIR = g:rplugin_tmpdir
 if !isdirectory(g:rplugin_tmpdir)
     call mkdir(g:rplugin_tmpdir, "p", 0700)
 endif
+
+" Make the file name of files to be sourced
+let g:rplugin_rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
 
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
@@ -2945,10 +2929,6 @@ for idx in range(0, obpllen)
 endfor
 unlet objbrplace
 unlet obpllen
-
-function SendObjPortToVimCom(p)
-    call SendToNvimcom("\002" . a:p)
-endfunction
 
 function ROnJobActivity()
     if v:job_data[1] == 'stdout'
@@ -3173,10 +3153,9 @@ let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_nvimcom_home = ""
-let g:rplugin_lastrpl = ""
 let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
-let g:rplugin_tmuxsname = "VimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
+let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
@@ -3190,7 +3169,6 @@ elseif executable("python")
 endif
 
 function GetRandomNumber(width)
-    let randnum = "NotRandom" . substitute(expand("%"), '\W', '', 'g')
     if g:rplugin_py_exec != "none"
         let pycode = ["import os, sys, base64",
                     \ "sys.stdout.write(base64.b64encode(os.urandom(" . a:width . ")).decode())" ]

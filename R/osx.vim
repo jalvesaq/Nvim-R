@@ -23,7 +23,7 @@ function StartR_OSX()
         lcd -
     endif
     let g:SendCmdToR = function('SendCmdToR_OSX')
-    WaitVimComStart()
+    WaitNvimcomStart()
 endfunction
 
 function SendCmdToR_OSX(cmd)

@@ -23,7 +23,7 @@ runtime R/common_buffer.vim
 
 setlocal iskeyword=@,48-57,_,.
 
-" Prepare R documentation output to be displayed by Vim
+" Prepare R documentation output to be displayed by Nvim
 function! FixRdoc()
     let lnr = line("$")
     for ii in range(1, lnr)

@@ -236,6 +236,6 @@ function StartR_Neovim()
     let rargs = b:rplugin_r_args + ['--no-readline', '--interactive']
     let g:rplugin_rjob = jobstart("Rjob", 'R', rargs, 'su')
     exe 'let $TERM="' . savedterm . '"'
-    call WaitVimComStart()
+    call WaitNvimcomStart()
 endfunction
 

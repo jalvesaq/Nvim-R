@@ -179,11 +179,11 @@ function MakeRMenu()
     " Help
     "----------------------------------------------------------------------------
     menu R.-Sep8- <nul>
-    amenu R.Help\ (plugin).Overview :help r-plugin-overview<CR>
-    amenu R.Help\ (plugin).Main\ features :help r-plugin-features<CR>
-    amenu R.Help\ (plugin).Installation :help r-plugin-installation<CR>
-    amenu R.Help\ (plugin).Use :help r-plugin-use<CR>
-    amenu R.Help\ (plugin).Known\ bugs\ and\ workarounds :help r-plugin-known-bugs<CR>
+    amenu R.Help\ (plugin).Overview :help Nvim-R-overview<CR>
+    amenu R.Help\ (plugin).Main\ features :help Nvim-R-features<CR>
+    amenu R.Help\ (plugin).Installation :help Nvim-R-installation<CR>
+    amenu R.Help\ (plugin).Use :help Nvim-R-use<CR>
+    amenu R.Help\ (plugin).Known\ bugs\ and\ workarounds :help Nvim-R-known-bugs<CR>
 
     amenu R.Help\ (plugin).Options.Assignment\ operator\ and\ Rnoweb\ code :help R_assign<CR>
     amenu R.Help\ (plugin).Options.Object\ Browser :help R_objbr_place<CR>
@@ -204,20 +204,20 @@ function MakeRMenu()
     amenu R.Help\ (plugin).Options.LaTeX\ command :help R_latexcmd<CR>
     amenu R.Help\ (plugin).Options.Never\ unmake\ the\ R\ menu :help R_never_unmake_menu<CR>
 
-    amenu R.Help\ (plugin).Custom\ key\ bindings :help r-plugin-key-bindings<CR>
-    amenu R.Help\ (plugin).Files :help r-plugin-files<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.All\ tips :help r-plugin-tips<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Indenting\ setup :help r-plugin-indenting<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Folding\ setup :help r-plugin-folding<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Remap\ LocalLeader :help r-plugin-localleader<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Customize\ key\ bindings :help r-plugin-bindings<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.ShowMarks :help r-plugin-showmarks<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.SnipMate :help r-plugin-snippets<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.LaTeX-Box :help r-plugin-latex-box<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Highlight\ marks :help r-plugin-showmarks<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Global\ plugin :help r-plugin-global<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Jump\ to\ function\ definitions :help r-plugin-tagsfile<CR>
-    amenu R.Help\ (plugin).News :help r-plugin-news<CR>
+    amenu R.Help\ (plugin).Custom\ key\ bindings :help Nvim-R-key-bindings<CR>
+    amenu R.Help\ (plugin).Files :help Nvim-R-files<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.All\ tips :help Nvim-R-tips<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Indenting\ setup :help Nvim-R-indenting<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Folding\ setup :help Nvim-R-folding<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Remap\ LocalLeader :help Nvim-R-localleader<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Customize\ key\ bindings :help Nvim-R-bindings<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.ShowMarks :help Nvim-R-showmarks<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.SnipMate :help Nvim-R-snippets<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.LaTeX-Box :help Nvim-R-latex-box<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Highlight\ marks :help Nvim-R-showmarks<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Global\ plugin :help Nvim-R-global<CR>
+    amenu R.Help\ (plugin).FAQ\ and\ tips.Jump\ to\ function\ definitions :help Nvim-R-tagsfile<CR>
+    amenu R.Help\ (plugin).News :help Nvim-R-news<CR>
 
     amenu R.Help\ (R)<Tab>:Rhelp :call g:SendCmdToR("help.start()")<CR>
     let g:rplugin_hasmenu = 1
