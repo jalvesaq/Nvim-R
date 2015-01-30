@@ -846,16 +846,7 @@ errors in the code sent to R. Details:
 
 
 ------------------------------------------------------------------------------
-5.2. The clipboard's content is lost (Windows only)~
-
-On Windows, the plugin copies the command that will be sent to R into the
-clipboard. Thus, if you have anything in the clipboard it will be lost while
-using the plugin. The is problem does not exist if you are running R as a
-Nvim job (see |R_in_buffer|).
-
-
-------------------------------------------------------------------------------
-5.3. The menu may not reflect some of your custom key bindings~
+5.2. The menu may not reflect some of your custom key bindings~
 
 If you have created a custom key binding for the Nvim-R, the menu in
 GVim will not always reflect the correct key binding if it is not the same for
@@ -863,7 +854,7 @@ Normal, Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
-5.4. Syntactically correct code may be wrongly indented~
+5.3. Syntactically correct code may be wrongly indented~
 
 If the Nvim-R indents your code wrongly you may get the correct
 indentation by adding braces and line breaks to it. For example, try to
@@ -893,14 +884,14 @@ See also:
 
 
 ------------------------------------------------------------------------------
-5.5. Functions are not always correctly sent to R~
+5.4. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
 operator. See: https://github.com/jcfaria/Vim-R-plugin/issues/94
 
 
 ------------------------------------------------------------------------------
-5.6. Objects Browser does not support knitr cache=TRUE~
+5.5. Objects Browser does not support knitr cache=TRUE~
 
 When processing Rnoweb documents with the knitr package, if the chunk option
 `cache` is `TRUE`, the Object Browser will not be able to detect the classes
@@ -909,7 +900,7 @@ issue is to define the chunk option `cache.lazy=FALSE`.
 
 
 ------------------------------------------------------------------------------
-5.7. Wrong message that "R is busy" (Windows only)~
+5.6. Wrong message that "R is busy" (Windows only)~
 
 On Windows, when code is sent from Nvim to R Console, the nvimcom library sets
 the value of the internal variable `r_is_busy` to 1. The value is set back to
@@ -926,14 +917,14 @@ The nvimcom library is started with the state `busy`.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-SyncTeX-win*
-5.8. SyncTeX on Windows~
+5.7. SyncTeX on Windows~
 
 On Windows, backward search with Sumatra pop ups a console window (`vim`
 running the required --remote-expr command) which quickly disappears.
 
 
 ------------------------------------------------------------------------------
-5.9. R must be started by Nvim~
+5.8. R must be started by Nvim~
 
 The communication between Nvim and R will work only if R was started by Nvim
 through the <LocalLeader>rf command because the plugin was designed to connect
@@ -1044,8 +1035,10 @@ is running:
 |R_source|            Source additional scripts
 |R_restart|           Restart R if it is already running
 |R_show_args|         Show extra information during omnicompletion
+|R_args_in_stline|    Set 'statusline' to function arguments
 |R_nvimcom_wait|      Time to wait for nvimcom loading
 |R_nvim_wd|           Start R in Nvim's working directory
+|R_after_start|       System command to execute after R startup
 |R_user_maps_only|    Only set user specified key bindings
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omnicompletion are stored
@@ -1678,7 +1671,8 @@ do <LocalLeader>rf, <LocalLeader>rv or <LocalLeader>rc, then, put in your
 
 ------------------------------------------------------------------------------
 								 *R_show_args*
-6.27. Show extra information during omnicompletion~
+							    *R_args_in_stline*
+6.27. Function arguments~
 
 If you want that Nvim shows a preview window with the function arguments as you
 do omnicompletion, put in your |nvimrc|:
@@ -1688,6 +1682,18 @@ do omnicompletion, put in your |nvimrc|:
 The preview window is not shown by default because it is more convenient to
 run <Ctrl-X><Ctrl-A> to complete the function arguments. The preview window
 will be shown only if "preview" is also included in your 'completeopt'.
+
+If you want that function arguments are displayed in Nvim's status line when
+you insert `(`, put in your |nvimrc|:
+>
+   let R_args_in_stline = 1
+<
+The status line is restored when `)` is typed. This option is useful only if
+the window has a status line. See |laststatus|. If the string with the list of
+arguments is longer than the status line width, the list is not displayed
+completely. This argument is incompatible with any plugin that changes the
+status line because it is always restored to the value that it had at Nvim's
+startup. Functions of .GlobalEnv do not have their arguments displayed.
 
 
 ------------------------------------------------------------------------------
@@ -1725,8 +1731,31 @@ This option is useful only for those who did not enable 'autochdir'.
 
 
 ------------------------------------------------------------------------------
+							       *R_after_start*
+6.30 System command to execute after R startup~
+
+If you want that Nvim executes a command right after R startup, set the value
+of R_after_start in your |nvimrc|.
+
+For example, if you are using GNvim and running R in the Gnome-terminal,
+`~/bin` is in your path, and you want to resize and change the positions of
+GNvim and the Terminal windows, you may create a script `~/bin/after_R_start`
+with the following contents
+>
+   #!/bin/sh
+   wmctrl -F -r R -e 0,0,200,1200,800
+   wmctrl -r GVIM -e 0,300,40,1200,800
+<
+make the script executable, and put in your |nvimrc|:
+>
+   if has("gui_running")
+       let R_after_start = "after_R_start"
+   endif
+<
+
+------------------------------------------------------------------------------
 							    *R_user_maps_only*
-6.30 Only set key bindings that are user specified~
+6.31 Only set key bindings that are user specified~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish the Nvim-R to only
@@ -1738,7 +1767,7 @@ set those key-bindings specified by the user, put in your |nvimrc|:
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.31 Temporary files directories~
+6.32 Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |nvimrc| the values of R_tmpdir and
@@ -1756,7 +1785,7 @@ want to know they are, while editing an R file, do in Normal mode:
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.32 SyncTeX support (Linux only)~
+6.33 SyncTeX support (Linux only)~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -1796,7 +1825,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.32.1 Evince configuration~
+6.33.1 Evince configuration~
 
 If you have Evince installed, the Nvim-R assumes that you are using it
 to view PDF documents and that you run either GVim or Nvim in Gnome-Terminal.
@@ -1809,7 +1838,7 @@ to press <LocalLeader>gp again.
 
 
 ------------------------------------------------------------------------------
-6.32.2 Okular configuration~
+6.33.2 Okular configuration~
 
 You have to configure Okular to call Nvim during backward searches.
 
@@ -1845,7 +1874,7 @@ and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
 
 ------------------------------------------------------------------------------
-6.32.3 Zathura configuration~
+6.33.3 Zathura configuration~
 
 No configuration should be required if Evince is not installed. If evince is
 installed, put in your |vimrc|:
@@ -2592,7 +2621,14 @@ please read this document from the beginning.
        # Load the required libraries:
        library(colorout)
        library(setwidth)
-       library(nvimcom)
+       if(Sys.getenv("NVIMR_TMPDIR") != ""){
+	   options(nvimcom.verbose = 1)
+	   library(nvimcom)
+       }
+       if(Sys.getenv("VIMRPLUGIN_TMPDIR") != ""){
+	   options(vimcom.verbose = 1)
+	   library(vimcom)
+       }
 
        # Use the text based web browser w3m to navigate through R docs
        # in Linux Console after help.start():

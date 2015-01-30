@@ -652,7 +652,11 @@ function StartR_TmuxSplit(rcmd)
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)
     endif
-    call WaitNvimcomStart()
+    if WaitNvimcomStart()
+        if g:R_after_start != ''
+            call system(g:R_after_start)
+        endif
+    endif
 endfunction
 
 
@@ -721,7 +725,11 @@ function StartR_ExternalTerm(rcmd)
         return
     endif
     let g:SendCmdToR = function('SendCmdToR_Term')
-    call WaitNvimcomStart()
+    if WaitNvimcomStart()
+        if g:R_after_start != ''
+            call system(g:R_after_start)
+        endif
+    endif
 endfunction
 
 function IsSendCmdToRFake()
@@ -1795,6 +1803,13 @@ function RQuit(how)
         endif
     endif
 
+    if g:R_save_win_pos && v:servername != ""
+        let repl = libcall(g:rplugin_vimcom_lib, "SaveWinPos", $NVIMR_COMPLDIR)
+        if repl != "OK"
+            call RWarningMsg(repl)
+        endif
+    endif
+
     call g:SendCmdToR(qcmd)
     if g:rplugin_do_tmux_split
         if a:how == "save"
@@ -2269,6 +2284,40 @@ function RAskHelp(...)
     endif
 endfunction
 
+function DisplayArgs()
+    if &filetype == "r" || b:IsInRCode(0)
+        let rkeyword = RGetKeyWord()
+        let s:sttl_str = g:rplugin_status_line
+        let fargs = "Not a function"
+        for omniL in g:rplugin_omni_lines
+            if omniL =~ '^' . rkeyword . "\x06"
+                let tmp = split(omniL, "\x06")
+                if len(tmp) < 5
+                    break
+                else
+                    let fargs = rkeyword . '(' . tmp[4] . ')'
+                endif
+            endif
+        endfor
+        if fargs !~ "Not a function"
+            let fargs = substitute(fargs, "NO_ARGS", '', 'g')
+            let fargs = substitute(fargs, "\x07", '=', 'g')
+            let s:sttl_str = substitute(fargs, "\x09", ', ', 'g')
+            silent set statusline=%!RArgsStatusLine()
+        endif
+    endif
+    exe "normal! a("
+endfunction
+
+function RArgsStatusLine()
+    return s:sttl_str
+endfunction
+
+function RestoreStatusLine()
+    exe 'set statusline=' . substitute(g:rplugin_status_line, ' ', '\\ ', 'g')
+    normal! a)
+endfunction
+
 function PrintRObject(rkeyword)
     if bufname("%") =~ "Object_Browser"
         let classfor = ""
@@ -2597,6 +2646,10 @@ function RCreateEditMaps()
     if g:R_assign == 1 || g:R_assign == 2
         silent exe 'imap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
     endif
+    if g:R_args_in_stline
+        imap <buffer><silent> ( <Esc>:call DisplayArgs()<CR>a
+        imap <buffer><silent> ) <Esc>:call RestoreStatusLine()<CR>a
+    endif
     if hasmapto("<Plug>RCompleteArgs", "i")
         imap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
     else
@@ -2871,12 +2924,14 @@ call RSetDefaultValue("g:R_allnames",          0)
 call RSetDefaultValue("g:R_rmhidden",          0)
 call RSetDefaultValue("g:R_assign",            1)
 call RSetDefaultValue("g:R_assign_map",    "'_'")
+call RSetDefaultValue("g:R_args_in_stline",    0)
 call RSetDefaultValue("g:R_rnowebchunk",       1)
 call RSetDefaultValue("g:R_strict_rst",        1)
 call RSetDefaultValue("g:R_openpdf",           2)
 call RSetDefaultValue("g:R_synctex",           1)
 call RSetDefaultValue("g:R_openhtml",          0)
 call RSetDefaultValue("g:R_nvim_wd",           0)
+call RSetDefaultValue("g:R_after_start",    "''")
 call RSetDefaultValue("g:R_restart",           0)
 call RSetDefaultValue("g:R_vsplit",            0)
 call RSetDefaultValue("g:R_rconsole_width",   -1)
@@ -2911,6 +2966,15 @@ call RSetDefaultValue("g:R_objbr_place",     "'script,right'")
 call RSetDefaultValue("g:R_user_maps_only", 0)
 call RSetDefaultValue("g:R_latexcmd", "'default'")
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
+if has("win32") || has("win64")
+    call RSetDefaultValue("g:R_Rterm",           0)
+    call RSetDefaultValue("g:R_save_win_pos",    1)
+    call RSetDefaultValue("g:R_arrange_windows", 1)
+else
+    let g:R_Rterm = 0
+    call RSetDefaultValue("g:R_save_win_pos",    0)
+    call RSetDefaultValue("g:R_arrange_windows", 0)
+endif
 
 " Look for invalid options
 let objbrplace = split(g:R_objbr_place, ",")
@@ -3147,6 +3211,7 @@ if &filetype != "rbrowser"
 endif
 
 let g:rplugin_firstbuffer = expand("%:p")
+let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
 let g:rplugin_clt_job = 0
 let g:rplugin_r_pid = 0
