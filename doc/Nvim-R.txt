@@ -302,34 +302,23 @@ Start/Close
 
 Send
   . File                                               \aa
-  . File (echo)                                        \ae
   . File (open .Rout)                                  \ao
   --------------------------------------------------------
   . Block (cur)                                        \bb
-  . Block (cur, echo)                                  \be
   . Block (cur, down)                                  \bd
-  . Block (cur, echo and down)                         \ba
   --------------------------------------------------------
   . Chunk (cur)                                        \cc
-  . Chunk (cur, echo)                                  \ce
   . Chunk (cur, down)                                  \cd
-  . Chunk (cur, echo and down)                         \ca
   . Chunk (from first to here)                         \ch
   --------------------------------------------------------
   . Function (cur)                                     \ff
-  . Function (cur, echo)                               \fe
   . Function (cur and down)                            \fd
-  . Function (cur, echo and down)                      \fa
   --------------------------------------------------------
   . Selection                                          \ss
-  . Selection (echo)                                   \se
   . Selection (and down)                               \sd
-  . Selection (echo and down)                          \sa
   --------------------------------------------------------
   . Paragraph                                          \pp
-  . Paragraph (echo)                                   \pe
   . Paragraph (and down)                               \pd
-  . Paragraph (echo and down)                          \pa
   --------------------------------------------------------
   . Line                                                \l
   . Line (and down)                                     \d
@@ -412,11 +401,10 @@ The plugin commands that send code to R Console are the most commonly used. If
 the code to be sent to R has a single line it is sent directly to R Console,
 but if it has more than one line (a selection of lines, a block of lines
 between two marks, a paragraph etc) the lines are written to a file and the
-plugin sends to R the command to source the file. You should type quickly
-<LocalLeader>d to send to R Console the line currently under the cursor. If
-you want to see what lines are being sourced when sending a selection of
-lines, you should do either <LocalLeader>se or <LocalLeader>sa instead of
-<LocalLeader>ss.
+plugin sends to R the command to source the file. To send to R Console the
+line currently under the cursor you should type <LocalLeader>d. If you want to
+see what lines are being sourced when sending a selection of lines, you can
+use either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
 
 If the cursor is over the header of an R chunk with the `child` option (from
 Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
@@ -575,7 +563,7 @@ them.
 ------------------------------------------------------------------------------
 4.4. The Object Browser~
 
-You have to do <LocalLeader>ro to start the Object Browser. The Object Browser
+You have to use <LocalLeader>ro to start the Object Browser. The Object Browser
 has two views: .GlobalEnv and Libraries. If you press <Enter> on the first
 line of the Object Browser it will toggle the view between the objects in
 .GlobalEnv and the currently loaded libraries.
@@ -590,9 +578,9 @@ UTF-8 is part of either LC_MESSAGES or LC_ALL variables, unicode line drawing
 characters will be used to draw lines in the Object Browser. This is the case
 of most Linux distributions.
 
-In the Libraries view, you can either double click or press <Enter> over a
-library to see its objects. In the Object Browser, the libraries have the
-color defined by the PreProc highlighting group, and the other objects have
+In the Libraries view, you can either double click or press <Enter> on a
+library name to see its objects. In the Object Browser, the libraries have the
+color defined by the PreProc highlighting group. The other objects have
 their colors defined by the return value of some R functions. Each line in the
 table below shows a highlighting group and the corresponding R function (if
 any) used to classify the objects:
@@ -729,8 +717,8 @@ copy/scroll back mode (see below).
 
 The configuration script also sets <C-a> as the Tmux escape character (the
 default is <C-b>), that is, you have to type <C-a> before typing a Tmux
-command. Below are the most useful key bindings to use Tmux with the above
-tmux.conf:
+command. Below are the most useful key bindings for Tmux with the tmux.conf
+shown above:
 
     <C-a>arrow keys : Move the cursor to the Tmux panel above, below, at the
                       right or at the left of the current one.
@@ -800,9 +788,9 @@ remote machine. Tmux should not be running in the local machine because some
 environment variables could pass from the local to the remote Tmux and make
 the plugin confuse.
 
-With Tmux, you can detach the Nvim-R session and reattach it latter (but the
+With Tmux, you can detach the Nvim-R session and reattach it later (but the
 connection with the XServer could be lost in the process). This is useful if
-you plan to begin the use the Nvim-R in a machine and latter move to
+you plan to begin the use the Nvim-R in a machine and later move to
 another computer and access remotely your previous Nvim-R session. Below is the
 step-by-step procedure to run the Nvim-R remotely:
 
@@ -819,7 +807,7 @@ step-by-step procedure to run the Nvim-R remotely:
     The command will be <C-b>d if you have not set <C-a> as the escape
     character in your ~/.tmux.conf.
 
-  - Some time latter (even if accessing the machine remotely) reattach the
+  - Some time later (even if accessing the machine remotely) reattach the
     Tmux session:
       tmux attach
 
@@ -828,19 +816,18 @@ step-by-step procedure to run the Nvim-R remotely:
 							   *Nvim-R-known-bugs*
 5. Known bugs and workarounds~
 
-The bugs that are known to exist but that will not be fixed are listed in this
-section. Some of them can not be fixed because they depend on either R or Nvim
-missing features; others would be very time consuming to fix without breaking
-anything.
+Known bugs that will not be fixed are listed in this section. Some of them can
+not be fixed because they depend on missing features in either R or Nvim;
+others would be very time consuming to fix without breaking anything.
 
 
 ------------------------------------------------------------------------------
 5.1. R's source() issues~
 
-The R's `source()` function of base package prints an extra new line between
-commands if the option echo = TRUE, and error and warning messages are printed
-only after the entire code is sourced, which makes it more difficult to find
-errors in the code sent to R. Details:
+The R's `source()` function of the base package prints an extra new line
+between commands if the option echo = TRUE, and error and warning messages are
+printed only after the entire code is sourced. This makes it more difficult to
+find errors in the code sent to R. Details:
 
    https://stat.ethz.ch/pipermail/r-devel/2012-December/065352.html
 
@@ -1018,7 +1005,7 @@ is running:
 |R_applescript|       Use osascript in Mac OS X
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
-|R_maxdeparse|        Argument to R `source()` function
+|R_source_args|       Arguments to R `source()` function
 |R_latexcmd|          Command to run on .tex files
 |R_latexmk|           Define wether `latexmk` should be run
 |R_sweaveargs|        Arguments do `Sweave()`
@@ -1207,7 +1194,7 @@ them converted into `<-`.
 							       *R_tmux_ob*
 6.4. Object Browser options~
 
-By default, the object browser will be created with 40 columns. The minimum
+By default, the Object Browser will be created with 40 columns. The minimum
 width of the Object Browser window is 9 columns. You can change the object
 browser's default width by setting the value of |R_objbr_w| in your
 |nvimrc|, as below:
@@ -1461,13 +1448,12 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 <
 
 ------------------------------------------------------------------------------
-								*R_maxdeparse*
-6.16. maxdeparse~
-
-You can set the argument maxdeparse to be passed to R's `source()` function.
-Example:
->
-   let R_maxdeparse = 300
+							       *R_source_args*
+6.16. Arguments to R source() function~
+ 
+You can add arguments to be passed to R's `source()` function. Example:
+ >
+   let R_source_args = "max.deparse.length = 300, echo = TRUE"
 <
 
 ------------------------------------------------------------------------------
@@ -1961,8 +1947,7 @@ The above example shows how to change key binding used to start R from
 
 Only the custom key bindings for Normal mode are shown in Nvim's menu, but you
 can type |:map| to see the complete list of current mappings, and below is the
-list of the names for custom key bindings (the prefix RE means "echo";
-RD, "cursor down"; RED, both "echo" and "down"):
+list of the names for custom key bindings (the prefix RD means "cursor down"):
 
    Star/Close R~
    RStart
@@ -1997,23 +1982,14 @@ RD, "cursor down"; RED, both "echo" and "down"):
 
    Send code to R console~
    RSendSelection
-   RESendSelection
    RDSendSelection
-   REDSendSelection
    RSendMBlock
-   RESendMBlock
    RDSendMBlock
-   REDSendMBlock
    RSendParagraph
-   RESendParagraph
    RDSendParagraph
-   REDSendParagraph
    RSendFunction
-   RESendFunction
    RDSendFunction
-   REDSendFunction
    RSendFile
-   RESendFile
 
    Send command to R~
    RHelp
@@ -2032,8 +2008,6 @@ RD, "cursor down"; RED, both "echo" and "down"):
    Support to Sweave and knitr~
    RSendChunk
    RDSendChunk
-   RESendChunk
-   REDSendChunk
    RSendChunkFH (from the first chunk to here)
    RBibTeX    (Sweave)
    RBibTeXK   (Knitr)
@@ -2556,7 +2530,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.21. Suggestion of setup for the Nvim-R~
+9.21. Suggested setup for the Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-r-plugin customization.

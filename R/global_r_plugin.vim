@@ -28,13 +28,13 @@ if exists("g:rplugin_did_sourcelines")
 endif
 let g:rplugin_did_sourcelines = 1
 
-function SourceNotDefined(lines, e)
+function SourceNotDefined(lines)
     echohl WarningMsg
     echo 'The function to source "' . &filetype . '" lines is not defined.'
     echohl Normal
 endfunction
 
-function JuliaSourceLines(lines, e)
+function JuliaSourceLines(lines)
     call writefile(a:lines, b:rsource)
     let jcmd = 'include("' . b:rsource . '")'
     let ok = g:SendCmdToR(jcmd)
@@ -57,7 +57,7 @@ function SetExeCmd()
         let b:rplugin_r_args = [" "]
         let b:quit_command = "quit()"
         let b:SourceLines = function("JuliaSourceLines")
-        call RCreateMaps("ni", '<Plug>RSendFile',     'aa', ':call JuliaSourceLines(getline(1, "$"), "silent")')
+        call RCreateMaps("ni", '<Plug>RSendFile',     'aa', ':call JuliaSourceLines(getline(1, "$"))')
     elseif &filetype == "python"
         let b:rplugin_R = "python"
         let b:rplugin_r_args = [" "]

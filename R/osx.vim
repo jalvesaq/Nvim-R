@@ -23,7 +23,18 @@ function StartR_OSX()
         lcd -
     endif
     let g:SendCmdToR = function('SendCmdToR_OSX')
-    WaitNvimcomStart()
+    if WaitNvimcomStart()
+        call foreground()
+        sleep 200m
+        if g:R_nvim_wd
+            call SendToNvimcom("\x08" . $NVIMR_ID . "setwd('" . getcwd() . "')")
+        else
+            call SendToNvimcom("\x08" . $NVIMR_ID . "setwd('" . expand("%:p:h") . "')")
+        endif
+        if g:R_after_start != ''
+            call system(g:R_after_start)
+        endif
+    endif
 endfunction
 
 function SendCmdToR_OSX(cmd)

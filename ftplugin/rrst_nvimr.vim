@@ -136,7 +136,7 @@ function! RMakePDFrrst()
 endfunction
 
 " Send Rrst chunk to R
-function! SendRrstChunkToR(e, m)
+function! SendRrstChunkToR(m)
     if RrstIsInRCode(0) == 0
         call RWarningMsg("Not inside an R code chunk.")
         return
@@ -144,7 +144,7 @@ function! SendRrstChunkToR(e, m)
     let chunkline = search("^\\.\\. {r", "bncW") + 1
     let docline = search("^\\.\\. \\.\\.", "ncW") - 1
     let lines = getline(chunkline, docline)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines)
     if ok == 0
         return
     endif
@@ -174,10 +174,8 @@ call RCreateMaps("nvi", '<Plug>RMakePDFK',      'kp', ':call RMakePDFrrst()')
 call RCreateMaps("nvi", '<Plug>RMakeHTML',      'kh', ':call RMakeHTMLrrst("html")')
 call RCreateMaps("nvi", '<Plug>RMakeODT',       'ko', ':call RMakeHTMLrrst("odt")')
 call RCreateMaps("nvi", '<Plug>RIndent',        'si', ':call RrstToggleIndentSty()')
-call RCreateMaps("ni",  '<Plug>RSendChunk',     'cc', ':call b:SendChunkToR("silent", "stay")')
-call RCreateMaps("ni",  '<Plug>RESendChunk',    'ce', ':call b:SendChunkToR("echo", "stay")')
-call RCreateMaps("ni",  '<Plug>RDSendChunk',    'cd', ':call b:SendChunkToR("silent", "down")')
-call RCreateMaps("ni",  '<Plug>REDSendChunk',   'ca', ':call b:SendChunkToR("echo", "down")')
+call RCreateMaps("ni",  '<Plug>RSendChunk',     'cc', ':call b:SendChunkToR("stay")')
+call RCreateMaps("ni",  '<Plug>RDSendChunk',    'cd', ':call b:SendChunkToR("down")')
 call RCreateMaps("n",  '<Plug>RNextRChunk',     'gn', ':call b:NextRChunk()')
 call RCreateMaps("n",  '<Plug>RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
