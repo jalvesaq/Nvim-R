@@ -602,6 +602,13 @@ function TmuxActivePane()
   endif
 endfunction
 
+function DelayedFillLibList()
+    autocmd! RStarting
+    augroup! RStarting
+    let g:rplugin_starting_R = 0
+    call FillRLibList()
+endfunction
+
 function StartR_TmuxSplit(rcmd)
     let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
@@ -943,8 +950,17 @@ function WaitNvimcomStart()
         endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
 
+        augroup RStarting
+            autocmd!
+            autocmd CursorMoved <buffer> call DelayedFillLibList()
+            autocmd CursorMovedI <buffer> call DelayedFillLibList()
+        augroup END
+
         if g:rplugin_do_tmux_split
-            call system("tmux set-environment NVIMR_TMPDIR None")
+            " Environment variables persists across Tmux windows.
+            " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
+            " when R was not started by Neovim:
+            call system("tmux set-environment -u NVIMR_TMPDIR")
         endif
         return 1
     else
@@ -1450,9 +1466,12 @@ endfunction
 
 " Send selection to R
 function SendSelectionToR(m)
-    if &filetype != "r" && b:IsInRCode(1) == 0
-        if !(&filetype == "rnoweb" && getline(".") =~ "\\Sexpr{")
-            return
+    if &filetype != "r"
+        if b:IsInRCode(0) == 0
+            if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
+                call RWarningMsg("Not inside an R code chunk.")
+                return
+            endif
         endif
     endif
 
@@ -3210,6 +3229,7 @@ let g:rplugin_nvimcom_home = ""
 let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
+let g:rplugin_starting_R = 0
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0

@@ -126,6 +126,11 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 function FillRLibList()
+    " Delay the syntax update
+    if g:rplugin_starting_R
+        return
+    endif
+
     " Update the list of objects for omnicompletion
     if filereadable(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
         let g:rplugin_lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
@@ -141,6 +146,7 @@ function FillRLibList()
                 call AddToRLibList(lib)
             endif
         endfor
+        call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
     endif
     " Now we need to update the syntax in all R files. There should be a
     " better solution than setting a flag to let other buffers know that they

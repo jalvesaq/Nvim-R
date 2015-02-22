@@ -693,6 +693,10 @@ file:
    set -g mouse-select-pane on
    set -g mouse-resize-pane on
 
+   # Escape time for libtermkey
+   # (see https://github.com/neovim/neovim/issues/2035):
+   set -sg escape-time 10
+
    # Act more like vi:
    set-window-option -g mode-keys vi
    bind h select-pane -L
@@ -2653,7 +2657,7 @@ See also |R_in_buffer|.
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-01-23)
+0.9.0 (2015-02-22)
 
  * First release (initial code extracted from the Vim-R-plugin).
 
