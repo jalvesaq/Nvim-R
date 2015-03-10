@@ -293,7 +293,6 @@ rhelp, rrst, rmd).
 Menu entry                                Default shortcut~
 Start/Close
   . Start R (default)                                  \rf
-  . Start R --vanilla                                  \rv
   . Start R (custom)                                   \rc
   --------------------------------------------------------
   . Close R (no save)                                  \rq
@@ -1955,7 +1954,6 @@ list of the names for custom key bindings (the prefix RD means "cursor down"):
 
    Star/Close R~
    RStart
-   RVanillaStart
    RCustomStart
    RClose
    RSaveClose

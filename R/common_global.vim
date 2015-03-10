@@ -610,6 +610,7 @@ function DelayedFillLibList()
 endfunction
 
 function StartR_TmuxSplit(rcmd)
+    let g:rplugin_starting_R = 1
     let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
@@ -767,15 +768,11 @@ function StartR(whatr)
         lcd %:p:h
     endif
 
-    if a:whatr =~ "vanilla"
-        let b:rplugin_r_args = ["--vanilla"]
-    else
-        if a:whatr =~ "custom"
-            call inputsave()
-            let r_args = input('Enter parameters for R: ')
-            call inputrestore()
-            let b:rplugin_r_args = split(r_args)
-        endif
+    if a:whatr =~ "custom"
+        call inputsave()
+        let r_args = input('Enter parameters for R: ')
+        call inputrestore()
+        let b:rplugin_r_args = split(r_args)
     endif
 
     if g:R_in_buffer
@@ -848,8 +845,9 @@ function StartR(whatr)
         endif
         call StartR_ExternalTerm(rcmd)
         if g:R_restart && bufloaded(b:objbrtitle)
-            call WaitNvimcomStart()
-            call SendToNvimcom("\002" . g:rplugin_myport)
+            if WaitNvimcomStart()
+                call SendToNvimcom("\002" . g:rplugin_myport)
+            endif
         endif
     endif
 
@@ -892,6 +890,9 @@ function OpenRScratch()
 endfunction
 
 function WaitNvimcomStart()
+    if b:rplugin_r_args_str =~ "vanilla"
+        return 0
+    endif
     if g:R_nvimcom_wait < 0
         return 0
     endif
@@ -2636,7 +2637,6 @@ function RCreateStartMaps()
     " Start
     "-------------------------------------
     call RCreateMaps("nvi", '<Plug>RStart',        'rf', ':call StartR("R")')
-    call RCreateMaps("nvi", '<Plug>RVanillaStart', 'rv', ':call StartR("vanilla")')
     call RCreateMaps("nvi", '<Plug>RCustomStart',  'rc', ':call StartR("custom")')
 
     " Close

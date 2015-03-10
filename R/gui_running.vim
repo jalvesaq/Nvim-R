@@ -17,7 +17,6 @@ function MakeRMenu()
     " Start/Close
     "----------------------------------------------------------------------------
     call RCreateMenuItem("nvi", 'Start/Close.Start\ R\ (default)', '<Plug>RStart', 'rf', ':call StartR("R")')
-    call RCreateMenuItem("nvi", 'Start/Close.Start\ R\ --vanilla', '<Plug>RVanillaStart', 'rv', ':call StartR("vanilla")')
     call RCreateMenuItem("nvi", 'Start/Close.Start\ R\ (custom)', '<Plug>RCustomStart', 'rc', ':call StartR("custom")')
     "-------------------------------
     menu R.Start/Close.-Sep1- <nul>
