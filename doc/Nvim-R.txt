@@ -125,7 +125,7 @@ Before installing the plugin, you should install its dependencies:
    Tmux >= 1.8:   http://tmux.sourceforge.net
 		  Tmux is necessary to send commands from Nvim to R running in
 		  a terminal emulator.
-		  (Not required if running R as a Neovim job (see |R_in_buffer|)
+		  (Not required if running R in a Neovim buffer (see |R_in_buffer|)
 		  or using the combination MacVim + R.app)
 
    colorout:     http://www.lepem.ufc.br/jaa/colorout.html
@@ -1078,73 +1078,16 @@ The last argument must be the one which precedes the command to be executed.
 								 *R_in_buffer*
 6.2. Run R in Neovim buffer (experimental feature)~
 
-Note: This feature depends the pull request:
-https://github.com/neovim/neovim/pull/1584
-
-Note: On Unix, there is no advantage of running R as a Neovim job over running
-R in a Tmux session. On Windows, there is the advantage of getting R output
-colorized.
-
-Note: Neovim for Windows is not available yet. See:
-https://github.com/neovim/neovim/issues/1749
+Note: This feature depends on the pull request
+https://github.com/neovim/neovim/pull/2076
 
 If you are running Neovim and want to try this experimental feature, put in
 your |nvimrc|:
 >
    let R_in_buffer = 1
 <
-R will run as a Neovim job and the output will be displayed in a buffer. If
-the cursor is in the last line of the R_Output buffer and Neovim is in Insert
-mode, an <Enter> will submit the line to R evaluation, <C-x><C-o> will
-complete names of objects, <C-x><C-a> will complete the names of function
-arguments, and <Up> and <Down> will cycle through the history of sent
-commands. Finally, if you type part of a previously issued command, you can
-press <C-H> to complete the line from the history.
+R will run in a Neovim buffer created with the command |:term|.
 
-Whether you are in the R script buffer or in the R_Output buffer, you can also
-press <LocalLeader><LocalLeader> in Normal mode to open an R scratch buffer to
-type commands that you want to see evaluated by R but do not want in your
-final script. The keys <Esc> and <q> are mapped in Normal mode to quit the
-scratch buffer.
-
-The R command `history()` will not work, but you can do `:Rhistory` in Neovim
-to open a buffer with the history of commands in a new tab. Commands starting
-with the string "base::source" are not added to the history.
-
-You can set the foreground colors of R output in your |nvimrc| when you are
-running Neovim in a terminal emulator. The example below is for a terminal
-emulator that supports 256 colors (see |highlight-ctermfg|):
->
-   if &t_Co == 256
-       let rout_color_input = 247
-       let rout_color_normal = 39
-       let rout_color_number = 51
-       let rout_color_integer = 51
-       let rout_color_float = 51
-       let rout_color_complex = 51
-       let rout_color_negnum = 183
-       let rout_color_negfloat = 183
-       let rout_color_date = 43
-       let rout_color_true = 78
-       let rout_color_false = 203
-       let rout_color_inf = 39
-       let rout_color_constant = 75
-       let rout_color_string = 79
-       let rout_color_stderr = 33
-       let rout_color_error = 15
-       let rout_color_warn = 1
-       let rout_color_index = 186
-   endif
-<
-To know what number corresponds to your preferred color (among the 256
-possibilities), hover you mouse pointer over the table of colors at the end
-of http://www.lepem.ufc.br/jaa/colorout.html
-
-If you prefer that R output is highlighted using you current |:colorscheme|,
-put in your |nvimrc|:
->
-   let rout_follow_colorscheme = 1
-<
 Known bugs~
 
    - If you delete part of a prompt question, the plugin will not recognize
@@ -2641,15 +2584,42 @@ Finally, if you want to use vi key bindings in Bash:
 
 ------------------------------------------------------------------------------
 
-9.23. Integration with GNU Screen, screen plugin, Conque Shell or VimShell~
+9.23. Syntax highlight of .Rout files~
 
-The plugin used to be able to use GNU Screen (through screen plugin), Conque
-Shell or VimShell to send commands to R. This integration was removed on
-August 20, 2013. People wanting this integration back into the plugin may want
-to use the old Nvim-R code as a starting point to create scripts to be
-sourced by the Nvim-R. Please look at |R_source| for details.
-See also |R_in_buffer|.
+You can set the foreground colors of R output in your |nvimrc|. The example
+below is for a terminal emulator that supports 256 colors (see
+|highlight-ctermfg|):
+>
+   if &t_Co == 256
+       let rout_color_input = 247
+       let rout_color_normal = 39
+       let rout_color_number = 51
+       let rout_color_integer = 51
+       let rout_color_float = 51
+       let rout_color_complex = 51
+       let rout_color_negnum = 183
+       let rout_color_negfloat = 183
+       let rout_color_date = 43
+       let rout_color_true = 78
+       let rout_color_false = 203
+       let rout_color_inf = 39
+       let rout_color_constant = 75
+       let rout_color_string = 79
+       let rout_color_stderr = 33
+       let rout_color_error = 15
+       let rout_color_warn = 1
+       let rout_color_index = 186
+   endif
+<
+To know what number corresponds to your preferred color (among the 256
+possibilities), hover you mouse pointer over the table of colors at the end
+of http://www.lepem.ufc.br/jaa/colorout.html
 
+If you prefer that R output is highlighted using you current |:colorscheme|,
+put in your |nvimrc|:
+>
+   let rout_follow_colorscheme = 1
+<
 
 ==============================================================================
 								 *Nvim-R-news*

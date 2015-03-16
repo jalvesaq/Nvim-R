@@ -1097,7 +1097,7 @@ function StartObjBrowser_Nvim()
             set splitright
         endif
         if g:R_objbr_place =~ "console"
-            sb R_Output
+            sb g:rplugin_R_bufname
         endif
         sil exe "vsplit " . b:objbrtitle
         let &splitright = l:sr
@@ -1741,15 +1741,7 @@ endfunction
 
 " Clear the console screen
 function RClearConsole()
-    if g:R_in_buffer
-        let edbuf = bufname("%")
-        sbuffer R_Output
-        call cursor("$", 1)
-        normal! zt
-        exe "sbuffer " . edbuf
-    else
-        call g:SendCmdToR("\014")
-    endif
+    call g:SendCmdToR("\014")
 endfunction
 
 " Remove all objects
@@ -1849,7 +1841,10 @@ function RQuit(how)
         sleep 500m
         mode
     elseif g:R_in_buffer
-        bunload R_Output
+        exe "sbuffer " . g:rplugin_R_bufname
+        redraw
+        sleep 500m
+        quit
     endif
 endfunction
 
@@ -2010,7 +2005,7 @@ function AskRDoc(rkeyword, package, getclass)
     endif
 
     let classfor = ""
-    if bufname("%") =~ "Object_Browser" || bufname("%") == "R_Output"
+    if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . b:rscript_buffer
@@ -2058,7 +2053,10 @@ function ShowRDoc(rkeyword)
         return
     endif
 
-    if bufname("%") =~ "Object_Browser" || bufname("%") == "R_Output"
+    if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
+        if bufname("%") == g:rplugin_R_bufname
+            stopinsert
+        endif
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . b:rscript_buffer
