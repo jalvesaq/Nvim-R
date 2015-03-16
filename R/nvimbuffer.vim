@@ -1,8 +1,4 @@
-" This file contains code used only by Neovim
-
-" For debugging
-let g:lastjobdata = []
-let b:rplugin_r_args_str = ""
+" This file contains code used only when R run in Neovim buffer
 
 function SendCmdToR_Neovim(...)
     let curbuf = bufname("%")
@@ -25,6 +21,7 @@ function StartR_Neovim()
 
     let edbuf = bufname("%")
     let objbrttl = b:objbrtitle
+    let r_args_str = b:rplugin_r_args_str
     let curbufnm = bufname("%")
     set switchbuf=useopen
     if g:R_vsplit
@@ -41,8 +38,7 @@ function StartR_Neovim()
         endif
     endif
     call cursor("$", 1)
-    let b:rplugin_r_args_str = join(g:R_args)
-    exe "term R " . join(g:R_args)
+    exe "term R " . r_args_str
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm

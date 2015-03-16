@@ -780,7 +780,6 @@ function StartR(whatr)
         return
     endif
 
-    " Only jobstart() needs arguments as list
     let b:rplugin_r_args_str = join(b:rplugin_r_args)
 
     if g:R_applescript
@@ -1842,9 +1841,9 @@ function RQuit(how)
         mode
     elseif g:R_in_buffer
         exe "sbuffer " . g:rplugin_R_bufname
-        redraw
         sleep 500m
-        quit
+        " Enter Insert mode and press 'any key' to close the buffer
+        call feedkeys("a ")
     endif
 endfunction
 
@@ -2054,9 +2053,6 @@ function ShowRDoc(rkeyword)
     endif
 
     if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
-        if bufname("%") == g:rplugin_R_bufname
-            stopinsert
-        endif
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . b:rscript_buffer
@@ -2134,8 +2130,8 @@ function ShowRDoc(rkeyword)
     endif
     let @@ = save_unnamed_reg
     setlocal nomodified
-    redraw
     stopinsert
+    redraw
 endfunction
 
 function RSetPDFViewer()
@@ -2761,6 +2757,7 @@ function SetRPath()
     if exists("g:R_args")
         let b:rplugin_r_args = g:R_args
     endif
+    let b:rplugin_r_args_str = join(b:rplugin_r_args)
 endfunction
 
 " Tell R to create a list of objects file listing all currently available
