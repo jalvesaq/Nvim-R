@@ -2052,6 +2052,11 @@ function ShowRDoc(rkeyword)
         return
     endif
 
+    if bufname("%") == g:rplugin_R_bufname
+        " Exit Terminal mode and go to Normal mode
+        call feedkeys("\<C-\>\<C-N>", 't')
+    endif
+
     if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
