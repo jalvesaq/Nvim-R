@@ -1397,10 +1397,18 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 							       *R_source_args*
 6.16. Arguments to R source() function~
  
+When you send multiple lines of code to R (a selection of lines, a paragraph,
+code between two marks or a R chunk of code), the Nvim-R saves the lines in a
+temporary file and, then, sends to R the command `source()` to read the
+temporary file.
+
 You can add arguments to be passed to R's `source()` function. Example:
  >
    let R_source_args = "max.deparse.length = 300, echo = TRUE"
 <
+See |Nvim-R-source-echo| if you frequently need to alternate the `echo`
+argument between `TRUE` and `FALSE`.
+
 
 ------------------------------------------------------------------------------
 								*R_sweaveargs*
@@ -2581,6 +2589,24 @@ Finally, if you want to use vi key bindings in Bash:
    set editing-mode vi
    set keymap vi
 <
+
+------------------------------------------------------------------------------
+							  *Nvim-R-source-echo*
+9.22. Set echo to TRUE or FALSE when sending multiple lines of code too R~
+
+If you want to alternate the `echo` argument of the `source()` function
+between `TRUE` and `FALSE`, then, you might want to create a couple of maps in
+your vimrc. You can use |nmap| to restrict the maps to Normal mode, |autocmd|
+and <buffer> to restrict the maps to R code, and <silent> if you prefer that
+the command is not displayed in Vim's command line. In the example below,
+<LocalLeader>`ee` sets `echo=TRUE` and <LocalLeader>`ne` sets `echo=FALSE`:
+>
+   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ee :let R_source_args = "echo = TRUE"<CR>
+   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ne :let R_source_args = "echo = FALSE"<CR>
+<
+If some of your files are named with lowercase "r" extensions, you have to
+repeat the two commands above with `*.r*`.
+
 
 ------------------------------------------------------------------------------
 
