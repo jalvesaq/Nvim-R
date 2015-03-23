@@ -25,7 +25,7 @@ For Neovim (development version)
 1. Overview~
 
 This plugin improves Nvim's support for editing R code and makes it possible
-to integrate Nvim with R. It is the sucessor of Vim-R-plugin which is being
+to integrate Nvim with R. It is the successor of Vim-R-plugin which is being
 discontinued due to Vim limitations. The latest stable version of this plugin
 is available at:
 
