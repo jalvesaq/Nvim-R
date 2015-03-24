@@ -2092,6 +2092,7 @@ same signal sent when you press CTRL-C into R's Console.
 If you prefer to see help pages in an html browser, put in your `~/.Rprofile`:
 >
    options(help_type = "html")
+   option(nvimcom.nvimpager = FALSE)
 <
 and in your |nvimrc| (see |R_nvimpager|):
 >
@@ -2599,13 +2600,13 @@ between `TRUE` and `FALSE`, then, you might want to create a couple of maps in
 your vimrc. You can use |nmap| to restrict the maps to Normal mode, |autocmd|
 and <buffer> to restrict the maps to R code, and <silent> if you prefer that
 the command is not displayed in Vim's command line. In the example below,
-<LocalLeader>`ee` sets `echo=TRUE` and <LocalLeader>`ne` sets `echo=FALSE`:
+<LocalLeader>`ee` sets `echo=TRUE`:
 >
    autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ee :let R_source_args = "echo = TRUE"<CR>
-   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ne :let R_source_args = "echo = FALSE"<CR>
 <
-If some of your files are named with lowercase "r" extensions, you have to
-repeat the two commands above with `*.r*`.
+You can make another map to set `echo=FALSE`, and, if some of your files are
+named with lowercase "r" extensions, you have to repeat the commands with
+`*.r*`.
 
 
 ------------------------------------------------------------------------------
@@ -2651,7 +2652,7 @@ put in your |nvimrc|:
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-02-22)
+0.9.0 (2015-03-24)
 
  * First release (initial code extracted from the Vim-R-plugin).
 

@@ -2004,7 +2004,7 @@ function AskRDoc(rkeyword, package, getclass)
     endif
 
     let classfor = ""
-    if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
+    if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . b:rscript_buffer
@@ -2052,12 +2052,21 @@ function ShowRDoc(rkeyword)
         return
     endif
 
-    if bufname("%") == g:rplugin_R_bufname
+    if exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname
         " Exit Terminal mode and go to Normal mode
         call feedkeys("\<C-\>\<C-N>", 't')
     endif
 
-    if bufname("%") =~ "Object_Browser" || bufname("%") == g:rplugin_R_bufname
+    " If the help command was triggered in the R Console, jump to Vim pane
+    if g:rplugin_do_tmux_split && !g:rplugin_running_rhelp
+        let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
+        if v:shell_error
+            call RWarningMsg(slog)
+        endif
+    endif
+    let g:rplugin_running_rhelp = 0
+
+    if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . b:rscript_buffer
@@ -2096,6 +2105,9 @@ function ShowRDoc(rkeyword)
             if winheight(0) < 20
                 resize 20
             endif
+        elseif s:vimpager == "no"
+            call RWarningMsg('R_nvimpager = "no". You should put options(nvimcom.nvimpager=FALSE) in your .Rprofile?')
+            return
         else
             echohl WarningMsg
             echomsg 'Invalid R_nvimpager value: "' . g:R_nvimpager . '". Valid values are: "tab", "vertical", "horizontal", "tabnew" and "no".'
@@ -2292,10 +2304,10 @@ function RAskHelp(...)
         call g:SendCmdToR("help.start()")
         return
     endif
-    if g:R_nvimpager != "no"
-        call AskRDoc(a:1, "", 0)
-    else
+    if g:R_nvimpager == "no"
         call g:SendCmdToR("help(" . a:1. ")")
+    else
+        call AskRDoc(a:1, "", 0)
     endif
 endfunction
 
@@ -2355,6 +2367,7 @@ function RAction(rcmd)
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
+            let g:rplugin_running_rhelp = 1
             if g:R_nvimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
             else
@@ -3221,6 +3234,7 @@ endif
 let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
+let g:rplugin_running_rhelp = 0
 let g:rplugin_clt_job = 0
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
