@@ -42,6 +42,9 @@ function StartR_Neovim()
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
+    if g:R_hl_term
+        set filetype=rout
+    endif
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()

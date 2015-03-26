@@ -65,25 +65,12 @@ endif
 
 if g:Rout_more_colors
     syn include @routR syntax/r.vim
-    syn region routColoredR start="^> " end='$' contains=@routR keepend
-    syn region routColoredR start="^+ " end='$' contains=@routR keepend
+    syn region routColoredR start="^>" end='$' contains=@routR keepend
+    syn region routColoredR start="^+" end='$' contains=@routR keepend
 else
     " Input
-    syn match routInput /^> .*/
-    syn match routInput /^+ .*/
-endif
-
-if has("conceal")
-    setlocal conceallevel=3
-    set concealcursor=n
-    syn match routConceal '^: ' conceal contained
-    syn region routStdErr start='^: ' end="$" contains=routConceal
-    syn region routError start='^: .*Error.*' end='\n:\@!' contains=routConceal
-    syn region routWarn start='^: .*Warn.*' end='\n:\@!' contains=routConceal
-else
-    syn region routStdErr start='^: ' end="$"
-    syn region routError start='^: .*Error.*' end='\n:\@!'
-    syn region routWarn start='^: .*Warn.*' end='\n:\@!'
+    syn match routInput /^>.*/
+    syn match routInput /^+.*/
 endif
 
 " Index of vectors
@@ -148,7 +135,6 @@ if g:Rout_more_colors == 0
     hi def link routInput	Comment
 endif
 
-hi def link routConceal	Ignore
 if exists("g:rout_follow_colorscheme") && g:rout_follow_colorscheme
     " Default when following :colorscheme
     hi def link routNormal	Normal
@@ -164,10 +150,7 @@ if exists("g:rout_follow_colorscheme") && g:rout_follow_colorscheme
     hi def link routInf  	Number
     hi def link routConst	Constant
     hi def link routString	String
-    hi def link routError	Error
-    hi def link routWarn	WarningMsg
     hi def link routIndex	Special
-    hi def link routStdErr	Function
     hi def link routError	ErrorMsg
     hi def link routWarn	WarningMsg
 else
@@ -187,7 +170,6 @@ else
         hi routInf      ctermfg=39
         hi routConst	ctermfg=35
         hi routString	ctermfg=85
-        hi routStdErr	ctermfg=117
         hi routError	ctermfg=15 ctermbg=1
         hi routWarn	ctermfg=1
         hi routIndex	ctermfg=109
@@ -207,7 +189,6 @@ else
         hi routTrue	ctermfg=darkgreen
         hi routConst	ctermfg=magenta
         hi routString	ctermfg=darkcyan
-        hi routStdErr	ctermfg=cyan
         hi routError	ctermfg=white ctermbg=red
         hi routWarn	ctermfg=red
         hi routIndex	ctermfg=darkgreen
@@ -255,9 +236,6 @@ else
     endif
     if exists("g:rout_color_string")
         exe "hi routString ctermfg=" . g:rout_color_string
-    endif
-    if exists("g:rout_color_stderr")
-        exe "hi routStdErr ctermfg=" . g:rout_color_stderr
     endif
     if exists("g:rout_color_error")
         exe "hi routError ctermfg=" . g:rout_color_error
