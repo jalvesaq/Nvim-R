@@ -1078,23 +1078,14 @@ The last argument must be the one which precedes the command to be executed.
 								 *R_in_buffer*
 6.2. Run R in Neovim buffer (experimental feature)~
 
-Note: This feature depends on the pull request
-https://github.com/neovim/neovim/pull/2076
-
-If you are running Neovim and want to try this experimental feature, put in
-your |nvimrc|:
+If you want to run R in Neovim's built in terminal emulator, put in your
+|nvimrc|:
 >
    let R_in_buffer = 1
 <
-R will run in a Neovim buffer created with the command |:term|.
-
-Known bugs~
-
-   - If you delete part of a prompt question, the plugin will not recognize
-     what remained of the prompt and will send the remaining characters as
-     part of the line sent to R when you press <Enter>.
-
-   - The debug() function does not work properly.
+R will run in a Neovim buffer created with the command |:term|. You have to
+enter Insert mode to type commands in R Console. Instead of using the <Esc>
+key, type <C-\><C-N> to go to Normal mode.
 
 
 ------------------------------------------------------------------------------
