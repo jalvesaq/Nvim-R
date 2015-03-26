@@ -921,19 +921,18 @@ through the <LocalLeader>rf command because the plugin was designed to connect
 each Nvim instance with its own R instance.
 
 If you start R before Nvim, it will not inherit from Nvim the environment
-variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_SVRNM,
-NVIMR_ID, and NVIMR_SECRET. The first one is the path used by the R
-package nvimcom to save temporary files used by the Nvim-R to: perform
-omnicompletion, show R documentation in a Nvim buffer, and update the Object
-Browser. The two last ones are used by the Nvim-R and by nvimcom to know
-that the connections are valid. If you use Nvim to start R, but then closes
-Nvim, some variables will become outdated. Additionally, the Nvim-R sets
-the value of its internal variable SendCmdToR from SendCmdToR_fake to the
-appropriate value when R is successfully started. It is possible to set the
-values of all those variables manually, but, as you can see below, it is not
-practical to do so. If you have either started R before Nvim or closed Nvim and
-opened it again and really want full communication between Nvim and R, you can
-try the following (not all procedures are necessary for all cases):
+variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and NVIMR_SECRET. The first
+one is the path used by the R package nvimcom to save temporary files used by
+the Nvim-R to: perform omnicompletion, show R documentation in a Nvim buffer,
+and update the Object Browser. The two last ones are used by the Nvim-R and by
+nvimcom to know that the connections are valid. If you use Nvim to start R,
+but then closes Nvim, some variables will become outdated. Additionally, the
+Nvim-R sets the value of its internal variable SendCmdToR from SendCmdToR_fake
+to the appropriate value when R is successfully started. It is possible to set
+the values of all those variables manually, but, as you can see below, it is
+not practical to do so. If you have either started R before Nvim or closed
+Nvim and opened it again and really want full communication between Nvim and
+R, you can try the following (not all procedures are necessary for all cases):
 
    In Normal mode Nvim do:
 >
@@ -941,7 +940,6 @@ try the following (not all procedures are necessary for all cases):
    :echo g:rplugin_compldir
    :echo $NVIMR_ID
    :echo $NVIMR_SECRET
-   :echo $NVIMR_SVRNM
 <
    In R do:
 >
@@ -949,7 +947,6 @@ try the following (not all procedures are necessary for all cases):
    Sys.setenv(NVIMR_TMPDIR="T")    # where "T" is what Nvim has echoed
    Sys.setenv(NVIMR_ID="I")        # where "I" is what Nvim has echoed
    Sys.setenv(NVIMR_SECRET"="S")   # where "S" is what Nvim has echoed
-   Sys.setenv(NVIMR_SVRNM"="N")    # where "N" is what Nvim has echoed
    Sys.setenv(NVIMR_COMPLDIR"="C") # where "C" is what Nvim has echoed
    library(nvimcom)
 <
@@ -1076,7 +1073,7 @@ The last argument must be the one which precedes the command to be executed.
 
 ------------------------------------------------------------------------------
 								 *R_in_buffer*
-6.2. Run R in Neovim buffer (experimental feature)~
+6.2. Run R in Neovim buffer~
 
 If you want to run R in Neovim's built in terminal emulator, put in your
 |nvimrc|:

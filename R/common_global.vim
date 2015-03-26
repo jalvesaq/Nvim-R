@@ -614,7 +614,6 @@ function StartR_TmuxSplit(rcmd)
     let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
-                \ 'set-environment NVIMR_SVRNM ' . $NVIMR_SVRNM ,
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ]
     if &t_Co == 256
@@ -698,7 +697,7 @@ function StartR_ExternalTerm(rcmd)
         let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') . ' NVIMR_ID=' . $NVIMR_ID . ' NVIMR_SECRET=' . $NVIMR_SECRET . ' NVIMR_SVRNM=' . $NVIMR_SVRNM . ' ' . a:rcmd
+    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') . ' NVIMR_ID=' . $NVIMR_ID . ' NVIMR_SECRET=' . $NVIMR_SECRET . ' ' . a:rcmd
 
     call system("tmux has-session -t " . g:rplugin_tmuxsname)
     if v:shell_error
@@ -754,7 +753,6 @@ endfunction
 
 " Start R
 function StartR(whatr)
-    let $NVIMR_SVRNM = "Neovim_" . g:rplugin_myport
     call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
@@ -924,6 +922,10 @@ function WaitNvimcomStart()
             call jobstop(g:rplugin_clt_job)
             let g:rplugin_clt_job = 0
         endif
+        if g:rplugin_srv_job
+            call jobstop(g:rplugin_srv_job)
+            let g:rplugin_srv_job = 0
+        endif
         if has("win64")
             let nvc = g:rplugin_nvimcom_home . "/bin/x64/nvimclient.exe"
             let nvs = g:rplugin_nvimcom_home . "/bin/x64/nvimserver.exe"
@@ -936,15 +938,11 @@ function WaitNvimcomStart()
         endif
         if filereadable(nvc)
             let g:rplugin_clt_job = jobstart('nvimcom', nvc)
-            autocmd JobActivity nvimcom call ROnJobActivity()
         else
             call RWarningMsg('Application "' . nvc . '" not found.")
         endif
         if filereadable(nvs)
-            if !exists("g:rplugin_srv_job")
-                let g:rplugin_srv_job = jobstart('udpsvr', nvs)
-                autocmd JobActivity udpsvr call ROnJobActivity()
-            endif
+            let g:rplugin_srv_job = jobstart('udpsvr', nvs)
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
         endif
@@ -1844,6 +1842,15 @@ function RQuit(how)
         sleep 500m
         " Enter Insert mode and press 'any key' to close the buffer
         call feedkeys("a ")
+    endif
+
+    if g:rplugin_clt_job
+        call jobstop(g:rplugin_clt_job)
+        let g:rplugin_clt_job = 0
+    endif
+    if g:rplugin_srv_job
+        call jobstop(g:rplugin_srv_job)
+        let g:rplugin_srv_job = 0
     endif
 endfunction
 
@@ -3236,6 +3243,7 @@ let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
 let g:rplugin_running_rhelp = 0
 let g:rplugin_clt_job = 0
+let g:rplugin_srv_job = 0
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_nvimcom_port = 0
@@ -3244,6 +3252,11 @@ let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 let g:rplugin_starting_R = 0
+
+" Set the JobActivities here because to guarantee that the callback function
+" will be called only once
+autocmd JobActivity nvimcom call ROnJobActivity()
+autocmd JobActivity udpsvr call ROnJobActivity()
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
