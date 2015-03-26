@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	R
 " Author:	Jakson Alves de Aquino <jalvesaq@gmail.com>
-" Last Change:	Fri Feb 20, 2015  12:16PM
+" Last Change:	Thu Mar 26, 2015  05:41PM
 
 
 " Only load this indent file when no other was loaded.
@@ -259,6 +259,10 @@ function GetRIndent()
     if line =~ '^\\examples{' || line =~ '^\\usage{' || line =~ '^\\dontshow{' || line =~ '^\\dontrun{' || line =~ '^\\donttest{' || line =~ '^\\testonly{'
       return 0
     endif
+  endif
+
+  if &filetype == "rnoweb" && line =~ "^<<.*>>="
+    return 0
   endif
 
   if cline =~ '^\s*{'
