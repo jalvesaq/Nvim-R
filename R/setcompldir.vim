@@ -1,5 +1,5 @@
 
-" g:rplugin_home should be the directory where the r-plugin files are.  For
+" g:rplugin_home should be the directory where the plugin files are.  For
 " users following the installation instructions it will be at ~/.vim or
 " ~/vimfiles, that is, the same value of g:rplugin_uservimfiles. However the
 " variables will have different values if the plugin is installed somewhere

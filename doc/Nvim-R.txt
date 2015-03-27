@@ -1074,6 +1074,7 @@ The last argument must be the one which precedes the command to be executed.
 
 ------------------------------------------------------------------------------
 								 *R_in_buffer*
+								 *R_hl_term*
 6.2. Run R in Neovim buffer~
 
 If you want to run R in Neovim's built in terminal emulator, put in your
@@ -2483,7 +2484,7 @@ See also: |R_latexcmd|.
 9.21. Suggested setup for the Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
-Nvim-r-plugin customization.
+Nvim-R customization.
 
 Here are some suggestions of configuration of Nvim, Bash, Tmux and R. To
 understand what you are doing, and change the configuration to your taste,

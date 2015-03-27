@@ -552,7 +552,7 @@ function! SyncTeX_forward(...)
     if g:rplugin_pdfviewer == "okular"
         call system("okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
     elseif g:rplugin_pdfviewer == "evince"
-        call jobstart("RnwSyncFor", "python", [g:rplugin_home . "/r-plugin/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"])
+        call jobstart("RnwSyncFor", "python", [g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"])
         autocmd JobActivity RnwSyncFor call ROnJobActivity()
         if g:rplugin_has_wmctrl
             call system("wmctrl -a '" . basenm . ".pdf'")
@@ -606,7 +606,7 @@ function! Run_SyncTeX()
         if basedir != '.'
             exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
         endif
-        call jobstart("RnwSyncTeX", "python", [g:rplugin_home . "/r-plugin/synctex_evince_backward.py", basenm . ".pdf", "nvim"])
+        call jobstart("RnwSyncTeX", "python", [g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"])
         autocmd JobActivity RnwSyncTeX call ROnJobActivity()
         if basedir != '.'
             cd -

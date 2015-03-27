@@ -19,7 +19,7 @@
 "          
 "          Based on previous work by Johannes Ranke
 "
-" Please see doc/r-plugin.txt for usage details.
+" Please see doc/Nvim-R.txt for usage details.
 "==========================================================================
 
 
