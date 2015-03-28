@@ -552,8 +552,11 @@ function! SyncTeX_forward(...)
     if g:rplugin_pdfviewer == "okular"
         call system("okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
     elseif g:rplugin_pdfviewer == "evince"
-        call jobstart("RnwSyncFor", "python", [g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"])
-        autocmd JobActivity RnwSyncFor call ROnJobActivity()
+        if exists("##JobActivity")
+            call jobstart("RnwSyncFor", "python", [g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"])
+        else
+            call jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
+        endif
         if g:rplugin_has_wmctrl
             call system("wmctrl -a '" . basenm . ".pdf'")
         endif
@@ -606,16 +609,22 @@ function! Run_SyncTeX()
         if basedir != '.'
             exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
         endif
-        call jobstart("RnwSyncTeX", "python", [g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"])
-        autocmd JobActivity RnwSyncTeX call ROnJobActivity()
+        if exists("##JobActivity")
+            call jobstart("RnwSyncTeX", "python", [g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"])
+        else
+            call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
+        endif
         if basedir != '.'
             cd -
         endif
     elseif (g:rplugin_pdfviewer == "okular" || g:rplugin_pdfviewer == "zathura") && !exists("g:rplugin_tail_follow")
         let g:rplugin_tail_follow = 1
         call writefile([], g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search")
-        call jobstart("RnwSyncTeX", "tail", ["-f", g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search"])
-        autocmd JobActivity RnwSyncTeX call ROnJobActivity()
+        if exists("##JobActivity")
+            call jobstart("RnwSyncTeX", "tail", ["-f", g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search"])
+        else
+            call jobstart(["tail", "-f", g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search"], g:rplugin_job_handlers)
+        endif
         autocmd VimLeave * call delete(g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search") | call delete(g:rplugin_tmpdir . "/synctex_back.sh")
     endif
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
@@ -643,6 +652,11 @@ if g:rplugin_pdfviewer != "none"
     if g:R_synctex
         call Run_SyncTeX()
     endif
+endif
+
+if exists("##JobActivity")
+    autocmd JobActivity RnwSyncFor call ROnJobActivity()
+    autocmd JobActivity RnwSyncTeX call ROnJobActivity()
 endif
 
 call RSourceOtherScripts()

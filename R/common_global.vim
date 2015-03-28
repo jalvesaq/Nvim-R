@@ -937,12 +937,20 @@ function WaitNvimcomStart()
             let nvs = g:rplugin_nvimcom_home . "/bin/nvimserver"
         endif
         if filereadable(nvc)
-            let g:rplugin_clt_job = jobstart('nvimcom', nvc)
+            if exists("##JobActivity")
+                let g:rplugin_clt_job = jobstart('nvimcom', nvc)
+            else
+                let g:rplugin_clt_job = jobstart([nvc], g:rplugin_job_handlers)
+            endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.")
         endif
         if filereadable(nvs)
-            let g:rplugin_srv_job = jobstart('udpsvr', nvs)
+            if exists("##JobActivity")
+                let g:rplugin_srv_job = jobstart('udpsvr', nvs)
+            else
+                let g:rplugin_srv_job = jobstart([nvs], g:rplugin_job_handlers)
+            endif
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
         endif
@@ -1015,10 +1023,15 @@ function StartObjBrowser_Tmux()
                 \ 'set laststatus=0',
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
-                \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
-                \ 'let g:rplugin_clt_job = jobstart("nvimcom", "' . g:rplugin_nvimcom_home . '/bin/nvimclient")',
-                \ 'let g:rplugin_srv_job = jobstart("udpsvr", "' . g:rplugin_nvimcom_home . '/bin/nvimserver")',
-                \ 'autocmd JobActivity udpsvr call ROnJobActivity()'], objbrowserfile)
+                \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")'], objbrowserfile)
+    if exists("##JobActivity")
+        call writefile([ 'let g:rplugin_clt_job = jobstart("nvimcom", "' . g:rplugin_nvimcom_home . '/bin/nvimclient")',
+                    \ 'let g:rplugin_srv_job = jobstart("udpsvr", "' . g:rplugin_nvimcom_home . '/bin/nvimserver")',
+                    \ 'autocmd JobActivity udpsvr call ROnJobActivity()'], objbrowserfile, 'a')
+    else
+        call writefile(['let g:rplugin_clt_job = jobstart(["' . g:rplugin_nvimcom_home . '/bin/nvimclient"' . '], g:rplugin_job_handlers)',
+                    \ 'let g:rplugin_srv_job = jobstart(["' . g:rplugin_nvimcom_home . '/bin/nvimserver"' . '], g:rplugin_job_handlers)'], objbrowserfile, 'a')
+    endif
 
     if g:R_objbr_place =~ "left"
         let panw = system("tmux list-panes | cat")
@@ -1161,7 +1174,7 @@ function RBrOpenCloseLs_Nvim(status)
 endfunction
 
 function RBrOpenCloseLs_TmuxNeovim(status)
-    if exists("g:rplugin_ob_port")
+    if g:rplugin_ob_port
         call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . 'call RBrOpenCloseLs_Nvim(' . a:status . ')' . "\n")
     endif
 endfunction
@@ -2987,7 +3000,6 @@ if g:R_in_buffer
     let g:rplugin_rhist_pos = -1
     let g:rplugin_addedtohist = 0
     call RSetDefaultValue("g:R_nvimpager", "'vertical'")
-    autocmd JobActivity Rjob call GetRActivity()
 else
     call RSetDefaultValue("g:R_nvimpager",      "'tab'")
 endif
@@ -3037,6 +3049,31 @@ function ROnJobActivity()
         endfor
     elseif v:job_data[1] == 'stderr'
         call RWarningMsg('JobActivity error: ' . join(v:job_data[2]))
+    endif
+endfunction
+
+function ROnJobStdout(job_id, data)
+    for cmd in a:data
+        if cmd == ""
+            continue
+        endif
+        if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
+            exe cmd
+        else
+            call RWarningMsg("[Job] Unknown command: " . cmd)
+        endif
+    endfor
+endfunction
+
+function ROnJobStderr(job_id, data)
+    call RWarningMsg('Job error: ' . join(a:data))
+endfunction
+
+function ROnJobExit(job_id, data)
+    if a:job_id == g:rplugin_clt_job
+        let g:rplugin_clt_job = 0
+    elseif a:job_id == g:rplugin_srv_job
+        let g:rplugin_srv_job = 0
     endif
 endfunction
 
@@ -3247,6 +3284,7 @@ let g:rplugin_clt_job = 0
 let g:rplugin_srv_job = 0
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
+let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_nvimcom_home = ""
 let g:rplugin_lastev = ""
@@ -3256,8 +3294,12 @@ let g:rplugin_starting_R = 0
 
 " Set the JobActivities here because to guarantee that the callback function
 " will be called only once
-autocmd JobActivity nvimcom call ROnJobActivity()
-autocmd JobActivity udpsvr call ROnJobActivity()
+if exists("##JobActivity")
+    autocmd JobActivity nvimcom call ROnJobActivity()
+    autocmd JobActivity udpsvr call ROnJobActivity()
+else
+    let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
+endif
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
