@@ -1,14 +1,13 @@
 " This file contains code used only when R run in Neovim buffer
 
 function SendCmdToR_Neovim(...)
-    let curbuf = bufname("%")
-    let saved_reg = @"
-    let @" = a:1 . "\r"
-    exe "sbuffer " . g:rplugin_R_bufname
-    normal! p
-    exe "sbuffer " . curbuf
-    let @" = saved_reg
-    return 1
+    if g:rplugin_R_job
+        call jobsend(g:rplugin_R_job, a:1 . "\n")
+        return 1
+    else
+        call RWarningMsg("Is R running?")
+        return 0
+    endif
 endfunction
 
 function StartR_Neovim()
@@ -26,24 +25,24 @@ function StartR_Neovim()
     set switchbuf=useopen
     if g:R_vsplit
         if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 16)
-            silent exe "belowright " . g:R_rconsole_width . "vsplit"
+            silent exe "belowright " . g:R_rconsole_width . "vnew"
         else
-            silent belowright vsplit
+            silent belowright vnew
         endif
     else
         if g:R_rconsole_height > 6 && g:R_rconsole_height < (winheight(0) - 6)
-            silent exe "belowright " . g:R_rconsole_height . "split"
+            silent exe "belowright " . g:R_rconsole_height . "new"
         else
-            silent belowright split
+            silent belowright new
         endif
     endif
     call cursor("$", 1)
-    exe "term R " . r_args_str
+    let g:rplugin_R_job = termopen("R " . r_args_str, {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if g:R_hl_term
-        set filetype=rout
+        runtime syntax/rout.vim
     endif
     exe "sbuffer " . edbuf
     stopinsert
