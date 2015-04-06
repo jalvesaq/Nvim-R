@@ -19,18 +19,10 @@ function StartR_OSX()
     if v:shell_error
         call RWarningMsg(rlog)
     endif
-    if g:R_nvim_wd == 0
-        lcd -
-    endif
     let g:SendCmdToR = function('SendCmdToR_OSX')
     if WaitNvimcomStart()
         call foreground()
         sleep 200m
-        if g:R_nvim_wd
-            call SendToNvimcom("\x08" . $NVIMR_ID . "setwd('" . getcwd() . "')")
-        else
-            call SendToNvimcom("\x08" . $NVIMR_ID . "setwd('" . expand("%:p:h") . "')")
-        endif
         if g:R_after_start != ''
             call system(g:R_after_start)
         endif

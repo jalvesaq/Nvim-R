@@ -1693,14 +1693,21 @@ skip this step:
 								   *R_nvim_wd*
 6.29 Start R in working directory of Nvim~
 
-The Nvim-R starts R in the directory where the current buffer is. If you
-want R's working directory to be the same as Nvim's working directory, put in
-your |nvimrc|:
+When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
+package nvimcom runs the command `setwd()` with the directory of the file
+being edited as argument, that is, the R working directory becomes the same
+directory of the R file. If you want R's working directory to be the same as
+Nvim's working directory, put in your |nvimrc|:
 >
-    let R_nvim_wd = 1
+   let R_nvim_wd = 1
 <
 This option is useful only for those who did not enable 'autochdir'.
 
+If you prefer that the Vim-R-plugin does not set the working directory in any
+way, put in |vimrc|:
+>
+   let R_nvim_wd = -1
+<
 
 ------------------------------------------------------------------------------
 							       *R_after_start*
