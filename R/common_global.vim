@@ -1818,6 +1818,13 @@ function ClearRInfo()
     if g:rplugin_do_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux set automatic-rename on")
     endif
+
+    if g:rplugin_clt_job
+        call jobstop(g:rplugin_clt_job)
+    endif
+    if g:rplugin_srv_job
+        call jobstop(g:rplugin_srv_job)
+    endif
 endfunction
 
 " Quit R
@@ -1862,24 +1869,19 @@ function RQuit(how)
     sleep 50m
     call CloseExternalOB()
 
-    call ClearRInfo()
-
     if g:rplugin_do_tmux_split
         " Force Neovim to update the window size
         sleep 500m
         mode
-    elseif g:R_in_buffer
+    elseif g:R_in_buffer && exists("g:rplugin_R_bufname")
         exe "sbuffer " . g:rplugin_R_bufname
         sleep 500m
         " Enter Insert mode and press 'any key' to close the buffer
         call feedkeys("a ")
     endif
 
-    if g:rplugin_clt_job
-        call jobstop(g:rplugin_clt_job)
-    endif
-    if g:rplugin_srv_job
-        call jobstop(g:rplugin_srv_job)
+    if !g:R_in_buffer
+        call ClearRInfo()
     endif
 endfunction
 
@@ -2797,6 +2799,9 @@ function RVimLeave()
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/rconsole_hwnd_" . $NVIMR_SECRET)
     call delete(g:rplugin_tmpdir . "/openR'")
+    if executable("rmdir")
+        call system("rmdir '" . g:rplugin_tmpdir . "'")
+    endif
 endfunction
 
 function SetRPath()
@@ -3084,6 +3089,8 @@ function ROnJobExit(job_id, data)
         let g:rplugin_srv_job = 0
     elseif a:job_id == g:rplugin_R_job
         let g:rplugin_R_job = 0
+        unlet g:rplugin_R_bufname
+        call ClearRInfo()
     endif
 endfunction
 
@@ -3369,6 +3376,3 @@ if g:R_applescript
 endif
 runtime R/nvimbuffer.vim
 
-if exists("g:R_permanent_libs")
-    call RWarningMsgInp("The option 'R_permanent_libs' was renamed to 'R_start_libs'. Please, rename it in your nvimrc too.")
-endif
