@@ -788,7 +788,7 @@ function StartR(whatr)
     else
         let start_options += ['options(nvimcom.allnames = FALSE)']
     endif
-    if g:R_objbr_texerr
+    if g:R_texerr
         let start_options += ['options(nvimcom.texerrs = TRUE)']
     else
         let start_options += ['options(nvimcom.texerrs = FALSE)']
@@ -3014,7 +3014,6 @@ call RSetDefaultValue("g:R_objbr_w",          40)
 call RSetDefaultValue("g:R_objbr_opendf",      1)
 call RSetDefaultValue("g:R_objbr_openlist",    0)
 call RSetDefaultValue("g:R_objbr_allnames",    0)
-call RSetDefaultValue("g:R_objbr_texerr",      1)
 call RSetDefaultValue("g:R_objbr_labelerr",    1)
 call RSetDefaultValue("g:R_in_buffer",         0)
 call RSetDefaultValue("g:R_hl_term",           0)
@@ -3036,6 +3035,7 @@ endif
 call RSetDefaultValue("g:R_objbr_place",     "'script,right'")
 call RSetDefaultValue("g:R_user_maps_only", 0)
 call RSetDefaultValue("g:R_latexcmd", "'default'")
+call RSetDefaultValue("g:R_texerr",             1)
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
 if has("win32") || has("win64")
     call RSetDefaultValue("g:R_Rterm",           0)
