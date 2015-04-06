@@ -2,7 +2,12 @@
 
 function SendCmdToR_Neovim(...)
     if g:rplugin_R_job
-        call jobsend(g:rplugin_R_job, a:1 . "\n")
+        if g:R_ca_ck
+            let cmd = "\001" . "\013" . a:1
+        else
+            let cmd = a:1
+        endif
+        call jobsend(g:rplugin_R_job, cmd . "\n")
         return 1
     else
         call RWarningMsg("Is R running?")
