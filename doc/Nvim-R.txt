@@ -982,6 +982,7 @@ is running:
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
 |R_in_buffer|         Run R in Neovim buffer
+|R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
 |R_hl_term|           Syntax highlight terminal as rout file type
 |R_assign|            Convert '_' into ' <- '
 |R_assign_map|        Choose what to convert into ' <- '
@@ -1079,6 +1080,7 @@ The last argument must be the one which precedes the command to be executed.
 
 ------------------------------------------------------------------------------
 								 *R_in_buffer*
+								 *R_esc_term*
 								 *R_hl_term*
 6.2. Run R in Neovim buffer~
 
@@ -1087,10 +1089,12 @@ If you want to run R in Neovim's built in terminal emulator, put in your
 >
    let R_in_buffer = 1
 <
-R will run in a Neovim buffer created with the command |:term|. You have to
-enter Insert mode to type commands in R Console. Instead of using the <Esc>
-key, type <C-\><C-N> to go to Normal mode.
-
+R will run in a Neovim buffer created with the command |:term|. The <Esc> key
+will be mapped to stop Insert mode and go to Normal mode. If you prefer to use
+the default <C-\><C-N> to go to Normal mode, put in your |nvimrc|:
+>
+   let R_esc_term = 0
+<
 You may either use the package colorout to colorize R output or let Nvim
 highlight the terminal contents as it was a .Rout file type. If you prefer the
 later option, do not load colorout in your `~/.Rprofile` and put in your

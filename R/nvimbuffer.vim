@@ -49,6 +49,9 @@ function StartR_Neovim()
     if g:R_hl_term
         runtime syntax/rout.vim
     endif
+    if g:R_esc_term
+        tnoremap <buffer> <Esc> <C-\><C-n>
+    endif
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()
