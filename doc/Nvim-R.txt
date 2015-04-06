@@ -1157,6 +1157,36 @@ Valid values for the Object Browser placement are "script" or "console" and
    let R_objbr_place = "script,right"
    let R_objbr_place = "console,left"
 <
+Below is an example of setup of some other options in the |nvimrc| that
+control the behavior of the Object Browser:
+>
+   let R_objbr_opendf = 1    # Show data.frames elements
+   let R_objbr_openlist = 0  # Show lists elements
+   let R_objbr_allnames = 0  # Show .GlobalEnv hidden objects
+   let R_objbr_texerr = 1    # Output TeX errors and warnings
+   let R_objbr_labelerr = 1  # Warn if label is not a valid text
+<
+Objects whose names start with a "." are hidden by default. If you want that
+they are displayed in the Object Browser, set the value of `R_objbr_allnames`
+to `1`.
+
+when a `data.frame` appears in the Object Browser for the first time, its
+elements are immediately displayed, but the elements of a `list` are displayed
+only if it is explicitly opened. The options `R_objbr_opendf` and
+`R_objbr_openlist` control the initial status (either opened or closed) of,
+respectively, `data.frames` and `lists`. The options are ignored for
+`data.frames` and `lists` of libraries which are always started closed.
+
+If an object R's workspace has the attribute `"label"`, it is displayed in
+Nvim's Object Browser. If the `"label"` attribute is not of class
+`"character"`, and if  `R_objbr_labelerr` is `1`, an error message is printed
+in the Object Browser.
+
+If the value of `R_objbr_texerr` is `1`, LaTeX errors and warnings produced by
+the compilation of the .tex document into .pdf file will be output to R
+Console at the end of the compilation. So, you do not have to scroll the R
+Console seeking for these messages.
+
 
 ------------------------------------------------------------------------------
 								 *R_nvimpager*
@@ -1170,10 +1200,6 @@ If you do not want to see R documentation in a Nvim's buffer, put in your
 |nvimrc|:
 >
    let R_nvimpager = "no"
-<
-And put in your `~/.Rprofile`:
->
-   options(nvimcom.nvimpager = FALSE)
 <
 If you want to see R documentation in Nvim, but are not satisfied with the way
 it works, please, read the subsection 6.5.2 below.
@@ -2089,7 +2115,6 @@ same signal sent when you press CTRL-C into R's Console.
 If you prefer to see help pages in an html browser, put in your `~/.Rprofile`:
 >
    options(help_type = "html")
-   option(nvimcom.nvimpager = FALSE)
 <
 and in your |nvimrc| (see |R_nvimpager|):
 >

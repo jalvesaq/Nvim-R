@@ -773,6 +773,38 @@ function StartR(whatr)
         let b:rplugin_r_args = split(r_args)
     endif
 
+    if g:R_objbr_opendf
+        let start_options = ['options(nvimcom.opendf = TRUE)']
+    else
+        let start_options = ['options(nvimcom.opendf = FALSE)']
+    endif
+    if g:R_objbr_openlist
+        let start_options += ['options(nvimcom.openlist = TRUE)']
+    else
+        let start_options += ['options(nvimcom.openlist = FALSE)']
+    endif
+    if g:R_objbr_allnames
+        let start_options += ['options(nvimcom.allnames = TRUE)']
+    else
+        let start_options += ['options(nvimcom.allnames = FALSE)']
+    endif
+    if g:R_objbr_texerr
+        let start_options += ['options(nvimcom.texerrs = TRUE)']
+    else
+        let start_options += ['options(nvimcom.texerrs = FALSE)']
+    endif
+    if g:R_objbr_labelerr
+        let start_options += ['options(nvimcom.labelerr = TRUE)']
+    else
+        let start_options += ['options(nvimcom.labelerr = FALSE)']
+    endif
+    if g:R_nvimpager == "no"
+        let start_options += ['options(nvimcom.nvimpager = FALSE)']
+    else
+        let start_options += ['options(nvimcom.nvimpager = TRUE)']
+    endif
+    call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
+
     if g:R_in_buffer
         call StartR_Neovim()
         return
@@ -914,8 +946,8 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.1"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.1.')
+        if nvimcom_version != "0.9.2"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.2.')
             sleep 1
         endif
         if g:rplugin_clt_job
@@ -2749,6 +2781,7 @@ endfunction
 
 function RVimLeave()
     call delete(g:rplugin_rsource)
+    call delete(g:rplugin_tmpdir . "/start_options.R")
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/formatted_code")
     call delete(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
@@ -2973,6 +3006,11 @@ call RSetDefaultValue("g:R_routnotab",         0)
 call RSetDefaultValue("g:R_editor_w",         66)
 call RSetDefaultValue("g:R_help_w",           46)
 call RSetDefaultValue("g:R_objbr_w",          40)
+call RSetDefaultValue("g:R_objbr_opendf",      1)
+call RSetDefaultValue("g:R_objbr_openlist",    0)
+call RSetDefaultValue("g:R_objbr_allnames",    0)
+call RSetDefaultValue("g:R_objbr_texerr",      1)
+call RSetDefaultValue("g:R_objbr_labelerr",    1)
 call RSetDefaultValue("g:R_in_buffer",         0)
 call RSetDefaultValue("g:R_hl_term",           0)
 call RSetDefaultValue("g:R_nvimcom_wait",   5000)
