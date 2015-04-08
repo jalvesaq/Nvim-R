@@ -844,44 +844,14 @@ Normal, Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
-5.3. Syntactically correct code may be wrongly indented~
-
-If the Nvim-R indents your code wrongly you may get the correct
-indentation by adding braces and line breaks to it. For example, try to
-indent the code below:
->
-   # This code will be wrongly indented:
-
-   levels(x) <- ## nl == nL or 1
-       if (nl == nL) as.character(labels)
-       else paste(labels, seq_along(levels), sep = "")
-   class(x) <- c(if(ordered) "ordered", "factor")
-
-
-   # But this one will be correctly indented:
-
-   levels(x) <- ## nl == nL or 1
-       if (nl == nL)
-           as.character(labels)
-       else
-           paste(labels, seq_along(levels), sep = "")
-   class(x) <- c(if(ordered) "ordered", "factor")
-<
-See also:
-
-   https://github.com/jcfaria/Vim-R-plugin/issues/77
-   https://github.com/jcfaria/Vim-R-plugin/blob/master/r-plugin/indent_test.R
-
-
-------------------------------------------------------------------------------
-5.4. Functions are not always correctly sent to R~
+5.3. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
 operator. See: https://github.com/jcfaria/Vim-R-plugin/issues/94
 
 
 ------------------------------------------------------------------------------
-5.5. Objects Browser does not support knitr cache=TRUE~
+5.4. Objects Browser does not support knitr cache=TRUE~
 
 When processing Rnoweb documents with the knitr package, if the chunk option
 `cache` is `TRUE`, the Object Browser will not be able to detect the classes
@@ -890,7 +860,7 @@ issue is to define the chunk option `cache.lazy=FALSE`.
 
 
 ------------------------------------------------------------------------------
-5.6. Wrong message that "R is busy" (Windows only)~
+5.5. Wrong message that "R is busy" (Windows only)~
 
 On Windows, when code is sent from Nvim to R Console, the nvimcom library sets
 the value of the internal variable `r_is_busy` to 1. The value is set back to
@@ -907,14 +877,14 @@ The nvimcom library is started with the state `busy`.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-SyncTeX-win*
-5.7. SyncTeX on Windows~
+5.6. SyncTeX on Windows~
 
 On Windows, backward search with Sumatra pop ups a console window (`vim`
 running the required --remote-expr command) which quickly disappears.
 
 
 ------------------------------------------------------------------------------
-5.8. R must be started by Nvim~
+5.7. R must be started by Nvim~
 
 The communication between Nvim and R will work only if R was started by Nvim
 through the <LocalLeader>rf command because the plugin was designed to connect
@@ -2076,30 +2046,16 @@ The following files are part of the plugin and should be in your ~/.nvim
 directory after the installation:
 
 doc/Nvim-R.txt
-indent/rhelp.vim
-indent/rmd.vim
-indent/rnoweb.vim
-indent/rrst.vim
-indent/r.vim
-syntax/rbrowser.vim
-syntax/rdoc.vim
-syntax/rhelp.vim
-syntax/rmd.vim
-syntax/rout.vim
-syntax/rrst.vim
-syntax/r.vim
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
 ftplugin/rhelp_nvimr.vim
-ftplugin/rhelp.vim
 ftplugin/rmd_nvimr.vim
-ftplugin/rmd.vim
 ftplugin/rnoweb_nvimr.vim
-ftplugin/rnoweb.vim
 ftplugin/r_nvimr.vim
 ftplugin/rrst_nvimr.vim
-ftplugin/rrst.vim
-ftplugin/r.vim
+syntax/rbrowser.vim
+syntax/rdoc.vim
+syntax/rout.vim
 R/common_buffer.vim
 R/common_global.vim
 R/functions.vim
@@ -2689,7 +2645,7 @@ put in your |nvimrc|:
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-03-26)
+0.9.0 (2015-04-05)
 
  * First release (initial code extracted from the Vim-R-plugin).
 

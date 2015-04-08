@@ -3305,13 +3305,19 @@ let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 let g:rplugin_starting_R = 0
 
-" Set the JobActivities here because to guarantee that the callback function
-" will be called only once
-if exists("##JobActivity")
+" Check if Neovim version is recent enough
+redir => s:nvim_version
+silent version
+redir END
+let s:version_list = split(s:nvim_version)
+let s:nvim_version = s:version_list[1]
+if s:nvim_version < "0.0.0-alpha+201504060000"
     call RWarningMsgInp("You must update Neovim! Run 'git pull', 'make', etc...")
-else
-    let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
 endif
+unlet s:nvim_version
+unlet s:version_list
+
+let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0

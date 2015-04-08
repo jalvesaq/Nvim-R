@@ -59,15 +59,10 @@ deb:
 	  - ftplugin/rbrowser.vim\n\
 	  - ftplugin/rdoc.vim\n\
 	  - ftplugin/rhelp_nvimr.vim\n\
-	  - ftplugin/rhelp.vim\n\
 	  - ftplugin/rmd_nvimr.vim\n\
-	  - ftplugin/rmd.vim\n\
 	  - ftplugin/rnoweb_nvimr.vim\n\
-	  - ftplugin/rnoweb.vim\n\
 	  - ftplugin/r_nvimr.vim\n\
 	  - ftplugin/rrst_nvimr.vim\n\
-	  - ftplugin/rrst.vim\n\
-	  - ftplugin/r.vim\n\
 	  - R/common_buffer.vim\n\
 	  - R/common_global.vim\n\
 	  - R/functions.vim\n\
@@ -81,18 +76,9 @@ deb:
 	  - R/synctex_evince_backward.py\n\
 	  - R/synctex_evince_forward.py\n\
 	  - R/synctex_okular_backward.sh\n\
-	  - indent/rhelp.vim\n\
-	  - indent/rmd.vim\n\
-	  - indent/rnoweb.vim\n\
-	  - indent/rrst.vim\n\
-	  - indent/r.vim\n\
 	  - syntax/rbrowser.vim\n\
 	  - syntax/rdoc.vim\n\
-	  - syntax/rhelp.vim\n\
-	  - syntax/rmd.vim\n\
 	  - syntax/rout.vim\n\
-	  - syntax/rrst.vim\n\
-	  - syntax/r.vim\n\
 	" > /tmp/nvim-r-tmp/usr/share/nvim/registry/nvim-r.yaml
 	# Create the copyright
 	echo "Copyright (C) 2011-2014 Jakson Aquino\n\
