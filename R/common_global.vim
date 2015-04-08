@@ -668,11 +668,6 @@ endfunction
 
 
 function StartR_ExternalTerm(rcmd)
-    if $DISPLAY == "" && !g:rplugin_is_darwin
-        call RWarningMsg("Start 'tmux' before Nvim. The X Window system is required to run R in an external terminal.")
-        return
-    endif
-
     if g:R_notmuxconf
         let tmuxcnf = ' '
     else
@@ -3146,6 +3141,12 @@ else
     let g:R_applescript = 0
     call RSetDefaultValue("g:R_tmux_ob", 1)
 endif
+
+if !g:rplugin_do_tmux_split && $TMUX == "" && $DISPLAY == "" && !g:rplugin_is_darwin
+    let g:R_in_buffer = 1
+    let g:R_tmux_ob = 0
+endif
+
 if g:R_objbr_place =~ "console" && !g:R_in_buffer
     let g:R_tmux_ob = 1
 endif
