@@ -41,7 +41,6 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
-    call cursor("$", 1)
     let g:rplugin_R_job = termopen("R " . r_args_str, {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl

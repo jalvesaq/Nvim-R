@@ -2079,11 +2079,8 @@ function ShowRDoc(rkeyword)
     endif
 
     if exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname
-        call RWarningMsg("See https://github.com/neovim/neovim/issues/2301")
-        sleep 200m
-        return
         " Exit Terminal mode and go to Normal mode
-        call feedkeys("\<C-\>\<C-N>", 't')
+        stopinsert
     endif
 
     " If the help command was triggered in the R Console, jump to Vim pane
