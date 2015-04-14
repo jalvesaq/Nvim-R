@@ -272,6 +272,9 @@ temporarily using the full terminal window; 4) it is the better way of using
 the plugin remotely through ssh (the alternative is to enable the option
 |R_in_buffer|). Please, read |Nvim-R-tmux| for tips on how to use Tmux.
 
+If not in a Tmux session and the X Window is not running, R wil run in a
+Neovim terminal buffer.
+
 
 4.1. Key bindings~
 
@@ -2059,7 +2062,6 @@ syntax/rout.vim
 R/common_buffer.vim
 R/common_global.vim
 R/functions.vim
-R/global_r_plugin.vim
 R/gui_running.vim
 R/osx.vim
 R/rcomplete.vim
@@ -2397,37 +2399,7 @@ on top" or a similar option provided by your desktop manager.
 
 
 ------------------------------------------------------------------------------
-							       *Nvim-R-global*
-9.17. Turn the R-plugin into a global plugin (Linux/Unix only)~
-
-The Nvim-R is a file type plugin. If you want its functionality
-available for all file types, then put in your |nvimrc|:
->
-   runtime R/global_r_plugin.vim
-<
-You will then be able to type <LocalLeader>rf to start and <LocalLeader>rq to
-quit different command line interpreters and <LocalLeader>d, l, ss, bb, etc to
-send code to the interpreter. If you want support for a language other than
-Julia, Python, Haskell, Ruby and Lisp, you have to set the values of
-R_exe and R_quit in two Nvim auto commands in your |nvimrc|,
-BEFORE the `runtime` command above. Example:
->
-   autocmd FileType matlab let R_exe = "octave" | let R_quit = "quit"
-   autocmd BufNewFile,BufRead *.m let R_exe = "octave" | let R_quit = "quit"
-<
-If you use GVim, you may also want to set |R_never_unmake_menu| in
-your |nvimrc|:
->
-   let R_never_unmake_menu = 1
-<
-Lastly, you may turn off nvimcom waiting with the |R_nvimcom_wait| option:
->
-   let R_nvimcom_wait = -1
-<
-
-
-------------------------------------------------------------------------------
-9.18. Disable syntax highlight of R functions~
+9.17. Disable syntax highlight of R functions~
 
 If you want to disable the syntax highlight of R functions put in your
 |nvimrc|:
@@ -2436,26 +2408,8 @@ If you want to disable the syntax highlight of R functions put in your
 <
 
 ------------------------------------------------------------------------------
-								*Nvim-R-knitr*
-9.19. Tips for knitr users~
-
-If you are using knitr with option cache=TRUE, you may want from time to time
-to delete all objects in R workspace and all files in the cache directory. If
-you want to use <LocalLeader>kr in Normal mode for this, put in your |nvimrc|:
->
-   nmap <LocalLeader>kr :call g:SendCmdToR('rm(list=ls(all.names=TRUE)); unlink("cache/*")')<CR>
-<
-When generating pdfs out of Rmd-files, you can send options to pandoc. State
-them in your |nvimrc|. For example
-
-   let R_pandoc_args = "--toc -V lang=german"
-
-will produce a german document with a table of contents.
-
-
-------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.20. Integration with LaTeX-Box~
+9.18. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
@@ -2478,7 +2432,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.21. Suggested setup for the Nvim-R~
+9.19. Suggested setup for the Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2587,7 +2541,7 @@ Finally, if you want to use vi key bindings in Bash:
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-source-echo*
-9.22. Set echo to TRUE or FALSE when sending multiple lines of code too R~
+9.20. Set echo to TRUE or FALSE when sending multiple lines of code too R~
 
 If you want to alternate the `echo` argument of the `source()` function
 between `TRUE` and `FALSE`, then, you might want to create a couple of maps in
@@ -2605,7 +2559,7 @@ named with lowercase "r" extensions, you have to repeat the commands with
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.23. Syntax highlight of .Rout files~
+9.21. Syntax highlight of .Rout files~
 
 You can set the foreground colors of R output in your |nvimrc|. The example
 below is for a terminal emulator that supports 256 colors (see
