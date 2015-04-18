@@ -606,7 +606,7 @@ have their classes recognized in the GlobalEnv view.
 You can toggle the state of a line as either commented or uncommented by
 typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
 " or "### ", depending on the values of R_indent_commented and
-r_indent_ess_comments (see |r_indenting|).
+r_indent_ess_comments (see |R_rcomment_string|).
 
 You can also add the string "# " to the beginning of a line by typing
 <LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
@@ -976,6 +976,7 @@ is running:
 |Rout_more_colors|    More syntax highlighting in R output
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
+|R_rcomment_string|   String to comment code with \xx and \o
 |R_notmuxconf|        Don't use a specially built Tmux config file
 |R_rconsole_height|   The number of lines of R Console (Tmux split)
 |R_vsplit|            Make Tmux split the window vertically
@@ -1286,7 +1287,8 @@ file is open in a new split window, put in your |nvimrc|:
 <
 
 ------------------------------------------------------------------------------
-								 *r_indenting*
+							  *R_indent_commented*
+						          *R_rcomment_string*
 6.11. Indent commented lines~
 
 You can type <LocalLeader>xx to comment out a line or selected lines. If the
@@ -1305,6 +1307,12 @@ table below (see |Nvim-R-indenting|):
                  0                        0                #
                  1                        1                ##
                  0                        1                ###
+<
+The string used to comment text with <LocalLeader>xc, <LocalLeader>xu,
+<LocalLeader>xx and <LocalLeader>o is defined by R_rcomment_string.
+Example:
+>
+   let R_rcomment_string = "# "
 <
 
 ------------------------------------------------------------------------------
@@ -2548,14 +2556,11 @@ between `TRUE` and `FALSE`, then, you might want to create a couple of maps in
 your vimrc. You can use |nmap| to restrict the maps to Normal mode, |autocmd|
 and <buffer> to restrict the maps to R code, and <silent> if you prefer that
 the command is not displayed in Vim's command line. In the example below,
-<LocalLeader>`ee` sets `echo=TRUE`:
+<LocalLeader>`et` sets `echo=TRUE` and <LocalLeader>`ef` sets `echo=FALSE`:
 >
-   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ee :let R_source_args = "echo = TRUE"<CR>
+   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>et :let R_source_args = "echo = TRUE"<CR>
+   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ef :let R_source_args = "echo = FALSE"<CR>
 <
-You can make another map to set `echo=FALSE`, and, if some of your files are
-named with lowercase "r" extensions, you have to repeat the commands with
-`*.r*`.
-
 
 ------------------------------------------------------------------------------
 								 *rout_colors*

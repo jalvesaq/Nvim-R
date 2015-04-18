@@ -3007,9 +3007,7 @@ call RSetDefaultValue("g:R_nvimcom_wait",   5000)
 call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
-call RSetDefaultValue("g:R_indent_commented",  1)
 call RSetDefaultValue("g:R_source",         "''")
-call RSetDefaultValue("g:R_rcomment_string", "'# '")
 if g:R_in_buffer
     let g:rplugin_rhistory = [ ]
     let g:rplugin_rhist_pos = -1
@@ -3023,6 +3021,21 @@ call RSetDefaultValue("g:R_user_maps_only", 0)
 call RSetDefaultValue("g:R_latexcmd", "'default'")
 call RSetDefaultValue("g:R_texerr",             1)
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
+call RSetDefaultValue("g:R_indent_commented",  1)
+
+if !exists("g:r_indent_ess_comments")
+    let g:r_indent_ess_comments = 0
+endif
+if g:r_indent_ess_comments
+    if g:R_indent_commented
+        call RSetDefaultValue("g:R_rcomment_string", "'## '")
+    else
+        call RSetDefaultValue("g:R_rcomment_string", "'### '")
+    endif
+else
+    call RSetDefaultValue("g:R_rcomment_string", "'# '")
+endif
+
 if has("win32") || has("win64")
     call RSetDefaultValue("g:R_Rterm",           0)
     call RSetDefaultValue("g:R_save_win_pos",    1)
