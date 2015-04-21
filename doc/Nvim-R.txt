@@ -777,12 +777,13 @@ pane and, then, paste.
 
 However, if you want to copy something from either Nvim or R to another
 application not running inside Tmux, Tmux may prevent the X server from
-capturing the text selected by the mouse. The solution is to disable mouse
-support in Tmux. You will be able to toggle mouse support on and off by typing
-<C-a>m if you add the following line to your ~/.tmux.conf:
->
-   bind m run-shell '( if [ "mode-mouse off" = "$(tmux show-window-option mode-mouse)" ]; then toggle=on; else toggle=off; fi; tmux display-message "mouse $toggle"; tmux set-option -w mode-mouse $toggle ; for cmd in mouse-select-pane mouse-resize-pane mouse-select-window; do tmux set-option -g $cmd $toggle ; done;) > /dev/null 2>&1'
-<
+capturing the text selected by the mouse. This can be prevented by
+pressing the <Shift> key, as it suspends the capturing of mouse events
+by tmux. If you keep <Shift> pressed while selecting text with the mouse,
+it will be available in the X server clipboard and can be inserted
+into other windows using the middle mouse button. It can of course also be
+inserted into a tmux window using <Shift> and the middle mouse button.
+
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-remote*
@@ -1403,7 +1404,7 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 ------------------------------------------------------------------------------
 							       *R_source_args*
 6.16. Arguments to R source() function~
- 
+
 When you send multiple lines of code to R (a selection of lines, a paragraph,
 code between two marks or a R chunk of code), the Nvim-R saves the lines in a
 temporary file and, then, sends to R the command `source()` to read the
@@ -2057,6 +2058,7 @@ The following files are part of the plugin and should be in your ~/.nvim
 directory after the installation:
 
 doc/Nvim-R.txt
+ftdetect/r.vim
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
 ftplugin/rhelp_nvimr.vim
@@ -2604,7 +2606,7 @@ put in your |nvimrc|:
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-04-05)
+0.9.0 (2015-04-20)
 
  * First release (initial code extracted from the Vim-R-plugin).
 

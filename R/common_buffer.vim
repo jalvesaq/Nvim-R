@@ -44,11 +44,6 @@ if !exists("b:objbrtitle")
     unlet s:tnr
 endif
 
-if exists("g:rplugin_firstbuffer") && g:rplugin_firstbuffer == ""
-    " The file global_r_plugin.vim was copied to ~/.vim/plugin
-    let g:rplugin_firstbuffer = expand("%:p")
-endif
-
 let g:rplugin_lastft = &filetype
 
 if !exists("g:SendCmdToR")
