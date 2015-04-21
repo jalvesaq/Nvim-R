@@ -1,4 +1,5 @@
 doc/Nvim-R.txt
+ftdetect/r.vim
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
 ftplugin/rhelp_nvimr.vim
@@ -9,7 +10,6 @@ ftplugin/rrst_nvimr.vim
 R/common_buffer.vim
 R/common_global.vim
 R/functions.vim
-R/global_r_plugin.vim
 R/gui_running.vim
 R/nvimbuffer.vim
 R/osx.vim

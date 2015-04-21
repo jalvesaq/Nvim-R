@@ -56,6 +56,7 @@ deb:
 	disabledby: \"let disable_r_ftplugin = 1\"\n\
 	files:\n\
 	  - doc/Nvim-R.txt\n\
+	  - ftdetect/r.vim\n\
 	  - ftplugin/rbrowser.vim\n\
 	  - ftplugin/rdoc.vim\n\
 	  - ftplugin/rhelp_nvimr.vim\n\
@@ -66,7 +67,6 @@ deb:
 	  - R/common_buffer.vim\n\
 	  - R/common_global.vim\n\
 	  - R/functions.vim\n\
-	  - R/global_r_plugin.vim\n\
 	  - R/gui_running.vim\n\
 	  - R/nvimbuffer.vim\n\
 	  - R/osx.vim\n\
