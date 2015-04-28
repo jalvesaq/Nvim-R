@@ -304,23 +304,34 @@ Start/Close
 
 Send
   . File                                               \aa
+  . File (echo)                                        \ae
   . File (open .Rout)                                  \ao
   --------------------------------------------------------
   . Block (cur)                                        \bb
+  . Block (cur, echo)                                  \be
   . Block (cur, down)                                  \bd
+  . Block (cur, echo and down)                         \ba
   --------------------------------------------------------
   . Chunk (cur)                                        \cc
+  . Chunk (cur, echo)                                  \ce
   . Chunk (cur, down)                                  \cd
+  . Chunk (cur, echo and down)                         \ca
   . Chunk (from first to here)                         \ch
   --------------------------------------------------------
   . Function (cur)                                     \ff
+  . Function (cur, echo)                               \fe
   . Function (cur and down)                            \fd
+  . Function (cur, echo and down)                      \fa
   --------------------------------------------------------
   . Selection                                          \ss
+  . Selection (echo)                                   \se
   . Selection (and down)                               \sd
+  . Selection (echo and down)                          \sa
   --------------------------------------------------------
   . Paragraph                                          \pp
+  . Paragraph (echo)                                   \pe
   . Paragraph (and down)                               \pd
+  . Paragraph (echo and down)                          \pa
   --------------------------------------------------------
   . Line                                                \l
   . Line (and down)                                     \d
@@ -1412,11 +1423,8 @@ temporary file.
 
 You can add arguments to be passed to R's `source()` function. Example:
  >
-   let R_source_args = "max.deparse.length = 300, echo = TRUE"
+   let R_source_args = "max.deparse.length = 300"
 <
-See |Nvim-R-source-echo| if you frequently need to alternate the `echo`
-argument between `TRUE` and `FALSE`.
-
 
 ------------------------------------------------------------------------------
 								*R_sweaveargs*
@@ -1922,7 +1930,8 @@ The above example shows how to change key binding used to start R from
 
 Only the custom key bindings for Normal mode are shown in Nvim's menu, but you
 can type |:map| to see the complete list of current mappings, and below is the
-list of the names for custom key bindings (the prefix RD means "cursor down"):
+list of the names for custom key bindings (the prefix RE means "echo";
+RD, "cursor down"; RED, both "echo" and "down"):
 
    Star/Close R~
    RStart
@@ -1956,13 +1965,21 @@ list of the names for custom key bindings (the prefix RD means "cursor down"):
 
    Send code to R console~
    RSendSelection
+   RESendSelection
    RDSendSelection
+   REDSendSelection
    RSendMBlock
+   RESendMBlock
    RDSendMBlock
+   REDSendMBlock
    RSendParagraph
+   RESendParagraph
    RDSendParagraph
+   REDSendParagraph
    RSendFunction
+   RESendFunction
    RDSendFunction
+   REDSendFunction
    RSendFile
 
    Send command to R~
@@ -1982,6 +1999,8 @@ list of the names for custom key bindings (the prefix RD means "cursor down"):
    Support to Sweave and knitr~
    RSendChunk
    RDSendChunk
+   RESendChunk
+   REDSendChunk
    RSendChunkFH (from the first chunk to here)
    RBibTeX    (Sweave)
    RBibTeXK   (Knitr)
@@ -2550,23 +2569,8 @@ Finally, if you want to use vi key bindings in Bash:
 <
 
 ------------------------------------------------------------------------------
-							  *Nvim-R-source-echo*
-9.20. Set echo to TRUE or FALSE when sending multiple lines of code too R~
-
-If you want to alternate the `echo` argument of the `source()` function
-between `TRUE` and `FALSE`, then, you might want to create a couple of maps in
-your vimrc. You can use |nmap| to restrict the maps to Normal mode, |autocmd|
-and <buffer> to restrict the maps to R code, and <silent> if you prefer that
-the command is not displayed in Vim's command line. In the example below,
-<LocalLeader>`et` sets `echo=TRUE` and <LocalLeader>`ef` sets `echo=FALSE`:
->
-   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>et :let R_source_args = "echo = TRUE"<CR>
-   autocmd BufNewFile,BufRead *.R* nmap <silent><buffer> <LocalLeader>ef :let R_source_args = "echo = FALSE"<CR>
-<
-
-------------------------------------------------------------------------------
 								 *rout_colors*
-9.21. Syntax highlight of .Rout files~
+9.20. Syntax highlight of .Rout files~
 
 You can set the foreground colors of R output in your |nvimrc|. The example
 below is for a terminal emulator that supports 256 colors (see
@@ -2606,7 +2610,7 @@ put in your |nvimrc|:
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-04-20)
+0.9.0 (2015-04-21)
 
  * First release (initial code extracted from the Vim-R-plugin).
 

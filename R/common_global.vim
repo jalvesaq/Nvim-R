@@ -798,6 +798,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let start_options += ['setwd("' . getcwd() . '")']
     endif
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.2") warning("Your version of Nvim-R requires nvimcom-0.9-2.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -1340,7 +1341,7 @@ function RGetKeyWord()
 endfunction
 
 " Send sources to R
-function RSourceLines(lines)
+function RSourceLines(lines, e)
     let lines = a:lines
     if &filetype == "rrst"
         let lines = map(copy(lines), 'substitute(v:val, "^\\.\\. \\?", "", "")')
@@ -1349,33 +1350,36 @@ function RSourceLines(lines)
         let lines = map(copy(lines), 'substitute(v:val, "^\\`\\`\\?", "", "")')
     endif
     call writefile(lines, g:rplugin_rsource)
-    if g:R_source_args == ""
-        let rcmd = 'base::source("' . g:rplugin_rsource . '")'
-    else
-        let rcmd = 'base::source("' . g:rplugin_rsource . '", ' . g:R_source_args . ')'
+    let sargs = ""
+    if g:R_source_args != ""
+        let sargs = ", " . g:R_source_args
     endif
+    if a:e == "echo"
+        let sargs .= ', echo=TRUE'
+    endif
+    let rcmd = 'base::source("' . g:rplugin_rsource . '"' . sargs . ')'
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
 
 " Send file to R
-function SendFileToR()
+function SendFileToR(e)
     update
     let fpath = expand("%:p")
     if has("win32") || has("win64")
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
-    if g:R_source_args == ""
-        call g:SendCmdToR('base::source("' . fpath . '")')
+    if a:e == "echo"
+        call g:SendCmdToR('base::source("' . fpath . '", echo=TRUE)')
     else
-        call g:SendCmdToR('base::source("' . fpath . '", ' . g:R_source_args . ')')
+        call g:SendCmdToR('base::source("' . fpath . '")')
     endif
 endfunction
 
 " Send block to R
 " Adapted from marksbrowser plugin
 " Function to get the marks which the cursor is between
-function SendMBlockToR(m)
+function SendMBlockToR(e, m)
     if &filetype != "r" && b:IsInRCode(1) == 0
         return
     endif
@@ -1405,7 +1409,7 @@ function SendMBlockToR(m)
         let lineB -= 1
     endif
     let lines = getline(lineA, lineB)
-    let ok = b:SourceLines(lines)
+    let ok = b:SourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1416,7 +1420,7 @@ function SendMBlockToR(m)
 endfunction
 
 " Send functions to R
-function SendFunctionToR(m)
+function SendFunctionToR(e, m)
     if &filetype != "r" && b:IsInRCode(1) == 0
         return
     endif
@@ -1468,13 +1472,13 @@ function SendFunctionToR(m)
 
     if startline > lastline
         call setpos(".", [0, firstline - 1, 1])
-        call SendFunctionToR(a:m)
+        call SendFunctionToR(a:e, a:m)
         call setpos(".", save_cursor)
         return
     endif
 
     let lines = getline(firstline, lastline)
-    let ok = b:SourceLines(lines)
+    let ok = b:SourceLines(lines, a:e)
     if  ok == 0
         return
     endif
@@ -1485,7 +1489,7 @@ function SendFunctionToR(m)
 endfunction
 
 " Send selection to R
-function SendSelectionToR(m)
+function SendSelectionToR(e, m)
     if &filetype != "r"
         if b:IsInRCode(0) == 0
             if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
@@ -1538,7 +1542,7 @@ function SendSelectionToR(m)
         let lines[llen] = strpart(lines[llen], 0, j)
     endif
 
-    let ok = b:SourceLines(lines)
+    let ok = b:SourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1551,7 +1555,7 @@ function SendSelectionToR(m)
 endfunction
 
 " Send paragraph to R
-function SendParagraphToR(m)
+function SendParagraphToR(e, m)
     if &filetype != "r" && b:IsInRCode(1) == 0
         return
     endif
@@ -1576,7 +1580,7 @@ function SendParagraphToR(m)
         endif
     endwhile
     let lines = getline(i, j)
-    let ok = b:SourceLines(lines)
+    let ok = b:SourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1620,7 +1624,7 @@ function SendFHChunkToR()
             " Child R chunk
             if curbuf[idx] =~ chdchk
                 " First run everything up to child chunk and reset buffer
-                call b:SourceLines(codelines)
+                call b:SourceLines(codelines, "silent")
                 let codelines = []
 
                 " Next run child chunk and continue
@@ -1638,7 +1642,7 @@ function SendFHChunkToR()
             let idx += 1
         endif
     endwhile
-    call b:SourceLines(codelines)
+    call b:SourceLines(codelines, "silent")
 endfunction
 
 function KnitChild(line, godown)
@@ -2716,23 +2720,31 @@ endfunction
 function RCreateSendMaps()
     " Block
     "-------------------------------------
-    call RCreateMaps("ni", '<Plug>RSendMBlock',     'bb', ':call SendMBlockToR("stay")')
-    call RCreateMaps("ni", '<Plug>RDSendMBlock',    'bd', ':call SendMBlockToR("down")')
+    call RCreateMaps("ni", '<Plug>RSendMBlock',     'bb', ':call SendMBlockToR("silent", "stay")')
+    call RCreateMaps("ni", '<Plug>RESendMBlock',    'be', ':call SendMBlockToR("echo", "stay")')
+    call RCreateMaps("ni", '<Plug>RDSendMBlock',    'bd', ':call SendMBlockToR("silent", "down")')
+    call RCreateMaps("ni", '<Plug>REDSendMBlock',   'ba', ':call SendMBlockToR("echo", "down")')
 
     " Function
     "-------------------------------------
-    call RCreateMaps("nvi", '<Plug>RSendFunction',  'ff', ':call SendFunctionToR("stay")')
-    call RCreateMaps("nvi", '<Plug>RDSendFunction', 'fd', ':call SendFunctionToR("down")')
+    call RCreateMaps("nvi", '<Plug>RSendFunction',  'ff', ':call SendFunctionToR("silent", "stay")')
+    call RCreateMaps("nvi", '<Plug>RDSendFunction', 'fe', ':call SendFunctionToR("echo", "stay")')
+    call RCreateMaps("nvi", '<Plug>RDSendFunction', 'fd', ':call SendFunctionToR("silent", "down")')
+    call RCreateMaps("nvi", '<Plug>RDSendFunction', 'fa', ':call SendFunctionToR("echo", "down")')
 
     " Selection
     "-------------------------------------
-    call RCreateMaps("v", '<Plug>RSendSelection',   'ss', ':call SendSelectionToR("stay")')
-    call RCreateMaps("v", '<Plug>RDSendSelection',  'sd', ':call SendSelectionToR("down")')
+    call RCreateMaps("v", '<Plug>RSendSelection',   'ss', ':call SendSelectionToR("silent", "stay")')
+    call RCreateMaps("v", '<Plug>RESendSelection',  'se', ':call SendSelectionToR("echo", "stay")')
+    call RCreateMaps("v", '<Plug>RDSendSelection',  'sd', ':call SendSelectionToR("silent", "down")')
+    call RCreateMaps("v", '<Plug>REDSendSelection', 'sa', ':call SendSelectionToR("echo", "down")')
 
     " Paragraph
     "-------------------------------------
-    call RCreateMaps("ni", '<Plug>RSendParagraph',   'pp', ':call SendParagraphToR("stay")')
-    call RCreateMaps("ni", '<Plug>RDSendParagraph',  'pd', ':call SendParagraphToR("down")')
+    call RCreateMaps("ni", '<Plug>RSendParagraph',   'pp', ':call SendParagraphToR("silent", "stay")')
+    call RCreateMaps("ni", '<Plug>RESendParagraph',  'pe', ':call SendParagraphToR("echo", "stay")')
+    call RCreateMaps("ni", '<Plug>RDSendParagraph',  'pd', ':call SendParagraphToR("silent", "down")')
+    call RCreateMaps("ni", '<Plug>REDSendParagraph', 'pa', ':call SendParagraphToR("echo", "down")')
 
     if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst"
         call RCreateMaps("ni", '<Plug>RSendChunkFH', 'ch', ':call SendFHChunkToR()')
@@ -3317,18 +3329,6 @@ let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 let g:rplugin_starting_R = 0
-
-" Check if Neovim version is recent enough
-redir => s:nvim_version
-silent version
-redir END
-let s:version_list = split(s:nvim_version)
-let s:nvim_version = s:version_list[1]
-if s:nvim_version < "0.0.0-alpha+201504060000"
-    call RWarningMsgInp("You must update Neovim! Run 'git pull', 'make', etc...")
-endif
-unlet s:nvim_version
-unlet s:version_list
 
 let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
 
