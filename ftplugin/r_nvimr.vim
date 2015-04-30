@@ -67,10 +67,6 @@ endfunction
 
 let b:IsInRCode = function("DefaultIsInRCode")
 
-" Pointer to function that must be different if the plugin is used as a
-" global one:
-let b:SourceLines = function("RSourceLines")
-
 "==========================================================================
 " Key bindings and menu items
 
@@ -100,7 +96,7 @@ endif
 call RSourceOtherScripts()
 
 if exists("b:undo_ftplugin")
-    let b:undo_ftplugin .= " | unlet! b:IsInRCode b:SourceLines"
+    let b:undo_ftplugin .= " | unlet! b:IsInRCode"
 else
-    let b:undo_ftplugin = "unlet! b:IsInRCode b:SourceLines"   
+    let b:undo_ftplugin = "unlet! b:IsInRCode"
 endif

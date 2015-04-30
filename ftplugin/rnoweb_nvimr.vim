@@ -246,10 +246,6 @@ let b:PreviousRChunk = function("RnwPreviousChunk")
 let b:NextRChunk = function("RnwNextChunk")
 let b:SendChunkToR = function("RnwSendChunkToR")
 
-" Pointers to functions that must be different if the plugin is used as a
-" global one:
-let b:SourceLines = function("RSourceLines")
-
 let b:pdf_opened = 0
 
 
@@ -646,4 +642,4 @@ endif
 
 call RSourceOtherScripts()
 
-let b:undo_ftplugin .= " | unlet! b:IsInRCode b:SourceLines b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"

@@ -27,7 +27,6 @@ function! RhelpIsInRCode(vrb)
 endfunction
 
 let b:IsInRCode = function("RhelpIsInRCode")
-let b:SourceLines = function("RSourceLines")
 
 "==========================================================================
 " Key bindings and menu items
@@ -46,4 +45,4 @@ endif
 
 call RSourceOtherScripts()
 
-let b:undo_ftplugin .= " | unlet! b:IsInRCode b:SourceLines"
+let b:undo_ftplugin .= " | unlet! b:IsInRCode"

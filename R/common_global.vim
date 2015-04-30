@@ -1409,7 +1409,7 @@ function SendMBlockToR(e, m)
         let lineB -= 1
     endif
     let lines = getline(lineA, lineB)
-    let ok = b:SourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1478,7 +1478,7 @@ function SendFunctionToR(e, m)
     endif
 
     let lines = getline(firstline, lastline)
-    let ok = b:SourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e)
     if  ok == 0
         return
     endif
@@ -1542,7 +1542,7 @@ function SendSelectionToR(e, m)
         let lines[llen] = strpart(lines[llen], 0, j)
     endif
 
-    let ok = b:SourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1580,7 +1580,7 @@ function SendParagraphToR(e, m)
         endif
     endwhile
     let lines = getline(i, j)
-    let ok = b:SourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -1624,7 +1624,7 @@ function SendFHChunkToR()
             " Child R chunk
             if curbuf[idx] =~ chdchk
                 " First run everything up to child chunk and reset buffer
-                call b:SourceLines(codelines, "silent")
+                call RSourceLines(codelines, "silent")
                 let codelines = []
 
                 " Next run child chunk and continue
@@ -1642,7 +1642,7 @@ function SendFHChunkToR()
             let idx += 1
         endif
     endwhile
-    call b:SourceLines(codelines, "silent")
+    call RSourceLines(codelines, "silent")
 endfunction
 
 function KnitChild(line, godown)
