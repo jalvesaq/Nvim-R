@@ -588,32 +588,44 @@ function! SyncTeX_SetPID(spid)
 endfunction
 
 function! Run_SyncTeX()
-    if $DISPLAY == "" || g:rplugin_pdfviewer == "none" || exists("b:did_synctex")
+    if $DISPLAY == "" || g:rplugin_pdfviewer == "none" || exists("g:rplugin_tail_follow")
         return
     endif
-    let b:did_synctex = 1
-
-    let olddir = getcwd()
-    if olddir != expand("%:p:h")
-        exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
-    endif
-
     if g:rplugin_pdfviewer == "evince"
+        let olddir = getcwd()
+        if olddir != expand("%:p:h")
+            try
+                exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+            catch /.*/
+                return
+            endtry
+        endif
         let [basenm, basedir] = SyncTeX_GetMaster()
         if basedir != '.'
             exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
         endif
-        call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
-        if basedir != '.'
-            cd -
+        let did_evince = 0
+        if !exists("g:rplugin_evince_list")
+            let g:rplugin_evince_list = []
+        else
+            for bb in g:rplugin_evince_list
+                if bb == basenm
+                    let did_evince = 1
+                    break
+                endif
+            endfor
         endif
-    elseif (g:rplugin_pdfviewer == "okular" || g:rplugin_pdfviewer == "zathura") && !exists("g:rplugin_tail_follow")
+        if !did_evince
+            call add(g:rplugin_evince_list, basenm)
+            call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
+        endif
+        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+    elseif (g:rplugin_pdfviewer == "okular" || g:rplugin_pdfviewer == "zathura")
         let g:rplugin_tail_follow = 1
         call writefile([], g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search")
         call jobstart(["tail", "-f", g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search"], g:rplugin_job_handlers)
         autocmd VimLeave * call delete(g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search") | call delete(g:rplugin_tmpdir . "/synctex_back.sh")
     endif
-    exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
 
 call RSetPDFViewer()
