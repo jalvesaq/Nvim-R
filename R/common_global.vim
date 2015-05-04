@@ -798,7 +798,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let start_options += ['setwd("' . getcwd() . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.2") warning("Your version of Nvim-R requires nvimcom-0.9-2.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.3") warning("Your version of Nvim-R requires nvimcom-0.9-3.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -935,8 +935,8 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.2"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.2.')
+        if nvimcom_version != "0.9.3"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.3.')
             sleep 1
         endif
         if g:rplugin_clt_job
@@ -1338,6 +1338,34 @@ function RGetKeyWord()
     exe "setlocal iskeyword=" . save_keyword
     call setpos(".", save_cursor)
     return rkeyword
+endfunction
+
+function RViewDF(oname)
+    if exists("g:R_csv_app")
+        if !executable(g:R_csv_app)
+            call RWarningMsg('R_csv_app ("' . g:R_csv_app . '") is not executable')
+            return
+        endif
+        normal! :<Esc>
+        call system('cp "' . g:rplugin_tmpdir . '/Rinsert" "' . a:oname . '.csv"')
+        if has("win32") || has("win64")
+            silent exe '!start "' . g:R_csv_app . '" "' . a:oname . '.csv"'
+        else
+            call system(g:R_csv_app . ' "' . a:oname . '.csv" >/dev/null 2>/dev/null &')
+        endif
+        return
+    endif
+    echo 'Opening "' . a:oname . '.csv"'
+    silent exe 'tabnew ' . a:oname . '.csv'
+    silent 1,$d
+    silent exe 'read ' . substitute(g:rplugin_tmpdir, " ", '\\ ', 'g') . '/Rinsert'
+    silent 1d
+    set filetype=csv
+    set nomodified
+    redraw
+    if !exists(":CSVTable") && g:R_csv_warn
+        call RWarningMsg("csv.vim is not installed (http://www.vim.org/scripts/script.php?script_id=2830)")
+    endif
 endfunction
 
 " Send sources to R
@@ -2443,6 +2471,16 @@ function RAction(rcmd)
             call g:SendCmdToR(raction)
             return
         endif
+        if a:rcmd == "viewdf"
+            if exists("g:R_df_viewer")
+                call g:SendCmdToR(printf(g:R_df_viewer, rkeyword))
+            else
+                echo "Wait..."
+                call delete(g:rplugin_tmpdir . "/Rinsert")
+                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+            endif
+            return
+        endif
 
         let raction = rfun . "(" . rkeyword . ")"
         call g:SendCmdToR(raction)
@@ -2575,6 +2613,7 @@ function RControlMenu()
     call RCreateMenuItem("nvi", 'Command.Print\ (cur)', '<Plug>RObjectPr', 'rp', ':call RAction("print")')
     call RCreateMenuItem("nvi", 'Command.Names\ (cur)', '<Plug>RObjectNames', 'rn', ':call RAction("nvim.names")')
     call RCreateMenuItem("nvi", 'Command.Structure\ (cur)', '<Plug>RObjectStr', 'rt', ':call RAction("str")')
+    call RCreateMenuItem("nvi", 'Command.View\ data\.frame\ (cur)', '<Plug>RViewDF', 'rv', ':call RAction("viewdf")')
     "-------------------------------
     menu R.Command.-Sep2- <nul>
     call RCreateMenuItem("nvi", 'Command.Arguments\ (cur)', '<Plug>RShowArgs', 'ra', ':call RAction("args")')
@@ -2600,6 +2639,7 @@ function RControlMaps()
     call RCreateMaps("nvi", '<Plug>RObjectPr',     'rp', ':call RAction("print")')
     call RCreateMaps("nvi", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
     call RCreateMaps("nvi", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
+    call RCreateMaps("nvi", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
 
     " Arguments, example, help
     "-------------------------------------
@@ -3000,6 +3040,7 @@ call RSetDefaultValue("g:R_source_args",    "''")
 call RSetDefaultValue("g:R_after_start",    "''")
 call RSetDefaultValue("g:R_restart",           0)
 call RSetDefaultValue("g:R_vsplit",            0)
+call RSetDefaultValue("g:R_csv_warn",          1)
 call RSetDefaultValue("g:R_rconsole_width",   -1)
 call RSetDefaultValue("g:R_rconsole_height",  15)
 call RSetDefaultValue("g:R_tmux_title","'NvimR'")

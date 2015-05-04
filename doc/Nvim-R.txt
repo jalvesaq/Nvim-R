@@ -244,10 +244,10 @@ section Indenting setup (|Nvim-R-indenting|) of this document.
 3.3.2 Install additional plugins~
 
 You may be interested in installing additional general plugins to get
-functionality not provided by this file type plugin. ShowMarks and snipMate
-are particularly interesting. Please read |Nvim-R-tips| for details. If you
-edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of LaTeX
-code (see |Nvim-R-latex-box| for details).
+functionality not provided by this file type plugin. Particularly interesting
+are vim-signature, csv.vim and snipMate. Please read |Nvim-R-tips| for
+details. If you edit Rnoweb files, you may want to try LaTeX-Box for
+omnicompletion of LaTeX code (see |Nvim-R-latex-box| for details).
 
 
 ==============================================================================
@@ -349,6 +349,7 @@ Command
   . Print (cur)                                        \rp
   . Names (cur)                                        \rn
   . Structure (cur)                                    \rt
+  . View data.frame (cur)                              \rv
   --------------------------------------------------------
   . Arguments (cur)                                    \ra
   . Example (cur)                                      \re
@@ -457,6 +458,14 @@ in each case:
    summary(x)
    summary(m)
 <
+If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
+will show it in a new tab. If the csv.vim plugin is not installed, the Nvim-R
+will warn you about that (see |Nvim-R-df-view|). Specially useful commands
+from the csv.vim plugin are |:CSVHeader|, |:ArrangeColumn| and |:CSVHiColumn|.
+It can be installed from:
+
+   http://www.vim.org/scripts/script.php?script_id=2830
+
 When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
 CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
 backward (see |popupmenu-completion|). Note: if using Nvim in a terminal
@@ -1022,6 +1031,7 @@ is running:
 |R_user_maps_only|    Only set user specified key bindings
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omnicompletion are stored
+|Nvim-R-df-view|      Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|      Options for SyncTeX
 
 
@@ -1753,8 +1763,33 @@ want to know they are, while editing an R file, do in Normal mode:
 <
 
 ------------------------------------------------------------------------------
+							      *Nvim-R-df-view*
+6.33 View a data.frame or matrix~
+
+The csv.vim plugin helps to visualize and edit csv files, and if it is not
+installed, the Nvim-R will warn you about that when you do <LocalLeader>rv.
+If you do not want to install the csv.vim plugin, put in your |nvimrc|:
+>
+   let R_csv_warn = 0
+<
+If you rather prefer to see the table in a graphical viewer, you should set
+the value of R_csv_app in your |nvimrc|. Examples:
+>
+   let R_csv_app = "localc"
+   let R_csv_app = "c:/Program Files (x86)/LibreOffice 4/program/scalc.exe"
+<
+There is also the option of configuring the Nvim-R to run an R command to
+display the data. Example:
+>
+   let R_df_viewer = "relimp::showData(%s, font = 'Courier 14')"
+<
+The value of R_df_viewer is a string and the substring `%s` is replaced by the
+name of the object under the cursor.
+
+
+------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.33 SyncTeX support (Linux only)~
+6.34 SyncTeX support (Linux only)~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -1794,7 +1829,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.33.1 Evince configuration~
+6.34.1 Evince configuration~
 
 If you have Evince installed, the Nvim-R assumes that you are using it
 to view PDF documents and that you run either GVim or Nvim in Gnome-Terminal.
@@ -1807,7 +1842,7 @@ to press <LocalLeader>gp again.
 
 
 ------------------------------------------------------------------------------
-6.33.2 Okular configuration~
+6.34.2 Okular configuration~
 
 You have to configure Okular to call Nvim during backward searches.
 
@@ -1843,7 +1878,7 @@ and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
 
 ------------------------------------------------------------------------------
-6.33.3 Zathura configuration~
+6.34.3 Zathura configuration~
 
 No configuration should be required if Evince is not installed. If evince is
 installed, put in your |vimrc|:
@@ -1860,7 +1895,7 @@ to press <LocalLeader>gp again.
 
 
 ------------------------------------------------------------------------------
-6.33.4 Skim with MacNvim configuration~
+6.34.4 Skim with MacNvim configuration~
 
 You have to configure Skim to call MacNvim during backward searches.
 In Skim click in the drop down menu and fill the fields:
@@ -1874,7 +1909,7 @@ In Skim click in the drop down menu and fill the fields:
 <
 
 ------------------------------------------------------------------------------
-6.33.5 Sumatra configuration (Windows)~
+6.34.5 Sumatra configuration (Windows)~
 
 No configuration is required.
 
@@ -1882,7 +1917,7 @@ No configuration is required.
 ------------------------------------------------------------------------------
 							       *R_nvim_window*
 							       *R_synctex*
-6.33.6 Configuring the PDF editor and Nvim's window title~
+6.34.6 Configuring the PDF editor and Nvim's window title~
 
 If SyncTeX does not work (see above), you may try to set in your |nvimrc| the
 values of |R_pdfviewer| and R_nvim_window.
@@ -1992,6 +2027,7 @@ RD, "cursor down"; RED, both "echo" and "down"):
    RObjectNames
    RObjectPr
    RObjectStr
+   RViewDF
    RSetwd
    RSummary
    RListSpace
@@ -2137,17 +2173,11 @@ mark, the plugin will send from the mark to the end of the file. The mark
 above the cursor is included and the mark below is excluded from the block to
 be sent to R. To create a mark, press m<letter> in Normal mode.
 
-We recommended the use of ShowMarks plugin which show what lines have marks
-defined. The plugin is available at:
+We recommended the use of vim-signature which show what lines have marks
+defined. The plugins are available at:
 
    http://www.vim.org/scripts/script.php?script_id=152
-
-You may want to add the following two lines to your |nvimrc| to customize
-ShowMarks behavior:
->
-   let marksCloseWhenSelected = 0
-   let showmarks_include = "abcdefghijklmnopqrstuvwxyz"
-<
+   https://github.com/kshenoy/vim-signature
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-snippets*
