@@ -25,7 +25,6 @@ function StartR_Neovim()
 
     let edbuf = bufname("%")
     let objbrttl = b:objbrtitle
-    let r_args_str = b:rplugin_r_args_str
     let curbufnm = bufname("%")
     set switchbuf=useopen
     if g:R_vsplit
@@ -41,7 +40,7 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
-    let g:rplugin_R_job = termopen("R " . r_args_str, {'on_exit': function('ROnJobExit')})
+    let g:rplugin_R_job = termopen("R " . g:rplugin_r_args_str, {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm

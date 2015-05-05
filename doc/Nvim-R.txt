@@ -327,6 +327,7 @@ Send
   . Selection (echo)                                   \se
   . Selection (and down)                               \sd
   . Selection (echo and down)                          \sa
+  . Selection (evaluate and insert output in new tab)  \so
   --------------------------------------------------------
   . Paragraph                                          \pp
   . Paragraph (echo)                                   \pe
@@ -2003,6 +2004,7 @@ RD, "cursor down"; RED, both "echo" and "down"):
    RESendSelection
    RDSendSelection
    REDSendSelection
+   RSendSelAndInsertOutput
    RSendMBlock
    RESendMBlock
    RDSendMBlock

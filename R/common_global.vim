@@ -752,15 +752,11 @@ function StartR(whatr)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
 
-    if !exists("b:rplugin_R")
-        call SetRPath()
-    endif
-
     if a:whatr =~ "custom"
         call inputsave()
         let r_args = input('Enter parameters for R: ')
         call inputrestore()
-        let b:rplugin_r_args = split(r_args)
+        let g:rplugin_r_args = split(r_args)
     endif
 
     if g:R_objbr_opendf
@@ -806,7 +802,7 @@ function StartR(whatr)
         return
     endif
 
-    let b:rplugin_r_args_str = join(b:rplugin_r_args)
+    let g:rplugin_r_args_str = join(g:rplugin_r_args)
 
     if g:R_applescript
         call StartR_OSX()
@@ -853,10 +849,10 @@ function StartR(whatr)
         endif
     endif
 
-    if b:rplugin_r_args_str == ""
-        let rcmd = b:rplugin_R
+    if g:rplugin_r_args_str == ""
+        let rcmd = g:rplugin_R
     else
-        let rcmd = b:rplugin_R . " " . b:rplugin_r_args_str
+        let rcmd = g:rplugin_R . " " . g:rplugin_r_args_str
     endif
 
     if g:rplugin_do_tmux_split
@@ -908,7 +904,7 @@ function OpenRScratch()
 endfunction
 
 function WaitNvimcomStart()
-    if b:rplugin_r_args_str =~ "vanilla"
+    if g:rplugin_r_args_str =~ "vanilla"
         return 0
     endif
     if g:R_nvimcom_wait < 0
@@ -1232,18 +1228,22 @@ function RFormatCode() range
     echo (a:lastline - a:firstline + 1) . " lines formatted."
 endfunction
 
-function RInsert(cmd)
+function RInsert(...)
     if g:rplugin_nvimcom_port == 0
         return
     endif
 
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/Rinsert")
-    call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:cmd . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:1 . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
     let g:rplugin_lastev = ReadEvalReply()
     if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "UNKNOWN" || g:rplugin_lastev =~ "^Error" || g:rplugin_lastev == "INVALID" || g:rplugin_lastev == "ERROR" || g:rplugin_lastev == "EMPTY" || g:rplugin_lastev == "No reply"
         call RWarningMsg(g:rplugin_lastev)
     else
+        if a:0 == 2 && a:2 == "newtab"
+            tabnew
+            set ft=rout
+        endif
         silent exe "read " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
     endif
 endfunction
@@ -1253,7 +1253,7 @@ function SendLineToRAndInsertOutput()
     call RInsert("print(" . lin . ")")
     let curpos = getpos(".")
     " comment the output
-    let ilines = readfile(substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert")
+    let ilines = readfile(g:rplugin_tmpdir . "/Rinsert")
     for iln in ilines
         call RSimpleCommentLine("normal", "c")
         normal! j
@@ -1340,6 +1340,24 @@ function RGetKeyWord()
     return rkeyword
 endfunction
 
+function GetROutput(outf)
+    if a:outf =~ g:rplugin_tmpdir
+        let tnum = 1
+        while bufexists("so" . tnum)
+            let tnum += 1
+        endwhile
+        exe 'tabnew so' . tnum
+        exe 'read ' . substitute(a:outf, " ", '\\ ', 'g')
+        set filetype=rout
+        setlocal buftype=nofile
+        setlocal noswapfile
+    else
+        exe 'tabnew ' . substitute(a:outf, " ", '\\ ', 'g')
+    endif
+    normal! gT
+    redraw
+endfunction
+
 function RViewDF(oname)
     if exists("g:R_csv_app")
         if !executable(g:R_csv_app)
@@ -1369,8 +1387,8 @@ function RViewDF(oname)
 endfunction
 
 " Send sources to R
-function RSourceLines(lines, e)
-    let lines = a:lines
+function RSourceLines(...)
+    let lines = a:1
     if &filetype == "rrst"
         let lines = map(copy(lines), 'substitute(v:val, "^\\.\\. \\?", "", "")')
     endif
@@ -1382,7 +1400,13 @@ function RSourceLines(lines, e)
     if g:R_source_args != ""
         let sargs = ", " . g:R_source_args
     endif
-    if a:e == "echo"
+
+    if a:0 == 3 && a:3 == "NewtabInsert"
+        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . g:rplugin_rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
+        return 1
+    endif
+
+    if a:2 == "echo"
         let sargs .= ', echo=TRUE'
     endif
     let rcmd = 'base::source("' . g:rplugin_rsource . '"' . sargs . ')'
@@ -1517,7 +1541,7 @@ function SendFunctionToR(e, m)
 endfunction
 
 " Send selection to R
-function SendSelectionToR(e, m)
+function SendSelectionToR(...)
     if &filetype != "r"
         if b:IsInRCode(0) == 0
             if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
@@ -1533,7 +1557,7 @@ function SendSelectionToR(e, m)
         let l = getline("'<")
         let line = strpart(l, i, j)
         let ok = g:SendCmdToR(line)
-        if ok && a:m =~ "down"
+        if ok && a:2 =~ "down"
             call GoDown()
         endif
         return
@@ -1570,12 +1594,17 @@ function SendSelectionToR(e, m)
         let lines[llen] = strpart(lines[llen], 0, j)
     endif
 
-    let ok = RSourceLines(lines, a:e)
+    if a:0 == 3 && a:3 == "NewtabInsert"
+        let ok = RSourceLines(lines, a:1, "NewtabInsert")
+    else
+        let ok = RSourceLines(lines, a:1)
+    endif
+
     if ok == 0
         return
     endif
 
-    if a:m == "down"
+    if a:2 == "down"
         call GoDown()
     else
         normal! gv
@@ -2778,6 +2807,7 @@ function RCreateSendMaps()
     call RCreateMaps("v", '<Plug>RESendSelection',  'se', ':call SendSelectionToR("echo", "stay")')
     call RCreateMaps("v", '<Plug>RDSendSelection',  'sd', ':call SendSelectionToR("silent", "down")')
     call RCreateMaps("v", '<Plug>REDSendSelection', 'sa', ':call SendSelectionToR("echo", "down")')
+    call RCreateMaps('v', '<Plug>RSendSelAndInsertOutput', 'so', ':call SendSelectionToR("echo", "stay", "NewtabInsert")')
 
     " Paragraph
     "-------------------------------------
@@ -2846,21 +2876,27 @@ endfunction
 
 function SetRPath()
     if exists("g:R_path")
-        let b:rplugin_R = expand(g:R_path)
-        if isdirectory(b:rplugin_R)
-            let b:rplugin_R = b:rplugin_R . "/R"
+        let g:rplugin_R = expand(g:R_path)
+        if isdirectory(g:rplugin_R)
+            let g:rplugin_R = g:rplugin_R . "/R"
+        endif
+    elseif has("win32") || has("win64")
+        if g:vimrplugin_Rterm
+            let g:rplugin_R = "Rgui.exe"
+        else
+            let g:rplugin_R = "Rterm.exe"
         endif
     else
-        let b:rplugin_R = "R"
+        let g:rplugin_R = "R"
     endif
-    if !executable(b:rplugin_R)
-        call RWarningMsgInp("R executable not found: '" . b:rplugin_R . "'")
+    if !executable(g:rplugin_R)
+        call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
     endif
-    let b:rplugin_r_args = []
+    let g:rplugin_r_args = []
     if exists("g:R_args")
-        let b:rplugin_r_args = g:R_args
+        let g:rplugin_r_args = g:R_args
     endif
-    let b:rplugin_r_args_str = join(b:rplugin_r_args)
+    let g:rplugin_r_args_str = join(g:rplugin_r_args)
 endfunction
 
 " Tell R to create a list of objects file listing all currently available
@@ -3420,9 +3456,8 @@ endif
 
 if has("win32") || has("win64")
     runtime R/windows.vim
-else
-    call SetRPath()
 endif
+call SetRPath()
 if has("gui_running")
     runtime R/gui_running.vim
 endif

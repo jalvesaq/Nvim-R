@@ -13,45 +13,42 @@ endif
 " need be defined after the global ones:
 runtime R/common_buffer.vim
 
+function! GetRCmdBatchOutput()
+    if filereadable(s:routfile)
+        let curpos = getpos(".")
+        if g:R_routnotab == 1
+            exe "split " . s:routfile
+            set filetype=rout
+            exe "normal! \<c-w>\<c-p>"
+        else
+            exe "tabnew " . s:routfile
+            set filetype=rout
+            normal! gT
+        endif
+    else
+        call RWarningMsg("The file '" . s:routfile . "' is not readable.")
+    endif
+endfunction
+
 " Run R CMD BATCH on current file and load the resulting .Rout in a split
 " window
 function! ShowRout()
-    let b:routfile = expand("%:r") . ".Rout"
-    if bufloaded(b:routfile)
-        exe "bunload " . b:routfile
-        call delete(b:routfile)
-    endif
-
-    if !exists("b:rplugin_R")
-        call SetRPath()
+    let s:routfile = expand("%:r") . ".Rout"
+    if bufloaded(s:routfile)
+        exe "bunload " . s:routfile
+        call delete(s:routfile)
     endif
 
     " if not silent, the user will have to type <Enter>
     silent update
 
     if has("win32") || has("win64")
-        let rcmd = 'Rcmd.exe BATCH --no-restore --no-save "' . expand("%") . '" "' . b:routfile . '"'
+        let rcmd = 'Rcmd.exe BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
     else
-        let rcmd = b:rplugin_R . " CMD BATCH --no-restore --no-save '" . expand("%") . "' '" . b:routfile . "'"
+        let rcmd = g:rplugin_R . " CMD BATCH --no-restore --no-save '" . expand("%") . "' '" . s:routfile . "'"
     endif
 
-    echon "Please wait for: " . rcmd
-    redraw
-    let rlog = system(rcmd)
-    if v:shell_error && rlog != ""
-        call RWarningMsg('Error: "' . rlog . '"')
-        sleep 1
-    endif
-    if filereadable(b:routfile)
-        if g:R_routnotab == 1
-            exe "split " . b:routfile
-        else
-            exe "tabnew " . b:routfile
-        endif
-        set filetype=rout
-    else
-        call RWarningMsg("The file '" . b:routfile . "' is not readable.")
-    endif
+    call jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
 endfunction
 
 " Convert R script into Rmd, md and, then, html.
