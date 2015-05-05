@@ -2874,31 +2874,6 @@ function RVimLeave()
     endif
 endfunction
 
-function SetRPath()
-    if exists("g:R_path")
-        let g:rplugin_R = expand(g:R_path)
-        if isdirectory(g:rplugin_R)
-            let g:rplugin_R = g:rplugin_R . "/R"
-        endif
-    elseif has("win32") || has("win64")
-        if g:vimrplugin_Rterm
-            let g:rplugin_R = "Rgui.exe"
-        else
-            let g:rplugin_R = "Rterm.exe"
-        endif
-    else
-        let g:rplugin_R = "R"
-    endif
-    if !executable(g:rplugin_R)
-        call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
-    endif
-    let g:rplugin_r_args = []
-    if exists("g:R_args")
-        let g:rplugin_r_args = g:R_args
-    endif
-    let g:rplugin_r_args_str = join(g:rplugin_r_args)
-endfunction
-
 " Tell R to create a list of objects file listing all currently available
 " objects in its environment. The file is necessary for omni completion.
 function BuildROmniList()
@@ -3457,7 +3432,30 @@ endif
 if has("win32") || has("win64")
     runtime R/windows.vim
 endif
-call SetRPath()
+
+if exists("g:R_path")
+    let g:rplugin_R = expand(g:R_path)
+    if isdirectory(g:rplugin_R)
+        let g:rplugin_R = g:rplugin_R . "/R"
+    endif
+elseif has("win32") || has("win64")
+    if g:vimrplugin_Rterm
+        let g:rplugin_R = "Rgui.exe"
+    else
+        let g:rplugin_R = "Rterm.exe"
+    endif
+else
+    let g:rplugin_R = "R"
+endif
+if !executable(g:rplugin_R)
+    call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
+endif
+let g:rplugin_r_args = []
+if exists("g:R_args")
+    let g:rplugin_r_args = g:R_args
+endif
+let g:rplugin_r_args_str = join(g:rplugin_r_args)
+
 if has("gui_running")
     runtime R/gui_running.vim
 endif
