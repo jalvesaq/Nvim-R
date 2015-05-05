@@ -2605,27 +2605,26 @@ Finally, if you want to use vi key bindings in Bash:
 9.20. Syntax highlight of .Rout files~
 
 You can set the foreground colors of R output in your |nvimrc|. The example
-below is for a terminal emulator that supports 256 colors (see
-|highlight-ctermfg|):
+below is for a terminal emulator that supports 256 colors (see |:highlight|):
 >
    if &t_Co == 256
-       let rout_color_input = 247
-       let rout_color_normal = 39
-       let rout_color_number = 51
-       let rout_color_integer = 51
-       let rout_color_float = 51
-       let rout_color_complex = 51
-       let rout_color_negnum = 183
-       let rout_color_negfloat = 183
-       let rout_color_date = 43
-       let rout_color_true = 78
-       let rout_color_false = 203
-       let rout_color_inf = 39
-       let rout_color_constant = 75
-       let rout_color_string = 79
-       let rout_color_error = 15
-       let rout_color_warn = 1
-       let rout_color_index = 186
+       let rout_color_input    = 'ctermfg=247'
+       let rout_color_normal   = 'ctermfg=39'
+       let rout_color_number   = 'ctermfg=51'
+       let rout_color_integer  = 'ctermfg=51'
+       let rout_color_float    = 'ctermfg=51'
+       let rout_color_complex  = 'ctermfg=51'
+       let rout_color_negnum   = 'ctermfg=183'
+       let rout_color_negfloat = 'ctermfg=183'
+       let rout_color_date     = 'ctermfg=43'
+       let rout_color_true     = 'ctermfg=78'
+       let rout_color_false    = 'ctermfg=203'
+       let rout_color_inf      = 'ctermfg=39'
+       let rout_color_constant = 'ctermfg=75'
+       let rout_color_string   = 'ctermfg=79'
+       let rout_color_error    = 'ctermfg=15 ctermbg=1'
+       let rout_color_warn     = 'ctermfg=1'
+       let rout_color_index    = 'ctermfg=186'
    endif
 <
 To know what number corresponds to your preferred color (among the 256
