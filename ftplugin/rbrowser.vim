@@ -293,16 +293,6 @@ function! RBrowserGetName(cleantail, cleantick)
     endif
 endfunction
 
-function! MakeRBrowserMenu()
-    let g:rplugin_curbuf = bufname("%")
-    if g:rplugin_hasmenu == 1
-        return
-    endif
-    menutranslate clear
-    call RControlMenu()
-    call RBrowserMenu()
-endfunction
-
 function! SourceObjBrLines()
     exe "source " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/objbrowserInit"
 endfunction

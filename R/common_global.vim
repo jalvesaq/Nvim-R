@@ -2516,12 +2516,6 @@ function RAction(rcmd)
     endif
 endfunction
 
-if exists('g:maplocalleader')
-    let s:tll = '<Tab>' . g:maplocalleader
-else
-    let s:tll = '<Tab>\\'
-endif
-
 redir => s:ikblist
 silent imap
 redir END
@@ -2586,74 +2580,6 @@ function RVMapCmd(plug)
             return el1
         endif
     endfor
-endfunction
-
-function RCreateMenuItem(type, label, plug, combo, target)
-    if a:type =~ '0'
-        let tg = a:target . '<CR>0'
-        let il = 'i'
-    else
-        let tg = a:target . '<CR>'
-        let il = 'a'
-    endif
-    if a:type =~ "n"
-        if hasmapto(a:plug, "n")
-            let boundkey = RNMapCmd(a:plug)
-            exec 'nmenu <silent> &R.' . a:label . '<Tab>' . boundkey . ' ' . tg
-        else
-            exec 'nmenu <silent> &R.' . a:label . s:tll . a:combo . ' ' . tg
-        endif
-    endif
-    if a:type =~ "v"
-        if hasmapto(a:plug, "v")
-            let boundkey = RVMapCmd(a:plug)
-            exec 'vmenu <silent> &R.' . a:label . '<Tab>' . boundkey . ' ' . '<Esc>' . tg
-        else
-            exec 'vmenu <silent> &R.' . a:label . s:tll . a:combo . ' ' . '<Esc>' . tg
-        endif
-    endif
-    if a:type =~ "i"
-        if hasmapto(a:plug, "i")
-            let boundkey = RIMapCmd(a:plug)
-            exec 'imenu <silent> &R.' . a:label . '<Tab>' . boundkey . ' ' . '<Esc>' . tg . il
-        else
-            exec 'imenu <silent> &R.' . a:label . s:tll . a:combo . ' ' . '<Esc>' . tg . il
-        endif
-    endif
-endfunction
-
-function RBrowserMenu()
-    call RCreateMenuItem("nvi", 'Object\ browser.Show/Update', '<Plug>RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
-    call RCreateMenuItem("nvi", 'Object\ browser.Expand\ (all\ lists)', '<Plug>ROpenLists', 'r=', ':call g:RBrOpenCloseLs(1)')
-    call RCreateMenuItem("nvi", 'Object\ browser.Collapse\ (all\ lists)', '<Plug>RCloseLists', 'r-', ':call g:RBrOpenCloseLs(0)')
-    if &filetype == "rbrowser"
-        imenu <silent> R.Object\ browser.Toggle\ (cur)<Tab>Enter <Esc>:call RBrowserDoubleClick()<CR>
-        nmenu <silent> R.Object\ browser.Toggle\ (cur)<Tab>Enter :call RBrowserDoubleClick()<CR>
-    endif
-    let g:rplugin_hasmenu = 1
-endfunction
-
-function RControlMenu()
-    call RCreateMenuItem("nvi", 'Command.List\ space', '<Plug>RListSpace', 'rl', ':call g:SendCmdToR("ls()")')
-    call RCreateMenuItem("nvi", 'Command.Clear\ console\ screen', '<Plug>RClearConsole', 'rr', ':call RClearConsole()')
-    call RCreateMenuItem("nvi", 'Command.Clear\ all', '<Plug>RClearAll', 'rm', ':call RClearAll()')
-    "-------------------------------
-    menu R.Command.-Sep1- <nul>
-    call RCreateMenuItem("nvi", 'Command.Print\ (cur)', '<Plug>RObjectPr', 'rp', ':call RAction("print")')
-    call RCreateMenuItem("nvi", 'Command.Names\ (cur)', '<Plug>RObjectNames', 'rn', ':call RAction("nvim.names")')
-    call RCreateMenuItem("nvi", 'Command.Structure\ (cur)', '<Plug>RObjectStr', 'rt', ':call RAction("str")')
-    call RCreateMenuItem("nvi", 'Command.View\ data\.frame\ (cur)', '<Plug>RViewDF', 'rv', ':call RAction("viewdf")')
-    "-------------------------------
-    menu R.Command.-Sep2- <nul>
-    call RCreateMenuItem("nvi", 'Command.Arguments\ (cur)', '<Plug>RShowArgs', 'ra', ':call RAction("args")')
-    call RCreateMenuItem("nvi", 'Command.Example\ (cur)', '<Plug>RShowEx', 're', ':call RAction("example")')
-    call RCreateMenuItem("nvi", 'Command.Help\ (cur)', '<Plug>RHelp', 'rh', ':call RAction("help")')
-    "-------------------------------
-    menu R.Command.-Sep3- <nul>
-    call RCreateMenuItem("nvi", 'Command.Summary\ (cur)', '<Plug>RSummary', 'rs', ':call RAction("summary")')
-    call RCreateMenuItem("nvi", 'Command.Plot\ (cur)', '<Plug>RPlot', 'rg', ':call RAction("plot")')
-    call RCreateMenuItem("nvi", 'Command.Plot\ and\ summary\ (cur)', '<Plug>RSPlot', 'rb', ':call RAction("plotsumm")')
-    let g:rplugin_hasmenu = 1
 endfunction
 
 function RControlMaps()
@@ -2984,7 +2910,6 @@ command RBuildTags :call g:SendCmdToR('rtags(ofile = "TAGS")')
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
 command -nargs=? -complete=dir RSourceDir :call RSourceDirectory(<q-args>)
 command RStop :call StopR()
-command Rhistory :call ShowRhistory()
 
 
 "==========================================================================
