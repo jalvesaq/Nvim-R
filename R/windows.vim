@@ -130,11 +130,11 @@ function StartR_Windows()
     endif
 endfunction
 
-function SendCmdToR_Windows(cmd)
+function SendCmdToR_Windows(...)
     if g:R_ca_ck
-        let cmd = "\001" . "\013" . a:cmd . "\n"
+        let cmd = "\001" . "\013" . a:1 . "\n"
     else
-        let cmd = a:cmd . "\n"
+        let cmd = a:1 . "\n"
     endif
     " FIXME: save and restore clipboard contents
     "let save_clip = getreg('+')
@@ -142,8 +142,6 @@ function SendCmdToR_Windows(cmd)
     " SendToRConsole
     call jobsend(g:rplugin_clt_job, "\003" . cmd . "\n")
     " exe "sleep " . g:rplugin_sleeptime
-    " FIXME: call foreground
-    "call foreground()
     "call setreg('+', save_clip)
     return 1
 endfunction

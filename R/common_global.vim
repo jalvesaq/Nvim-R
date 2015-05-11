@@ -1292,16 +1292,16 @@ endfunction
 
 " Function to send commands
 " return 0 on failure and 1 on success
-function SendCmdToR_fake(cmd)
+function SendCmdToR_fake(...)
     call RWarningMsg("Did you already start R?")
     return 0
 endfunction
 
-function SendCmdToR_TmuxSplit(cmd)
+function SendCmdToR_TmuxSplit(...)
     if g:R_ca_ck
-        let cmd = "\001" . "\013" . a:cmd
+        let cmd = "\001" . "\013" . a:1
     else
-        let cmd = a:cmd
+        let cmd = a:1
     endif
 
     if !exists("g:rplugin_rconsole_pane")
@@ -1312,7 +1312,11 @@ function SendCmdToR_TmuxSplit(cmd)
     if str =~ '^-'
         let str = ' ' . str
     endif
-    let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
+    if a:0 == 2 && a:2 == 0
+        let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
+    else
+        let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
+    endif
     let rlog = system(scmd)
     if v:shell_error
         let rlog = substitute(rlog, "\n", " ", "g")
@@ -1324,16 +1328,20 @@ function SendCmdToR_TmuxSplit(cmd)
     return 1
 endfunction
 
-function SendCmdToR_Term(cmd)
+function SendCmdToR_Term(...)
     if g:R_ca_ck
-        let cmd = "\001" . "\013" . a:cmd
+        let cmd = "\001" . "\013" . a:1
     else
-        let cmd = a:cmd
+        let cmd = a:1
     endif
 
     " Send the command to R running in an external terminal emulator
     let str = substitute(cmd, "'", "'\\\\''", "g")
-    let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_tmuxsname . '.0'
+    if a:0 == 2 && a:2 == 0
+        let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . g:rplugin_tmuxsname . '.0'
+    else
+        let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_tmuxsname . '.0'
+    endif
     let rlog = system(scmd)
     if v:shell_error
         let rlog = substitute(rlog, '\n', ' ', 'g')
@@ -1863,7 +1871,7 @@ function RClearConsole()
         " RClearConsole
         call jobsend(g:rplugin_clt_job, "\006\n")
     else
-        call g:SendCmdToR("\014")
+        call g:SendCmdToR("\014", 0)
     endif
 endfunction
 

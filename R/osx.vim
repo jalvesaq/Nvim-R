@@ -29,11 +29,11 @@ function StartR_OSX()
     endif
 endfunction
 
-function SendCmdToR_OSX(cmd)
+function SendCmdToR_OSX(...)
     if g:R_ca_ck
-        let cmd = "\001" . "\013" . a:cmd
+        let cmd = "\001" . "\013" . a:1
     else
-        let cmd = a:cmd
+        let cmd = a:1
     endif
 
     if g:rplugin_r64app
