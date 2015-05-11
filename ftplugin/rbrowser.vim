@@ -300,7 +300,7 @@ endfunction
 function! OnOBBufUnload()
     call SendToNvimcom("\004Stop updating info [OB BufUnload].")
     if b:rplugin_extern_ob
-        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . "let g:rplugin_ob_port = 0\n")
+        call SendToOtherNvim("let g:rplugin_ob_port = 0")
     endif
 endfunction
 

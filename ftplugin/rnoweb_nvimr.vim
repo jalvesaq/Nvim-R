@@ -572,6 +572,7 @@ function! SyncTeX_forward(...)
         call system("wmctrl -a '" . basenm . ".pdf'")
     elseif g:rplugin_pdfviewer == "sumatra"
         if g:rplugin_sumatra_path != "" || FindSumatra()
+            " FIXME:
             silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "vim --servername ' . v:servername . " --remote-expr SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
         endif
     elseif g:rplugin_pdfviewer == "skim"

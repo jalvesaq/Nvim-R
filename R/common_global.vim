@@ -789,12 +789,19 @@ function StartR(whatr)
     else
         let start_options += ['options(nvimcom.nvimpager = TRUE)']
     endif
+    let rwd = ""
     if g:R_nvim_wd == 0
-        let start_options += ['setwd("' . expand("%:p:h") . '")']
+        let rwd = expand("%:p:h")
     elseif g:R_nvim_wd == 1
-        let start_options += ['setwd("' . getcwd() . '")']
+        let rwd = getcwd()
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.3") warning("Your version of Nvim-R requires nvimcom-0.9-3.", call. = FALSE)']
+    if rwd != ""
+        if has("win32") || has("win64") || $OS == "Windows_NT"
+            let rwd = substitute(rwd, '\\', '/', 'g')
+        endif
+        let start_options += ['setwd("' . rwd . '")']
+    endif
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.4") warning("Your version of Nvim-R requires nvimcom-0.9-4.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -809,7 +816,7 @@ function StartR(whatr)
         return
     endif
 
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         call StartR_Windows()
         return
     endif
@@ -835,7 +842,7 @@ function StartR(whatr)
                     call g:SendCmdToR("\014")
                 endif
                 if IsExternalOBRunning()
-                    call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . 'let g:rplugin_nvimcom_port = ' . g:rplugin_nvimcom_port . "\n")
+                    call SendToOtherNvim('let g:rplugin_nvimcom_port = ' . g:rplugin_nvimcom_port)
                 endif
                 return
             elseif IsSendCmdToRFake()
@@ -928,11 +935,11 @@ function WaitNvimcomStart()
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let nvimcom_version = vr[0]
-        let g:rplugin_nvimcom_home = vr[1]
+        let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.3"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.3.')
+        if nvimcom_version != "0.9.4"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.4.')
             sleep 1
         endif
         if g:rplugin_clt_job
@@ -943,23 +950,35 @@ function WaitNvimcomStart()
             call jobstop(g:rplugin_srv_job)
             let g:rplugin_srv_job = 0
         endif
-        if has("win64")
-            let nvc = g:rplugin_nvimcom_home . "/bin/x64/nvimclient.exe"
-            let nvs = g:rplugin_nvimcom_home . "/bin/x64/nvimserver.exe"
-        elseif has("win32")
-            let nvc = g:rplugin_nvimcom_home . "/bin/i386/nvimclient.exe"
-            let nvs = g:rplugin_nvimcom_home . "/bin/i386/nvimserver.exe"
+        if isdirectory(nvimcom_home . "/bin/x64")
+            let s:nvimcom_bin_dir = nvimcom_home . "/bin/x64"
+        elseif isdirectory(nvimcom_home . "/bin/i386")
+            let s:nvimcom_bin_dir = nvimcom_home . "/bin/i386"
         else
-            let nvc = g:rplugin_nvimcom_home . "/bin/nvimclient"
-            let nvs = g:rplugin_nvimcom_home . "/bin/nvimserver"
+            let s:nvimcom_bin_dir = nvimcom_home . "/bin"
         endif
-        if filereadable(nvc)
-            let g:rplugin_clt_job = jobstart([nvc], g:rplugin_job_handlers)
+        if $OS == "Windows_NT"
+            let nvc = "nvimclient.exe"
+            let nvs = "nvimserver.exe"
+            if $PATH !~ s:nvimcom_bin_dir
+                let $PATH = s:nvimcom_bin_dir . ';' . $PATH
+            endif
         else
-            call RWarningMsg('Application "' . nvc . '" not found.")
+            let nvc = "nvimclient"
+            let nvs = "nvimserver"
+            if $PATH !~ s:nvimcom_bin_dir
+                let $PATH = s:nvimcom_bin_dir . ':' . $PATH
+            endif
         endif
-        if filereadable(nvs)
-            let g:rplugin_srv_job = jobstart([nvs], g:rplugin_job_handlers)
+        if filereadable(s:nvimcom_bin_dir . '/' . nvc)
+            let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
+            " Set nvimcom port in the nvimclient
+            call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
+        else
+            call RWarningMsg('Application "' . nvc . '" not found.')
+        endif
+        if filereadable(s:nvimcom_bin_dir . '/' . nvs)
+            let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
         endif
@@ -1015,7 +1034,6 @@ function StartObjBrowser_Tmux()
     let tmxs = " "
 
     call writefile([
-                \ 'let g:rplugin_editor_port = ' . g:rplugin_myport,
                 \ 'let g:rplugin_editor_pane = "' . g:rplugin_editor_pane . '"',
                 \ 'let g:rplugin_rconsole_pane = "' . g:rplugin_rconsole_pane . '"',
                 \ 'let $NVIMR_ID = "' . $NVIMR_ID . '"',
@@ -1023,7 +1041,7 @@ function StartObjBrowser_Tmux()
                 \ 'let g:rplugin_tmuxsname = "' . g:rplugin_tmuxsname . '"',
                 \ 'let b:rscript_buffer = "' . bufname("%") . '"',
                 \ 'set filetype=rbrowser',
-                \ 'let g:rplugin_nvimcom_home = "' . g:rplugin_nvimcom_home . '"',
+                \ 'let $PATH = "' . s:nvimcom_bin_dir . '" . ":" . $PATH',
                 \ 'let g:rplugin_nvimcom_port = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let b:objbrtitle = "' . b:objbrtitle . '"',
                 \ 'let b:rplugin_extern_ob = 1',
@@ -1033,8 +1051,10 @@ function StartObjBrowser_Tmux()
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
                 \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
-                \ 'let g:rplugin_clt_job = jobstart(["' . g:rplugin_nvimcom_home . '/bin/nvimclient"' . '], g:rplugin_job_handlers)',
-                \ 'let g:rplugin_srv_job = jobstart(["' . g:rplugin_nvimcom_home . '/bin/nvimserver"' . '], g:rplugin_job_handlers)'], objbrowserfile)
+                \ 'let g:rplugin_clt_job = jobstart("nvimclient", g:rplugin_job_handlers)',
+                \ 'call jobsend(g:rplugin_clt_job, "\001V' . g:rplugin_myport . '\n")',
+                \ 'call jobsend(g:rplugin_clt_job, "\001R' . g:rplugin_nvimcom_port . '\n")',
+                \ 'let g:rplugin_srv_job = jobstart("nvimserver", g:rplugin_job_handlers)'], objbrowserfile)
 
     if g:R_objbr_place =~ "left"
         let panw = system("tmux list-panes | cat")
@@ -1178,23 +1198,32 @@ endfunction
 
 function RBrOpenCloseLs_TmuxNeovim(status)
     if g:rplugin_ob_port
-        call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . 'call RBrOpenCloseLs_Nvim(' . a:status . ')' . "\n")
+        call SendToOtherNvim('call RBrOpenCloseLs_Nvim(' . a:status . ')')
     endif
 endfunction
 
 function SendToNvimcom(cmd)
     if g:rplugin_clt_job == 0
-        call RWarningMsg("nvimcom client not running.")
+        call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_clt_job, g:rplugin_nvimcom_port . ' ' . a:cmd . "\n")
+    call jobsend(g:rplugin_clt_job, "\002" . a:cmd . "\n")
+endfunction
+
+function SendToOtherNvim(cmd)
+    if g:rplugin_clt_job == 0
+        call RWarningMsg("Neovim client not running.")
+        return
+    endif
+    call jobsend(g:rplugin_clt_job, "\007" . $NVIMR_SECRET . a:cmd . "\n")
 endfunction
 
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
     if &filetype == "rbrowser" && g:rplugin_do_tmux_split
         call SendToNvimcom("\002" . a:p)
-        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . 'let g:rplugin_ob_port = ' . g:rplugin_myport . "\n")
+        call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
+        call SendToOtherNvim('call jobsend(g:rplugin_clt_job, "\001V' . g:rplugin_myport . '\n")')
     else
         call SendToNvimcom("\001" . a:p)
     endif
@@ -1366,7 +1395,7 @@ function RViewDF(oname)
         endif
         normal! :<Esc>
         call system('cp "' . g:rplugin_tmpdir . '/Rinsert" "' . a:oname . '.csv"')
-        if has("win32") || has("win64")
+        if has("win32") || has("win64") || $OS == "Windows_NT"
             silent exe '!start "' . g:R_csv_app . '" "' . a:oname . '.csv"'
         else
             call system(g:R_csv_app . ' "' . a:oname . '.csv" >/dev/null 2>/dev/null &')
@@ -1418,7 +1447,7 @@ endfunction
 function SendFileToR(e)
     update
     let fpath = expand("%:p")
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
     if a:e == "echo"
@@ -1821,7 +1850,12 @@ endfunction
 
 " Clear the console screen
 function RClearConsole()
-    call g:SendCmdToR("\014")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
+        " RClearConsole
+        call jobsend(g:rplugin_clt_job, "\006\n")
+    else
+        call g:SendCmdToR("\014")
+    endif
 endfunction
 
 " Remove all objects
@@ -1838,7 +1872,7 @@ endfunction
 "Set working directory to the path of current buffer
 function RSetWD()
     let wdcmd = 'setwd("' . expand("%:p:h") . '")'
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         let wdcmd = substitute(wdcmd, "\\", "/", "g")
     endif
     call g:SendCmdToR(wdcmd)
@@ -1847,7 +1881,7 @@ endfunction
 
 function CloseExternalOB()
     if IsExternalOBRunning()
-        call jobsend(g:rplugin_clt_job, g:rplugin_ob_port . ' ' . $NVIMR_SECRET . "call ExternOBQuit()\n")
+        call SendToOtherNvim("call ExternOBQuit()")
         unlet g:rplugin_ob_pane
     endif
 endfunction
@@ -1898,11 +1932,9 @@ function RQuit(how)
         endif
     endif
 
-    if g:R_save_win_pos && v:servername != ""
-        let repl = libcall(g:rplugin_vimcom_lib, "SaveWinPos", $NVIMR_COMPLDIR)
-        if repl != "OK"
-            call RWarningMsg(repl)
-        endif
+    if g:R_save_win_pos
+        " SaveWinPos
+        call jobsend(g:rplugin_clt_job, "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
     call g:SendCmdToR(qcmd)
@@ -1940,7 +1972,7 @@ endfunction
 " knit the current buffer content
 function! RKnit()
     update
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . substitute(expand("%:p:h"), '\\', '/', 'g') . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
     else
         call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . expand("%:p:h") . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
@@ -2216,6 +2248,7 @@ function ShowRDoc(rkeyword)
     unlet g:tmp_tmuxsname
 
     let save_unnamed_reg = @@
+    set modifiable
     sil normal! ggdG
     let fcntt = readfile(g:rplugin_docfile)
     call setline(1, fcntt)
@@ -2246,8 +2279,9 @@ function RSetPDFViewer()
         let g:rplugin_pdfviewer = tolower(g:R_pdfviewer)
     else
         " Try to guess what PDF viewer is used:
-        if has("win32") || has("win64")
+        if has("win32") || has("win64") || $OS = "Windows_NT"
             let g:rplugin_pdfviewer = "sumatra"
+            return
         elseif g:rplugin_is_darwin
             let g:rplugin_pdfviewer = "skim"
         elseif executable("evince")
@@ -2359,6 +2393,7 @@ function ROpenPDF(path)
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             return
         elseif g:rplugin_pdfviewer == "sumatra" && (g:rplugin_sumatra_path != "" || FindSumatra())
+            " FIXME:
             silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -inverse-search "vim --servername ' . v:servername . " --remote-expr SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             return
@@ -2377,7 +2412,7 @@ endfunction
 
 
 function RSourceDirectory(...)
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         let dir = substitute(a:1, '\\', '/', "g")
     else
         let dir = a:1
@@ -2468,7 +2503,7 @@ function RAction(rcmd)
                         let pkg = ""
                     endif
                     if b:rplugin_extern_ob
-                        call jobsend(g:rplugin_clt_job, g:rplugin_editor_port . ' ' . $NVIMR_SECRET . 'call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)' . "\n")
+                        call SendToOtherNvim('call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)')
                         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
                         if v:shell_error
                             call RWarningMsg(slog)
@@ -2926,7 +2961,7 @@ endif
 if exists("g:R_tmpdir")
     let g:rplugin_tmpdir = expand(g:R_tmpdir)
 else
-    if has("win32") || has("win64")
+    if has("win32") || has("win64") || $OS == "Windows_NT"
         if isdirectory($TMP)
             let g:rplugin_tmpdir = $TMP . "/NvimR-" . g:rplugin_userlogin
         elseif isdirectory($TEMP)
@@ -3028,12 +3063,10 @@ else
     call RSetDefaultValue("g:R_rcomment_string", "'# '")
 endif
 
-if has("win32") || has("win64")
-    call RSetDefaultValue("g:R_Rterm",           0)
+if has("win32") || has("win64") || $OS == "Windows_NT"
     call RSetDefaultValue("g:R_save_win_pos",    1)
     call RSetDefaultValue("g:R_arrange_windows", 1)
 else
-    let g:R_Rterm = 0
     call RSetDefaultValue("g:R_save_win_pos",    0)
     call RSetDefaultValue("g:R_arrange_windows", 0)
 endif
@@ -3058,6 +3091,7 @@ unlet obpllen
 
 function ROnJobStdout(job_id, data)
     for cmd in a:data
+        let cmd = substitute(cmd, '\r', '', 'g')
         if cmd == ""
             continue
         endif
@@ -3070,7 +3104,7 @@ function ROnJobStdout(job_id, data)
 endfunction
 
 function ROnJobStderr(job_id, data)
-    call RWarningMsg('Job error: ' . join(a:data))
+    call RWarningMsg('Job error: ' . substitute(join(a:data), '\r', '', 'g'))
 endfunction
 
 function ROnJobExit(job_id, data)
@@ -3080,7 +3114,11 @@ function ROnJobExit(job_id, data)
         let g:rplugin_srv_job = 0
     elseif a:job_id == g:rplugin_R_job
         let g:rplugin_R_job = 0
-        unlet g:rplugin_R_bufname
+        if exists("g:rplugin_R_bufname")
+            unlet g:rplugin_R_bufname
+        endif
+        " Set nvimcom port to 0 in nvimclient
+        call jobsend(g:rplugin_clt_job, "\001" . "0\n")
         call ClearRInfo()
     endif
 endfunction
@@ -3121,7 +3159,7 @@ if has("gui_running") || g:R_applescript
     let R_only_in_tmux = 0
 endif
 
-if has("gui_running") || has("win32") || g:R_applescript
+if has("gui_running") || has("win32") || $OS == "Windows_NT" || g:R_applescript
     let g:R_tmux_ob = 0
     if !g:R_in_buffer
         if g:R_objbr_place =~ "console"
@@ -3144,7 +3182,7 @@ else
     call RSetDefaultValue("g:R_tmux_ob", 1)
 endif
 
-if !g:rplugin_do_tmux_split && $TMUX == "" && $DISPLAY == "" && !g:rplugin_is_darwin
+if !g:rplugin_do_tmux_split && $TMUX == "" && $DISPLAY == "" && !g:rplugin_is_darwin && $OS != "Windows_NT"
     let g:R_in_buffer = 1
     let g:R_tmux_ob = 0
 endif
@@ -3157,7 +3195,7 @@ endif
 " ========================================================================
 
 " Check whether Tmux is OK
-if !has("win32") && !has("win64") && !has("gui_win32") && !has("gui_win64") && !g:R_applescript && !g:R_in_buffer
+if !has("win32") && !has("win64") && !$OS == "Windows_NT" && !g:R_applescript && !g:R_in_buffer
     if !executable('tmux') && g:R_source !~ "screenR"
         call RWarningMsgInp("Please, install the 'Tmux' application to enable the Nvim-R.")
         let g:rplugin_failed = 1
@@ -3201,7 +3239,7 @@ if exists("g:R_term")
         let g:R_term = "xterm"
     endif
 endif
-if has("win32") || has("win64") || g:rplugin_is_darwin || g:rplugin_do_tmux_split || g:R_in_buffer
+if has("win32") || has("win64") || $OS == "Windows_NT" || g:rplugin_is_darwin || g:rplugin_do_tmux_split || g:R_in_buffer
     " No external terminal emulator will be called, so any value is good
     let g:R_term = "xterm"
 endif
@@ -3279,7 +3317,7 @@ endif
 
 if filewritable('/dev/null')
     let g:rplugin_null = "'/dev/null'"
-elseif has("win32") && filewritable('NUL')
+elseif (has("win32") || $OS == "Windows_NT") && filewritable('NUL')
     let g:rplugin_null = "'NUL'"
 else
     let g:rplugin_null = 'tempfile()'
@@ -3301,11 +3339,11 @@ let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
-let g:rplugin_nvimcom_home = ""
 let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 let g:rplugin_starting_R = 0
+let s:nvimcom_bin_dir = ""
 
 let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
 
@@ -3327,7 +3365,7 @@ function GetRandomNumber(width)
         call writefile(pycode, g:rplugin_tmpdir . "/getRandomNumber.py")
         let randnum = system(g:rplugin_py_exec . ' "' . g:rplugin_tmpdir . '/getRandomNumber.py"')
         call delete(g:rplugin_tmpdir . "/getRandomNumber.py")
-    elseif !has("win32") && !has("win64") && !has("gui_win32") && !has("gui_win64")
+    elseif !has("win32") && !has("win64") && !$OS == "Windows_NT" && !has("gui_win32") && !has("gui_win64")
         let randnum = system("echo $RANDOM")
     else
         let randnum = localtime()
@@ -3354,7 +3392,7 @@ if &filetype != "rbrowser"
     call writefile([], g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
 endif
 
-if has("win32") || has("win64")
+if has("win32") || has("win64") || $OS == "Windows_NT"
     runtime R/windows.vim
 endif
 
@@ -3363,12 +3401,8 @@ if exists("g:R_path")
     if isdirectory(g:rplugin_R)
         let g:rplugin_R = g:rplugin_R . "/R"
     endif
-elseif has("win32") || has("win64")
-    if g:vimrplugin_Rterm
-        let g:rplugin_R = "Rgui.exe"
-    else
-        let g:rplugin_R = "Rterm.exe"
-    endif
+elseif has("win32") || has("win64") || $OS == "Windows_NT"
+    let g:rplugin_R = "Rgui.exe"
 else
     let g:rplugin_R = "R"
 endif
@@ -3388,4 +3422,3 @@ if g:R_applescript
     runtime R/osx.vim
 endif
 runtime R/nvimbuffer.vim
-

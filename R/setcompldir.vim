@@ -18,7 +18,9 @@ endif
 " Windows logins can include domain, e.g: 'DOMAIN\Username', need to remove
 " the backslash from this as otherwise cause file path problems.
 if executable("whoami")
-    let g:rplugin_userlogin = substitute(system('whoami'), "\\", "-", "")
+    let g:rplugin_userlogin = substitute(system('whoami'), '\W', '-', 'g')
+elseif $USERNAME != ""
+    let g:rplugin_userlogin = $USERNAME
 elseif $USER != ""
     let g:rplugin_userlogin = $USER
 else
@@ -26,29 +28,25 @@ else
     let g:rplugin_failed = 1
     finish
 endif
-
-if v:shell_error
-    let g:rplugin_userlogin = 'unknown'
-else
-    let newuline = stridx(g:rplugin_userlogin, "\n")
-    if newuline != -1
-        let g:rplugin_userlogin = strpart(g:rplugin_userlogin, 0, newuline)
-    endif
-    unlet newuline
+let g:rplugin_userlogin = substitute(substitute(g:rplugin_userlogin, '.*\\', '', ''), '\W', '', 'g')
+if g:rplugin_userlogin == ""
+    call RWarningMsgInp("Could not determine user name.")
+    let g:rplugin_failed = 1
+    finish
 endif
 
-if has("win32") || has("win64")
+if has("win32") || has("win64") || $OS == "Windows_NT"
     let g:rplugin_home = substitute(g:rplugin_home, "\\", "/", "g")
     let g:rplugin_uservimfiles = substitute(g:rplugin_uservimfiles, "\\", "/", "g")
     if $USERNAME != ""
-        let g:rplugin_userlogin = substitute($USERNAME, " ", "", "g")
+        let g:rplugin_userlogin = substitute($USERNAME, '\W', '', 'g')
     endif
 endif
 
 if exists("g:R_compldir")
     let g:rplugin_compldir = expand(g:R_compldir)
-elseif (has("win32") || has("win64")) && $AppData != "" && isdirectory($AppData)
-    let g:rplugin_compldir = $AppData . "\\Nvim-R"
+elseif (has("win32") || has("win64") || $OS == "Windows_NT") && $APPDATA != "" && isdirectory($APPDATA)
+    let g:rplugin_compldir = $APPDATA . "\\Nvim-R"
 elseif isdirectory(expand("~/.cache"))
     let g:rplugin_compldir = expand("~/.cache/Nvim-R")
 elseif isdirectory(expand("~/Library/Caches"))
