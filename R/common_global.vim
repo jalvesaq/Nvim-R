@@ -1424,6 +1424,15 @@ function RSourceLines(...)
     if &filetype == "rmd"
         let lines = map(copy(lines), 'substitute(v:val, "^\\`\\`\\?", "", "")')
     endif
+    if !g:R_commented_lines
+        let newlines = []
+        for line in lines
+            if line !~ '^\s*#'
+                call add(newlines, line)
+            endif
+        endfor
+        let lines = newlines
+    endif
     call writefile(lines, g:rplugin_rsource)
     let sargs = ""
     if g:R_source_args != ""
@@ -3008,6 +3017,7 @@ call RSetDefaultValue("g:R_synctex",           1)
 call RSetDefaultValue("g:R_openhtml",          0)
 call RSetDefaultValue("g:R_nvim_wd",           0)
 call RSetDefaultValue("g:R_source_args",    "''")
+call RSetDefaultValue("g:R_commented_lines",   0)
 call RSetDefaultValue("g:R_after_start",    "''")
 call RSetDefaultValue("g:R_restart",           0)
 call RSetDefaultValue("g:R_vsplit",            0)

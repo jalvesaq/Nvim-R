@@ -1008,6 +1008,7 @@ is running:
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
 |R_source_args|       Arguments to R `source()` function
+|R_commented_lines|   Include commented lines in code sent to `source()`
 |R_latexcmd|          Command to run on .tex files
 |R_latexmk|           Define wether `latexmk` should be run
 |R_texerr|            Show a summary of LaTeX errors after compilation
@@ -1425,6 +1426,7 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 
 ------------------------------------------------------------------------------
 							       *R_source_args*
+							   *R_commented_lines*
 6.16. Arguments to R source() function~
 
 When you send multiple lines of code to R (a selection of lines, a paragraph,
@@ -1435,6 +1437,11 @@ temporary file.
 You can add arguments to be passed to R's `source()` function. Example:
  >
    let R_source_args = "max.deparse.length = 300"
+<
+If you want that commented lines are included in the code to be sourced, put
+in your |nvimrc|:
+>
+   let R_commented_lines = 1
 <
 
 ------------------------------------------------------------------------------
