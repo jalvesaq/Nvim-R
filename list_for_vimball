@@ -9,6 +9,7 @@ ftplugin/r_nvimr.vim
 ftplugin/rrst_nvimr.vim
 R/common_buffer.vim
 R/common_global.vim
+R/external_term.vim
 R/functions.vim
 R/gui_running.vim
 R/nvimbuffer.vim

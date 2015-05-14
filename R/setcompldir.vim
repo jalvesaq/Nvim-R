@@ -35,7 +35,7 @@ if g:rplugin_userlogin == ""
     finish
 endif
 
-if has("win32") || has("win64") || $OS == "Windows_NT"
+if has("win32")
     let g:rplugin_home = substitute(g:rplugin_home, "\\", "/", "g")
     let g:rplugin_uservimfiles = substitute(g:rplugin_uservimfiles, "\\", "/", "g")
     if $USERNAME != ""
@@ -45,7 +45,7 @@ endif
 
 if exists("g:R_compldir")
     let g:rplugin_compldir = expand(g:R_compldir)
-elseif (has("win32") || has("win64") || $OS == "Windows_NT") && $APPDATA != "" && isdirectory($APPDATA)
+elseif has("win32") && $APPDATA != "" && isdirectory($APPDATA)
     let g:rplugin_compldir = $APPDATA . "\\Nvim-R"
 elseif isdirectory(expand("~/.cache"))
     let g:rplugin_compldir = expand("~/.cache/Nvim-R")

@@ -44,7 +44,7 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
-    let g:rplugin_R_job = termopen("R " . g:rplugin_r_args_str, {'on_exit': function('ROnJobExit')})
+    let g:rplugin_R_job = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm

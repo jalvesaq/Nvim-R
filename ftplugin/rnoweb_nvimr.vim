@@ -26,6 +26,76 @@ if !exists("g:rplugin_has_latexmk")
     endif
 endif
 
+function! RStart_Zathura(basenm)
+    let shcode = ['#!/bin/sh', 'nvimclient ' . g:rplugin_myport . ' "' . $NVIMR_SECRET .'call SyncTeX_backward(' . "'$1'" . ', $2)"']
+    call writefile(shcode, g:rplugin_tmpdir . "/synctex_back.sh")
+    let a2 = "a2 = 'sh " . g:rplugin_tmpdir . "/synctex_back.sh %{input} %{line}'"
+    let pycode = ["import subprocess",
+                \ "import os",
+                \ "import sys",
+                \ "FNULL = open(os.devnull, 'w')",
+                \ "a1 = '--synctex-editor-command'",
+                \ a2,
+                \ "a3 = '" . a:basenm . ".pdf'",
+                \ "zpid = subprocess.Popen(['zathura', a1, a2, a3], stdout = FNULL, stderr = FNULL).pid",
+                \ "sys.stdout.write(str(zpid))" ]
+    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
+    let pid = system("python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
+    let g:rplugin_zathura_pid[a:basenm] = pid
+    call delete(g:rplugin_tmpdir . "/start_zathura.py")
+endfunction
+
+function! ROpenPDF(path)
+    if a:path == "Get Master"
+        let tmpvar = SyncTeX_GetMaster()
+        let pdfpath = tmpvar[1] . '/' . tmpvar[0] . '.pdf'
+    else
+        let pdfpath = a:path
+    endif
+    let basenm = substitute(substitute(pdfpath, '.*/', '', ''), '\.pdf$', '', '')
+
+    let olddir = getcwd()
+    if olddir != expand("%:p:h")
+        exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+    endif
+
+    if !filereadable(basenm . ".pdf")
+        call RWarningMsg('File not found: "' . basenm . '.pdf".')
+        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+        return
+    endif
+    if g:rplugin_pdfviewer == "none"
+        call RWarningMsg("Could not find a PDF viewer, and R_pdfviewer is not defined.")
+    else
+        if g:rplugin_pdfviewer == "okular"
+            let pcmd = "okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
+            call system(pcmd)
+        elseif g:rplugin_pdfviewer == "zathura"
+            if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
+                call system("wmctrl -a '" . basenm . ".pdf'")
+            else
+                let g:rplugin_zathura_pid[basenm] = 0
+                call RStart_Zathura(basenm)
+            endif
+            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+            return
+        elseif g:rplugin_pdfviewer == "sumatra" && (g:rplugin_sumatra_path != "" || FindSumatra())
+            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -inverse-search "nvimclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET ."call SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
+            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+            return
+        elseif g:rplugin_pdfviewer == "skim"
+            call system(g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
+        else
+            let pcmd = g:rplugin_pdfviewer . " '" . pdfpath . "' 2>/dev/null >/dev/null &"
+            call system(pcmd)
+        endif
+        if g:rplugin_has_wmctrl
+            call system("wmctrl -a '" . basenm . ".pdf'")
+        endif
+    endif
+    exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+endfunction
+
 function! RWriteChunk()
     if getline(".") =~ "^\\s*$" && RnwIsInRCode(0) == 0
         call setline(line("."), "<<>>=")
@@ -572,8 +642,7 @@ function! SyncTeX_forward(...)
         call system("wmctrl -a '" . basenm . ".pdf'")
     elseif g:rplugin_pdfviewer == "sumatra"
         if g:rplugin_sumatra_path != "" || FindSumatra()
-            " FIXME:
-            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "vim --servername ' . v:servername . " --remote-expr SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
+            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET ."call SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
         endif
     elseif g:rplugin_pdfviewer == "skim"
         " This command is based on macvim-skim
@@ -621,11 +690,11 @@ function! Run_SyncTeX()
             call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
         endif
         exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-    elseif (g:rplugin_pdfviewer == "okular" || g:rplugin_pdfviewer == "zathura")
+    elseif g:rplugin_pdfviewer == "okular"
         let g:rplugin_tail_follow = 1
-        call writefile([], g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search")
-        call jobstart(["tail", "-f", g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search"], g:rplugin_job_handlers)
-        autocmd VimLeave * call delete(g:rplugin_tmpdir . "/" . g:rplugin_pdfviewer . "_search") | call delete(g:rplugin_tmpdir . "/synctex_back.sh")
+        call writefile([], g:rplugin_tmpdir . "/okular_search")
+        call jobstart(["tail", "-f", g:rplugin_tmpdir . "/okular_search"], g:rplugin_job_handlers)
+        autocmd VimLeave * call delete(g:rplugin_tmpdir . "/okular_search") | call delete(g:rplugin_tmpdir . "/synctex_back.sh")
     endif
 endfunction
 
@@ -655,4 +724,8 @@ endif
 
 call RSourceOtherScripts()
 
-let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+if exists("b:undo_ftplugin")
+    let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+else
+    let b:undo_ftplugin = " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+endif
