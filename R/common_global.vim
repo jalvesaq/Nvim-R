@@ -2206,12 +2206,12 @@ function RSetPDFViewer()
             return
         elseif g:rplugin_is_darwin
             let g:rplugin_pdfviewer = "skim"
+        elseif executable("zathura")
+            let g:rplugin_pdfviewer = "zathura"
         elseif executable("evince")
             let g:rplugin_pdfviewer = "evince"
         elseif executable("okular")
             let g:rplugin_pdfviewer = "okular"
-        elseif executable("zathura")
-            let g:rplugin_pdfviewer = "zathura"
         else
             let g:rplugin_pdfviewer = "none"
             if $R_PDFVIEWER == ""

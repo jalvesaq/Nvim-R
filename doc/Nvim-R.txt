@@ -116,7 +116,7 @@ Before installing the plugin, you should install its dependencies:
 
    PDF viewer with SyncTeX support and capable of automatically reloading
    documents. This is required only if you edit Rnoweb files.
-      On Linux and other Unixes systems: Evince, Zathura or Okular.
+      On Linux and other Unixes systems: Zathura, Evince or Okular.
       On OS X: Skim.
       On Windows: SumatraPDF.
 
@@ -146,11 +146,6 @@ Before installing the plugin, you should install its dependencies:
 		 Might be necessary if you want support for 256 colors at the
 		 terminal emulator.
 		 (Not required if using MacVim + R.app)
-
-   Note: Nvim, R, Tmux, ncurses-term and latexmk are already packaged for most
-   GNU/Linux distributions and other Unix variants. Unfortunately their
-   installation instructions vary widely and are beyond the scope of this
-   document.
 
 Put the following lines in your `~/Rprofile` (you don't need `colorout` and
 `setwidth` if you either are on Windows or will run R.app on OS X):
@@ -901,15 +896,7 @@ expected again after any valid code is executed in the R Console.
 The nvimcom library is started with the state `busy`.
 
 ------------------------------------------------------------------------------
-							  *Nvim-R-SyncTeX-win*
-5.6. SyncTeX on Windows~
-
-On Windows, backward search with Sumatra pop ups a console window (`vim`
-running the required --remote-expr command) which quickly disappears.
-
-
-------------------------------------------------------------------------------
-5.7. R must be started by Nvim~
+5.6. R must be started by Nvim~
 
 The communication between Nvim and R will work only if R was started by Nvim
 through the <LocalLeader>rf command because the plugin was designed to connect
@@ -1488,9 +1475,8 @@ this behavior. Examples:
    let R_latexcmd = "latex"
    let R_latexcmd = 'latexmk -pdf -pdflatex="xelatex %O -synctex=1 %S"'
 <
-By default, R_latexmk is 0 on Windows and 1 on other systems.
-If you want to pass arguments do the `Sweave()` function, set the value of the
-R_sweaveargs variable.
+By default, R_latexmk is 1. If you want to pass arguments do the `Sweave()`
+function, set the value of the R_sweaveargs variable.
 
 If the value of `R_texerr` is `1`, LaTeX errors and warnings produced by the
 compilation of the .tex document into .pdf file will be output to R Console at
@@ -1822,18 +1808,28 @@ name of the object under the cursor.
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
 to the corresponding line in the PDF viewer and vice-versa. The Nvim-R
-has support for Evince, Zathura and Okular SyncTeX systems.
+has support for the SyncTeX systems of five applications:
+
+   Linux:   Evince, Zathura and Okular
+   OS X:    Skim
+   Windows: SumatraPDF
+
+On Linux, the application `wmctrl` is required to raise both the PDF viewer
+and Nvim windows.
 
 To completely disable SyncTeX support, put in your |nvimrc|:
 >
    let R_synctex = 0
 <
-The application `wmctrl` is required to raise both the PDF viewer and Nvim
-windows. Limitation: the Nvim-R may raise the wrong terminal window or
-GVim window if there is more than one open.
-
-No configuration is required if you use Evince, Gnome-Terminal, the knitr
-package, and single file Rnoweb documents. Otherwise, keep reading...
+On Linux, if you have more than one PDF viewer installed, and Nvim-R is not
+opening your preferred one, you can choose one in your |nvimrc|. Examples:
+>
+   let R_pdfviewer = "evince"
+   let R_pdfviewer = "okular"
+<
+You do not have to do anything special in your Rnoweb document if you are
+using the knitr package, and are editing single file Rnoweb documents.
+Otherwise, keep reading...
 
 If you use `Sweave()` rather than `knit()`, you must put in your Rnoweb
 document:
@@ -1861,13 +1857,16 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.35.1 Evince configuration~
+6.35.1 Notes on Zathura and Evince~
 
-No configuration is required.
+Zathura version must be >= 0.3.1.
 
-Note: If Evince is not started yet when you try to jump to the PDF document
-for the first time, it will start, but will not jump to desired line; you have
-to press <LocalLeader>gp again.
+If either Zathura or Evince is not started yet when you try to jump to the PDF
+document for the first time, it will start, but will not jump to desired line;
+you have to press <LocalLeader>gp again. For backward search, hold the CTRL
+key and left-click in the PDF.
+
+No additional configuration is required for Evince and Zathura.
 
 
 ------------------------------------------------------------------------------
@@ -1892,34 +1891,12 @@ You have to configure Okular to call Nvim during backward searches.
      Dropdown menu: Custom Text Editor
            Command: synctex_okular_backward.sh '%f' %l
 <
-
-If Evince is not installed in your system, the Nvim-R will automatically
-use Okular as the PDF viewer. Otherwise, you have to set the value of
-|R_pdfviewer| to "okular":
->
-   let vimrplugin_pdfviewer = "okular"
-<
 Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
 
 ------------------------------------------------------------------------------
-6.35.3 Zathura configuration~
-
-No configuration should be required if Evince is not installed. If evince is
-installed, put in your |vimrc|:
->
-   let vimrplugin_pdfviewer = "zathura"
-<
-Zathura version must be >= 0.3.1.
-
-Note: If Zathura is not started yet when you try to jump to the PDF document
-for the first time, it will start, but will not jump to desired line; you have
-to press <LocalLeader>gp again.
-
-
-------------------------------------------------------------------------------
-6.35.4 Skim with MacNvim configuration~
+6.35.3 Skim with MacNvim configuration~
 
 You have to configure Skim to call MacNvim during backward searches.
 In Skim click in the drop down menu and fill the fields:
@@ -1931,12 +1908,6 @@ In Skim click in the drop down menu and fill the fields:
    Command: /path/to/MacNvim/mvim
    Arguments: --remote-expr "SyncTeX_backward('%file', %line)"
 <
-
-------------------------------------------------------------------------------
-6.35.5 Sumatra configuration (Windows)~
-
-No configuration is required.
-
 
 ==============================================================================
 							 *Nvim-R-key-bindings*
@@ -2633,8 +2604,6 @@ put in your |nvimrc|:
 								 *Nvim-R-news*
 10. News~
 
-0.9.0 (2015-05-14)
-
- * First release (initial code extracted from the Vim-R-plugin).
+ * Not released yet (initial code extracted from the Vim-R-plugin).
 
 vim:tw=78:ts=8:ft=help:norl
