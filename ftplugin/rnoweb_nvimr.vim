@@ -68,7 +68,7 @@ function! ROpenPDF(path)
         call RWarningMsg("Could not find a PDF viewer, and R_pdfviewer is not defined.")
     else
         if g:rplugin_pdfviewer == "okular"
-            let pcmd = "okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
+            let pcmd = "NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
             call system(pcmd)
         elseif g:rplugin_pdfviewer == "zathura"
             if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
@@ -622,7 +622,7 @@ function! SyncTeX_forward(...)
     endif
 
     if g:rplugin_pdfviewer == "okular"
-        call system("okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
+        call system("NVIMR_PORT=" . g:rplugin_myport . " okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
     elseif g:rplugin_pdfviewer == "evince"
         call jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
         if g:rplugin_has_wmctrl
@@ -661,45 +661,35 @@ function! SyncTeX_SetPID(spid)
     exe 'autocmd VimLeave * call system("kill ' . a:spid . '")'
 endfunction
 
-function! Run_SyncTeX()
-    if $DISPLAY == "" || g:rplugin_pdfviewer == "none" || exists("g:rplugin_tail_follow")
-        return
+function! Run_EvinceBackward()
+    let olddir = getcwd()
+    if olddir != expand("%:p:h")
+        try
+            exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+        catch /.*/
+            return
+        endtry
     endif
-    if g:rplugin_pdfviewer == "evince"
-        let olddir = getcwd()
-        if olddir != expand("%:p:h")
-            try
-                exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
-            catch /.*/
-                return
-            endtry
-        endif
-        let [basenm, basedir] = SyncTeX_GetMaster()
-        if basedir != '.'
-            exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
-        endif
-        let did_evince = 0
-        if !exists("g:rplugin_evince_list")
-            let g:rplugin_evince_list = []
-        else
-            for bb in g:rplugin_evince_list
-                if bb == basenm
-                    let did_evince = 1
-                    break
-                endif
-            endfor
-        endif
-        if !did_evince
-            call add(g:rplugin_evince_list, basenm)
-            call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
-        endif
-        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-    elseif g:rplugin_pdfviewer == "okular"
-        let g:rplugin_tail_follow = 1
-        call writefile([], g:rplugin_tmpdir . "/okular_search")
-        call jobstart(["tail", "-f", g:rplugin_tmpdir . "/okular_search"], g:rplugin_job_handlers)
-        autocmd VimLeave * call delete(g:rplugin_tmpdir . "/okular_search") | call delete(g:rplugin_tmpdir . "/synctex_back.sh")
+    let [basenm, basedir] = SyncTeX_GetMaster()
+    if basedir != '.'
+        exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
     endif
+    let did_evince = 0
+    if !exists("g:rplugin_evince_list")
+        let g:rplugin_evince_list = []
+    else
+        for bb in g:rplugin_evince_list
+            if bb == basenm
+                let did_evince = 1
+                break
+            endif
+        endfor
+    endif
+    if !did_evince
+        call add(g:rplugin_evince_list, basenm)
+        call jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
+    endif
+    exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
 
 call RSetPDFViewer()
@@ -721,8 +711,8 @@ if g:rplugin_pdfviewer != "none"
         unlet s:key_list
         unlet s:has_key
     endif
-    if g:R_synctex
-        call Run_SyncTeX()
+    if g:R_synctex && g:rplugin_pdfviewer == "evince" && $DISPLAY != ""
+        call Run_EvinceBackward()
     endif
 endif
 
