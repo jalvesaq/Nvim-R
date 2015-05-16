@@ -506,10 +506,14 @@ function! SyncTeX_backward(fname, ln)
     let rnwf = substitute(rnwf, '^\./', '', '')
 
     if GoToBuf(rnwbn, rnwf, basedir, rnwln)
-        if g:rplugin_has_wmctrl
-            call system("wmctrl -xa " . g:R_nvim_window)
-        elseif has("gui_running")
+        if has("gui_running")
             call foreground()
+        elseif g:rplugin_has_wmctrl
+            if v:windowid != 0
+                call system("wmctrl -ia " . v:windowid)
+            elseif $WINDOWID != ""
+                call system("wmctrl -ia " . $WINDOWID)
+            endif
         endif
     endif
 endfunction

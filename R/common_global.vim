@@ -2248,18 +2248,6 @@ function RSetPDFViewer()
             endif
         endif
     endif
-
-    " Try to guess the title of the window where Nvim is running:
-    if has("gui_running")
-        call RSetDefaultValue("g:R_nvim_window", "'GVim'")
-    elseif g:rplugin_pdfviewer == "evince"
-        call RSetDefaultValue("g:R_nvim_window", "'Terminal'")
-    elseif g:rplugin_pdfviewer == "okular"
-        call RSetDefaultValue("g:R_nvim_window", "'Konsole'")
-    else
-        call RSetDefaultValue("g:R_nvim_window", "'term'")
-    endif
-
 endfunction
 
 function RSourceDirectory(...)
@@ -3223,3 +3211,7 @@ if g:R_applescript
     runtime R/osx.vim
 endif
 runtime R/nvimbuffer.vim
+
+if exists("g:R_nvim_window")
+    call RWarningMsgInp("The option 'g:R_nvim_window' was deprecated. Please remove it from your vimrc.")
+endif

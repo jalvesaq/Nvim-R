@@ -1824,6 +1824,10 @@ text editors which allow users to jump from a specific line in the text editor
 to the corresponding line in the PDF viewer and vice-versa. The Nvim-R
 has support for Evince, Zathura and Okular SyncTeX systems.
 
+To completely disable SyncTeX support, put in your |nvimrc|:
+>
+   let R_synctex = 0
+<
 The application `wmctrl` is required to raise both the PDF viewer and Nvim
 windows. Limitation: the Nvim-R may raise the wrong terminal window or
 GVim window if there is more than one open.
@@ -1859,10 +1863,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 ------------------------------------------------------------------------------
 6.35.1 Evince configuration~
 
-If you have Evince installed, the Nvim-R assumes that you are using it
-to view PDF documents and that you run either GVim or Nvim in Gnome-Terminal.
-If you run Nvim in another terminal emulator, you have to set the value of
-|R_nvim_window|, as explained below.
+No configuration is required.
 
 Note: If Evince is not started yet when you try to jump to the PDF document
 for the first time, it will start, but will not jump to desired line; you have
@@ -1894,13 +1895,10 @@ You have to configure Okular to call Nvim during backward searches.
 
 If Evince is not installed in your system, the Nvim-R will automatically
 use Okular as the PDF viewer. Otherwise, you have to set the value of
-|R_pdfviewer| to "okular".
-
-If the Nvim-R is set to use Okular as the PDF viewer, it assumes that
-you run Nvim in Konsole. If you run Nvim in another terminal
-emulator, you have to set the value of |R_nvim_window|, as explained
-below.
-
+|R_pdfviewer| to "okular":
+>
+   let vimrplugin_pdfviewer = "okular"
+<
 Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
@@ -1913,9 +1911,7 @@ installed, put in your |vimrc|:
 >
    let vimrplugin_pdfviewer = "zathura"
 <
-Zathura (version >= 0.3.1) is supported. If the terminal emulator is not
-raised during backward search (from PDF to Nvim), you have to set the value of
-|R_nvim_window|, as explained below.
+Zathura version must be >= 0.3.1.
 
 Note: If Zathura is not started yet when you try to jump to the PDF document
 for the first time, it will start, but will not jump to desired line; you have
@@ -1941,37 +1937,6 @@ In Skim click in the drop down menu and fill the fields:
 
 No configuration is required.
 
-
-------------------------------------------------------------------------------
-							       *R_nvim_window*
-							       *R_synctex*
-6.35.6 Configuring the PDF editor and Nvim's window title~
-
-If SyncTeX does not work (see above), you may try to set in your |nvimrc| the
-values of |R_pdfviewer| and R_nvim_window.
-
-The valid values for |R_pdfviewer| are "evince", "okular" and
-"zathura".
-
-To know the correct value of R_nvim_window, type in the terminal
-emulator:
->
-   wmctrl -xl
-<
-This command will list the windows currently running under the X Window
-system. You must set the value of R_nvim_window as a string that is
-part of the title of the window where Nvim is running ("Terminal",
-"Konsole", "yourlogin", "Nvim", etc).
-
-Example of |nvimrc| configuration:
->
-   let R_pdfviewer = "okular"
-   let R_nvim_window = "XTerm"
-<
-To completely disable SyncTeX support, put in your |nvimrc|:
->
-   let R_synctex = 0
-<
 
 ==============================================================================
 							 *Nvim-R-key-bindings*
