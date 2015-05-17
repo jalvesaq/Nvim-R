@@ -110,10 +110,13 @@ class EvinceWindowProxy:
         self.status = CLOSED
 
     def on_sync_source(self, input_file, source_link, timestamp):
+        input_file = input_file.replace("file://", "")
+        input_file = input_file.replace("%20", " ")
         sys.stdout.write("call SyncTeX_backward('" + input_file + "', " + str(source_link[0]) + ")\n")
         sys.stdout.flush()
 
 path_output = os.getcwd() + '/' + sys.argv[1]
+path_output = path_output.replace(" ", "%20")
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 

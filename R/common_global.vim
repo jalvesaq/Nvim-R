@@ -739,7 +739,7 @@ function StartR(whatr)
         endif
         let start_options += ['setwd("' . rwd . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.6") warning("Your version of Nvim-R requires nvimcom-0.9-6.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.7") warning("Your version of Nvim-R requires nvimcom-0.9-7.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -876,8 +876,8 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.6"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.6.')
+        if nvimcom_version != "0.9.7"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.7.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")

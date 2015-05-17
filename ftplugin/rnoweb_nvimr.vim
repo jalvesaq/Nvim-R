@@ -23,20 +23,17 @@ if !exists("g:rplugin_has_latexmk")
 endif
 
 function! RStart_Zathura(basenm)
-    let shcode = ['#!/bin/sh', 'nvimrclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' "$1" $2']
-    call writefile(shcode, g:rplugin_tmpdir . "/synctex_back.sh")
-    let a2 = "a2 = 'sh " . g:rplugin_tmpdir . "/synctex_back.sh %{input} %{line}'"
     let pycode = ["import subprocess",
                 \ "import os",
                 \ "import sys",
                 \ "FNULL = open(os.devnull, 'w')",
                 \ "a1 = '--synctex-editor-command'",
-                \ a2,
+                \ "a2 = 'nvimrclient %{input} %{line}'",
                 \ "a3 = '" . a:basenm . ".pdf'",
                 \ "zpid = subprocess.Popen(['zathura', a1, a2, a3], stdout = FNULL, stderr = FNULL).pid",
                 \ "sys.stdout.write(str(zpid))" ]
     call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
-    let pid = system("python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
+    let pid = system("NVIMR_PORT=" . g:rplugin_myport . " python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
     let g:rplugin_zathura_pid[a:basenm] = pid
     call delete(g:rplugin_tmpdir . "/start_zathura.py")
 endfunction
@@ -52,7 +49,11 @@ function! ROpenPDF(path)
 
     let olddir = getcwd()
     if olddir != expand("%:p:h")
-        exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+        try
+            " The :cd command will fail if the cursor is in the term buffer
+            silent exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+        catch /.*/
+        endtry
     endif
 
     if !filereadable(basenm . ".pdf")
@@ -80,13 +81,14 @@ function! ROpenPDF(path)
                 call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
             endif
             if SumatraInPath()
-                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrclient.exe ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+                let $NVIMR_PORT = g:rplugin_myport
+                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrclient.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
                 call system(g:rplugin_tmpdir . "/run_cmd.bat")
                 exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             endif
             return
         elseif g:rplugin_pdfviewer == "skim"
-            call system(g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
+            call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
         else
             let pcmd = g:rplugin_pdfviewer . " '" . pdfpath . "' 2>/dev/null >/dev/null &"
             call system(pcmd)
@@ -463,8 +465,7 @@ function! GoToBuf(rnwbn, rnwf, basedir, rnwln)
 endfunction
 
 function! SyncTeX_backward(fname, ln)
-    let flnm = substitute(a:fname, 'file://', '', '') " Evince
-    let flnm = substitute(flnm, '/\./', '/', '')      " Okular
+    let flnm = substitute(a:fname, '/\./', '/', '')   " Okular
     let basenm = substitute(flnm, "\....$", "", "")   " Delete extension
     if basenm =~ "/"
         let basedir = substitute(basenm, '\(.*\)/.*', '\1', '')
@@ -529,10 +530,6 @@ function! SyncTeX_forward(...)
     let basenm = expand("%:t:r")
     let lnum = 0
     let rnwf = expand("%:t")
-
-    if g:rplugin_pdfviewer == "evince" && expand("%:p") =~ " "
-        call RWarningMsg('SyncTeX may not work because there is space in the file path "' . expand("%:p") . '".')
-    endif
 
     let olddir = getcwd()
     if olddir != expand("%:p:h")
@@ -656,12 +653,13 @@ function! SyncTeX_forward(...)
             call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
         endif
         if SumatraInPath()
-            call writefile(['start SumatraPDF.exe -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimrclient.exe ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+            let $NVIMR_PORT = g:rplugin_myport
+            call writefile(['start SumatraPDF.exe -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimrclient.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
             call system(g:rplugin_tmpdir . "/run_cmd.bat")
         endif
     elseif g:rplugin_pdfviewer == "skim"
         " This command is based on macvim-skim
-        call system(g:macvim_skim_app_path . '/Contents/SharedSupport/displayline -r ' . texln . ' "' . basenm . '.pdf" "' . basenm . '.tex" 2> /dev/null >/dev/null &')
+        call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/SharedSupport/displayline -r ' . texln . ' "' . basenm . '.pdf" "' . basenm . '.tex" 2> /dev/null >/dev/null &')
     else
         call RWarningMsg('SyncTeX support for "' . g:rplugin_pdfviewer . '" not implemented.')
     endif

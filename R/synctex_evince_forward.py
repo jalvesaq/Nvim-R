@@ -125,9 +125,10 @@ class EvinceWindowProxy:
         self._handler = None
         return True
 
-path_output  = os.getcwd() + '/' + sys.argv[1]
+path_output = os.getcwd() + '/' + sys.argv[1]
+path_output = path_output.replace(" ", "%20")
 line_number = int(sys.argv[2])
-path_input   = os.getcwd() + '/' + sys.argv[3]
+path_input = os.getcwd() + '/' + sys.argv[3]
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 

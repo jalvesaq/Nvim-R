@@ -525,20 +525,29 @@ mode:
    [count]<LocalLeader>gn : go to the next chunk of R code
    [count]<LocalLeader>gN : go to the previous chunk of R code
 
+You can also press <LocalLeader>gt to go the corresponding line in the
+generated .tex file (if SyncTeX is enabled).
+
 The commands <LocalLeader>cc, ce, cd and ca send the current chunk of R code
 to R Console. The command <LocalLeader>ch sends the R code from the first
 chunk up to the current line.
 
 The commands <LocalLeader>kn builds the .tex file from the Rnoweb one using
 the knitr package and <LocalLeader>kp compiles the pdf; for Sweave, the
-commands are, respectively <LocalLeader>sw and <LocalLeader>sp. On Linux, if
-using Evince, Okular or Zathura, you can jump from the Rnoweb file to the PDF
-with the command <LocalLeader>gp. To jump from a specific location in the PDF
-to the corresponding line in the Rnoweb, in either Evince or Zathura you
-should press <C-LeftMouse>, and in Okular <S-LeftMouse>. No configuration is
-required if you use Evince, Gnome-Terminal and the knitr package, and work
-with single file Rnoweb documents. Otherwise, see |Nvim-R-SyncTeX| for
-configuration details.
+commands are, respectively <LocalLeader>sw and <LocalLeader>sp. You can jump
+from the Rnoweb file to the PDF (forward search) with the command
+<LocalLeader>gp. The command to jump from a specific location in the PDF to
+the corresponding line in the Rnoweb (backward search) is specific to each pdf
+viewer:
+
+   Zathura: <C-LeftMouse>
+   Evince:  <C-LeftMouse>
+   Okular:  <S-LeftMouse>
+   Skim:    <S-Cmd-Click>
+   Sumatra: <Double-click>
+
+In any case, the pdf viewer must be started by the Nvim-R plugin. See
+|Nvim-R-SyncTeX| for details.
 
 
 ------------------------------------------------------------------------------
@@ -1872,24 +1881,14 @@ No additional configuration is required for Evince and Zathura.
 ------------------------------------------------------------------------------
 6.35.2 Okular configuration~
 
-You have to configure Okular to call Nvim during backward searches.
-
-   - Copy the file synctex_okular_backward.sh from the Nvim-R directory
-     to your path (for example, ~/bin or /usr/local/bin).
-
-   - Turn the file executable. In the terminal, go to the directory where you
-     have copied the file and do:
->
-     chmod +x synctex_okular_backward.sh
-<
-   - In Okular, do the mouse clicks described below and fill the field
-     "Command" from "Custom Text Editor" as exemplified:
+In Okular, do the mouse clicks described below and fill the field "Command"
+from "Custom Text Editor" as exemplified:
 >
      Settings
      Configure Okular
      Editor
      Dropdown menu: Custom Text Editor
-           Command: synctex_backward.sh '%f' %l
+           Command: nvimrclient '%f' %l
 <
 Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
@@ -1898,23 +1897,13 @@ of Okular will be started.
 ------------------------------------------------------------------------------
 6.35.3 Skim configuration~
 
-You have to configure Skim to call Nvim during backward searches.
-
-   - Copy the file synctex_okular_backward.sh from the Nvim-R directory
-     to your path (for example, ~/bin or /usr/local/bin).
-
-   - Turn the file executable. In the terminal, go to the directory where you
-     have copied the file and do:
->
-     chmod +x synctex_okular_backward.sh
-<
 In Skim click in the drop down menu and fill the fields:
 >
    Skim
    Settings
    Sync
    Preset: Custom
-   Command: synctex_backward.sh
+   Command: nvimrclient
    Arguments: '%file' %line
 <
 
