@@ -112,7 +112,7 @@ function! RMakePDFrrst()
     endif
 
     let rrstdir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rrstdir = substitute(rrstdir, '\\', '/', 'g')
     endif
     let pdfcmd = 'nvim.interlace.rrst("' . expand("%:t") . '", rrstdir = "' . rrstdir . '"'

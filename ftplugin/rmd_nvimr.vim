@@ -69,7 +69,7 @@ function! RMakeRmd(t)
     update
 
     if a:t == "odt"
-        if has("win32") || has("win64")
+        if has("win32")
             let g:rplugin_soffbin = "soffice.exe"
         else
             let g:rplugin_soffbin = "soffice"
@@ -81,7 +81,7 @@ function! RMakeRmd(t)
     endif
 
     let rmddir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rmddir = substitute(rmddir, '\\', '/', 'g')
     endif
     if a:t == "default"

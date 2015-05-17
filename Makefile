@@ -76,7 +76,7 @@ deb:
 	  - R/setcompldir.vim\n\
 	  - R/synctex_evince_backward.py\n\
 	  - R/synctex_evince_forward.py\n\
-	  - R/synctex_okular_backward.sh\n\
+	  - R/synctex_backward.sh\n\
 	  - R/windows.vim\n\
 	  - syntax/rbrowser.vim\n\
 	  - syntax/rdoc.vim\n\

@@ -262,7 +262,7 @@ function MakeRMenu()
     amenu R.Help\ (plugin).Options.Assignment\ operator\ and\ Rnoweb\ code :help R_assign<CR>
     amenu R.Help\ (plugin).Options.Object\ Browser :help R_objbr_place<CR>
     amenu R.Help\ (plugin).Options.Vim\ as\ pager\ for\ R\ help :help R_nvimpager<CR>
-    if !(has("gui_win32") || has("gui_win64"))
+    if !has("win32")
         amenu R.Help\ (plugin).Options.Terminal\ emulator :help R_term<CR>
     endif
     if g:rplugin_is_darwin

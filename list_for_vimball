@@ -19,7 +19,7 @@ R/r.snippets
 R/setcompldir.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
-R/synctex_okular_backward.sh
+R/synctex_backward.sh
 R/windows.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim

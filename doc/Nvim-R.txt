@@ -1889,24 +1889,33 @@ You have to configure Okular to call Nvim during backward searches.
      Configure Okular
      Editor
      Dropdown menu: Custom Text Editor
-           Command: synctex_okular_backward.sh '%f' %l
+           Command: synctex_backward.sh '%f' %l
 <
 Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
 
 ------------------------------------------------------------------------------
-6.35.3 Skim with MacNvim configuration~
+6.35.3 Skim configuration~
 
-You have to configure Skim to call MacNvim during backward searches.
+You have to configure Skim to call Nvim during backward searches.
+
+   - Copy the file synctex_okular_backward.sh from the Nvim-R directory
+     to your path (for example, ~/bin or /usr/local/bin).
+
+   - Turn the file executable. In the terminal, go to the directory where you
+     have copied the file and do:
+>
+     chmod +x synctex_okular_backward.sh
+<
 In Skim click in the drop down menu and fill the fields:
 >
    Skim
    Settings
    Sync
    Preset: Custom
-   Command: /path/to/MacNvim/mvim
-   Arguments: --remote-expr "SyncTeX_backward('%file', %line)"
+   Command: synctex_backward.sh
+   Arguments: '%file' %line
 <
 
 ==============================================================================

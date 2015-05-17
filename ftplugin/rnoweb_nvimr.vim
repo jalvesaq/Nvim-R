@@ -13,11 +13,7 @@ endif
 " after the global ones:
 runtime R/common_buffer.vim
 
-if has("win32") || has("win64")
-    call RSetDefaultValue("g:R_latexmk", 0)
-else
-    call RSetDefaultValue("g:R_latexmk", 1)
-endif
+call RSetDefaultValue("g:R_latexmk", 1)
 if !exists("g:rplugin_has_latexmk")
     if g:R_latexmk && executable("latexmk") && executable("perl")
         let g:rplugin_has_latexmk = 1
@@ -27,7 +23,7 @@ if !exists("g:rplugin_has_latexmk")
 endif
 
 function! RStart_Zathura(basenm)
-    let shcode = ['#!/bin/sh', 'nvimclient ' . g:rplugin_myport . ' "' . $NVIMR_SECRET .'call SyncTeX_backward(' . "'$1'" . ', $2)"']
+    let shcode = ['#!/bin/sh', 'nvimrclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' "$1" $2']
     call writefile(shcode, g:rplugin_tmpdir . "/synctex_back.sh")
     let a2 = "a2 = 'sh " . g:rplugin_tmpdir . "/synctex_back.sh %{input} %{line}'"
     let pycode = ["import subprocess",
@@ -79,9 +75,15 @@ function! ROpenPDF(path)
             endif
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             return
-        elseif g:rplugin_pdfviewer == "sumatra" && (g:rplugin_sumatra_path != "" || FindSumatra())
-            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -inverse-search "nvimclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET ."call SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
-            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+        elseif g:rplugin_pdfviewer == "sumatra"
+            if basenm =~ ' '
+                call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
+            endif
+            if SumatraInPath()
+                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrclient.exe ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+                call system(g:rplugin_tmpdir . "/run_cmd.bat")
+                exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+            endif
             return
         elseif g:rplugin_pdfviewer == "skim"
             call system(g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
@@ -204,7 +206,7 @@ endfunction
 function! RKnitRnw()
     update
     let rnwdir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rnwdir = substitute(rnwdir, '\\', '/', 'g')
     endif
     if g:R_synctex == 0
@@ -221,7 +223,7 @@ function! RMakePDF(bibtex, knit)
     endif
     update
     let rnwdir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rnwdir = substitute(rnwdir, '\\', '/', 'g')
     endif
     let pdfcmd = 'nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '"'
@@ -291,7 +293,7 @@ endfunction
 function! RSweave()
     update
     let rnwdir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rnwdir = substitute(rnwdir, '\\', '/', 'g')
     endif
     let scmd = 'nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '", knit = FALSE, buildpdf = FALSE'
@@ -507,7 +509,12 @@ function! SyncTeX_backward(fname, ln)
 
     if GoToBuf(rnwbn, rnwf, basedir, rnwln)
         if has("gui_running")
-            call foreground()
+            " Raise Neovim window
+            if has("win32")
+                call jobsend(g:rplugin_clt_job, "\007 \n")
+            else
+                call foreground()
+            endif
         elseif g:rplugin_has_wmctrl
             if v:windowid != 0
                 call system("wmctrl -ia " . v:windowid)
@@ -645,8 +652,12 @@ function! SyncTeX_forward(...)
         endif
         call system("wmctrl -a '" . basenm . ".pdf'")
     elseif g:rplugin_pdfviewer == "sumatra"
-        if g:rplugin_sumatra_path != "" || FindSumatra()
-            silent exe '!start "' . g:rplugin_sumatra_path . '" -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimclient ' . g:rplugin_myport . ' ' . $NVIMR_SECRET ."call SyncTeX_backward('\\%f',\\%l)" . '" "' . basenm . '.pdf"'
+        if basenm =~ ' '
+            call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
+        endif
+        if SumatraInPath()
+            call writefile(['start SumatraPDF.exe -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimrclient.exe ' . g:rplugin_myport . ' ' . $NVIMR_SECRET . ' %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+            call system(g:rplugin_tmpdir . "/run_cmd.bat")
         endif
     elseif g:rplugin_pdfviewer == "skim"
         " This command is based on macvim-skim

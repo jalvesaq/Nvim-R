@@ -739,7 +739,7 @@ function StartR(whatr)
         endif
         let start_options += ['setwd("' . rwd . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.5") warning("Your version of Nvim-R requires nvimcom-0.9-5.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.6") warning("Your version of Nvim-R requires nvimcom-0.9-6.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -782,7 +782,7 @@ function StartR(whatr)
                 endif
                 return
             elseif IsSendCmdToRFake()
-		return
+                return
             endif
         else
             if g:R_restart
@@ -869,15 +869,15 @@ function WaitNvimcomStart()
     endwhile
     echon "\r                              "
     redraw
-    sleep 100m
+    sleep 200m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let nvimcom_version = vr[0]
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.5"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.5.')
+        if nvimcom_version != "0.9.6"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.6.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -888,14 +888,14 @@ function WaitNvimcomStart()
             let s:nvimcom_bin_dir = nvimcom_home . "/bin"
         endif
         if has("win32")
-            let nvc = "nvimclient.exe"
-            let nvs = "nvimserver.exe"
+            let nvc = "nvimrclient.exe"
+            let nvs = "nvimrserver.exe"
             if $PATH !~ s:nvimcom_bin_dir
                 let $PATH = s:nvimcom_bin_dir . ';' . $PATH
             endif
         else
-            let nvc = "nvimclient"
-            let nvs = "nvimserver"
+            let nvc = "nvimrclient"
+            let nvs = "nvimrserver"
             if $PATH !~ s:nvimcom_bin_dir
                 let $PATH = s:nvimcom_bin_dir . ':' . $PATH
             endif
@@ -904,8 +904,11 @@ function WaitNvimcomStart()
             if g:rplugin_clt_job == 0
                 let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
             endif
-            " Set nvimcom port in the nvimclient
+            " Set nvimcom port in the nvimrclient
             call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
+            if has("win32") && vr[4] != "0"
+                call jobsend(g:rplugin_clt_job, "\010" . vr[4] . "\n")
+            endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
@@ -988,10 +991,10 @@ function StartObjBrowser_Tmux()
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
                 \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
-                \ 'let g:rplugin_clt_job = jobstart("nvimclient", g:rplugin_job_handlers)',
+                \ 'let g:rplugin_clt_job = jobstart("nvimrclient", g:rplugin_job_handlers)',
                 \ 'call jobsend(g:rplugin_clt_job, "\001V' . g:rplugin_myport . '\n")',
                 \ 'call jobsend(g:rplugin_clt_job, "\001R' . g:rplugin_nvimcom_port . '\n")',
-                \ 'let g:rplugin_srv_job = jobstart("nvimserver", g:rplugin_job_handlers)'], objbrowserfile)
+                \ 'let g:rplugin_srv_job = jobstart("nvimrserver", g:rplugin_job_handlers)'], objbrowserfile)
 
     if g:R_objbr_place =~ "left"
         let panw = system("tmux list-panes | cat")
@@ -2676,7 +2679,7 @@ function RVimLeave()
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/openR'")
-    call delete(g:rplugin_tmpdir . "/run_reg.bat")
+    call delete(g:rplugin_tmpdir . "/run_cmd.bat")
     if executable("rmdir")
         call system("rmdir '" . g:rplugin_tmpdir . "'")
     endif
@@ -2952,7 +2955,15 @@ function ROnJobStdout(job_id, data)
 endfunction
 
 function ROnJobStderr(job_id, data)
-    call RWarningMsg('Job error: ' . substitute(join(a:data), '\r', '', 'g'))
+    if a:job_id == g:rplugin_srv_job
+        call RWarningMsg('[Nvim-R Server] ' . substitute(join(a:data), '\r', '', 'g'))
+    elseif a:job_id == g:rplugin_clt_job
+        call RWarningMsg('[NvimR Client] ' . substitute(join(a:data), '\r', '', 'g'))
+    elseif a:job_id == g:rplugin_R_job
+        call RWarningMsg('[R] ' . substitute(join(a:data), '\r', '', 'g'))
+    else
+        call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
+    endif
 endfunction
 
 function ROnJobExit(job_id, data)
@@ -2965,7 +2976,7 @@ function ROnJobExit(job_id, data)
         if exists("g:rplugin_R_bufname")
             unlet g:rplugin_R_bufname
         endif
-        " Set nvimcom port to 0 in nvimclient
+        " Set nvimcom port to 0 in nvimrclient
         call jobsend(g:rplugin_clt_job, "\001" . "0\n")
         call ClearRInfo()
     endif
