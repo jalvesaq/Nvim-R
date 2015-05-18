@@ -917,7 +917,7 @@ function WaitNvimcomStart()
                let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
            else
                " Set the editor port in the nvimcom (R library)
-               call SendToNvimcom("\002" . g:rplugin_myport)
+               call SendToNvimcom("\001" . g:rplugin_myport)
            endif
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
