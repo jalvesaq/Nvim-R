@@ -193,5 +193,5 @@ call RSourceOtherScripts()
 if exists("b:undo_ftplugin")
     let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
 else
-    let b:undo_ftplugin = " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+    let b:undo_ftplugin = "unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
 endif
