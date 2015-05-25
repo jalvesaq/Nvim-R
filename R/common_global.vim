@@ -902,7 +902,7 @@ function WaitNvimcomStart()
         endif
         if filereadable(s:nvimcom_bin_dir . '/' . nvc)
             if g:rplugin_clt_job == 0
-                let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
+                let g:rplugin_clt_job = jobstart([nvc], g:rplugin_job_handlers)
             endif
             " Set nvimcom port in the nvimrclient
             call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
@@ -914,7 +914,7 @@ function WaitNvimcomStart()
         endif
         if filereadable(s:nvimcom_bin_dir . '/' . nvs)
            if g:rplugin_srv_job == 0
-               let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
+               let g:rplugin_srv_job = jobstart([nvs], g:rplugin_job_handlers)
            else
                " Set the editor port in the nvimcom (R library)
                call SendToNvimcom("\001" . g:rplugin_myport)
