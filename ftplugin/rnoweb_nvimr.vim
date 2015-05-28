@@ -23,6 +23,27 @@ if !exists("g:rplugin_has_latexmk")
 endif
 
 function! RStart_Zathura(basenm)
+    " Use wmctrl to check if the pdf is already open and get Zathura's PID to
+    " close the document and kill Zathura.
+    if g:rplugin_has_wmctrl && g:rplugin_has_dbussend && filereadable("/proc/sys/kernel/pid_max")
+        let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . a:basenm . '"')
+        if len(info) > 0
+            let pid = split(info[0])[2] + 0     " + 0 to convert into number
+            let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
+            if pid > 0 && pid <= max_pid
+                " Instead of killing, it would be better to reset the backward
+                " command, but Zathura does not have a Dbus message for this,
+                " and we would have to change nvimrclient to receive NVIMR_PORT
+                " and NVIMR_SECRET as part of argv[].
+                call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
+                sleep 5m
+                call system('kill ' . pid)
+                sleep 5m
+            endif
+        endif
+    endif
+
+    let $NVIMR_PORT = g:rplugin_myport
     let pycode = ["import subprocess",
                 \ "import os",
                 \ "import sys",
@@ -34,7 +55,11 @@ function! RStart_Zathura(basenm)
                 \ "sys.stdout.write(str(zpid))" ]
     call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
     let pid = system("NVIMR_PORT=" . g:rplugin_myport . " python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
-    let g:rplugin_zathura_pid[a:basenm] = pid
+    if pid == 0
+        call RWarningMsg("Failed to run Zathura")
+    else
+        let g:rplugin_zathura_pid[a:basenm] = pid
+    endif
     call delete(g:rplugin_tmpdir . "/start_zathura.py")
 endfunction
 
@@ -526,6 +551,29 @@ function! SyncTeX_backward(fname, ln)
     endif
 endfunction
 
+function! SyncTeX_forward_Zathura(basenm, texln, vrbs)
+    if g:rplugin_zathura_pid[a:basenm] == 0
+        return 0
+    endif
+    let result = system("zathura --synctex-forward=" . a:texln . ":1:" . a:basenm . ".tex --synctex-pid=" . g:rplugin_zathura_pid[a:basenm] . " " . a:basenm . ".pdf")
+    if v:shell_error
+        let g:rplugin_zathura_pid[a:basenm] = 0
+        if a:vrbs
+            call RWarningMsg(substitute(result, "\n", " ", "g"))
+        endif
+        return 0
+    endif
+    return 1
+endfunction
+
+" Avoid possible infinite loop if Evince cannot open the document and
+" synctex_evince_forward.py keeps sending the message to Neovim run
+" SyncTeX_forward() again.
+function! Evince_Again()
+    let g:rplugin_evince_loop += 1
+    call SyncTeX_forward()
+endfunction
+
 function! SyncTeX_forward(...)
     let basenm = expand("%:t:r")
     let lnum = 0
@@ -628,24 +676,27 @@ function! SyncTeX_forward(...)
     if g:rplugin_pdfviewer == "okular"
         call system("NVIMR_PORT=" . g:rplugin_myport . " okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
     elseif g:rplugin_pdfviewer == "evince"
-        call jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
+        if g:rplugin_evince_loop < 2
+            call jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
+        else
+            let g:rplugin_evince_loop = 0
+        endif
         if g:rplugin_has_wmctrl
             call system("wmctrl -a '" . basenm . ".pdf'")
         endif
     elseif g:rplugin_pdfviewer == "zathura"
         if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
-            if g:rplugin_has_dbussend
-                let result = system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . g:rplugin_zathura_pid[basenm] . ' /org/pwmt/zathura org.pwmt.zathura.SynctexView string:"' . basenm . '.tex' . '" uint32:' . texln . ' uint32:1')
-            else
-                let result = system("zathura --synctex-forward=" . texln . ":1:" . basenm . ".tex --synctex-pid=" . g:rplugin_zathura_pid[basenm] . " " . basenm . ".pdf")
-            endif
-            if v:shell_error
-                let g:rplugin_zathura_pid[basenm] = 0
-                call RWarningMsg(result)
+            if SyncTeX_forward_Zathura(basenm, texln, 0) == 0
+                " The user closed Zathura and later opened the pdf manually
+                call RStart_Zathura(basenm)
+                sleep 900m
+                call SyncTeX_forward_Zathura(basenm, texln, 1)
             endif
         else
             let g:rplugin_zathura_pid[basenm] = 0
             call RStart_Zathura(basenm)
+            sleep 900m
+            call SyncTeX_forward_Zathura(basenm, texln, 1)
         endif
         call system("wmctrl -a '" . basenm . ".pdf'")
     elseif g:rplugin_pdfviewer == "sumatra"
@@ -720,8 +771,16 @@ if g:rplugin_pdfviewer != "none"
         unlet s:key_list
         unlet s:has_key
     endif
-    if g:R_synctex && g:rplugin_pdfviewer == "evince" && $DISPLAY != ""
-        call Run_EvinceBackward()
+    if g:R_synctex
+        if $DISPLAY != "" && g:rplugin_pdfviewer == "evince"
+            let g:rplugin_evince_loop = 0
+            call Run_EvinceBackward()
+        elseif g:rplugin_nvimcom_bin_dir != "" && g:rplugin_srv_job == 0 && !($DISPLAY == "" && (g:rplugin_pdfviewer == "zathura" || g:rplugin_pdfviewer == "okular"))
+            if $PATH !~ g:rplugin_nvimcom_bin_dir
+                let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
+            endif
+            let g:rplugin_srv_job = jobstart("nvimrserver", g:rplugin_job_handlers)
+        endif
     endif
 endif
 

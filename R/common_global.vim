@@ -881,26 +881,30 @@ function WaitNvimcomStart()
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
-            let s:nvimcom_bin_dir = nvimcom_home . "/bin/x64"
+            let nvimcom_bin_dir = nvimcom_home . "/bin/x64"
         elseif isdirectory(nvimcom_home . "/bin/i386")
-            let s:nvimcom_bin_dir = nvimcom_home . "/bin/i386"
+            let nvimcom_bin_dir = nvimcom_home . "/bin/i386"
         else
-            let s:nvimcom_bin_dir = nvimcom_home . "/bin"
+            let nvimcom_bin_dir = nvimcom_home . "/bin"
+        endif
+        if nvimcom_bin_dir != g:rplugin_nvimcom_bin_dir
+            let g:rplugin_nvimcom_bin_dir = nvimcom_bin_dir
+            call writefile([nvimcom_version, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_bin_dir")
         endif
         if has("win32")
             let nvc = "nvimrclient.exe"
             let nvs = "nvimrserver.exe"
-            if $PATH !~ s:nvimcom_bin_dir
-                let $PATH = s:nvimcom_bin_dir . ';' . $PATH
+            if $PATH !~ g:rplugin_nvimcom_bin_dir
+                let $PATH = g:rplugin_nvimcom_bin_dir . ';' . $PATH
             endif
         else
             let nvc = "nvimrclient"
             let nvs = "nvimrserver"
-            if $PATH !~ s:nvimcom_bin_dir
-                let $PATH = s:nvimcom_bin_dir . ':' . $PATH
+            if $PATH !~ g:rplugin_nvimcom_bin_dir
+                let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
             endif
         endif
-        if filereadable(s:nvimcom_bin_dir . '/' . nvc)
+        if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
             if g:rplugin_clt_job == 0
                 let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
             endif
@@ -912,12 +916,11 @@ function WaitNvimcomStart()
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
-        if filereadable(s:nvimcom_bin_dir . '/' . nvs)
+        if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvs)
            if g:rplugin_srv_job == 0
                let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
            else
-               " Set the editor port in the nvimcom (R library)
-               call SendToNvimcom("\001" . g:rplugin_myport)
+               call RSendMyPort()
            endif
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
@@ -981,7 +984,7 @@ function StartObjBrowser_Tmux()
                 \ 'let g:rplugin_tmuxsname = "' . g:rplugin_tmuxsname . '"',
                 \ 'let b:rscript_buffer = "' . bufname("%") . '"',
                 \ 'set filetype=rbrowser',
-                \ 'let $PATH = "' . s:nvimcom_bin_dir . '" . ":" . $PATH',
+                \ 'let $PATH = "' . g:rplugin_nvimcom_bin_dir . '" . ":" . $PATH',
                 \ 'let g:rplugin_nvimcom_port = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let b:objbrtitle = "' . b:objbrtitle . '"',
                 \ 'let b:rplugin_extern_ob = 1',
@@ -1158,16 +1161,22 @@ function SendToOtherNvim(cmd)
     call jobsend(g:rplugin_clt_job, "\002O" . $NVIMR_SECRET . a:cmd . "\n")
 endfunction
 
+function RSendMyPort()
+    if g:rplugin_clt_job
+        call jobsend(g:rplugin_clt_job, "\001S" . g:rplugin_myport . "\n")
+        if &filetype == "rbrowser" && g:rplugin_do_tmux_split
+            call SendToNvimcom("\002" . g:rplugin_myport)
+            call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
+            call SendToOtherNvim('call jobsend(g:rplugin_clt_job, "\001O' . g:rplugin_myport . '\n")')
+        else
+            call SendToNvimcom("\001" . g:rplugin_myport)
+        endif
+    endif
+endfunction
+
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
-    call jobsend(g:rplugin_clt_job, "\001S" . a:p . "\n")
-    if &filetype == "rbrowser" && g:rplugin_do_tmux_split
-        call SendToNvimcom("\002" . a:p)
-        call SendToOtherNvim('let g:rplugin_ob_port = ' . a:p)
-        call SendToOtherNvim('call jobsend(g:rplugin_clt_job, "\001O' . a:p . '\n")')
-    else
-        call SendToNvimcom("\001" . a:p)
-    endif
+    call RSendMyPort()
 endfunction
 
 function RFormatCode() range
@@ -2210,6 +2219,10 @@ function RSetPDFViewer()
         elseif g:rplugin_is_darwin
             let g:rplugin_pdfviewer = "skim"
         elseif executable("zathura")
+            let vv = split(system("zathura --version"))[1]
+            if vv < '0.3.1'
+                call RWarningMsg("Zathura version must be >= 0.3.1")
+            endif
             let g:rplugin_pdfviewer = "zathura"
         elseif executable("evince")
             let g:rplugin_pdfviewer = "evince"
@@ -3125,7 +3138,15 @@ let g:rplugin_lastev = ""
 let g:rplugin_last_r_prompt = ""
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 let g:rplugin_starting_R = 0
-let s:nvimcom_bin_dir = ""
+
+let g:rplugin_nvimcom_bin_dir = ""
+if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
+    let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.7"
+        let g:rplugin_nvimcom_bin_dir = s:filelines[1]
+    endif
+    unlet s:filelines
+endif
 
 let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
 

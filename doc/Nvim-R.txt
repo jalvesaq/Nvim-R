@@ -1868,14 +1868,9 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 ------------------------------------------------------------------------------
 6.35.1 Notes on Zathura and Evince~
 
-Zathura version must be >= 0.3.1.
-
-If either Zathura or Evince is not started yet when you try to jump to the PDF
-document for the first time, it will start, but will not jump to desired line;
-you have to press <LocalLeader>gp again. For backward search, hold the CTRL
-key and left-click in the PDF.
-
 No additional configuration is required for Evince and Zathura.
+
+For backward search, hold the CTRL key and left-click in the PDF.
 
 
 ------------------------------------------------------------------------------
