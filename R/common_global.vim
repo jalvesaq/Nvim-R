@@ -2375,8 +2375,13 @@ function RAction(rcmd)
             return
         endif
         let rfun = a:rcmd
-        if a:rcmd == "args" && g:R_listmethods == 1
-            let rfun = "nvim.list.args"
+        if a:rcmd == "args"
+            if g:R_listmethods == 1
+                call g:SendCmdToR('nvim.list.args("' . rkeyword . '")')
+            else
+                call g:SendCmdToR('args("' . rkeyword . '")')
+            endif
+            return
         endif
         if a:rcmd == "plot" && g:R_specialplot == 1
             let rfun = "nvim.plot"
