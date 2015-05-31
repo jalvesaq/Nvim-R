@@ -739,7 +739,7 @@ function StartR(whatr)
         endif
         let start_options += ['setwd("' . rwd . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.7") warning("Your version of Nvim-R requires nvimcom-0.9-7.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8") warning("Your version of Nvim-R requires nvimcom-0.9-8.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -876,8 +876,8 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.7"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.7.')
+        if nvimcom_version != "0.9.8"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.8.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -2700,7 +2700,7 @@ endfunction
 
 " Tell R to create a list of objects file listing all currently available
 " objects in its environment. The file is necessary for omni completion.
-function BuildROmniList()
+function BuildROmniList(pattern)
     if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
         return
     endif
@@ -2709,7 +2709,7 @@ function BuildROmniList()
     if g:R_allnames == 1
         let omnilistcmd = omnilistcmd . ', allnames = TRUE'
     endif
-    let omnilistcmd = omnilistcmd . ')'
+    let omnilistcmd = omnilistcmd . ', pattern = "' . a:pattern . '")'
 
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/eval_reply")
@@ -2750,9 +2750,9 @@ function CompleteR(findstart, base)
         while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.' || line[start - 1] =~ '\$' || line[start - 1] =~ '@')
             let start -= 1
         endwhile
-        call BuildROmniList()
         return start
     else
+        call BuildROmniList(a:base)
         let resp = []
         if strlen(a:base) == 0
             return resp
@@ -3146,7 +3146,7 @@ let g:rplugin_starting_R = 0
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.7"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
