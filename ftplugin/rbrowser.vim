@@ -118,7 +118,11 @@ function! RBrowserDoubleClick()
     " Toggle state of list or data.frame: open X closed
     let key = RBrowserGetName(0, 1)
     if g:rplugin_curview == "GlobalEnv"
-        call SendToNvimcom("\006" . key)
+        if getline(".") =~ "&#.*\t"
+            call SendToNvimcom("\006&" . key)
+        else
+            call SendToNvimcom("\006" . key)
+        endif
     else
         let key = substitute(key, '`', '', "g") 
         if key !~ "^package:"
