@@ -609,21 +609,28 @@ In the Libraries view, you can either double click or press <Enter> on a
 library name to see its objects. In the Object Browser, the libraries have the
 color defined by the PreProc highlighting group. The other objects have
 their colors defined by the return value of some R functions. Each line in the
-table below shows a highlighting group and the corresponding R function (if
-any) used to classify the objects:
+table below shows a highlighting group and the corresponding type of R object:
 
 	 PreProc	libraries
-	 Number		is.numeric()
-	 String		is.character()
-	 Special	is.factor()
-	 Boolean	is.logical()
-	 Type		is.list()
-	 Function	is.function()
-	 Statement	isS4()
+	 Number		numeric
+	 String		character
+	 Special	factor
+	 Boolean	logical
+	 Type		list
+	 Function	function
+	 Statement	s4
+	 Comment	promise (lazy load object)
 
-One limitation is that objects made available by the command `data()` may not
-have their classes recognized in the GlobalEnv view.
-
+One limitation of the Object Browser is that objects made available by the
+command `data()` are only links to the actual objects (promises of lazily
+loading the object when needed) and their real classes are not recognized in
+the GlobalEnv view. The same problem happens when the `knitr` option
+`cache.lazy=TRUE`. If you press <Enter> over the name of the object in the
+Object Browser, it will be actually loaded by the command (ran in the
+background):
+>
+   obj <- obj
+<
 
 ------------------------------------------------------------------------------
 4.5. Commenting and uncommenting lines~
@@ -880,16 +887,7 @@ operator. See: https://github.com/jcfaria/Vim-R-plugin/issues/94
 
 
 ------------------------------------------------------------------------------
-5.4. Objects Browser does not support knitr cache=TRUE~
-
-When processing Rnoweb documents with the knitr package, if the chunk option
-`cache` is `TRUE`, the Object Browser will not be able to detect the classes
-of objects because knitr uses R's lazy load feature. The workaround for this
-issue is to define the chunk option `cache.lazy=FALSE`.
-
-
-------------------------------------------------------------------------------
-5.5. Wrong message that "R is busy" (Windows only)~
+5.4. Wrong message that "R is busy" (Windows only)~
 
 On Windows, when code is sent from Nvim to R Console, the nvimcom library sets
 the value of the internal variable `r_is_busy` to 1. The value is set back to
@@ -904,8 +902,9 @@ expected again after any valid code is executed in the R Console.
 
 The nvimcom library is started with the state `busy`.
 
+
 ------------------------------------------------------------------------------
-5.6. R must be started by Nvim~
+5.5. R must be started by Nvim~
 
 The communication between Nvim and R will work only if R was started by Nvim
 through the <LocalLeader>rf command because the plugin was designed to connect
