@@ -1111,6 +1111,28 @@ later option, do not load colorout in your `~/.Rprofile` and put in your
 >
    let R_hl_term = 1
 <
+Tips:
+
+  - If you want to press `gz` in Normal mode to emulate the <C-a>z Tmux
+    command (zoom Window), put the following in your |nvimrc|:
+>
+    " Emulate Tmux ^az
+    function ZoomWindow()
+        let cpos = getpos(".")
+        tabnew %
+        redraw
+        call cursor(cpos[1], cpos[2])
+        normal! zz
+    endfunction
+    nmap gz :call ZoomWindow()<CR>
+<
+    Then, you can open the current buffer in a new tab to get it occupying the
+    whole screen.
+
+  - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
+    console orientation (vertical and horizontal). See |window-moving| for a
+    complete description of commands.
+
 
 ------------------------------------------------------------------------------
 							       *R_rnowebchunk*
