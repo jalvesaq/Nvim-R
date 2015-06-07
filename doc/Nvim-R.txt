@@ -25,9 +25,9 @@ For Neovim (development version)
 1. Overview~
 
 This plugin improves Nvim's support for editing R code and makes it possible
-to integrate Nvim with R. It is the successor of Vim-R-plugin which is being
-discontinued due to Vim limitations. The latest stable version of this plugin
-is available at:
+to integrate Nvim with R. It is the successor of Vim-R-plugin which may be
+discontinued in the future. The latest stable version of this plugin is
+available at:
 
     http://www.lepem.ufc.br/jaa/Nvim-R.html
 
@@ -122,22 +122,6 @@ Before installing the plugin, you should install its dependencies:
 
    Additional dependencies on Unix (Linux, OS X, etc.):~
 
-   Tmux >= 1.8:   http://tmux.sourceforge.net
-		  Tmux is necessary to send commands from Nvim to R running in
-		  a terminal emulator.
-		  (Not required if running R in a Neovim buffer (see |R_in_buffer|)
-		  or using the combination MacVim + R.app)
-
-   colorout:     http://www.lepem.ufc.br/jaa/colorout.html
-                 Colorizes the R output in terminal emulators.
-		 (Not required if |R_in_buffer| or MacVim + R.app)
-
-   setwidth:     An R package that can be installed with the command
-                 `install.packages("setwidth")`.
-                 The library setwidth adjusts the value of `options("width")`
-                 whenever the terminal is resized.
-		 (Not required if |R_in_buffer| or MacVim + R.app)
-
    wmctrl:       http://tomas.styblo.name/wmctrl/
                  Required for better SyncTeX support under X Server.
 		 (Not required on OS X)
@@ -147,12 +131,28 @@ Before installing the plugin, you should install its dependencies:
 		 terminal emulator.
 		 (Not required if using MacVim + R.app)
 
+   Tmux >= 1.8:   http://tmux.sourceforge.net
+		  Tmux is necessary to send commands from Nvim to R running in
+		  a terminal emulator.
+		  (Not required if running R in a Neovim buffer (see |R_in_buffer|)
+		  or using the combination MacVim + R.app)
+
+   setwidth:     An R package that can be installed with the command
+                 `install.packages("setwidth")`.
+                 The library setwidth adjusts the value of `options("width")`
+                 whenever the terminal is resized.
+		 (Not required if |R_in_buffer| or MacVim + R.app)
+
+   colorout:     http://www.lepem.ufc.br/jaa/colorout.html
+                 Colorizes the R output in terminal emulators.
+		 (Not required if |R_in_buffer| or MacVim + R.app)
+
 Put the following lines in your `~/Rprofile` (you don't need `colorout` and
 `setwidth` if you either are on Windows or will run R.app on OS X):
 >
    if(interactive()){
-       library(colorout) # For colorized output in terminal emulators
-       library(setwidth) # For automatic update of options("width")
+       # library(colorout) # Uncomment if R running in a Tmux pane
+       # library(setwidth) # Uncomment if R running in a Tmux pane
        options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
        library(nvimcom)
    }
@@ -267,7 +267,7 @@ temporarily using the full terminal window; 4) it is the better way of using
 the plugin remotely through ssh (the alternative is to enable the option
 |R_in_buffer|). Please, read |Nvim-R-tmux| for tips on how to use Tmux.
 
-If not in a Tmux session and the X Window is not running, R wil run in a
+If not in a Tmux session and the X Window is not running, R will run in a
 Neovim terminal buffer.
 
 
@@ -454,6 +454,18 @@ in each case:
    summary(x)
    summary(m)
 <
+To get help on an R topic, you can also type in Nvim (Normal mode):
+>
+   :Rhelp topic
+<
+The command may be abbreviated to `:Rh` and you can either press <Tab> to
+trigger the autocompletion of R objects names or hit CTRL-D to list the
+possible completions (see |cmdline-completion| for details on the various ways
+of getting command-line completion). The list of objects used for
+completion is the same available for omnicompletion (see
+|R_start_libs|). You may close the R documentation buffer by
+simply pressing `q`.
+
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
 will show it in a new tab. If the csv.vim plugin is not installed, the Nvim-R
 will warn you about that (see |Nvim-R-df-view|). Specially useful commands
@@ -464,11 +476,11 @@ It can be installed from:
 
 When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
 CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
-backward (see |popupmenu-completion|). Note: if using Nvim in a terminal
-emulator, Tmux will capture the CTRL-A command. You have to do CTRL-A twice to
-pass a single CTRL-A to Nvim. For rnoweb, rmd and rrst file types, CTRL-X
-CTRL-A can also be used to complete knitr chunk options if the cursor is
-inside the chunk header.
+backward (see |popupmenu-completion|). Note: if using Nvim in a Tmux session,
+Tmux will capture the CTRL-A command. You have to do CTRL-A twice to pass a
+single CTRL-A to Nvim. For rnoweb, rmd and rrst file types, CTRL-X CTRL-A can
+also be used to complete knitr chunk options if the cursor is inside the chunk
+header.
 
 If R is not running or if it is running but is busy the completion will be
 based on information from the packages listed by |R_start_libs|
@@ -481,22 +493,10 @@ and not of the function itself). For library() and require(), when completing
 the first argument, the popup list shows the names of installed packages, but
 only if R is running.
 
-To get help on an R topic, type in Nvim (Normal mode):
->
-   :Rhelp topic
-<
-The command may be abbreviated to  :Rh  and you can either press <Tab> to
-trigger the autocompletion of R objects names or hit CTRL-D to list the
-possible completions (see |cmdline-completion| for details on the various ways
-of getting command-line completion). The list of objects used for
-completion is the same available for omnicompletion (see
-|R_start_libs|). You may close the R documentation buffer by
-simply pressing `q`.
-
 You can source all .R files in a directory with the Normal mode command
 :RSourceDir, which accepts an optional argument (the directory to be sourced).
 								     *Rinsert*
-The command  :Rinsert <cmd>  inserts one or more lines with the output of the
+The command  `:Rinsert` <cmd>  inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
 and pasting the output R from its console to Nvim. For example, to insert the
 output of `dput(levels(var))`, where `var` is a factor vector, we could do in
@@ -504,9 +504,9 @@ Nvim:
 >
    :Rinsert dput(levels(var))
 <
-The output inserted by  :Rinsert  is limited to 5012 characters.
+The output inserted by `:Rinsert` is limited to 5012 characters.
 
-The command  :Rformat  calls the function `tidy_source()` of formatR package
+The command `:Rformat` calls the function `tidy_source()` of formatR package
 to format either the entire buffer or the selected lines. The value of the
 `width.cutoff` argument is set to the buffer's 'textwidth' if it is not
 outside the range 20-180. Se R help on `tidy_source` for details on how to
@@ -596,14 +596,21 @@ line of the Object Browser it will toggle the view between the objects in
 .GlobalEnv and the currently loaded libraries.
 
 In the .GlobalEnv view, if an object has the attribute "label", it will also
-be displayed. Please, see the R help for package nvimcom for some options
-to control the Object Browser behavior. In the Object Browser window, while in
-Normal mode, you can either press <Enter> or double click (GVim only) over a
-data.frame or list to show/hide its elements (not if viewing the content of
-loaded libraries). If you are running R in an environment where the string
-UTF-8 is part of either LC_MESSAGES or LC_ALL variables, unicode line drawing
-characters will be used to draw lines in the Object Browser. This is the case
-of most Linux distributions.
+be displayed. For instance, the code below would make the Object Browser
+display the variable labels of an imported SPSS dataset:
+>
+   library(foreign)
+   d <- read.spss("/path/to/spss/dataset.sav", to.data.frame = TRUE)
+   vlabs <- attr(d, "variable.labels")
+   for(n in names(vlabs))
+       attr(d[[n]], "label") <- vlabs[[n]]
+<
+In the Object Browser window, while in Normal mode, you can either press
+<Enter> or double click (GVim only) over a data.frame or list to show/hide its
+elements (not if viewing the content of loaded libraries). If you are running
+R in an environment where the string UTF-8 is part of either LC_MESSAGES or
+LC_ALL variables, unicode line drawing characters will be used to draw lines
+in the Object Browser. This is the case of most Linux distributions.
 
 In the Libraries view, you can either double click or press <Enter> on a
 library name to see its objects. In the Object Browser, the libraries have the
@@ -625,8 +632,8 @@ One limitation of the Object Browser is that objects made available by the
 command `data()` are only links to the actual objects (promises of lazily
 loading the object when needed) and their real classes are not recognized in
 the GlobalEnv view. The same problem happens when the `knitr` option
-`cache.lazy=TRUE`. If you press <Enter> over the name of the object in the
-Object Browser, it will be actually loaded by the command (ran in the
+`cache.lazy=TRUE`. However, if you press <Enter> over the name of the object
+in the Object Browser, it will be actually loaded by the command (ran in the
 background):
 >
    obj <- obj
@@ -677,7 +684,7 @@ in a buffer (see |:s| and |pattern-overview|).
 
 Nvim can jump to functions defined in other files if you press CTRL-] over the
 name of a function, but it needs a tags file to be able to find the function
-definition (see |tags-and-searches|). The command  :RBuildTags  calls the R
+definition (see |tags-and-searches|). The command `:RBuildTags` calls the R
 function `rtags()` to build the tags file for the R scripts in the current
 directory. Please read |Nvim-R-tagsfile| to learn how to create a tags file
 referencing source code located in other directories, including the entire R
@@ -1104,14 +1111,26 @@ the default <C-\><C-N> to go to Normal mode, put in your |nvimrc|:
 >
    let R_esc_term = 0
 <
-You may either use the package colorout to colorize R output or let Nvim
-highlight the terminal contents as it was a .Rout file type. If you prefer the
-later option, do not load colorout in your `~/.Rprofile` and put in your
-|nvimrc|:
->
-   let R_hl_term = 1
-<
+You may either use the package colorout (Unix only) to colorize R output or
+let Nvim highlight the terminal contents as it was a .Rout file type. Two
+advantages of colorout are the possibility of highlighting numbers close to
+zero in a different color and the distinction between stdout and stderr. The
+value of R_hl_term (0 or 1) determines whether Nvim should syntax highlight
+the R output, and its default value will be 1 unless the file `~/.Rprofile` is
+found and contains "source", "library.*colorout" or "require.*colorout" in an
+uncommented line.
+
+Before sending a command to R Console, if the terminal width has changed,
+Neovim will send to nvimcom the command `options(width=X)`, where X is the
+new terminal width. On Unix systems, you can also install the package setwidth
+to get `options("width")` automatically updated when the terminal resizes even
+if you are typing commands directly in the R Console when the resize happens.
+
 Tips:
+
+  - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
+    console orientation (vertical and horizontal). See |window-moving| for a
+    complete description of commands.
 
   - If you want to press `gz` in Normal mode to emulate the <C-a>z Tmux
     command (zoom Window), put the following in your |nvimrc|:
@@ -1128,10 +1147,6 @@ Tips:
 <
     Then, you can open the current buffer in a new tab to get it occupying the
     whole screen.
-
-  - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
-    console orientation (vertical and horizontal). See |window-moving| for a
-    complete description of commands.
 
 
 ------------------------------------------------------------------------------

@@ -2902,16 +2902,12 @@ call RSetDefaultValue("g:R_objbr_allnames",    0)
 call RSetDefaultValue("g:R_objbr_labelerr",    1)
 call RSetDefaultValue("g:R_in_buffer",         0)
 call RSetDefaultValue("g:R_esc_term",          1)
-call RSetDefaultValue("g:R_hl_term",           0)
 call RSetDefaultValue("g:R_nvimcom_wait",   5000)
 call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
 if g:R_in_buffer
-    let g:rplugin_rhistory = [ ]
-    let g:rplugin_rhist_pos = -1
-    let g:rplugin_addedtohist = 0
     call RSetDefaultValue("g:R_nvimpager", "'vertical'")
 else
     call RSetDefaultValue("g:R_nvimpager",      "'tab'")
@@ -3251,7 +3247,10 @@ endif
 if g:R_applescript
     runtime R/osx.vim
 endif
-runtime R/nvimbuffer.vim
+
+if g:R_in_buffer
+    runtime R/nvimbuffer.vim
+endif
 
 if exists("g:R_nvim_window")
     call RWarningMsgInp("The option 'g:R_nvim_window' was deprecated. Please remove it from your vimrc.")

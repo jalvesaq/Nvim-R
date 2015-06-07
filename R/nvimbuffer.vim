@@ -7,6 +7,14 @@ function SendCmdToR_Neovim(...)
         else
             let cmd = a:1
         endif
+
+        let rwnwdth = winwidth(g:rplugin_R_winnr)
+        if rwnwdth != g:rplugin_R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
+            let g:rplugin_R_width = rwnwdth
+            call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
+            sleep 10m
+        endif
+
         if a:0 == 2 && a:2 == 0
             call jobsend(g:rplugin_R_job, cmd)
         else
@@ -46,6 +54,8 @@ function StartR_Neovim()
     endif
     let g:rplugin_R_job = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
+    let g:rplugin_R_winnr = winnr()
+    let g:rplugin_R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if g:R_hl_term
@@ -59,3 +69,26 @@ function StartR_Neovim()
     call WaitNvimcomStart()
 endfunction
 
+if has("win32")
+    call RSetDefaultValue("g:R_hl_term", 1)
+else
+    let s:hlterm = 1
+    if filereadable(expand("~/.Rprofile"))
+        let s:rprfl = readfile(expand("~/.Rprofile"))
+        if len(s:rprfl)
+            for s:lin in s:rprfl
+                let s:lin = substitute(s:lin, '^\s*#.*', '', '')
+                if s:lin =~ "library.*colorout" || s:lin =~ "require.*colorout" || s:lin =~ "source"
+                    let s:hlterm = 0
+                    break
+                endif
+            endfor
+            unlet s:lin
+        endif
+        unlet s:rprfl
+    else
+        let s:hlterm = 0
+    endif
+    call RSetDefaultValue("g:R_hl_term", s:hlterm)
+    unlet s:hlterm
+endif
