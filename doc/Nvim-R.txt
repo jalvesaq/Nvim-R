@@ -2108,28 +2108,29 @@ directory after the installation:
 
 doc/Nvim-R.txt
 ftdetect/r.vim
+ftplugin/r_nvimr.vim
 ftplugin/rbrowser.vim
 ftplugin/rdoc.vim
 ftplugin/rhelp_nvimr.vim
 ftplugin/rmd_nvimr.vim
 ftplugin/rnoweb_nvimr.vim
-ftplugin/r_nvimr.vim
 ftplugin/rrst_nvimr.vim
-syntax/rbrowser.vim
-syntax/rdoc.vim
-syntax/rout.vim
 R/common_buffer.vim
 R/common_global.vim
 R/functions.vim
 R/gui_running.vim
+R/nvimbuffer.vim
 R/osx.vim
-R/rcomplete.vim
-R/rmd.snippets
 R/r.snippets
+R/rmd.snippets
 R/setcompldir.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
-R/synctex_okular_backward.sh
+R/tmux.vim
+R/windows.vim
+syntax/rbrowser.vim
+syntax/rdoc.vim
+syntax/rout.vim
 
 
 ==============================================================================

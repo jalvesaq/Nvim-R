@@ -60,7 +60,6 @@ function StartR_Neovim()
     endif
     let g:rplugin_R_job = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
-    let g:rplugin_R_winnr = winnr()
     let g:rplugin_R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
