@@ -8,7 +8,13 @@ function SendCmdToR_Neovim(...)
             let cmd = a:1
         endif
 
-        let rwnwdth = winwidth(g:rplugin_R_winnr)
+        let curbuf = bufname("%")
+        let savesb = &switchbuf
+        set switchbuf=useopen
+        exe 'sb ' . g:rplugin_R_bufname
+        let rwnwdth = winwidth(0)
+        exe 'sb ' . curbuf
+        exe 'set switchbuf=' . savesb
         if rwnwdth != g:rplugin_R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
             let g:rplugin_R_width = rwnwdth
             call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
