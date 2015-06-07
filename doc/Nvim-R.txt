@@ -1672,14 +1672,11 @@ scripts, put in your |nvimrc|:
 >
    let R_source = "~/path/to/MyScript.vim,/path/to/AnotherScript.vim"
 <
-Currently, there are only two scripts known to extend the Nvim-R
+Currently, there is only one script known to extend the Nvim-R
 features:
 
    Support to the devtools R package~
    https://github.com/mllg/vim-devtools-plugin
-
-   Basic integration with GNU screen~
-   https://github.com/jalvesaq/screenR
 
 
 ------------------------------------------------------------------------------

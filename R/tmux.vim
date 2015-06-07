@@ -1,5 +1,5 @@
 " Check whether Tmux is OK
-if !executable('tmux') && g:R_source !~ "screenR"
+if !executable('tmux')
     let g:R_in_buffer = 1
     let g:R_tmux_ob = 0
     finish
@@ -10,8 +10,8 @@ let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1',
 if strlen(s:tmuxversion) != 3
     let s:tmuxversion = "1.0"
 endif
-if s:tmuxversion < "1.5" && g:R_source !~ "screenR"
-    call RWarningMsgInp("Nvim-R requires Tmux >= 1.5")
+if s:tmuxversion < "1.8"
+    call RWarningMsgInp("Nvim-R requires Tmux >= 1.8")
     let g:rplugin_failed = 1
     finish
 endif
