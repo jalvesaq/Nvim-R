@@ -167,6 +167,7 @@ htmldoc:
 	    sed -i -e 's/<\/a>|/<\/a>/g' Nvim-R.html ;\
 	    sed -i -e 's/|<code /<code /g' Nvim-R.html ;\
 	    sed -i -e 's/<\/code>|/<\/code>/g' Nvim-R.html ;\
+	    sed -i -e 's/&term/\&amp;term/g' Nvim-R.html ;\
 	    sed -i -e 's/`//g' Nvim-R.html ;\
 	    sed -i -e 's/\( *\)\(http\S*\)/\1<a href="\2">\2<\/a>/' Nvim-R.html ;\
 	    sed -i -e 's/<\/pre><hr><pre>/  --------------------------------------------------------\n/' Nvim-R.html ;\
