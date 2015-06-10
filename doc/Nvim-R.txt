@@ -826,7 +826,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-remote*
-4.7.2 Remote access~
+4.7.4 Remote access~
 
 The Nvim-R can not send commands from a local Nvim to a remote R, but
 you can access the remote machine through ssh and run Tmux, Nvim and R in the
@@ -1116,10 +1116,13 @@ let Nvim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
 zero in a different color and the distinction between stdout and stderr. The
 value of R_hl_term (0 or 1) determines whether Nvim should syntax highlight
-the R output, and its default value will be 1 unless the file `~/.Rprofile` is
-found and contains "source", "library.*colorout" or "require.*colorout" in an
-uncommented line.
-
+the R output, and its default value will be set to 1 if the package colorout
+is not loaded at the moment that you send the first command to R console.
+If you prefer do not rely on the auto detection of colorout, you should set
+the value of R_hl_term in your |nvimrc|. Example:
+>
+   let R_hl_term = 0
+<
 Before sending a command to R Console, if the terminal width has changed,
 Neovim will send to nvimcom the command `options(width=X)`, where X is the
 new terminal width. On Unix systems, you can also install the package setwidth
@@ -1220,11 +1223,10 @@ control the behavior of the Object Browser:
    let R_objbr_allnames = 0  " Show .GlobalEnv hidden objects
    let R_objbr_labelerr = 1  " Warn if label is not a valid text
 <
-Objects whose names start with a "." are hidden by default. If you want that
-they are displayed in the Object Browser, set the value of `R_objbr_allnames`
-to `1`.
+Objects whose names start with a "." are hidden by default. If you want them
+displayed in the Object Browser, set the value of `R_objbr_allnames` to `1`.
 
-when a `data.frame` appears in the Object Browser for the first time, its
+When a `data.frame` appears in the Object Browser for the first time, its
 elements are immediately displayed, but the elements of a `list` are displayed
 only if it is explicitly opened. The options `R_objbr_opendf` and
 `R_objbr_openlist` control the initial status (either opened or closed) of,
@@ -1482,7 +1484,7 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 6.17. Arguments to R source() function~
 
 When you send multiple lines of code to R (a selection of lines, a paragraph,
-code between two marks or a R chunk of code), the Nvim-R saves the lines in a
+code between two marks or an R chunk of code), the Nvim-R saves the lines in a
 temporary file and, then, sends to R the command `source()` to read the
 temporary file.
 
@@ -1547,7 +1549,7 @@ you can set
 6.20. Never unmake the R menu~
 
 Use this option if you want that the "R" menu item in GVim is not deleted when
-you change from one buffer to another, for example, when going from an .R file
+you change from one buffer to another, for example, when going from a .R file
 to a .txt one:
 >
    let R_never_unmake_menu = 1

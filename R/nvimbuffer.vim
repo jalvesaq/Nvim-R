@@ -1,5 +1,15 @@
 " This file contains code used only when R run in Neovim buffer
 
+function ExeOnRTerm(cmd)
+    let curbuf = bufname("%")
+    let savesb = &switchbuf
+    set switchbuf=useopen
+    exe 'sb ' . g:rplugin_R_bufname
+    exe a:cmd
+    exe 'sb ' . curbuf
+    exe 'set switchbuf=' . savesb
+endfunction
+
 function SendCmdToR_Neovim(...)
     if g:rplugin_R_job
         if g:R_ca_ck
@@ -8,15 +18,27 @@ function SendCmdToR_Neovim(...)
             let cmd = a:1
         endif
 
-        let curbuf = bufname("%")
-        let savesb = &switchbuf
-        set switchbuf=useopen
-        exe 'sb ' . g:rplugin_R_bufname
-        let rwnwdth = winwidth(0)
-        exe 'sb ' . curbuf
-        exe 'set switchbuf=' . savesb
-        if rwnwdth != g:rplugin_R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
-            let g:rplugin_R_width = rwnwdth
+        if !exists("g:R_hl_term")
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'paste(search(), collapse=" ")')
+            let g:rplugin_lastev = ReadEvalReply()
+            if g:rplugin_lastev =~ "colorout"
+                call RSetDefaultValue("g:R_hl_term", 0)
+            else
+                call RSetDefaultValue("g:R_hl_term", 1)
+            endif
+        endif
+
+        if !exists("g:rplugin_hl_term")
+            let g:rplugin_hl_term = g:R_hl_term
+            if g:rplugin_hl_term
+                call ExeOnRTerm('runtime syntax/rout.vim')
+            endif
+        endif
+
+        " Update the width, if necessary
+        call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
+        if s:rwnwdth != g:rplugin_R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
+            let g:rplugin_R_width = s:rwnwdth
             call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
             sleep 10m
         endif
@@ -63,8 +85,9 @@ function StartR_Neovim()
     let g:rplugin_R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
-    if g:R_hl_term
+    if exists("g:R_hl_term") && g:R_hl_term
         runtime syntax/rout.vim
+        let g:rplugin_hl_term = g:R_hl_term
     endif
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>
@@ -75,25 +98,6 @@ function StartR_Neovim()
 endfunction
 
 if has("win32")
+    " The R package colorout only works on Unix systems
     call RSetDefaultValue("g:R_hl_term", 1)
-else
-    let s:hlterm = 1
-    if filereadable(expand("~/.Rprofile"))
-        let s:rprfl = readfile(expand("~/.Rprofile"))
-        if len(s:rprfl)
-            for s:lin in s:rprfl
-                let s:lin = substitute(s:lin, '^\s*#.*', '', '')
-                if s:lin =~ "library.*colorout" || s:lin =~ "require.*colorout" || s:lin =~ "source"
-                    let s:hlterm = 0
-                    break
-                endif
-            endfor
-            unlet s:lin
-        endif
-        unlet s:rprfl
-    else
-        let s:hlterm = 0
-    endif
-    call RSetDefaultValue("g:R_hl_term", s:hlterm)
-    unlet s:hlterm
 endif
