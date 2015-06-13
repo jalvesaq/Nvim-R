@@ -6,6 +6,7 @@ function ExeOnRTerm(cmd)
     set switchbuf=useopen
     exe 'sb ' . g:rplugin_R_bufname
     exe a:cmd
+    call cursor("$", 1)
     exe 'sb ' . curbuf
     exe 'set switchbuf=' . savesb
 endfunction
