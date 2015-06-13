@@ -1941,7 +1941,15 @@ function ShowRDoc(rkeyword)
                 resize 20
             endif
         elseif s:vimpager == "no"
-            call RWarningMsg('R_nvimpager = "no". You should put options(nvimcom.nvimpager=FALSE) in your .Rprofile?')
+            " The only way of ShowRDoc() being called when R_nvimpager=="no"
+            " is the user setting the value of R_nvimpager to 'no' after
+            " Neovim startup. It should be set in the nvimrc.
+            if g:R_in_buffer
+                let g:R_nvimpager = "vertical"
+            else
+                let g:R_nvimpager = "tab"
+            endif
+            call ShowRDoc(a:rkeyword)
             return
         else
             echohl WarningMsg
@@ -2894,7 +2902,6 @@ let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_lastev = ""
-let g:rplugin_last_r_prompt = ""
 let g:rplugin_starting_R = 0
 
 let g:rplugin_nvimcom_bin_dir = ""
