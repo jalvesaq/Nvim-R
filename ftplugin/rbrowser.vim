@@ -93,7 +93,6 @@ function! UpdateOB(what)
     if bufname("%") =~ "Object_Browser" || b:rplugin_extern_ob
         setlocal nomodifiable
     endif
-    redraw
     if rplugin_switchedbuf
         exe "sil noautocmd sb " . g:rplugin_curbuf
         exe "set switchbuf=" . savesb
