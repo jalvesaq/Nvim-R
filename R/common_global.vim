@@ -591,13 +591,6 @@ function GoDown()
     endwhile
 endfunction
 
-function DelayedFillLibList()
-    autocmd! RStarting
-    augroup! RStarting
-    let g:rplugin_starting_R = 0
-    call FillRLibList()
-endfunction
-
 function IsSendCmdToRFake()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         if exists("g:maplocalleader")
@@ -858,12 +851,6 @@ function WaitNvimcomStart()
             call RWarningMsg('Application "' . nvs . '" not found.')
         endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-
-        augroup RStarting
-            autocmd!
-            autocmd CursorMoved <buffer> call DelayedFillLibList()
-            autocmd CursorMovedI <buffer> call DelayedFillLibList()
-        augroup END
 
         if g:rplugin_do_tmux_split
             " Environment variables persists across Tmux windows.
@@ -2902,7 +2889,6 @@ let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_lastev = ""
-let g:rplugin_starting_R = 0
 
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")

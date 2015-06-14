@@ -29,7 +29,6 @@ function TmuxActivePane()
 endfunction
 
 function StartR_TmuxSplit(rcmd)
-    let g:rplugin_starting_R = 1
     let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
