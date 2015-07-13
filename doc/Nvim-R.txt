@@ -1098,6 +1098,7 @@ annoying. You can adjust this waiting time in your |nvimrc|. Example:
 								 *R_in_buffer*
 								 *R_esc_term*
 								 *R_hl_term*
+								 *R_setwidth*
 6.3. Run R in Neovim buffer~
 
 If you want to run R in Neovim's built in terminal emulator, put in your
@@ -1123,12 +1124,15 @@ the value of R_hl_term in your |nvimrc|. Example:
 >
    let R_hl_term = 0
 <
-Before sending a command to R Console, if the terminal width has changed,
-Neovim will send to nvimcom the command `options(width=X)`, where X is the
-new terminal width. On Unix systems, you can also install the package setwidth
-to get `options("width")` automatically updated when the terminal resizes even
-if you are typing commands directly in the R Console when the resize happens.
-
+Unless the R package setwidth is loaded, before sending a command to R
+Console, if the terminal width has changed, Neovim will send to nvimcom the
+command `options(width=X)`, where X is the new terminal width. You can either
+set the value of R_setwidth to 1 to force the width to be set even if setwidth
+is loaded or set it to 0 to avoid the width being set even if setwidth is not
+loaded. Example:
+>
+   let R_setwidth = 0
+<
 Tips:
 
   - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
@@ -1252,6 +1256,9 @@ If you do not want to see R documentation in a Nvim's buffer, put in your
 >
    let R_nvimpager = "no"
 <
+This option can only be set to "no" in the |nvimrc|. It will be automatically
+changed to a suitable value if it is set to "no" after Neovim startup.
+
 If you want to see R documentation in Nvim, but are not satisfied with the way
 it works, please, read the subsection 6.5.2 below.
 

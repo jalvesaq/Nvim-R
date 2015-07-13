@@ -19,29 +19,40 @@ function SendCmdToR_Neovim(...)
             let cmd = a:1
         endif
 
-        if !exists("g:R_hl_term")
+        if !exists("g:R_hl_term") || !exists("g:R_setwidth")
             call SendToNvimcom("\x08" . $NVIMR_ID . 'paste(search(), collapse=" ")')
             let g:rplugin_lastev = ReadEvalReply()
-            if g:rplugin_lastev =~ "colorout"
-                call RSetDefaultValue("g:R_hl_term", 0)
-            else
-                call RSetDefaultValue("g:R_hl_term", 1)
+            if !exists("g:R_hl_term")
+                if g:rplugin_lastev =~ "colorout"
+                    let g:R_hl_term = 0
+                else
+                    let g:R_hl_term = 1
+                endif
+            endif
+            if !exists("g:R_setwidth")
+                if g:rplugin_lastev =~ "setwidth"
+                    let g:R_setwidth = 0
+                else
+                    let g:R_setwidth = 1
+                endif
             endif
         endif
 
         if !exists("g:rplugin_hl_term")
             let g:rplugin_hl_term = g:R_hl_term
             if g:rplugin_hl_term
-                call ExeOnRTerm('runtime syntax/rout.vim')
+                call ExeOnRTerm('set filetype=rout')
             endif
         endif
 
         " Update the width, if necessary
-        call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
-        if s:rwnwdth != g:rplugin_R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
-            let g:rplugin_R_width = s:rwnwdth
-            call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
-            sleep 10m
+        if g:R_setwidth
+            call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
+            if s:rwnwdth != g:rplugin_R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
+                let g:rplugin_R_width = s:rwnwdth
+                call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
+                sleep 10m
+            endif
         endif
 
         if a:0 == 2 && a:2 == 0
@@ -87,7 +98,7 @@ function StartR_Neovim()
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
-        runtime syntax/rout.vim
+        set filetype=rout
         let g:rplugin_hl_term = g:R_hl_term
     endif
     if g:R_esc_term
