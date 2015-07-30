@@ -605,6 +605,9 @@ endfunction
 
 " Start R
 function StartR(whatr)
+    if !isdirectory(g:rplugin_tmpdir)
+        call mkdir(g:rplugin_tmpdir, "p", 0700)
+    endif
     call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
