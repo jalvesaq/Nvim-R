@@ -56,22 +56,18 @@ deb:
 	disabledby: \"let disable_r_ftplugin = 1\"\n\
 	files:\n\
 	  - doc/Nvim-R.txt\n\
+	  - ftdetect/r.vim\n\
 	  - ftplugin/rbrowser.vim\n\
 	  - ftplugin/rdoc.vim\n\
 	  - ftplugin/rhelp_nvimr.vim\n\
-	  - ftplugin/rhelp.vim\n\
 	  - ftplugin/rmd_nvimr.vim\n\
-	  - ftplugin/rmd.vim\n\
 	  - ftplugin/rnoweb_nvimr.vim\n\
-	  - ftplugin/rnoweb.vim\n\
 	  - ftplugin/r_nvimr.vim\n\
 	  - ftplugin/rrst_nvimr.vim\n\
-	  - ftplugin/rrst.vim\n\
-	  - ftplugin/r.vim\n\
 	  - R/common_buffer.vim\n\
 	  - R/common_global.vim\n\
+	  - R/tmux.vim\n\
 	  - R/functions.vim\n\
-	  - R/global_r_plugin.vim\n\
 	  - R/gui_running.vim\n\
 	  - R/nvimbuffer.vim\n\
 	  - R/osx.vim\n\
@@ -80,19 +76,10 @@ deb:
 	  - R/setcompldir.vim\n\
 	  - R/synctex_evince_backward.py\n\
 	  - R/synctex_evince_forward.py\n\
-	  - R/synctex_okular_backward.sh\n\
-	  - indent/rhelp.vim\n\
-	  - indent/rmd.vim\n\
-	  - indent/rnoweb.vim\n\
-	  - indent/rrst.vim\n\
-	  - indent/r.vim\n\
+	  - R/windows.vim\n\
 	  - syntax/rbrowser.vim\n\
 	  - syntax/rdoc.vim\n\
-	  - syntax/rhelp.vim\n\
-	  - syntax/rmd.vim\n\
 	  - syntax/rout.vim\n\
-	  - syntax/rrst.vim\n\
-	  - syntax/r.vim\n\
 	" > /tmp/nvim-r-tmp/usr/share/nvim/registry/nvim-r.yaml
 	# Create the copyright
 	echo "Copyright (C) 2011-2014 Jakson Aquino\n\
@@ -180,6 +167,7 @@ htmldoc:
 	    sed -i -e 's/<\/a>|/<\/a>/g' Nvim-R.html ;\
 	    sed -i -e 's/|<code /<code /g' Nvim-R.html ;\
 	    sed -i -e 's/<\/code>|/<\/code>/g' Nvim-R.html ;\
+	    sed -i -e 's/&term/\&amp;term/g' Nvim-R.html ;\
 	    sed -i -e 's/`//g' Nvim-R.html ;\
 	    sed -i -e 's/\( *\)\(http\S*\)/\1<a href="\2">\2<\/a>/' Nvim-R.html ;\
 	    sed -i -e 's/<\/pre><hr><pre>/  --------------------------------------------------------\n/' Nvim-R.html ;\

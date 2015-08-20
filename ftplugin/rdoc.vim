@@ -101,7 +101,6 @@ function! RdocIsInRCode(vrb)
 endfunction
 
 let b:IsInRCode = function("RdocIsInRCode")
-let b:SourceLines = function("RSourceLines")
 
 "==========================================================================
 " Key bindings and menu items

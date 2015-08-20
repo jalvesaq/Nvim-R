@@ -19,7 +19,7 @@
 
 # Modified to Nvim-R by Jakson Aquino
 
-import dbus, subprocess, time
+import dbus
 import dbus.mainloop.glib, sys, os
 from gi.repository import GObject
 
@@ -33,7 +33,6 @@ EVINCE_PATH = "/org/gnome/evince/Evince"
 EVINCE_IFACE = "org.gnome.evince.Application"
 
 EV_WINDOW_IFACE = "org.gnome.evince.Window"
-
 
 
 class EvinceWindowProxy:
@@ -106,14 +105,18 @@ class EvinceWindowProxy:
             sys.stderr.flush()
 
 
-    def SyncView(self, input_file, data, time):
+    def SyncView(self, input_file, data):
         if self.status == CLOSED:
             if self.spawn:
-                self._tmp_syncview = [input_file, data, time];
+                self._tmp_syncview = [input_file, data, 0];
                 self._handler = self._syncview_handler
                 self._get_dbus_name(True)
+                sys.stdout.write("call Evince_Again()")
+                sys.stdout.flush()
         else:
-            self.window.SyncView(input_file, data, time,  dbus_interface = "org.gnome.evince.Window")
+            self.window.SyncView(input_file, data, 0,  dbus_interface = "org.gnome.evince.Window")
+            sys.stdout.write("let g:rplugin_evince_loop = 0")
+            sys.stdout.flush()
 
     def _syncview_handler(self, window_list):
         self.handle_get_window_list_reply(window_list)
@@ -125,19 +128,19 @@ class EvinceWindowProxy:
         self._handler = None
         return True
 
-path_output  = os.getcwd() + '/' + sys.argv[1]
+path_output = os.getcwd() + '/' + sys.argv[1]
+path_output = path_output.replace(" ", "%20")
 line_number = int(sys.argv[2])
-path_input   = os.getcwd() + '/' + sys.argv[3]
+path_input = os.getcwd() + '/' + sys.argv[3]
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 a = EvinceWindowProxy('file://' + path_output, True)
 
 def sync_view(ev_window, path_input, line_number):
-    ev_window.SyncView(path_input, (line_number, 1), 0)
+    ev_window.SyncView(path_input, (line_number, 1))
     loop.quit()
 
 GObject.timeout_add(400, sync_view, a, path_input, line_number)
 loop = GObject.MainLoop()
 loop.run() 
-

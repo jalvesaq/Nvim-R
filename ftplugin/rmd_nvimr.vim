@@ -69,7 +69,7 @@ function! RMakeRmd(t)
     update
 
     if a:t == "odt"
-        if has("win32") || has("win64")
+        if has("win32")
             let g:rplugin_soffbin = "soffice.exe"
         else
             let g:rplugin_soffbin = "soffice"
@@ -81,7 +81,7 @@ function! RMakeRmd(t)
     endif
 
     let rmddir = expand("%:p:h")
-    if has("win32") || has("win64")
+    if has("win32")
         let rmddir = substitute(rmddir, '\\', '/', 'g')
     endif
     if a:t == "default"
@@ -97,7 +97,7 @@ function! RMakeRmd(t)
 endfunction
 
 " Send Rmd chunk to R
-function! SendRmdChunkToR(m)
+function! SendRmdChunkToR(e, m)
     if RmdIsInRCode(0) == 0
         call RWarningMsg("Not inside an R code chunk.")
         return
@@ -105,7 +105,7 @@ function! SendRmdChunkToR(m)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW") + 1
     let docline = search("^[ \t]*```", "ncW") - 1
     let lines = getline(chunkline, docline)
-    let ok = RSourceLines(lines)
+    let ok = RSourceLines(lines, a:e)
     if ok == 0
         return
     endif
@@ -118,7 +118,6 @@ let b:IsInRCode = function("RmdIsInRCode")
 let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
-let b:SourceLines = function("RSourceLines")
 
 "==========================================================================
 " Key bindings and menu items
@@ -136,8 +135,10 @@ call RCreateMaps("nvi", '<Plug>RMakePDFK',      'kp', ':call RMakeRmd("pdf_docum
 call RCreateMaps("nvi", '<Plug>RMakePDFKb',     'kl', ':call RMakeRmd("beamer_presentation")')
 call RCreateMaps("nvi", '<Plug>RMakeHTML',      'kh', ':call RMakeRmd("html_document")')
 call RCreateMaps("nvi", '<Plug>RMakeODT',       'ko', ':call RMakeRmd("odt")')
-call RCreateMaps("ni",  '<Plug>RSendChunk',     'cc', ':call b:SendChunkToR("stay")')
-call RCreateMaps("ni",  '<Plug>RDSendChunk',    'cd', ':call b:SendChunkToR("down")')
+call RCreateMaps("ni",  '<Plug>RSendChunk',     'cc', ':call b:SendChunkToR("silent", "stay")')
+call RCreateMaps("ni",  '<Plug>RESendChunk',    'ce', ':call b:SendChunkToR("echo", "stay")')
+call RCreateMaps("ni",  '<Plug>RDSendChunk',    'cd', ':call b:SendChunkToR("silent", "down")')
+call RCreateMaps("ni",  '<Plug>REDSendChunk',   'ca', ':call b:SendChunkToR("echo", "down")')
 call RCreateMaps("n",  '<Plug>RNextRChunk',     'gn', ':call b:NextRChunk()')
 call RCreateMaps("n",  '<Plug>RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
@@ -154,4 +155,8 @@ call RSetPDFViewer()
 
 call RSourceOtherScripts()
 
-let b:undo_ftplugin .= " | unlet! b:IsInRCode b:SourceLines b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+if exists("b:undo_ftplugin")
+    let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+else
+    let b:undo_ftplugin = "unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
+endif

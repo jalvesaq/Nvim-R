@@ -19,7 +19,7 @@
 "          
 "          Based on previous work by Johannes Ranke
 "
-" Please see doc/r-plugin.txt for usage details.
+" Please see doc/Nvim-R.txt for usage details.
 "==========================================================================
 
 
@@ -42,11 +42,6 @@ if !exists("b:objbrtitle")
         let b:objbrtitle = "Object_Browser" . s:tnr
     endif
     unlet s:tnr
-endif
-
-if exists("g:rplugin_firstbuffer") && g:rplugin_firstbuffer == ""
-    " The file global_r_plugin.vim was copied to ~/.vim/plugin
-    let g:rplugin_firstbuffer = expand("%:p")
 endif
 
 let g:rplugin_lastft = &filetype

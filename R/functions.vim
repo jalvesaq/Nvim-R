@@ -126,11 +126,6 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 function FillRLibList()
-    " Delay the syntax update
-    if g:rplugin_starting_R
-        return
-    endif
-
     " Update the list of objects for omnicompletion
     if filereadable(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
         let g:rplugin_lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
@@ -154,6 +149,7 @@ function FillRLibList()
     " https://github.com/neovim/neovim/issues/901
     let g:rplugin_new_libs = len(g:rplugin_loaded_lists)
     silent exe 'set filetype=' . &filetype
+    redraw
     let b:rplugin_new_libs = g:rplugin_new_libs
 endfunction
 
@@ -167,6 +163,7 @@ function RCheckLibList()
         return
     endif
     silent exe 'set filetype=' . &filetype
+    redraw
     let b:rplugin_new_libs = g:rplugin_new_libs
 endfunction
 
