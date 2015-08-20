@@ -1,6 +1,6 @@
 *Nvim-R.txt*                                                  *Nvim-R*
 				  Nvim-R~
-			     Plugin to work with R~
+			  Plugin to work with R~
 
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
@@ -467,7 +467,7 @@ completion is the same available for omnicompletion (see
 simply pressing `q`.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
-will show it in a new tab. If the csv.vim plugin is not installed, the Nvim-R
+will show it in a new tab. If the csv.vim plugin is not installed, Nvim-R
 will warn you about that (see |Nvim-R-df-view|). Specially useful commands
 from the csv.vim plugin are |:CSVHeader|, |:ArrangeColumn| and |:CSVHiColumn|.
 It can be installed from:
@@ -836,9 +836,9 @@ the plugin confuse.
 
 With Tmux, you can detach the Nvim-R session and reattach it later (but the
 connection with the XServer could be lost in the process). This is useful if
-you plan to begin the use the Nvim-R in a machine and later move to
-another computer and access remotely your previous Nvim-R session. Below is the
-step-by-step procedure to run the Nvim-R remotely:
+you plan to begin the use of vim-R in a machine and later move to another
+computer and access remotely your previous Nvim-R session. Below is the
+step-by-step procedure to run Nvim-R remotely:
 
   - Start Tmux:
       tmux
@@ -881,7 +881,7 @@ find errors in the code sent to R. Details:
 ------------------------------------------------------------------------------
 5.2. The menu may not reflect some of your custom key bindings~
 
-If you have created a custom key binding for the Nvim-R, the menu in
+If you have created a custom key binding for Nvim-R, the menu in
 GVim will not always reflect the correct key binding if it is not the same for
 Normal, Visual and Insert modes.
 
@@ -920,16 +920,16 @@ each Nvim instance with its own R instance.
 If you start R before Nvim, it will not inherit from Nvim the environment
 variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and NVIMR_SECRET. The first
 one is the path used by the R package nvimcom to save temporary files used by
-the Nvim-R to: perform omnicompletion, show R documentation in a Nvim buffer,
-and update the Object Browser. The two last ones are used by the Nvim-R and by
-nvimcom to know that the connections are valid. If you use Nvim to start R,
-but then closes Nvim, some variables will become outdated. Additionally, the
-Nvim-R sets the value of its internal variable SendCmdToR from SendCmdToR_fake
-to the appropriate value when R is successfully started. It is possible to set
-the values of all those variables manually, but, as you can see below, it is
-not practical to do so. If you have either started R before Nvim or closed
-Nvim and opened it again and really want full communication between Nvim and
-R, you can try the following (not all procedures are necessary for all cases):
+Nvim-R to: perform omnicompletion, show R documentation in a Nvim buffer, and
+update the Object Browser. The two last ones are used by Nvim-R and by nvimcom
+to know that the connections are valid. If you use Nvim to start R, but then
+closes Nvim, some variables will become outdated. Additionally, Nvim-R sets
+the value of its internal variable SendCmdToR from SendCmdToR_fake to the
+appropriate value when R is successfully started. It is possible to set the
+values of all those variables manually, but, as you can see below, it is not
+practical to do so. If you have either started R before Nvim or closed Nvim
+and opened it again and really want full communication between Nvim and R, you
+can try the following (not all procedures are necessary for all cases):
 
    In Normal mode Nvim do:
 >
@@ -1426,7 +1426,7 @@ file (~/.tmux.conf).
 
 These three options are valid only when Nvim is started inside a Tmux session.
 In this case, when you type <LocalLeader>rf, the terminal will be split in two
-regions and R will run in one of them. By default, the Nvim-R will tell
+regions and R will run in one of them. By default, Nvim-R will tell
 Tmux to split the terminal window horizontally and you can set in your
 |nvimrc| the initial number of lines of the Tmux pane running R as in the
 example below:
@@ -1491,7 +1491,7 @@ after <LocalLeader>rg if you put the following line in your |nvimrc|:
 6.17. Arguments to R source() function~
 
 When you send multiple lines of code to R (a selection of lines, a paragraph,
-code between two marks or an R chunk of code), the Nvim-R saves the lines in a
+code between two marks or an R chunk of code), Nvim-R saves the lines in a
 temporary file and, then, sends to R the command `source()` to read the
 temporary file.
 
@@ -1623,7 +1623,7 @@ The html file will be automatically opened if you put the following in your
 							      *R_rst2pdfargs*
 6.23. Support to RreStructuredText file~
 
-By default, the Nvim-R sends the command `render_rst(strict=TRUE)` to R
+By default, Nvim-R sends the command `render_rst(strict=TRUE)` to R
 before using R's `knit()` function to convert an Rrst file into an rst one. If
 you prefer the non strict rst code, put the following in your |nvimrc|:
 >
@@ -1675,14 +1675,13 @@ you prefer to remove only visible objects, put in your |nvimrc|:
 6.26. Source additional scripts~
 
 This variable should contain a comma separated list of Nvim scripts to be
-sourced by the Nvim-R. These scripts may provide additional
-functionality and/or change the behavior of the Nvim-R. If you have such
+sourced by Nvim-R. These scripts may provide additional
+functionality and/or change the behavior of Nvim-R. If you have such
 scripts, put in your |nvimrc|:
 >
    let R_source = "~/path/to/MyScript.vim,/path/to/AnotherScript.vim"
 <
-Currently, there is only one script known to extend the Nvim-R
-features:
+Currently, there is only one script known to extend Nvim-R features:
 
    Support to the devtools R package~
    https://github.com/mllg/vim-devtools-plugin
@@ -1693,7 +1692,7 @@ features:
 6.27. Restart R if it is already running (Linux/Unix only)~
 
 When R is already running and you type one of the commands to start R before
-you have done <LocalLeader>rq, the Nvim-R does one of the following:
+you have done <LocalLeader>rq, Nvim-R does one of the following:
 (a) If R is in an external terminal emulator, the terminal is closed, a new
 one is opened with the same R session running in it. (b) If both Nvim and R are
 running in different Tmux regions of the same terminal emulator, the plugin
@@ -1802,7 +1801,7 @@ make the script executable, and put in your |nvimrc|:
 6.32 Only set key bindings that are user specified~
 
 The Nvim-R sets many default key bindings.  The user can set custom
-key bindings (|Nvim-R-key-bindings|).  If you wish the Nvim-R to only
+key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
 set those key-bindings specified by the user, put in your |nvimrc|:
 >
     let R_user_maps_only = 1
@@ -1832,7 +1831,7 @@ want to know they are, while editing an R file, do in Normal mode:
 6.34 View a data.frame or matrix~
 
 The csv.vim plugin helps to visualize and edit csv files, and if it is not
-installed, the Nvim-R will warn you about that when you do <LocalLeader>rv.
+installed, Nvim-R will warn you about that when you do <LocalLeader>rv.
 If you do not want to install the csv.vim plugin, put in your |nvimrc|:
 >
    let R_csv_warn = 0
@@ -1843,7 +1842,7 @@ the value of R_csv_app in your |nvimrc|. Examples:
    let R_csv_app = "localc"
    let R_csv_app = "c:/Program Files (x86)/LibreOffice 4/program/scalc.exe"
 <
-There is also the option of configuring the Nvim-R to run an R command to
+There is also the option of configuring Nvim-R to run an R command to
 display the data. Example:
 >
    let R_df_viewer = "relimp::showData(%s, font = 'Courier 14')"
@@ -1948,7 +1947,7 @@ In Skim click in the drop down menu and fill the fields:
 							 *Nvim-R-key-bindings*
 7. Custom key bindings~
 
-When creating custom key bindings for the Nvim-R, it is necessary to
+When creating custom key bindings for Nvim-R, it is necessary to
 create three maps for most functions because the way the function is called is
 different in each Nvim mode. Thus, key bindings must be made for Normal mode,
 Insert mode, and Visual mode.
@@ -2190,7 +2189,7 @@ in your R script. The plugin may be downloaded from:
    http://www.vim.org/scripts/script.php?script_id=2540
 
 The snipMate plugin does not come with snippets for R, but you can copy the
-files r.snippets and rmd.snippets that ship with the Nvim-R (look at the R
+files r.snippets and rmd.snippets that ship with Nvim-R (look at the R
 directory) to the snippets directory. The files have only a few snippets, but
 they will help you to get started. If you usually edit rnoweb files, you may
 also want to create an rnoweb.snippets by concatenating both tex.snippets and
@@ -2492,7 +2491,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.19. Suggested setup for the Nvim-R~
+9.19. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2526,7 +2525,7 @@ please read this document from the beginning.
    nmap <Space> <Plug>RDSendLine
 
    " The lines below are suggestions for Nvim in general and are not
-   " specific to the improvement of the Nvim-R.
+   " specific to the improvement of Nvim-R.
 
    " Highlight the last searched pattern:
    set hlsearch
