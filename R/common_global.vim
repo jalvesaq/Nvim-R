@@ -1663,9 +1663,7 @@ function RQuit(how)
         mode
     elseif g:R_in_buffer && exists("g:rplugin_R_bufname")
         exe "sbuffer " . g:rplugin_R_bufname
-        sleep 500m
-        " Enter Insert mode and press 'any key' to close the buffer
-        call feedkeys("a ")
+        startinsert
     endif
 
     if !g:R_in_buffer
