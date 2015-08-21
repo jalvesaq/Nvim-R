@@ -1132,7 +1132,7 @@ function RSourceLines(...)
         let lines = map(copy(lines), 'substitute(v:val, "^\\.\\. \\?", "", "")')
     endif
     if &filetype == "rmd"
-        let lines = map(copy(lines), 'substitute(v:val, "^\\`\\`\\?", "", "")')
+        let lines = map(copy(lines), 'substitute(v:val, "^(\\`\\`)\\?", "", "")')
     endif
     if !g:R_commented_lines
         let newlines = []
@@ -1502,7 +1502,7 @@ function SendLineToR(godown)
             call KnitChild(line, a:godown)
             return
         endif
-        let line = substitute(line, "^\\`\\`\\?", "", "")
+        let line = substitute(line, "^(\\`\\`)\\?", "", "")
         if RmdIsInRCode(1) == 0
             return
         endif
