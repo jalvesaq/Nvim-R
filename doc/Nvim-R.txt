@@ -582,7 +582,7 @@ other buffers open, they will be updated when you enter them.
 
 Nvim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
-directory and is deleted when you quits Nvim. The other files are stored in the
+directory and is deleted when you quit Nvim. The other files are stored in the
 `$NVIMR_COMPLDIR` directory and remain available until you manually delete
 them.
 
