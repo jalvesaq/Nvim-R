@@ -69,7 +69,7 @@ Nvim-R (see |R_source|).
     packages).
   * Auto-completion of function arguments.
   * Auto-completion of knitr chunk options.
-  * Ability to see R's documentation in a Nvim's buffer:
+  * Ability to see R's documentation in an Nvim buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
         available room).
@@ -582,7 +582,7 @@ other buffers open, they will be updated when you enter them.
 
 Nvim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
-directory and is deleted when you quits Nvim. The other files are stored in the
+directory and is deleted when you quit Nvim. The other files are stored in the
 `$NVIMR_COMPLDIR` directory and remain available until you manually delete
 them.
 
@@ -920,7 +920,7 @@ each Nvim instance with its own R instance.
 If you start R before Nvim, it will not inherit from Nvim the environment
 variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and NVIMR_SECRET. The first
 one is the path used by the R package nvimcom to save temporary files used by
-Nvim-R to: perform omnicompletion, show R documentation in a Nvim buffer, and
+Nvim-R to: perform omnicompletion, show R documentation in an Nvim buffer, and
 update the Object Browser. The two last ones are used by Nvim-R and by nvimcom
 to know that the connections are valid. If you use Nvim to start R, but then
 closes Nvim, some variables will become outdated. Additionally, Nvim-R sets
@@ -1209,7 +1209,8 @@ browser's default width by setting the value of |R_objbr_w| in your
 The Object Browser is created by splitting the Nvim script window, but if Nvim
 is running in a terminal emulator inside a Tmux session, the Object Browser
 will be created in an independent Nvim instance in a Tmux pane. If you prefer
-the Object Browser always created as a Nvim split window, put in your |nvimrc|:
+the Object Browser always created as an Nvim split window, put in your
+|nvimrc|:
 >
    let R_tmux_ob = 0
 <
@@ -1251,7 +1252,7 @@ in the Object Browser.
 
 6.6.1. Quick setup~
 
-If you do not want to see R documentation in a Nvim's buffer, put in your
+If you do not want to see R documentation in an Nvim buffer, put in your
 |nvimrc|:
 >
    let R_nvimpager = "no"
@@ -2241,7 +2242,7 @@ information about the place where the function is defined. To generate the
 tags file, use the R function `rtags()`, which will build an Emacs tags file.
 If Nvim was compiled with the feature |emacs_tags|, it will be able to read the
 tags file. Otherwise, you can use the nvimcom function `etags2ctags()` to
-convert the Emacs tags file into a Nvim's one. To jump to a function
+convert the Emacs tags file into an Nvim one. To jump to a function
 definition, put the cursor over the function name and hit CTRL-]. Please, read
 |tagsrch.txt| for details on how to use tags files, specially the section
 |tags-option|.
