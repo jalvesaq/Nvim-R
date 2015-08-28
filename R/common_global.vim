@@ -1858,6 +1858,18 @@ function AskRDoc(rkeyword, package, getclass)
     call SendToNvimcom("\x08" . $NVIMR_ID . rcmd)
 endfunction
 
+function StartTxtBrowser(brwsr, url)
+    if exists("*termopen")
+        tabnew
+        call termopen(a:brwsr . " " . a:url)
+        startinsert
+    elseif $TMUX != ""
+        call system("tmux new-window '" . a:brwsr . " " . a:url . "'")
+    else
+        call RWarningMsg('Cannot run "' . a:brwsr . '".')
+    endif
+endfunction
+
 " This function is called by nvimcom
 function ShowRDoc(rkeyword)
     let rkeyw = a:rkeyword

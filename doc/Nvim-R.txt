@@ -836,7 +836,7 @@ the plugin confuse.
 
 With Tmux, you can detach the Nvim-R session and reattach it later (but the
 connection with the XServer could be lost in the process). This is useful if
-you plan to begin the use of vim-R in a machine and later move to another
+you plan to begin the use of Nvim-R in a machine and later move to another
 computer and access remotely your previous Nvim-R session. Below is the
 step-by-step procedure to run Nvim-R remotely:
 
@@ -2566,10 +2566,9 @@ please read this document from the beginning.
 	   library(vimcom)
        }
 
-       # Use the text based web browser w3m to navigate through R docs
-       # in Linux Console after help.start():
-       if(Sys.getenv("TMUX") != "" && Sys.getenv("DISPLAY") == "")
-	   options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
+       # Use text based web browser to navigate through R docs after help.start():
+       options(browser = function(u) .C("nvimcom_msg_to_nvim",
+                                        paste0('StartTxtBrowser("w3m", "', u, '")')))
    }
 <
 
