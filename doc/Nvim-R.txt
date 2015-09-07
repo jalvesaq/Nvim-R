@@ -923,7 +923,7 @@ one is the path used by the R package nvimcom to save temporary files used by
 Nvim-R to: perform omnicompletion, show R documentation in an Nvim buffer, and
 update the Object Browser. The two last ones are used by Nvim-R and by nvimcom
 to know that the connections are valid. If you use Nvim to start R, but then
-closes Nvim, some variables will become outdated. Additionally, Nvim-R sets
+close Nvim, some variables will become outdated. Additionally, Nvim-R sets
 the value of its internal variable SendCmdToR from SendCmdToR_fake to the
 appropriate value when R is successfully started. It is possible to set the
 values of all those variables manually, but, as you can see below, it is not
