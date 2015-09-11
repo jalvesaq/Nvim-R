@@ -1125,6 +1125,17 @@ function RViewDF(oname)
     endif
 endfunction
 
+function GetSourceArgs(e)
+    let sargs = ""
+    if g:R_source_args != ""
+        let sargs = ", " . g:R_source_args
+    endif
+    if a:e == "echo"
+        let sargs .= ', echo=TRUE'
+    endif
+    return sargs
+endfunction
+
 " Send sources to R
 function RSourceLines(...)
     let lines = a:1
@@ -1144,19 +1155,13 @@ function RSourceLines(...)
         let lines = newlines
     endif
     call writefile(lines, g:rplugin_rsource)
-    let sargs = ""
-    if g:R_source_args != ""
-        let sargs = ", " . g:R_source_args
-    endif
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . g:rplugin_rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
         return 1
     endif
 
-    if a:2 == "echo"
-        let sargs .= ', echo=TRUE'
-    endif
+    let sargs = GetSourceArgs(a:2)
     let rcmd = 'base::source("' . g:rplugin_rsource . '"' . sargs . ')'
     let ok = g:SendCmdToR(rcmd)
     return ok
@@ -1169,11 +1174,8 @@ function SendFileToR(e)
     if has("win32")
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
-    if a:e == "echo"
-        call g:SendCmdToR('base::source("' . fpath . '", echo=TRUE)')
-    else
-        call g:SendCmdToR('base::source("' . fpath . '")')
-    endif
+    let sargs = GetSourceArgs(a:e)
+    call g:SendCmdToR('base::source("' . fpath .  '"' . sargs . ')')
 endfunction
 
 " Send block to R
