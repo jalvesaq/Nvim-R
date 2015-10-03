@@ -26,7 +26,46 @@ function! RhelpIsInRCode(vrb)
     endif
 endfunction
 
+function! RhelpComplete(findstart, base)
+    if a:findstart
+        let line = getline('.')
+        let start = col('.') - 1
+        while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] == '\')
+            let start -= 1
+        endwhile
+        return start
+    else
+        let resp = []
+        let hwords = ['\Alpha', '\Beta', '\Chi', '\Delta', '\Epsilon',
+                    \ '\Eta', '\Gamma', '\Iota', '\Kappa', '\Lambda', '\Mu', '\Nu',
+                    \ '\Omega', '\Omicron', '\Phi', '\Pi', '\Psi', '\R', '\Rdversion',
+                    \ '\Rho', '\S4method', '\Sexpr', '\Sigma', '\Tau', '\Theta', '\Upsilon',
+                    \ '\Xi', '\Zeta', '\acronym', '\alias', '\alpha', '\arguments',
+                    \ '\author', '\beta', '\bold', '\chi', '\cite', '\code', '\command',
+                    \ '\concept', '\cr', '\dQuote', '\delta', '\deqn', '\describe',
+                    \ '\description', '\details', '\dfn', '\docType', '\dontrun', '\dontshow',
+                    \ '\donttest', '\dots', '\email', '\emph', '\encoding', '\enumerate',
+                    \ '\env', '\epsilon', '\eqn', '\eta', '\examples', '\file', '\format',
+                    \ '\gamma', '\ge', '\href', '\iota', '\item', '\itemize', '\kappa',
+                    \ '\kbd', '\keyword', '\lambda', '\ldots', '\le',
+                    \ '\link', '\linkS4class', '\method', '\mu', '\name', '\newcommand',
+                    \ '\note', '\nu', '\omega', '\omicron', '\option', '\phi', '\pi',
+                    \ '\pkg', '\preformatted', '\psi', '\references', '\renewcommand', '\rho',
+                    \ '\sQuote', '\samp', '\section', '\seealso', '\sigma', '\source',
+                    \ '\special', '\strong', '\subsection', '\synopsis', '\tab', '\tabular',
+                    \ '\tau', '\testonly', '\theta', '\title', '\upsilon', '\url', '\usage',
+                    \ '\value', '\var', '\verb', '\xi', '\zeta']
+        for word in hwords
+            if word =~ '^' . escape(a:base, '\')
+                call add(resp, {'word': word})
+            endif
+        endfor
+        return resp
+    endif
+endfunction
+
 let b:IsInRCode = function("RhelpIsInRCode")
+let b:rplugin_nonr_omnifunc = "RhelpComplete"
 
 "==========================================================================
 " Key bindings and menu items

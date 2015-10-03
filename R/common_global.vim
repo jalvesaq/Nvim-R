@@ -2532,9 +2532,10 @@ function BuildROmniList(pattern)
 endfunction
 
 function CompleteR(findstart, base)
-    if &filetype == "rnoweb" && RnwIsInRCode(0) == 0 && exists("*LatexBox_Complete")
-        let texbegin = LatexBox_Complete(a:findstart, a:base)
-        return texbegin
+    if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") && b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
+        let Ofun = function(b:rplugin_nonr_omnifunc)
+        let thebegin = Ofun(a:findstart, a:base)
+        return thebegin
     endif
     if a:findstart
         let line = getline('.')
