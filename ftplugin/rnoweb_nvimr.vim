@@ -57,7 +57,7 @@ function! RStart_Zathura(basenm)
     call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
     let pid = system("NVIMR_PORT=" . g:rplugin_myport . " python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
     if pid == 0
-        call RWarningMsg("Failed to run Zathura")
+        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
     else
         let g:rplugin_zathura_pid[a:basenm] = pid
     endif
