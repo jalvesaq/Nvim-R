@@ -175,28 +175,10 @@ set it):
 <
 Please, see |Nvim-R-nvimrc-setup| for more suggestions of configuration.
 
-Now, download the latest version of `Nvim-R.vmb` from
+Now, install the development version of Nvim-R from
 
-    http://www.lepem.ufc.br/jaa/Nvim-R.html
+    https://github.com/jalvesaq/Nvim-R
 
-Load the Nvim-R.vmb in Neovim and type:
->
-   :so %
-<
-Press <Enter> and the plugin will be installed (because the plugin has many
-files, you have to press the space bar a few times to finish the
-installation). You should, then, quit Nvim.
-
-Note: If you need to install the plugin in a non default directory, do
-`:UseVimball` `[path]`. In this case, the configuration of Nvim's 'runtimepath'
-must be done before the command "filetype on" in both the system and the user
-|nvimrc| files, otherwise, some file types might not be correctly recognized.
-
-The plugin is installed and will be activated next time that you start to edit
-an R script. If you want to uninstall the plugin, do
->
-   :RmVimball Nvim-R
-<
 
 ------------------------------------------------------------------------------
 3.2. Troubleshooting (if the plugin doesn't work)~
