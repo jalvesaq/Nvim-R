@@ -44,7 +44,8 @@ function! RStart_Zathura(basenm)
     endif
 
     let $NVIMR_PORT = g:rplugin_myport
-    let pycode = ["import subprocess",
+    let pycode = ["# -*- coding: " . &encoding . " -*-",
+                \ "import subprocess",
                 \ "import os",
                 \ "import sys",
                 \ "FNULL = open(os.devnull, 'w')",
