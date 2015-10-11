@@ -2804,6 +2804,9 @@ if has('gui_running')
 endif
 
 if g:rplugin_is_darwin
+    if executable("R")
+        call RSetDefaultValue("g:R_applescript", 0)
+    endif
     let g:rplugin_r64app = 0
     if isdirectory("/Applications/R64.app")
         call RSetDefaultValue("g:R_applescript", 1)
