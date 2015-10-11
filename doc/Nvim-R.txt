@@ -26,8 +26,8 @@ For Neovim (development version)
 
 This plugin improves Nvim's support for editing R code and makes it possible
 to integrate Nvim with R. It is the successor of Vim-R-plugin which may be
-discontinued in the future. The latest stable version of this plugin is
-available at:
+discontinued in the future. When Neovim is released, the stable version of
+this plugin will be available available at:
 
     http://www.lepem.ufc.br/jaa/Nvim-R.html
 
@@ -120,7 +120,7 @@ Before installing the plugin, you should install its dependencies:
       On OS X: Skim.
       On Windows: SumatraPDF.
 
-   Additional dependencies on Unix (Linux, OS X, etc.):~
+   Additional suggestions for Unix (Linux, OS X, etc.):~
 
    wmctrl:       http://tomas.styblo.name/wmctrl/
                  Required for better SyncTeX support under X Server.
@@ -129,30 +129,24 @@ Before installing the plugin, you should install its dependencies:
    ncurses-term: http://invisible-island.net/ncurses
 		 Might be necessary if you want support for 256 colors at the
 		 terminal emulator.
-		 (Not required if using MacVim + R.app)
-
-   Tmux >= 1.8:   http://tmux.sourceforge.net
-		  Tmux is necessary to send commands from Nvim to R running in
-		  a terminal emulator.
-		  (Not required if running R in a Neovim buffer (see |R_in_buffer|)
-		  or using the combination MacVim + R.app)
+		 (Not required if using R.app on OS X)
 
    setwidth:     An R package that can be installed with the command
                  `install.packages("setwidth")`.
                  The library setwidth adjusts the value of `options("width")`
                  whenever the terminal is resized.
-		 (Not required if |R_in_buffer| or MacVim + R.app)
+		 (Optional if |R_in_buffer| and not required if using R.app)
 
    colorout:     http://www.lepem.ufc.br/jaa/colorout.html
                  Colorizes the R output in terminal emulators.
-		 (Not required if |R_in_buffer| or MacVim + R.app)
+		 (Optional if |R_in_buffer| and not required if using R.app)
 
 Put the following lines in your `~/Rprofile` (you don't need `colorout` and
 `setwidth` if you either are on Windows or will run R.app on OS X):
 >
    if(interactive()){
-       # library(colorout) # Uncomment if R running in a Tmux pane
-       # library(setwidth) # Uncomment if R running in a Tmux pane
+       # library(colorout) # Uncomment if you use it
+       # library(setwidth) # Uncomment if you use it
        options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
        library(nvimcom)
    }
@@ -231,26 +225,11 @@ omnicompletion of LaTeX code (see |Nvim-R-latex-box| for details).
 								  *Nvim-R-use*
 4. Use~
 
-On Windows, by default, Nvim-R will run Rgui.
+On Windows, by default, Nvim-R will run Rgui. On other systems, by default, it
+will run R in a Neovim's built in terminal.
 
-On Linux and other systems with X Server running, Nvim will start R in an
-external terminal emulator. If you start Nvim inside of a Tmux session, the
-plugin will split the Tmux window in two and start R in the other pane.
-
-On Mac OS X the plugin will use AppleScript to send commands to the R Console
-application unless |R_applescript| = 0. Some users have reported more luck
-with iTerm than with the default Mac OS X terminal emulator.
-
-The most efficient way of running the plugin on Linux, Mac OS X or other Unix
-system is running Nvim inside a Tmux session because: 1) you get colorized
-output; 2) Nvim and R run in he same window (the terminal window) split in two
-panes; 3) you can press <C-a>z to get Nvim, R or the Object Browser
-temporarily using the full terminal window; 4) it is the better way of using
-the plugin remotely through ssh (the alternative is to enable the option
-|R_in_buffer|). Please, read |Nvim-R-tmux| for tips on how to use Tmux.
-
-If not in a Tmux session and the X Window is not running, R will run in a
-Neovim terminal buffer.
+It is also possible to run R either in an external terminal emulator or in a
+Tmux pane (see |R_in_buffer| and |Nvim-R-Tmux|).
 
 
 4.1. Key bindings~
@@ -673,173 +652,6 @@ referencing source code located in other directories, including the entire R
 source code.
 
 
-------------------------------------------------------------------------------
-								 *Nvim-R-tmux*
-4.7. Tmux usage~
-
-When running either GVim or Nvim in a terminal emulator (Linux/Unix only), the
-Nvim-R will use Tmux to start R in a separate terminal emulator. R will
-be running inside a Tmux session, but you will hardly notice any difference
-from R running directly in the terminal emulator. The remaining of this
-section refers to the case of starting R when Nvim already is in a Tmux
-session, that is, if you do:
->
-   tmux
-   nvim filename.R
-   exit
-<
-In this case, the terminal window is split in two regions: one for Nvim and the
-other for Tmux. Then, it's useful (but not required) to know some Tmux
-commands. After you finished editing the file, you have to type `exit` to quit
-the Tmux session.
-
-Note: Starting GVim within a Tmux session is not supported.
-
-
-------------------------------------------------------------------------------
-							   *Nvim-R-tmux-setup*
-4.7.1 Tmux configuration~
-
-If, as recommended, you always prefer to run Tmux before running you have to
-create your `~/.tmux.conf` if it does not exist yet. You may put the lines
-below in your `~/.tmux.conf` as a starting point to your own configuration
-file:
->
-   # Use <C-a> instead of the default <C-b> as Tmux prefix
-   set-option -g prefix C-a
-   unbind-key C-b
-   bind-key C-a send-prefix
-
-   # Options enable mouse support in Tmux
-   set -g terminal-overrides 'xterm*:smcup@:rmcup@'
-   set -g mode-mouse on
-   set -g mouse-select-pane on
-   set -g mouse-resize-pane on
-
-   # Escape time for libtermkey
-   # (see https://github.com/neovim/neovim/issues/2035):
-   set -sg escape-time 10
-
-   # Act more like vi:
-   set-window-option -g mode-keys vi
-   bind h select-pane -L
-   bind j select-pane -D
-   bind k select-pane -U
-   bind l select-pane -R
-   unbind p
-   bind p paste-buffer
-   bind -t vi-copy v begin-selection
-   bind -t vi-copy y copy-selection
-<
-
-------------------------------------------------------------------------------
-4.7.2 Key bindings and mouse support~
-
-The Tmux configuration file suggested above configures Tmux to use vi key
-bindings. It also configures Tmux to react to mouse clicks. You should be able
-to switch the active pane by clicking on an inactive pane, to resize the panes
-by clicking on the border line and dragging it, and to scroll the R Console
-with the mouse wheel. When you use the mouse wheel, Tmux enters in its
-copy/scroll back mode (see below).
-
-The configuration script also sets <C-a> as the Tmux escape character (the
-default is <C-b>), that is, you have to type <C-a> before typing a Tmux
-command. Below are the most useful key bindings for Tmux with the tmux.conf
-shown above:
-
-    <C-a>arrow keys : Move the cursor to the Tmux panel above, below, at the
-                      right or at the left of the current one.
-
-    <C-a><C-Up>     : Move the panel division upward one line, that is, resize
-                      the panels. Repeat <C-Up> to move more. <C-Down> will
-                      move the division downward one line. If you are using
-                      the vertical split, you should use <C-Left> and
-                      <C-Right> to resize the panels.
-
-    <C-a>[          : Enter the copy/scroll back mode. You can use <PgUp>,
-                      <PgDown> and vi key bindings to move the cursor around
-                      the panel. Press q to quit copy mode.
-
-    <C-a>]          : Paste the content of Tmux paste buffer.
-
-    <C-a>z          : Hide/show all panes except the current one.
-		      Note: If you mistakenly press <C-a><C-z>, you have to
-		      type `fg` to get Tmux back to the foreground.
-
-While in the copy and scroll back mode, the following key bindings are very
-useful:
-
-    q               : Quit the copy and scroll mode.
-    <Space>         : Start text selection.
-    v<Space>        : Start rectangular text selection.
-    <Enter>         : Copy the selection to Tmux paste buffer.
-
-Please, read the manual page of Tmux if you want to change the Tmux
-configuration and learn more commands. To read the Tmux manual, type in the
-terminal emulator:
->
-  man tmux
-<
-Note: Because <C-a> was configured as the Tmux escape character, it will not
-be passed to applications running under Tmux. To send <C-a> to either R or Nvim
-you have to type <C-a><C-a>.
-
-
-------------------------------------------------------------------------------
-4.7.3 Copying and pasting~
-
-You do not need to copy code from Nvim to R because you can use the plugin's
-shortcuts to send the code. For pasting the output of R commands into Nvim's
-buffer, you can use the command :|Rinsert|. If you want to copy text from an
-application running inside the Tmux to another application also running in
-Tmux, as explained in the previous subsection, you can enter in Tmux
-copy/scroll mode, select the text, copy it, switch to the other application
-pane and, then, paste.
-
-However, if you want to copy something from either Nvim or R to another
-application not running inside Tmux, Tmux may prevent the X server from
-capturing the text selected by the mouse. This can be prevented by
-pressing the <Shift> key, as it suspends the capturing of mouse events
-by tmux. If you keep <Shift> pressed while selecting text with the mouse,
-it will be available in the X server clipboard and can be inserted
-into other windows using the middle mouse button. It can of course also be
-inserted into a tmux window using <Shift> and the middle mouse button.
-
-
-------------------------------------------------------------------------------
-							       *Nvim-R-remote*
-4.7.4 Remote access~
-
-The Nvim-R can not send commands from a local Nvim to a remote R, but
-you can access the remote machine through ssh and run Tmux, Nvim and R in the
-remote machine. Tmux should not be running in the local machine because some
-environment variables could pass from the local to the remote Tmux and make
-the plugin confuse.
-
-With Tmux, you can detach the Nvim-R session and reattach it later (but the
-connection with the XServer could be lost in the process). This is useful if
-you plan to begin the use of Nvim-R in a machine and later move to another
-computer and access remotely your previous Nvim-R session. Below is the
-step-by-step procedure to run Nvim-R remotely:
-
-  - Start Tmux:
-      tmux
-
-  - Start Nvim:
-      nvim script.R
-
-  - Use Nvim to start an R session:
-      <LocalLeader>rf
-
-  - Send code from Nvim to R, and, then, detach Nvim and R with <C-a>d
-    The command will be <C-b>d if you have not set <C-a> as the escape
-    character in your ~/.tmux.conf.
-
-  - Some time later (even if accessing the machine remotely) reattach the
-    Tmux session:
-      tmux attach
-
-
 ==============================================================================
 							   *Nvim-R-known-bugs*
 5. Known bugs and workarounds~
@@ -929,8 +741,8 @@ can try the following (not all procedures are necessary for all cases):
    Sys.setenv(NVIMR_COMPLDIR"="C") # where "C" is what Nvim has echoed
    library(nvimcom)
 <
-If you are running R in a terminal emulator (Linux/Unix) Nvim still needs to
-know the name of Tmux session and Tmux pane where R is running.
+If you are running R in a Tmux session (see |Nvim-R-Tmux|) Nvim will also need
+to know the name of Tmux session and Tmux pane where R is running.
 
 So, in R do:
 >
@@ -958,18 +770,17 @@ is running:
 							      *Nvim-R-options*
 6. Options~
 
-|R_term|              External terminal to be used
-|R_term_cmd|          Complete command to open an external terminal
-|R_sleeptime|         Time for paste command on R Console (Windows only)
 |R_in_buffer|         Run R in Neovim buffer
 |R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
 |R_hl_term|           Syntax highlight terminal as rout file type
+|R_term|              External terminal to be used
+|R_term_cmd|          Complete command to open an external terminal
+|R_sleeptime|         Time for paste command on R Console (Windows only)
 |R_assign|            Convert '_' into ' <- '
 |R_assign_map|        Choose what to convert into ' <- '
 |R_rnowebchunk|       Convert '<' into '<<>>=\n@' in Rnoweb files
 |R_objbr_place|       Placement of Object Browser
 |R_objbr_w|           Initial width of Object Browser window
-|R_tmux_ob|           Run Object Browser in Tmux pane
 |R_objbr_opendf|      Display data.frames open in the Object Browser
 |R_objbr_openlist|    Display lists open in the Object Browser
 |R_objbr_allnames|    Display hidden objects in the Object Browser
@@ -986,11 +797,10 @@ is running:
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_rcomment_string|   String to comment code with \xx and \o
 |R_notmuxconf|        Don't use a specially built Tmux config file
-|R_rconsole_height|   The number of lines of R Console (Tmux split)
-|R_vsplit|            Make Tmux split the window vertically
-|R_rconsole_width|    The number of columns of R Console (Tmux split)
-|R_tmux_title|        Set Tmux window title to "VimR"
-|R_applescript|       Use osascript in Mac OS X
+|R_rconsole_height|   The number of lines of R Console
+|R_vsplit|            Split the window vertically when starting R
+|R_rconsole_width|    The number of columns of R Console
+|R_applescript|       Use osascript in Mac OS X to run R.app
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
 |R_source_args|       Arguments to R `source()` function
@@ -1024,73 +834,16 @@ is running:
 
 
 ------------------------------------------------------------------------------
-								      *R_term*
-								  *R_term_cmd*
-6.1. Terminal emulator (Linux/Unix only)~
-
-Note: The options of this section are ignored on Mac OS X, where the command
-`open` is called to run the default application used to run shell scripts.
-
-The plugin uses the first terminal emulator that it finds in the following
-list:
-    1. gnome-terminal,
-    2. konsole,
-    3. xfce4-terminal,
-    4. iterm,
-    5. Eterm,
-    6. (u)rxvt,
-    7. aterm,
-    8. roxterm,
-    9. terminator,
-   10. xterm.
-
-If Nvim does not select your favorite terminal emulator, you may define it in
-your |nvimrc| by setting the variable R_term, as shown below:
->
-   let R_term = "xterm"
-   let R_term = "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
-<
-If your terminal emulator is not listed above, or if you are not satisfied
-with the way your terminal emulator is called by the plugin, you may define in
-your |nvimrc| the variable R_term_cmd, as in the examples below:
->
-   let R_term_cmd = "gnome-terminal --title R -e"
-   let R_term_cmd = "terminator --title R -x"
-   let R_term_cmd = "/Applications/Utilities/iTerm.app/Contents/MacOS/iTerm -t R"
-<
-Please, look at the manual of your terminal emulator to know how to call it.
-The last argument must be the one which precedes the command to be executed.
-
-
-------------------------------------------------------------------------------
-								 *R_sleeptime*
-6.2. Time for the paste command on Windows~
-
-On Windows, when running Rgui.exe, the plugin copies the command to be sent to
-R in the clipboard and paste it on the R Console. Then, it waits 100
-miliseconds before bringing Neovim window to the foreground. If this time is
-too short, the <C-V> command will effect the Neovim window, and the editor
-may enter Visual Block mode. If the time is too long, the delay will be
-annoying. You can adjust this waiting time in your |nvimrc|. Example:
->
-   let R_sleeptime = 300
-<
-
-------------------------------------------------------------------------------
-								 *R_in_buffer*
 								 *R_esc_term*
 								 *R_hl_term*
 								 *R_setwidth*
-6.3. Run R in Neovim buffer~
+								 *R_in_buffer*
+6.1. R in Neovim buffer~
 
-If you want to run R in Neovim's built in terminal emulator, put in your
+By default, R runs in a Neovim buffer created with the command |:term|. The
+<Esc> key will be mapped to stop Insert mode and go to Normal mode. If you
+prefer to use the default <C-\><C-N> to go to Normal mode, put in your
 |nvimrc|:
->
-   let R_in_buffer = 1
-<
-R will run in a Neovim buffer created with the command |:term|. The <Esc> key
-will be mapped to stop Insert mode and go to Normal mode. If you prefer to use
-the default <C-\><C-N> to go to Normal mode, put in your |nvimrc|:
 >
    let R_esc_term = 0
 <
@@ -1137,6 +890,71 @@ Tips:
     Then, you can open the current buffer in a new tab to get it occupying the
     whole screen.
 
+If you do not want to run R in Neovim's built in terminal emulator, you have
+to install Tmux >= 1.8. Then, put in your |nvimrc|:
+>
+   let R_in_buffer = 0
+<
+Then, R will start in an external terminal emulator (useful if you use two
+monitors and want Neovim and R separate from each other). If `nvim` is running
+inside of a Tmux session, the window will be split and R will run in a Tmux
+pane (see |Nvim-R-Tmux|).
+
+
+------------------------------------------------------------------------------
+								      *R_term*
+								  *R_term_cmd*
+6.2. Terminal emulator (Linux/Unix only)~
+
+Note: The options of this section are ignored on Mac OS X, where the command
+`open` is called to run the default application used to run shell scripts.
+
+If |R_in_buffer| = 0 and Neovim is not inside a Tmux session and the X Window
+System is running, then R will run in an external terminal emulator. The
+plugin uses the first terminal emulator that it finds in the following list:
+
+    1. gnome-terminal,
+    2. konsole,
+    3. xfce4-terminal,
+    4. iterm,
+    5. Eterm,
+    6. (u)rxvt,
+    7. aterm,
+    8. roxterm,
+    9. terminator,
+   10. xterm.
+
+If Nvim does not select your favorite terminal emulator, you may define it in
+your |nvimrc| by setting the variable R_term, as shown below:
+>
+   let R_term = "xterm"
+   let R_term = "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
+<
+If your terminal emulator is not listed above, or if you are not satisfied
+with the way your terminal emulator is called by the plugin, you may define in
+your |nvimrc| the variable R_term_cmd, as in the examples below:
+>
+   let R_term_cmd = "gnome-terminal --title R -e"
+   let R_term_cmd = "terminator --title R -x"
+   let R_term_cmd = "/Applications/Utilities/iTerm.app/Contents/MacOS/iTerm -t R"
+<
+Please, look at the manual of your terminal emulator to know how to call it.
+The last argument must be the one which precedes the command to be executed.
+
+
+------------------------------------------------------------------------------
+								 *R_sleeptime*
+6.3. Time for the paste command on Windows~
+
+On Windows, when running Rgui.exe, the plugin copies the command to be sent to
+R in the clipboard and paste it on the R Console. Then, it waits 100
+miliseconds before bringing Neovim window to the foreground. If this time is
+too short, the <C-V> command will effect the Neovim window, and the editor
+may enter Visual Block mode. If the time is too long, the delay will be
+annoying. You can adjust this waiting time in your |nvimrc|. Example:
+>
+   let R_sleeptime = 300
+<
 
 ------------------------------------------------------------------------------
 							       *R_rnowebchunk*
@@ -1178,7 +996,6 @@ them converted into `<-`.
 ------------------------------------------------------------------------------
 							       *R_objbr_place*
 							       *R_objbr_w*
-							       *R_tmux_ob*
 6.5. Object Browser options~
 
 By default, the Object Browser will be created with 40 columns. The minimum
@@ -1187,14 +1004,6 @@ browser's default width by setting the value of |R_objbr_w| in your
 |nvimrc|, as below:
 >
    let R_objbr_w = 30
-<
-The Object Browser is created by splitting the Nvim script window, but if Nvim
-is running in a terminal emulator inside a Tmux session, the Object Browser
-will be created in an independent Nvim instance in a Tmux pane. If you prefer
-the Object Browser always created as an Nvim split window, put in your
-|nvimrc|:
->
-   let R_tmux_ob = 0
 <
 Valid values for the Object Browser placement are "script" or "console" and
 "right" or "left" separated by a comma. Examples:
@@ -1388,9 +1197,9 @@ Example:
 6.13. Tmux configuration (Linux/Unix only)~
 
 
-GVim (or Nvim running R in an external terminal emulator) runs Tmux with a
-specially built configuration file. If you want to use your own ~/.tmux.conf,
-put in your |nvimrc|:
+If Neovim is running R in an external terminal emulator, R will run in a Tmux
+session with a specially built Tmux configuration file. If you want to use
+your own ~/.tmux.conf, put in your |nvimrc|:
 >
    let R_notmuxconf = 1
 <
@@ -1401,54 +1210,32 @@ file (~/.tmux.conf).
 
 
 ------------------------------------------------------------------------------
-							   *R_rconsole_height*
 							   *R_vsplit*
+							   *R_rconsole_height*
 							   *R_rconsole_width*
-							   *R_tmux_title*
-6.14. Integration with Tmux (Linux/Unix only)~
+6.14. Control of R window~
 
-These three options are valid only when Nvim is started inside a Tmux session.
-In this case, when you type <LocalLeader>rf, the terminal will be split in two
-regions and R will run in one of them. By default, Nvim-R will tell
-Tmux to split the terminal window horizontally and you can set in your
-|nvimrc| the initial number of lines of the Tmux pane running R as in the
-example below:
->
-   let R_rconsole_height = 15
-<
-If you prefer to split it vertically:
+By default, Neovim's window is split horizontally. If you prefer to split it
+vertically, put in your |vimrc|:
 >
    let R_vsplit = 1
 <
-In this case, you can choose the initial number of columns of R Console:
+
+You can also set the initial number of lines and columns of the R window:
 >
+   let R_rconsole_height = 15
    let R_rconsole_width = 15
-<
-Tmux automatically renames window titles to the command currently running. The
-Nvim-R sets the title of the window where Nvim and R are running to
-"VimR". This title will be visible only if Tmux status bar is "on", and it is
-useful only if you have created new windows with the <C-a>c command. You
-can change the value of R_tmux_title to either set a different title
-or let Tmux set the title automatically. Examples:
->
-   let R_tmux_title = "Nvim-R"
-   let R_tmux_title = "automatic"
 <
 
 ------------------------------------------------------------------------------
 							       *R_applescript*
 6.15. Integration with AppleScript (OS X only)~
 
-In Mac OS X, the plugin will try to send commands to R gui using AppleScript.
-If you prefer either to run R and Nvim in the same terminal emulator split in
-two regions (Nvim and R) or to run R in an external terminal emulator, put in
+If you are on Mac OS X and want to use the R.app graphical application, put in
 your |nvimrc|:
 >
-   let R_applescript = 0
+   let R_applescript = 1
 <
-If Nvim is running inside Tmux, the terminal will be split in two regions.
-Otherwise, R will start in an external terminal emulator.
-
 
 ------------------------------------------------------------------------------
 							       *R_listmethods*
@@ -1678,8 +1465,8 @@ When R is already running and you type one of the commands to start R before
 you have done <LocalLeader>rq, Nvim-R does one of the following:
 (a) If R is in an external terminal emulator, the terminal is closed, a new
 one is opened with the same R session running in it. (b) If both Nvim and R are
-running in different Tmux regions of the same terminal emulator, the plugin
-warns that R is already running.
+running in different Tmux regions of the same terminal emulator (see
+|Nvim-R-Terminal|), the plugin warns that R is already running.
 
 If instead of the default behavior, you prefer to quit and restart R when you
 do <LocalLeader>rf, <LocalLeader>rv or <LocalLeader>rc, then, put in your
@@ -2479,7 +2266,7 @@ See also: |R_latexcmd|.
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
 
-Here are some suggestions of configuration of Nvim, Bash, Tmux and R. To
+Here are some suggestions of configuration of Nvim, Bash and R. To
 understand what you are doing, and change the configuration to your taste,
 please read this document from the beginning.
 
@@ -2616,6 +2403,185 @@ put in your |nvimrc|:
 >
    let rout_follow_colorscheme = 1
 <
+
+------------------------------------------------------------------------------
+								 *Nvim-R-Tmux*
+9.21 Integration with Tmux~
+
+Before Neovim's built in terminal emulator was developed, the best of running
+R was inside a Tmux session. It is still possible to do this, as explained in
+this section.
+
+Tmux >= 1.8 is required, and you have to put in your |nvimrc|:
+>
+   let R_in_buffer = 0
+   let R_applescript = 0
+<
+Then, start Tmux before starting Neovim:
+>
+   tmux
+   nvim filename.R
+   exit
+<
+In this case, when you start R, the terminal window is split in two regions:
+one for Nvim and the other for Tmux. Then, it's useful (but not required) to
+know some Tmux commands. After you finished editing the file, you have to type
+`exit` to quit the Tmux session.
+
+
+Tmux configuration~
+
+You have to create your `~/.tmux.conf` if it does not exist yet. You may put
+the lines below in your `~/.tmux.conf` as a starting point to your own
+configuration file:
+>
+   # Use <C-a> instead of the default <C-b> as Tmux prefix
+   set-option -g prefix C-a
+   unbind-key C-b
+   bind-key C-a send-prefix
+
+   # Options enable mouse support in Tmux
+   set -g terminal-overrides 'xterm*:smcup@:rmcup@'
+   set -g mode-mouse on
+   set -g mouse-select-pane on
+   set -g mouse-resize-pane on
+
+   # Escape time for libtermkey
+   # (see https://github.com/neovim/neovim/issues/2035):
+   set -sg escape-time 10
+
+   # Act more like vi:
+   set-window-option -g mode-keys vi
+   bind h select-pane -L
+   bind j select-pane -D
+   bind k select-pane -U
+   bind l select-pane -R
+   unbind p
+   bind p paste-buffer
+   bind -t vi-copy v begin-selection
+   bind -t vi-copy y copy-selection
+<
+
+Tmux automatically renames window titles to the command currently running. The
+Nvim-R sets the title of the window where Nvim and R are running to "VimR".
+This title will be visible only if Tmux status bar is "on", and it is useful
+only if you have created new windows with the <C-a>c command. You can change
+the value of R_tmux_title to either set a different title or let Tmux set the
+title automatically. Examples:
+>
+   let R_tmux_title = "Nvim-R"
+   let R_tmux_title = "automatic"
+<
+The Object Browser will be created in an independent Nvim instance in a Tmux
+pane. If you prefer the Object Browser always created as an Nvim split window,
+put in your |nvimrc|:
+>
+   let R_tmux_ob = 0
+<
+
+Key bindings and mouse support~
+
+The Tmux configuration file suggested above configures Tmux to use vi key
+bindings. It also configures Tmux to react to mouse clicks. You should be able
+to switch the active pane by clicking on an inactive pane, to resize the panes
+by clicking on the border line and dragging it, and to scroll the R Console
+with the mouse wheel. When you use the mouse wheel, Tmux enters in its
+copy/scroll back mode (see below).
+
+The configuration script also sets <C-a> as the Tmux escape character (the
+default is <C-b>), that is, you have to type <C-a> before typing a Tmux
+command. Below are the most useful key bindings for Tmux with the tmux.conf
+shown above:
+
+    <C-a>arrow keys : Move the cursor to the Tmux panel above, below, at the
+                      right or at the left of the current one.
+
+    <C-a><C-Up>     : Move the panel division upward one line, that is, resize
+                      the panels. Repeat <C-Up> to move more. <C-Down> will
+                      move the division downward one line. If you are using
+                      the vertical split, you should use <C-Left> and
+                      <C-Right> to resize the panels.
+
+    <C-a>[          : Enter the copy/scroll back mode. You can use <PgUp>,
+                      <PgDown> and vi key bindings to move the cursor around
+                      the panel. Press q to quit copy mode.
+
+    <C-a>]          : Paste the content of Tmux paste buffer.
+
+    <C-a>z          : Hide/show all panes except the current one.
+		      Note: If you mistakenly press <C-a><C-z>, you have to
+		      type `fg` to get Tmux back to the foreground.
+
+While in the copy and scroll back mode, the following key bindings are very
+useful:
+
+    q               : Quit the copy and scroll mode.
+    <Space>         : Start text selection.
+    v<Space>        : Start rectangular text selection.
+    <Enter>         : Copy the selection to Tmux paste buffer.
+
+Please, read the manual page of Tmux if you want to change the Tmux
+configuration and learn more commands. To read the Tmux manual, type in the
+terminal emulator:
+>
+  man tmux
+<
+Note: Because <C-a> was configured as the Tmux escape character, it will not
+be passed to applications running under Tmux. To send <C-a> to either R or Nvim
+you have to type <C-a><C-a>.
+
+
+Copying and pasting~
+
+You do not need to copy code from Nvim to R because you can use the plugin's
+shortcuts to send the code. For pasting the output of R commands into Nvim's
+buffer, you can use the command :|Rinsert|. If you want to copy text from an
+application running inside the Tmux to another application also running in
+Tmux, as explained in the previous subsection, you can enter in Tmux
+copy/scroll mode, select the text, copy it, switch to the other application
+pane and, then, paste.
+
+However, if you want to copy something from either Nvim or R to another
+application not running inside Tmux, Tmux may prevent the X server from
+capturing the text selected by the mouse. This can be prevented by
+pressing the <Shift> key, as it suspends the capturing of mouse events
+by tmux. If you keep <Shift> pressed while selecting text with the mouse,
+it will be available in the X server clipboard and can be inserted
+into other windows using the middle mouse button. It can of course also be
+inserted into a tmux window using <Shift> and the middle mouse button.
+
+
+Remote access~
+
+The Nvim-R can not send commands from a local Nvim to a remote R, but
+you can access the remote machine through ssh and run Tmux, Nvim and R in the
+remote machine. Tmux should not be running in the local machine because some
+environment variables could pass from the local to the remote Tmux and make
+the plugin confuse.
+
+With Tmux, you can detach the Nvim-R session and reattach it later (but the
+connection with the XServer could be lost in the process). This is useful if
+you plan to begin the use of Nvim-R in a machine and later move to another
+computer and access remotely your previous Nvim-R session. Below is the
+step-by-step procedure to run Nvim-R remotely:
+
+  - Start Tmux:
+      tmux
+
+  - Start Nvim:
+      nvim script.R
+
+  - Use Nvim to start an R session:
+      <LocalLeader>rf
+
+  - Send code from Nvim to R, and, then, detach Nvim and R with <C-a>d
+    The command will be <C-b>d if you have not set <C-a> as the escape
+    character in your ~/.tmux.conf.
+
+  - Some time later (even if accessing the machine remotely) reattach the
+    Tmux session:
+      tmux attach
+
 
 ==============================================================================
 								 *Nvim-R-news*
