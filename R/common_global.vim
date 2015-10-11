@@ -2599,6 +2599,48 @@ function RSourceOtherScripts()
     endif
 endfunction
 
+function ROnJobStdout(job_id, data)
+    for cmd in a:data
+        let cmd = substitute(cmd, '\r', '', 'g')
+        if cmd == ""
+            continue
+        endif
+        if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
+            exe cmd
+        else
+            call RWarningMsg("[Job] Unknown command: " . cmd)
+        endif
+    endfor
+endfunction
+
+function ROnJobStderr(job_id, data)
+    if a:job_id == g:rplugin_srv_job
+        call RWarningMsg('[Nvim-R Server] ' . substitute(join(a:data), '\r', '', 'g'))
+    elseif a:job_id == g:rplugin_clt_job
+        call RWarningMsg('[NvimR Client] ' . substitute(join(a:data), '\r', '', 'g'))
+    elseif a:job_id == g:rplugin_R_job
+        call RWarningMsg('[R] ' . substitute(join(a:data), '\r', '', 'g'))
+    else
+        call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
+    endif
+endfunction
+
+function ROnJobExit(job_id, data)
+    if a:job_id == g:rplugin_clt_job
+        let g:rplugin_clt_job = 0
+    elseif a:job_id == g:rplugin_srv_job
+        let g:rplugin_srv_job = 0
+    elseif a:job_id == g:rplugin_R_job
+        let g:rplugin_R_job = 0
+        if exists("g:rplugin_R_bufname")
+            unlet g:rplugin_R_bufname
+        endif
+        " Set nvimcom port to 0 in nvimrclient
+        call jobsend(g:rplugin_clt_job, "\001" . "0\n")
+        call ClearRInfo()
+    endif
+endfunction
+
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call g:SendCmdToR('rtags(ofile = "TAGS")')
@@ -2609,8 +2651,8 @@ command RStop :call StopR()
 
 "==========================================================================
 " Global variables
-" Convention: R_ for user options
-"             rplugin_    for internal parameters
+" Convention: R_        for user options
+"             rplugin_  for internal parameters
 "==========================================================================
 
 if !exists("g:rplugin_compldir")
@@ -2748,48 +2790,6 @@ endfor
 unlet objbrplace
 unlet obpllen
 
-function ROnJobStdout(job_id, data)
-    for cmd in a:data
-        let cmd = substitute(cmd, '\r', '', 'g')
-        if cmd == ""
-            continue
-        endif
-        if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
-            exe cmd
-        else
-            call RWarningMsg("[Job] Unknown command: " . cmd)
-        endif
-    endfor
-endfunction
-
-function ROnJobStderr(job_id, data)
-    if a:job_id == g:rplugin_srv_job
-        call RWarningMsg('[Nvim-R Server] ' . substitute(join(a:data), '\r', '', 'g'))
-    elseif a:job_id == g:rplugin_clt_job
-        call RWarningMsg('[NvimR Client] ' . substitute(join(a:data), '\r', '', 'g'))
-    elseif a:job_id == g:rplugin_R_job
-        call RWarningMsg('[R] ' . substitute(join(a:data), '\r', '', 'g'))
-    else
-        call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
-    endif
-endfunction
-
-function ROnJobExit(job_id, data)
-    if a:job_id == g:rplugin_clt_job
-        let g:rplugin_clt_job = 0
-    elseif a:job_id == g:rplugin_srv_job
-        let g:rplugin_srv_job = 0
-    elseif a:job_id == g:rplugin_R_job
-        let g:rplugin_R_job = 0
-        if exists("g:rplugin_R_bufname")
-            unlet g:rplugin_R_bufname
-        endif
-        " Set nvimcom port to 0 in nvimrclient
-        call jobsend(g:rplugin_clt_job, "\001" . "0\n")
-        call ClearRInfo()
-    endif
-endfunction
-
 
 " ^K (\013) cleans from cursor to the right and ^U (\025) cleans from cursor
 " to the left. However, ^U causes a beep if there is nothing to clean. The
@@ -2799,7 +2799,7 @@ endfunction
 call RSetDefaultValue("g:R_ca_ck", 0)
 
 " ========================================================================
-" Set default mean of communication with R
+" Check if default mean of communication with R is OK
 
 if has('gui_running')
     let g:R_tmux_split = 0
