@@ -71,7 +71,7 @@ function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
-    let g:rplugin_do_tmux_split = 0
+    let g:R_tmux_split = 0
 
     let g:SendCmdToR = function('SendCmdToR_Neovim')
 

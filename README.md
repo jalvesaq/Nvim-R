@@ -5,7 +5,7 @@ This is the development code of Nvim-R.
 If you do not use a plugin manager, you should clone this directory and adjust
 [Neovim]'s **runtimepath** in your **~/.nvimrc** as in the example below:
 
-    set runtimepath=~/Nvim-R,~/.vim,$VIMRUNTIME,~/.vim/after
+    set runtimepath=~/Nvim-R,~/.nvim,$VIMRUNTIME,~/.nvim/after
 
 If you use a plugin manager, such as [Vundle] or [Pathogen], follow its
 instructions.

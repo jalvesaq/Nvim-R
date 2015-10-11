@@ -692,7 +692,7 @@ function StartR(whatr)
 
     " R was already started. Should restart it or warn?
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        if g:rplugin_do_tmux_split
+        if g:R_tmux_split
             if g:R_restart
                 call g:SendCmdToR('quit(save = "no")')
                 sleep 100m
@@ -727,7 +727,7 @@ function StartR(whatr)
         let rcmd = g:rplugin_R . " " . args_str
     endif
 
-    if g:rplugin_do_tmux_split
+    if g:R_tmux_split
         call StartR_TmuxSplit(rcmd)
     else
         if g:R_restart && bufloaded(b:objbrtitle)
@@ -855,7 +855,7 @@ function WaitNvimcomStart()
         endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
 
-        if g:rplugin_do_tmux_split
+        if g:R_tmux_split
             " Environment variables persists across Tmux windows.
             " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
             " when R was not started by Neovim:
@@ -972,7 +972,7 @@ endfunction
 function RSendMyPort()
     if g:rplugin_clt_job
         call jobsend(g:rplugin_clt_job, "\001S" . g:rplugin_myport . "\n")
-        if &filetype == "rbrowser" && g:rplugin_do_tmux_split
+        if &filetype == "rbrowser" && g:R_tmux_split
             call SendToNvimcom("\002" . g:rplugin_myport)
             call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
             call SendToOtherNvim('call jobsend(g:rplugin_clt_job, "\001O' . g:rplugin_myport . '\n")')
@@ -1614,7 +1614,7 @@ function ClearRInfo()
     let g:rplugin_r_pid = 0
     let g:rplugin_nvimcom_port = 0
 
-    if g:rplugin_do_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
+    if g:R_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux set automatic-rename on")
     endif
 endfunction
@@ -1644,7 +1644,7 @@ function RQuit(how)
     endif
 
     call g:SendCmdToR(qcmd)
-    if g:rplugin_do_tmux_split
+    if g:R_tmux_split
         if a:how == "save"
             sleep 200m
         endif
@@ -1658,7 +1658,7 @@ function RQuit(how)
 
     sleep 50m
 
-    if g:rplugin_do_tmux_split
+    if g:R_tmux_split
         call CloseExternalOB()
         " Force Neovim to update the window size
         sleep 500m
@@ -1896,7 +1896,7 @@ function ShowRDoc(rkeyword)
     endif
 
     " If the help command was triggered in the R Console, jump to Vim pane
-    if g:rplugin_do_tmux_split && !g:rplugin_running_rhelp
+    if g:R_tmux_split && !g:rplugin_running_rhelp
         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
         if v:shell_error
             call RWarningMsg(slog)
@@ -2689,6 +2689,8 @@ call RSetDefaultValue("g:R_objbr_openlist",    0)
 call RSetDefaultValue("g:R_objbr_allnames",    0)
 call RSetDefaultValue("g:R_objbr_labelerr",    1)
 call RSetDefaultValue("g:R_in_buffer",         1)
+call RSetDefaultValue("g:R_applescript",       0)
+call RSetDefaultValue("g:R_tmux_split",        0)
 call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_nvimcom_wait",   5000)
 call RSetDefaultValue("g:R_show_args",         0)
@@ -2800,24 +2802,19 @@ call RSetDefaultValue("g:R_ca_ck", 0)
 " Set default mean of communication with R
 
 if has('gui_running')
-    let g:rplugin_do_tmux_split = 0
+    let g:R_tmux_split = 0
 endif
 
 if g:rplugin_is_darwin
-    if executable("R")
-        call RSetDefaultValue("g:R_applescript", 0)
-    endif
-    let g:rplugin_r64app = 0
-    if isdirectory("/Applications/R64.app")
-        call RSetDefaultValue("g:R_applescript", 1)
-        let g:rplugin_r64app = 1
-    elseif isdirectory("/Applications/R.app")
-        call RSetDefaultValue("g:R_applescript", 1)
-    else
-        call RSetDefaultValue("g:R_applescript", 0)
-    endif
     if !exists("g:macvim_skim_app_path")
         let g:macvim_skim_app_path = '/Applications/Skim.app'
+    endif
+    if g:R_applescript
+        if isdirectory("/Applications/R64.app")
+            let g:rplugin_r64app = 1
+        else
+            let g:rplugin_r64app = 0
+        endif
     endif
 else
     let g:R_applescript = 0
@@ -2838,21 +2835,14 @@ endif
 
 if g:R_in_buffer
     let g:R_tmux_ob = 0
-    let g:rplugin_do_tmux_split = 0
+    let g:R_tmux_split = 0
 endif
 
 if $TMUX == ""
-    let g:rplugin_do_tmux_split = 0
+    let g:R_tmux_split = 0
     let g:R_tmux_ob = 0
 else
-    let g:rplugin_do_tmux_split = 1
-    let g:R_applescript = 0
     call RSetDefaultValue("g:R_tmux_ob", 1)
-endif
-
-if !g:rplugin_do_tmux_split && $TMUX == "" && $DISPLAY == "" && !g:rplugin_is_darwin && !has("win32")
-    let g:R_in_buffer = 1
-    let g:R_tmux_ob = 0
 endif
 
 if g:R_objbr_place =~ "console" && !g:R_in_buffer
@@ -2878,7 +2868,7 @@ endif
 " List of marks that the plugin seeks to find the block to be sent to R
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"
 
-if has("win32") || g:R_in_buffer || g:rplugin_do_tmux_split
+if has("win32") || g:R_in_buffer || g:R_tmux_split
     let g:R_term_cmd = "none"
     let g:R_term = "none"
 endif

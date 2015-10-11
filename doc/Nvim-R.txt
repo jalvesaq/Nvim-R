@@ -120,11 +120,11 @@ Before installing the plugin, you should install its dependencies:
       On OS X: Skim.
       On Windows: SumatraPDF.
 
-   Additional suggestions for Unix (Linux, OS X, etc.):~
-
    wmctrl:       http://tomas.styblo.name/wmctrl/
                  Required for better SyncTeX support under X Server.
-		 (Not required on OS X)
+		 (Not required on either Windows or OS X)
+
+   Additional suggestions for Unix (Linux, OS X, etc.):~
 
    ncurses-term: http://invisible-island.net/ncurses
 		 Might be necessary if you want support for 256 colors at the
@@ -162,7 +162,6 @@ the plugin. You need to activate plugins and indentation according to
 near the very top of your |nvimrc| (but below `set` `runtimepath`, if you have
 set it):
 >
-   set nocompatible
    syntax enable
    filetype plugin on
    filetype indent on
@@ -228,8 +227,8 @@ omnicompletion of LaTeX code (see |Nvim-R-latex-box| for details).
 On Windows, by default, Nvim-R will run Rgui. On other systems, by default, it
 will run R in a Neovim's built in terminal.
 
-It is also possible to run R either in an external terminal emulator or in a
-Tmux pane (see |R_in_buffer| and |Nvim-R-Tmux|).
+It is also possible to run R either in an external terminal emulator (see
+|R_in_buffer|).
 
 
 4.1. Key bindings~
@@ -896,9 +895,7 @@ to install Tmux >= 1.8. Then, put in your |nvimrc|:
    let R_in_buffer = 0
 <
 Then, R will start in an external terminal emulator (useful if you use two
-monitors and want Neovim and R separate from each other). If `nvim` is running
-inside of a Tmux session, the window will be split and R will run in a Tmux
-pane (see |Nvim-R-Tmux|).
+monitors and want Neovim and R separate from each other).
 
 
 ------------------------------------------------------------------------------
@@ -909,9 +906,9 @@ pane (see |Nvim-R-Tmux|).
 Note: The options of this section are ignored on Mac OS X, where the command
 `open` is called to run the default application used to run shell scripts.
 
-If |R_in_buffer| = 0 and Neovim is not inside a Tmux session and the X Window
-System is running, then R will run in an external terminal emulator. The
-plugin uses the first terminal emulator that it finds in the following list:
+If |R_in_buffer| = 0 and the X Window System is running and Tmux is installed,
+then R will run in an external terminal emulator. The plugin uses the first
+terminal emulator that it finds in the following list:
 
     1. gnome-terminal,
     2. konsole,
@@ -1216,7 +1213,7 @@ file (~/.tmux.conf).
 6.14. Control of R window~
 
 By default, Neovim's window is split horizontally. If you prefer to split it
-vertically, put in your |vimrc|:
+vertically, put in your |nvimrc|:
 >
    let R_vsplit = 1
 <
@@ -1538,7 +1535,7 @@ Nvim's working directory, put in your |nvimrc|:
 This option is useful only for those who did not enable 'autochdir'.
 
 If you prefer that the Vim-R-plugin does not set the working directory in any
-way, put in |vimrc|:
+way, put in |nvimrc|:
 >
    let R_nvim_wd = -1
 <
@@ -2274,7 +2271,6 @@ please read this document from the beginning.
    ~/.nvimrc~
 >
    " Minimum required configuration:
-   set nocompatible
    syntax on
    filetype plugin on
    filetype indent on
@@ -2408,14 +2404,15 @@ put in your |nvimrc|:
 								 *Nvim-R-Tmux*
 9.21 Integration with Tmux~
 
-Before Neovim's built in terminal emulator was developed, the best of running
-R was inside a Tmux session. It is still possible to do this, as explained in
-this section.
+Before Neovim's built in terminal emulator was developed, the best way of
+running R was inside a Tmux session. It is still possible to do this, as
+explained in this section.
 
 Tmux >= 1.8 is required, and you have to put in your |nvimrc|:
 >
    let R_in_buffer = 0
    let R_applescript = 0
+   let R_tmux_split = 1
 <
 Then, start Tmux before starting Neovim:
 >
