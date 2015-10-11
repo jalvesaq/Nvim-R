@@ -1899,6 +1899,8 @@ R/setcompldir.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
 R/tmux.vim
+R/tmux_split.vim
+R/extern_term.vim
 R/windows.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim

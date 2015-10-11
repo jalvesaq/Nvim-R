@@ -308,12 +308,6 @@ function! OnOBBufUnload()
     endif
 endfunction
 
-" Called by Neovim editor in another Tmux pane
-function! ExternOBQuit()
-    call OnOBBufUnload()
-    quit
-endfunction
-
 nmap <buffer><silent> <CR> :call RBrowserDoubleClick()<CR>
 nmap <buffer><silent> <2-LeftMouse> :call RBrowserDoubleClick()<CR>
 nmap <buffer><silent> <RightMouse> :call RBrowserRightClick()<CR>

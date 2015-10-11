@@ -9,6 +9,7 @@ ftplugin/rnoweb_nvimr.vim
 ftplugin/rrst_nvimr.vim
 R/common_buffer.vim
 R/common_global.vim
+R/extern_term.vim
 R/functions.vim
 R/gui_running.vim
 R/nvimbuffer.vim
@@ -19,6 +20,7 @@ R/setcompldir.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
 R/tmux.vim
+R/tmux_split.vim
 R/windows.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim

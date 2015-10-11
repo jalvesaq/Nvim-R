@@ -66,7 +66,9 @@ deb:
 	  - ftplugin/rrst_nvimr.vim\n\
 	  - R/common_buffer.vim\n\
 	  - R/common_global.vim\n\
+	  - R/extern_term.vim\n\
 	  - R/tmux.vim\n\
+	  - R/tmux_split.vim\n\
 	  - R/functions.vim\n\
 	  - R/gui_running.vim\n\
 	  - R/nvimbuffer.vim\n\

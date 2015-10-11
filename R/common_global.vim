@@ -1660,9 +1660,6 @@ function RQuit(how)
 
     if g:R_tmux_split
         call CloseExternalOB()
-        " Force Neovim to update the window size
-        sleep 500m
-        mode
     elseif g:R_in_buffer && exists("g:rplugin_R_bufname")
         exe "sbuffer " . g:rplugin_R_bufname
         startinsert
@@ -2847,6 +2844,10 @@ endif
 
 if g:R_objbr_place =~ "console" && !g:R_in_buffer
     let g:R_tmux_ob = 1
+endif
+
+if g:R_tmux_split == 0
+    let g:R_tmux_ob = 0
 endif
 
 
