@@ -2158,13 +2158,7 @@ Nvim breaks the R code automatically put in your |nvimrc|:
 
 If you want 256 colors support in Nvim, install the package ncurses-term. Then
 put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
-Finally, put in your |nvimrc|:
->
-   if &term =~ "xterm" || &term =~ "256" || $DISPLAY != ""
-       set t_Co=256
-   endif
-   colorscheme your_preferred_color_scheme
-<
+
 You have to search the internet for color schemes supporting 256 colors,
 download and copy them to ~/.nvim/colors. You may use the command
 |:colorscheme| to try them one by one before setting your preference in your
@@ -2305,15 +2299,10 @@ please read this document from the beginning.
    " spaces:
    set sw=4
 
-   " Search "Nvim colorscheme 256" in the internet and download color
+   " Search "vim colorscheme 256" in the internet and download color
    " schemes that supports 256 colors in the terminal emulator. Then,
    " uncomment the code below to set you color scheme:
    "colorscheme not_defined
-
-   " Use 256 colors even if in a terminal emulator:
-   if &term =~ "xterm" || &term =~ "256" || $DISPLAY != ""
-       set t_Co=256
-   endif
 <
 
 							      *Nvim-R-R-setup*
@@ -2328,10 +2317,6 @@ please read this document from the beginning.
 	   options(nvimcom.verbose = 1)
 	   library(nvimcom)
        }
-       if(Sys.getenv("VIMRPLUGIN_TMPDIR") != ""){
-	   options(vimcom.verbose = 1)
-	   library(vimcom)
-       }
 
        # Use text based web browser to navigate through R docs after help.start():
        options(browser = function(u) .C("nvimcom_msg_to_nvim",
@@ -2340,24 +2325,23 @@ please read this document from the beginning.
 <
 
 							   *Nvim-R-bash-setup*
-   ~/.bashrc for Nvim and Neovim (Unix):~
+   ~/.bashrc (Linux, Mac OS X, and other Unix systems):~
 >
-   # Change the TERM environment variable (to get 256 colors) and make Nvim
-   # connecting to X Server even if running in a terminal emulator (many of
-   # the plugin features depend on this).
-   if [ "x$DISPLAY" != "x" ]
+   # Change the TERM environment variable (to get 256 colors) even if you are
+   # accessing your system through ssh and using either Tmux or GNU Screen:
+   if [ "$TERM" = "xterm" ] || [ "$TERM" = "xterm-256color" ]
    then
-       if [ "screen" = "$TERM" ]
-       then
-           export TERM=screen-256color
-       else
-           export TERM=xterm-256color
-       fi
+       export TERM=xterm-256color
+       export HAS_256_COLORS=yes
+   fi
+   if [ "$TERM" = "screen" ] && [ "$HAS_256_COLORS" = "yes" ]
+   then
+       export TERM=screen-256color
    fi
 <
 
 
-Finally, if you want to use vi key bindings in Bash:
+Finally, if you want to use vi key bindings in Bash or other shell:
 
    ~/.inputrc~
 >
@@ -2461,8 +2445,8 @@ configuration file:
    bind -t vi-copy y copy-selection
 <
 
-Tmux automatically renames window titles to the command currently running. The
-Nvim-R sets the title of the window where Nvim and R are running to "VimR".
+Tmux automatically renames window titles to the command currently running.
+Nvim-R sets the title of the window where Nvim and R are running to "NvimR".
 This title will be visible only if Tmux status bar is "on", and it is useful
 only if you have created new windows with the <C-a>c command. You can change
 the value of R_tmux_title to either set a different title or let Tmux set the
