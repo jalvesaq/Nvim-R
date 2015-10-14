@@ -605,6 +605,11 @@ endfunction
 
 " Start R
 function StartR(whatr)
+    if g:R_only_in_tmux && $TMUX_PANE == ""
+        call RWarningMsg("Not inside Tmux (and option R_only_in_tmux = 1).")
+        return
+    endif
+
     if !isdirectory(g:rplugin_tmpdir)
         call mkdir(g:rplugin_tmpdir, "p", 0700)
     endif
@@ -685,38 +690,14 @@ function StartR(whatr)
         return
     endif
 
-    if g:R_only_in_tmux && $TMUX_PANE == ""
-        call RWarningMsg("Not inside Tmux.")
-        return
-    endif
-
     " R was already started. Should restart it or warn?
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        if g:R_tmux_split
-            if g:R_restart
-                call g:SendCmdToR('quit(save = "no")')
-                sleep 100m
-                call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-                let ca_ck = g:R_ca_ck
-                let g:R_ca_ck = 0
-                call g:SendCmdToR(g:rplugin_last_rcmd)
-                let g:R_ca_ck = ca_ck
-                if WaitNvimcomStart()
-                    sleep 100m
-                    call g:SendCmdToR("\014")
-                endif
-                if IsExternalOBRunning()
-                    call SendToOtherNvim('let g:rplugin_nvimcom_port = ' . g:rplugin_nvimcom_port)
-                endif
-                return
-            elseif IsSendCmdToRFake()
-                return
-            endif
-        else
-            if g:R_restart
-                call RQuit("restartR")
-                let g:rplugin_nvimcom_port = 0
-            endif
+        if g:R_restart
+            call RQuit("restartR")
+            let g:rplugin_nvimcom_port = 0
+            sleep 100m
+        elseif IsSendCmdToRFake()
+            return
         endif
     endif
 
@@ -730,15 +711,7 @@ function StartR(whatr)
     if g:R_tmux_split
         call StartR_TmuxSplit(rcmd)
     else
-        if g:R_restart && bufloaded(b:objbrtitle)
-            call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        endif
         call StartR_ExternalTerm(rcmd)
-        if g:R_restart && bufloaded(b:objbrtitle)
-            if WaitNvimcomStart()
-                call SendToNvimcom("\002" . g:rplugin_myport)
-            endif
-        endif
     endif
 
     echon
@@ -895,7 +868,6 @@ function StartObjBrowser_Nvim()
         let &splitright = l:sr
         sil exe "vertical resize " . g:R_objbr_w
         sil set filetype=rbrowser
-        let b:rplugin_extern_ob = 0
 
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle
@@ -921,7 +893,7 @@ function RObjBrowser()
 
     let g:rplugin_running_objbr = 1
 
-    if !b:rplugin_extern_ob
+    if !exists("b:rplugin_extern_ob")
         if g:R_tmux_ob
             call StartObjBrowser_Tmux()
         else
@@ -1617,17 +1589,15 @@ function ClearRInfo()
     if g:R_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux set automatic-rename on")
     endif
+
+    if bufloaded(b:objbrtitle)
+        exe "bunload! " . b:objbrtitle
+        sleep 30m
+    endif
 endfunction
 
 " Quit R
 function RQuit(how)
-    if a:how != "restartR"
-        if bufloaded(b:objbrtitle)
-            exe "bunload! " . b:objbrtitle
-            sleep 30m
-        endif
-    endif
-
     if exists("b:quit_command")
         let qcmd = b:quit_command
     else
@@ -2135,13 +2105,13 @@ function RAction(rcmd)
             if g:R_nvimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
             else
-                if bufname("%") =~ "Object_Browser" || b:rplugin_extern_ob
+                if bufname("%") =~ "Object_Browser" || exists("b:rplugin_extern_ob")
                     if g:rplugin_curview == "libraries"
                         let pkg = RBGetPkgName()
                     else
                         let pkg = ""
                     endif
-                    if b:rplugin_extern_ob
+                    if exists("b:rplugin_extern_ob")
                         call SendToOtherNvim('call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)')
                         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
                         if v:shell_error
@@ -2633,7 +2603,9 @@ function ROnJobExit(job_id, data)
             unlet g:rplugin_R_bufname
         endif
         " Set nvimcom port to 0 in nvimrclient
-        call jobsend(g:rplugin_clt_job, "\001" . "0\n")
+        if g:rplugin_clt_job
+            call jobsend(g:rplugin_clt_job, "\001" . "0\n")
+        endif
         call ClearRInfo()
     endif
 endfunction
@@ -2798,10 +2770,6 @@ call RSetDefaultValue("g:R_ca_ck", 0)
 " ========================================================================
 " Check if default mean of communication with R is OK
 
-if has('gui_running')
-    let g:R_tmux_split = 0
-endif
-
 if g:rplugin_is_darwin
     if !exists("g:macvim_skim_app_path")
         let g:macvim_skim_app_path = '/Applications/Skim.app'
@@ -2817,37 +2785,23 @@ else
     let g:R_applescript = 0
 endif
 
-if has("gui_running") || g:R_applescript
-    let R_only_in_tmux = 0
+" Neovim terminal does not work on Windows yet
+if has("win32")
+    let g:R_in_buffer = 0
 endif
 
-if has("gui_running") || has("win32") || g:R_applescript
-    let g:R_tmux_ob = 0
-    if !g:R_in_buffer
-        if g:R_objbr_place =~ "console"
-            let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
-        endif
-    endif
-endif
-
-if g:R_in_buffer
-    let g:R_tmux_ob = 0
+if has("gui_running") || g:R_applescript || g:R_in_buffer || $TMUX == "" || has("gui_running")
     let g:R_tmux_split = 0
 endif
 
-if $TMUX == ""
-    let g:R_tmux_split = 0
-    let g:R_tmux_ob = 0
-else
+if g:R_tmux_split
     call RSetDefaultValue("g:R_tmux_ob", 1)
-endif
-
-if g:R_objbr_place =~ "console" && !g:R_in_buffer
-    let g:R_tmux_ob = 1
-endif
-
-if g:R_tmux_split == 0
+else
     let g:R_tmux_ob = 0
+endif
+
+if !g:R_in_buffer && !g:R_tmux_split
+    let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 endif
 
 
@@ -2993,18 +2947,11 @@ if has("win32")
     runtime R/windows.vim
 endif
 
-if !executable(g:rplugin_R)
-    call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
-endif
-
-if has("gui_running")
-    runtime R/gui_running.vim
-endif
 if g:R_applescript
     runtime R/osx.vim
 endif
 
-if !has("win32") && !g:R_applescript && !R_in_buffer
+if !has("win32") && !g:R_applescript && !g:R_in_buffer
     runtime R/tmux.vim
 endif
 
@@ -3012,6 +2959,10 @@ if g:R_in_buffer
     runtime R/nvimbuffer.vim
 endif
 
-if exists("g:R_nvim_window")
-    call RWarningMsgInp("The option 'g:R_nvim_window' was deprecated. Please remove it from your vimrc.")
+if has("gui_running")
+    runtime R/gui_running.vim
+endif
+
+if !executable(g:rplugin_R)
+    call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
 endif

@@ -90,7 +90,7 @@ function! UpdateOB(what)
     endif
     call setline(1, fcntt)
     call cursor(curline, curcol)
-    if bufname("%") =~ "Object_Browser" || b:rplugin_extern_ob
+    if bufname("%") =~ "Object_Browser" || exists("b:rplugin_extern_ob")
         setlocal nomodifiable
     endif
     if rplugin_switchedbuf
@@ -303,7 +303,7 @@ endfunction
 
 function! OnOBBufUnload()
     call SendToNvimcom("\004Stop updating info [OB BufUnload].")
-    if b:rplugin_extern_ob
+    if exists("b:rplugin_extern_ob")
         call SendToOtherNvim("let g:rplugin_ob_port = 0")
     endif
 endfunction

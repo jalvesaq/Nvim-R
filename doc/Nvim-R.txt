@@ -436,11 +436,13 @@ It can be installed from:
 
 When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
 CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
-backward (see |popupmenu-completion|). Note: if using Nvim in a Tmux session,
-Tmux will capture the CTRL-A command. You have to do CTRL-A twice to pass a
-single CTRL-A to Nvim. For rnoweb, rmd and rrst file types, CTRL-X CTRL-A can
-also be used to complete knitr chunk options if the cursor is inside the chunk
-header.
+backward (see |popupmenu-completion|). For rnoweb, rmd and rrst file types,
+CTRL-X CTRL-A can also be used to complete knitr chunk options if the cursor
+is inside the chunk header.
+
+Note: If you are using Nvim in a Tmux session, and if you configured CTRL-A to
+be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to do
+CTRL-A twice to pass a single CTRL-A to Nvim.
 
 If R is not running or if it is running but is busy the completion will be
 based on information from the packages listed by |R_start_libs|
@@ -890,12 +892,13 @@ Tips:
     whole screen.
 
 If you do not want to run R in Neovim's built in terminal emulator, you have
-to install Tmux >= 1.8. Then, put in your |nvimrc|:
+to install Tmux >= 1.8, and then put in your |nvimrc|:
 >
    let R_in_buffer = 0
 <
 Then, R will start in an external terminal emulator (useful if you use two
-monitors and want Neovim and R separate from each other).
+monitors and want Neovim and R separate from each other), and Tmux will be
+used to send commands from Neovim to R.
 
 
 ------------------------------------------------------------------------------
@@ -1231,6 +1234,7 @@ You can also set the initial number of lines and columns of the R window:
 If you are on Mac OS X and want to use the R.app graphical application, put in
 your |nvimrc|:
 >
+   let R_in_buffer = 0
    let R_applescript = 1
 <
 
@@ -1456,21 +1460,17 @@ Currently, there is only one script known to extend Nvim-R features:
 
 ------------------------------------------------------------------------------
 								   *R_restart*
-6.27. Restart R if it is already running (Linux/Unix only)~
+6.27. Restart R (Only when R in external terminal on Unix)~
 
-When R is already running and you type one of the commands to start R before
-you have done <LocalLeader>rq, Nvim-R does one of the following:
-(a) If R is in an external terminal emulator, the terminal is closed, a new
-one is opened with the same R session running in it. (b) If both Nvim and R are
-running in different Tmux regions of the same terminal emulator (see
-|Nvim-R-Terminal|), the plugin warns that R is already running.
-
-If instead of the default behavior, you prefer to quit and restart R when you
-do <LocalLeader>rf, <LocalLeader>rv or <LocalLeader>rc, then, put in your
+If you want to quit and restart R when R is already running and you do
+<LocalLeader>rf, <LocalLeader>rv or <LocalLeader>rc, then, put in your
 |nvimrc|:
 >
    let R_restart = 1
 <
+The restart is possible only when R is running in a external terminal
+emulator.
+
 
 ------------------------------------------------------------------------------
 								 *R_show_args*

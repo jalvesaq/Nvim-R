@@ -69,6 +69,9 @@ endfunction
 
 function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        " We could run 'call RQuit("restartR")' instead of returning if it was
+        " possible to close the terminal buffer automatically. This would make
+        " R_restart work with R_in_buffer too.
         return
     endif
     let g:R_tmux_split = 0

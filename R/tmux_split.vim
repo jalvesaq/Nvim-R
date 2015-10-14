@@ -67,7 +67,7 @@ function StartR_TmuxSplit(rcmd)
 endfunction
 
 function StartObjBrowser_Tmux()
-    if b:rplugin_extern_ob
+    if exists("b:rplugin_extern_ob")
         " This is the Object Browser
         echoerr "StartObjBrowser_Tmux() called."
         return
