@@ -17,9 +17,6 @@ function StartR_ExternalTerm(rcmd)
                     \ "set terminal-overrides 'rxvt*:smcup@:rmcup@'" ]
         endif
 
-        if g:R_tmux_ob || !has("gui_running")
-            call extend(cnflines, ['set -g mode-mouse on', 'set -g mouse-select-pane on', 'set -g mouse-resize-pane on'])
-        endif
         call writefile(cnflines, g:rplugin_tmpdir . "/tmux.conf")
         let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
     endif
