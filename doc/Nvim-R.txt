@@ -1300,7 +1300,7 @@ this behavior. Examples:
    let R_latexcmd = "latex"
    let R_latexcmd = 'latexmk -pdf -pdflatex="xelatex %O -synctex=1 %S"'
 <
-By default, R_latexmk is 1. If you want to pass arguments do the `Sweave()`
+By default, R_latexmk is 1. If you want to pass arguments to the `Sweave()`
 function, set the value of the R_sweaveargs variable.
 
 If the value of `R_texerr` is `1`, LaTeX errors and warnings produced by the
