@@ -336,7 +336,7 @@ endfunction
 
 if g:R_rnowebchunk == 1
     " Write code chunk in rnoweb files
-    imap <buffer><silent> < <Esc>:call RWriteChunk()<CR>a
+    inoremap <buffer><silent> < <Esc>:call RWriteChunk()<CR>a
 endif
 
 " Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,

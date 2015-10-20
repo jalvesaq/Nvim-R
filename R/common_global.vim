@@ -2348,16 +2348,16 @@ function RCreateEditMaps()
     call RCreateMaps("v", '<Plug>RRightComment',    ';', ':call MovePosRCodeComment("selection")')
     " Replace 'underline' with '<-'
     if g:R_assign == 1 || g:R_assign == 2
-        silent exe 'imap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
+        silent exe 'inoremap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
     endif
     if g:R_args_in_stline
-        imap <buffer><silent> ( <Esc>:call DisplayArgs()<CR>a
-        imap <buffer><silent> ) <Esc>:call RestoreStatusLine()<CR>a
+        inoremap <buffer><silent> ( <Esc>:call DisplayArgs()<CR>a
+        inoremap <buffer><silent> ) <Esc>:call RestoreStatusLine()<CR>a
     endif
     if hasmapto("<Plug>RCompleteArgs", "i")
-        imap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
+        inoremap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
     else
-        imap <buffer><silent> <C-X><C-A> <C-R>=RCompleteArgs()<CR>
+        inoremap <buffer><silent> <C-X><C-A> <C-R>=RCompleteArgs()<CR>
     endif
 endfunction
 
