@@ -555,12 +555,30 @@ function CountBraces(line)
     return result
 endfunction
 
+function CleanOxygenLine(line)
+    let cline = a:line
+    if cline =~ "^\s*#\\{1,2}'"
+        let synName = synIDattr(synID(line("."), col("."), 1), "name")
+        if synName == "rOExamples"
+            let cline = substitute(cline, "^\s*#\\{1,2}'", "", "")
+        endif
+    endif
+    return cline
+endfunction
+
+function CleanCurrentLine()
+    let curline = substitute(getline("."), '^\s*', "", "")
+    if &filetype == "r"
+        let curline = CleanOxygenLine(curline)
+    endif
+    return curline
+endfunction
+
 " Skip empty lines and lines whose first non blank char is '#'
 function GoDown()
     if &filetype == "rnoweb"
         let curline = getline(".")
-        let fc = curline[0]
-        if fc == '@'
+        if curline[0] == '@'
             call RnwNextChunk()
             return
         endif
@@ -580,14 +598,12 @@ function GoDown()
 
     let i = line(".") + 1
     call cursor(i, 1)
-    let curline = substitute(getline("."), '^\s*', "", "")
-    let fc = curline[0]
+    let curline = CleanCurrentLine()
     let lastLine = line("$")
-    while i < lastLine && (fc == '#' || strlen(curline) == 0)
+    while i < lastLine && (curline[0] == '#' || strlen(curline) == 0)
         let i = i + 1
         call cursor(i, 1)
-        let curline = substitute(getline("."), '^\s*', "", "")
-        let fc = curline[0]
+        let curline = CleanCurrentLine()
     endwhile
 endfunction
 
@@ -1316,6 +1332,8 @@ function SendSelectionToR(...)
         let lines[llen] = strpart(lines[llen], 0, j)
     endif
 
+    let lines = map(copy(lines), 'substitute(v:val, "^#' . "'" . '", "", "")')
+
     if a:0 == 3 && a:3 == "NewtabInsert"
         let ok = RSourceLines(lines, a:1, "NewtabInsert")
     else
@@ -1513,6 +1531,10 @@ function SendLineToR(godown)
 
     if &filetype == "rhelp" && RhelpIsInRCode(1) == 0
         return
+    endif
+
+    if &filetype == "r"
+        let line = CleanOxygenLine(line)
     endif
 
     let ok = g:SendCmdToR(line)
