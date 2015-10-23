@@ -46,7 +46,7 @@ function SendCmdToR_Neovim(...)
         endif
 
         " Update the width, if necessary
-        if g:R_setwidth
+        if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
             call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
             if s:rwnwdth != g:rplugin_R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
                 let g:rplugin_R_width = s:rwnwdth
