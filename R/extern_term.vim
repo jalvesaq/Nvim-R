@@ -88,6 +88,13 @@ function SendCmdToR_Term(...)
     return 1
 endfunction
 
+" The Object Browser can run in a Tmux pane only if Neovim is inside a Tmux session
+let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
+
+if g:rplugin_is_darwin
+    finish
+endif
+
 " Choose a terminal (code adapted from screen.vim)
 if exists("g:R_term")
     if !executable(g:R_term)
@@ -167,6 +174,3 @@ endif
 if exists("g:R_term_cmd")
     let g:rplugin_termcmd = g:R_term_cmd
 endif
-
-" The Object Browser can run in a Tmux pane only if Neovim is inside a Tmux session
-let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")

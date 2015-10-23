@@ -2845,7 +2845,7 @@ endif
 " List of marks that the plugin seeks to find the block to be sent to R
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"
 
-if has("win32") || g:R_in_buffer || g:R_tmux_split
+if has("win32") || g:R_in_buffer || g:R_tmux_split || g:rplugin_is_darwin
     let g:R_term_cmd = "none"
     let g:R_term = "none"
 endif

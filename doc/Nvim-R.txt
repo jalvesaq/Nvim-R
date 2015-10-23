@@ -141,6 +141,10 @@ Before installing the plugin, you should install its dependencies:
                  Colorizes the R output in terminal emulators.
 		 (Optional if |R_in_buffer| and not required if using R.app)
 
+   Tmux >= 1.8:  http://tmux.sourceforge.net
+		 Tmux is required only if you want to run R in an external
+		 terminal emulator (see |R_in_buffer|).
+
 Put the following lines in your `~/Rprofile` (you don't need `colorout` and
 `setwidth` if you either are on Windows or will run R.app on OS X):
 >
@@ -928,7 +932,6 @@ If Nvim does not select your favorite terminal emulator, you may define it in
 your |nvimrc| by setting the variable R_term, as shown below:
 >
    let R_term = "xterm"
-   let R_term = "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
 <
 If your terminal emulator is not listed above, or if you are not satisfied
 with the way your terminal emulator is called by the plugin, you may define in
@@ -936,7 +939,6 @@ your |nvimrc| the variable R_term_cmd, as in the examples below:
 >
    let R_term_cmd = "gnome-terminal --title R -e"
    let R_term_cmd = "terminator --title R -x"
-   let R_term_cmd = "/Applications/Utilities/iTerm.app/Contents/MacOS/iTerm -t R"
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
