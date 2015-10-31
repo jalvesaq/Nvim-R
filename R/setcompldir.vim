@@ -47,6 +47,8 @@ if exists("g:R_compldir")
     let g:rplugin_compldir = expand(g:R_compldir)
 elseif has("win32") && $APPDATA != "" && isdirectory($APPDATA)
     let g:rplugin_compldir = $APPDATA . "\\Nvim-R"
+elseif $XDG_CACHE_HOME != "" && isdirectory($XDG_CACHE_HOME)
+    let g:rplugin_compldir = $XDG_CACHE_HOME . "/Nvim-R"
 elseif isdirectory(expand("~/.cache"))
     let g:rplugin_compldir = expand("~/.cache/Nvim-R")
 elseif isdirectory(expand("~/Library/Caches"))
