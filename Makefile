@@ -118,7 +118,7 @@ deb:
 	Architecture: all\n\
 	Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>\n\
 	Installed-Size: $(INSTALLEDSIZE)\n\
-	Depends: nvim | nvim-gtk | nvim-gnome, tmux (>= 1.8), ncurses-term, nvim-addon-manager, r-base-core\n\
+	Depends: nvim, tmux (>= 1.8), ncurses-term, r-base-core\n\
 	Suggests: wmctrl, latexmk\n\
 	Enhances: nvim\n\
 	Section: text\n\
@@ -173,7 +173,7 @@ htmldoc:
 	    sed -i -e 's/`//g' Nvim-R.html ;\
 	    sed -i -e 's/\( *\)\(http\S*\)/\1<a href="\2">\2<\/a>/' Nvim-R.html ;\
 	    sed -i -e 's/<\/pre><hr><pre>/  --------------------------------------------------------\n/' Nvim-R.html ;\
-	    mv Nvim-R.html /tmp/nvim-r-doc.html ;\
+	    mv Nvim-R.html /tmp ;\
 	    mv vim-stylesheet.css /tmp )
 
 all: vimball deb htmldoc

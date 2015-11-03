@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.0
-For Neovim (development version)
+For Neovim 0.1.0
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -29,7 +29,7 @@ to integrate Nvim with R. It is the successor of Vim-R-plugin which may be
 discontinued in the future. When Neovim is released, the stable version of
 this plugin will be available available at:
 
-    http://www.lepem.ufc.br/jaa/Nvim-R.html
+    http://www.lepem.ufc.br/jaa/NvimR.html
 
 Feedback is welcomed. Please submit bug reports to the developers. Do not like
 a feature? Tell us and we may add an option to disable it. If you have any
@@ -84,7 +84,7 @@ Nvim-R (see |R_source|).
   * SyncTeX support.
   * Most of the plugin's behavior is customizable.
 
-For screenshots see: http://www.lepem.ufc.br/jaa/Nvim-R.html
+For screenshots see: http://www.lepem.ufc.br/jaa/NvimR.html
 
 ==============================================================================
 							 *Nvim-R-installation*
@@ -103,11 +103,12 @@ Before installing the plugin, you should install its dependencies:
 
    Main dependencies:~
 
-   Neovim (development version): https://github.com/neovim/neovim
+   Neovim 0.1.0: https://github.com/neovim/neovim/releases/tag/v0.1.0
+		 See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
    R >= 3.0.0: http://www.r-project.org/
 
-   nvimcom (development version): https://github.com/jalvesaq/nvimcom
+   nvimcom 0.9.8: http://www.lepem.ufc.br/jaa/nvimcom.html
 
    Additional dependencies for editing Rnoweb documents:~
 
@@ -172,9 +173,15 @@ set it):
 <
 Please, see |Nvim-R-vimrc-setup| for more suggestions of configuration.
 
-Now, install the development version of Nvim-R from
+Now, install the version of Nvim-R released for Neovim 0.1.0:
+
+    http://www.lepem.ufc.br/jaa/NvimR.html
+
+Note: If you use the development version of Neovim, you should also use the
+development versions of Nvim-R and nvimcom:
 
     https://github.com/jalvesaq/Nvim-R
+    https://github.com/jalvesaq/nvimcom
 
 
 ------------------------------------------------------------------------------
@@ -198,7 +205,7 @@ message instead, you may want to set the path to the R executable (see
 Are you using Debian, Ubuntu or other Debian based Linux distribution? If yes,
 you may prefer to install the Debian package available at:
 
-   http://www.lepem.ufc.br/jaa/Nvim-R.html
+   http://www.lepem.ufc.br/jaa/vimr
 
 Did you see the message "nvimcom port not found"? This means that R is not
 running, the nvimcom package is not installed (or is installed but is not
@@ -996,8 +1003,12 @@ the value R_assign to 2. Then, you will have to type two `_` to get
 them converted into `<-`.
 
 ------------------------------------------------------------------------------
-							       *R_objbr_place*
-							       *R_objbr_w*
+							    *R_objbr_w*
+							    *R_objbr_place*
+							    *R_objbr_opendf*
+							    *R_objbr_openlist*
+							    *R_objbr_allnames*
+							    *R_objbr_labelerr*
 6.5. Object Browser options~
 
 By default, the Object Browser will be created with 40 columns. The minimum
@@ -1280,6 +1291,7 @@ in your |vimrc|:
 
 ------------------------------------------------------------------------------
 								*R_sweaveargs*
+								*R_latexmk*
 								*R_latexcmd*
 								*R_texerr*
 6.18. LaTeX options~
@@ -2266,7 +2278,7 @@ understand what you are doing, and change the configuration to your taste,
 please read this document from the beginning.
 
 							 *Nvim-R-vimrc-setup*
-   ~/.config/nvim/init.vim~
+   ~/.config/nvim/init.vim or ~\AppData\Roaming\nvim\init.vim~
 >
    " Minimum required configuration:
    syntax on
@@ -2572,6 +2584,9 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
- * Not released yet (initial code extracted from the Vim-R-plugin).
+
+0.9.0 (2015-11-03)
+
+ * Initial release of Nvim-R for Neovim 0.1.0.
 
 vim:tw=78:ts=8:ft=help:norl
