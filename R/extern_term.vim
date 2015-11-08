@@ -127,9 +127,9 @@ let g:rplugin_termcmd = g:R_term . " -e"
 if g:R_term == "gnome-terminal" || g:R_term == "xfce4-terminal" || g:R_term == "terminal" || g:R_term == "lxterminal"
     " Cannot set gnome-terminal icon: http://bugzilla.gnome.org/show_bug.cgi?id=126081
     if g:R_nvim_wd
-        let g:rplugin_termcmd = g:R_term . " --title R -e"
+        let g:rplugin_termcmd = g:R_term . " -e"
     else
-        let g:rplugin_termcmd = g:R_term . " --working-directory='" . expand("%:p:h") . "' --title R -e"
+        let g:rplugin_termcmd = g:R_term . " --working-directory='" . expand("%:p:h") . "' -e"
     endif
 endif
 
