@@ -26,7 +26,11 @@
 " Set completion with CTRL-X CTRL-O to autoloaded function.
 if exists('&ofu')
     if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
-        let b:rplugin_nonr_omnifunc = &omnifunc
+        if &omnifunc == "CompleteR"
+            let b:rplugin_nonr_omnifunc = ""
+        else
+            let b:rplugin_nonr_omnifunc = &omnifunc
+        endif
     endif
     if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rdoc" || &filetype == "rhelp" || &filetype == "rrst" || &filetype == "rmd"
         setlocal omnifunc=CompleteR
