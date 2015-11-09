@@ -823,12 +823,20 @@ function WaitNvimcomStart()
         endif
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
             if g:rplugin_clt_job == 0
+                if v:windowid != 0 && $WINDOWID == ""
+                    let $WINDOWID = v:windowid
+                endif
                 let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
             endif
             " Set nvimcom port in the nvimrclient
             call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
-            if has("win32") && vr[4] != "0"
-                call jobsend(g:rplugin_clt_job, "\010" . vr[4] . "\n")
+            if has("win32")
+                " Set RConsole window ID in nvimrclient
+		if vr[4] == "0"
+		    call RWarningMsg("nvimcom did not save R window ID")
+		else
+                    call jobsend(g:rplugin_clt_job, "\010" . vr[4] . "\n")
+                endif
             endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
