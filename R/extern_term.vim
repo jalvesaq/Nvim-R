@@ -72,6 +72,9 @@ function SendCmdToR_Term(...)
 
     " Send the command to R running in an external terminal emulator
     let str = substitute(cmd, "'", "'\\\\''", "g")
+    if str =~ '^-'
+        let str = ' ' . str
+    endif
     if a:0 == 2 && a:2 == 0
         let scmd = "tmux -L NvimR set-buffer '" . str . "' && tmux -L NvimR paste-buffer -t " . g:rplugin_tmuxsname . '.0'
     else
