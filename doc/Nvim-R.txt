@@ -387,6 +387,10 @@ line currently under the cursor you should type <LocalLeader>d. If you want to
 see what lines are being sourced when sending a selection of lines, you can
 use either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
 
+The command <LocalLeader>o runs in the background the R command `print(line)`,
+where `line` is the line under cursor, and adds the output as commented lines
+to the source code.
+
 If the cursor is over the header of an R chunk with the `child` option (from
 Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
 commands that send a single line of code to R, then the plugin will send to R
@@ -1000,7 +1004,14 @@ To completely disable this feature, put in your |vimrc|:
 <
 If you need to type many object names with underscores, you may want to change
 the value R_assign to 2. Then, you will have to type two `_` to get
-them converted into `<-`.
+them converted into `<-`. Alternatively, if the value of R_assign is 3, the
+plugin will run the following command in each buffer containing R code (R,
+Rnoweb, Rhelp, Rrst, and Rmd):
+>
+   iabb <buffer> _ <-
+<
+That is, the underscore will be replaced with the assign operator only if it
+is preceded by a space and followed by a non-word character.
 
 ------------------------------------------------------------------------------
 							    *R_objbr_w*
@@ -1532,7 +1543,6 @@ skip this step:
 >
    let R_nvimcom_wait = -1
 <
-
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
@@ -2437,11 +2447,14 @@ configuration file:
    unbind-key C-b
    bind-key C-a send-prefix
 
-   # Options enable mouse support in Tmux
+   # Options to enable mouse support in Tmux
    set -g terminal-overrides 'xterm*:smcup@:rmcup@'
+   # For Tmux < 2.1
    set -g mode-mouse on
    set -g mouse-select-pane on
    set -g mouse-resize-pane on
+   # For Tmux >= 2.1
+   set -g mouse on
 
    # Escape time for libtermkey
    # (see https://github.com/neovim/neovim/issues/2035):
@@ -2585,7 +2598,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.0 (2015-11-03)
+0.9.0 (2015-11-12)
 
  * Initial release of Nvim-R for Neovim 0.1.0.
 
