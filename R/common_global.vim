@@ -794,7 +794,7 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         if nvimcom_version != "0.9.8"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9.8.')
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -822,31 +822,36 @@ function WaitNvimcomStart()
             endif
         endif
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
-            if g:rplugin_clt_job == 0
-                if v:windowid != 0 && $WINDOWID == ""
-                    let $WINDOWID = v:windowid
-                endif
-                let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
-            endif
             " Set nvimcom port in the nvimrclient
-            call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
+            let $NVIMCOMPORT = g:rplugin_nvimcom_port
             if has("win32")
                 " Set RConsole window ID in nvimrclient
-		if vr[4] == "0"
-		    call RWarningMsg("nvimcom did not save R window ID")
-		else
-                    call jobsend(g:rplugin_clt_job, "\010" . vr[4] . "\n")
+                if vr[4] == "0"
+                    call RWarningMsg("nvimcom did not save R window ID")
+                else
+                    let $RCONSOLE = vr[4]
+                endif
+                if v:windowid == 0 && $WINDOWID == ""
+                    call RWarningMsg("Neovim did not define $WINDOWID")
+                    if v:windowid != 0 && $WINDOWID == ""
+                        let $WINDOWID = v:windowid
+                    endif
                 endif
             endif
+            if g:rplugin_clt_job == 0
+                let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
+            endif
+            " TODO: Delete the command below (Set nvimcom port in the nvimrclient) after increasing nvimcom version:
+            call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvs)
-           if g:rplugin_srv_job == 0
-               let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
-           else
-               call RSendMyPort()
-           endif
+            if g:rplugin_srv_job == 0
+                let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
+            else
+                call RSendMyPort()
+            endif
         else
             call RWarningMsg('Application "' . nvs . '" not found.')
         endif
@@ -2297,12 +2302,12 @@ endfunction
 
 " For each noremap we need a vnoremap including <Esc> before the :call,
 " otherwise nvim will call the function as many times as the number of selected
-" lines. If we put the <Esc> in the noremap, nvim will bell.
+" lines. If we put <Esc> in the noremap, nvim will bell.
 " RCreateMaps Args:
 "   type : modes to which create maps (normal, visual and insert) and whether
 "          the cursor have to go the beginning of the line
 "   plug : the <Plug>Name
-"   combo: the combination of letter that make the shortcut
+"   combo: combination of letters that make the shortcut
 "   target: the command or function to be called
 function RCreateMaps(type, plug, combo, target)
     if a:type =~ '0'
@@ -2430,6 +2435,7 @@ function RCreateSendMaps()
     call RCreateMaps("ni", '<Plug>RSendLine', 'l', ':call SendLineToR("stay")')
     call RCreateMaps('ni0', '<Plug>RDSendLine', 'd', ':call SendLineToR("down")')
     call RCreateMaps('ni0', '<Plug>RDSendLineAndInsertOutput', 'o', ':call SendLineToRAndInsertOutput()')
+    call RCreateMaps('v', '<Plug>RDSendLineAndInsertOutput', 'o', ':call RWarningMsg("This command does not work over a selection of lines.")')
     call RCreateMaps('i', '<Plug>RSendLAndOpenNewOne', 'q', ':call SendLineToR("newline")')
     call RCreateMaps('n', '<Plug>RNLeftPart', 'r<left>', ':call RSendPartOfLine("left", 0)')
     call RCreateMaps('n', '<Plug>RNRightPart', 'r<right>', ':call RSendPartOfLine("right", 0)')
