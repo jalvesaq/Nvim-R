@@ -50,17 +50,34 @@ function StartR_ExternalTerm(rcmd)
         endif
     endif
 
-    let rlog = system(opencmd)
-    if v:shell_error
-        call RWarningMsg(rlog)
-        return
+    if g:R_silent_term
+        let rlog = system(opencmd)
+        if v:shell_error
+            call RWarningMsg(rlog)
+            return
+        endif
+    else
+        let initterm = ['cd "' . getcwd() . '"',
+                    \ opencmd,
+                    \ 'while [ 1 ]  ',
+                    \ 'do',
+                    \ '    read x',
+                    \ '    if [ "$x" = "quit" ]',
+                    \ '    then',
+                    \ '        exit 0',
+                    \ '    fi',
+                    \ 'done']
+        call writefile(initterm, g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        let g:rplugin_term_job = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')})
     endif
+
     let g:SendCmdToR = function('SendCmdToR_Term')
     if WaitNvimcomStart()
         if g:R_after_start != ''
             call system(g:R_after_start)
         endif
     endif
+    call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
 endfunction
 
 function SendCmdToR_Term(...)
@@ -97,6 +114,8 @@ let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 if g:rplugin_is_darwin
     finish
 endif
+
+call RSetDefaultValue("g:R_silent_term", 0)
 
 " Choose a terminal (code adapted from screen.vim)
 if exists("g:R_term")
@@ -166,7 +185,7 @@ if g:R_term == "roxterm"
 endif
 
 if g:R_term == "xterm" || g:R_term == "uxterm"
-    let g:rplugin_termcmd = g:R_term . " -xrm '*iconPixmap: " . g:rplugin_home . "/bitmaps/ricon.xbm' -e"
+    let g:rplugin_termcmd = g:R_term . " -e"
 endif
 
 if g:R_term == "rxvt" || g:R_term == "urxvt"

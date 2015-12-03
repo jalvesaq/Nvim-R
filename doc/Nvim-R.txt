@@ -791,6 +791,7 @@ is running:
 |R_hl_term|           Syntax highlight terminal as rout file type
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
+|R_silent_term|       Do not show terminal errors
 |R_sleeptime|         Time for paste command on R Console (Windows only)
 |R_assign|            Convert '_' into ' <- '
 |R_assign_map|        Choose what to convert into ' <- '
@@ -919,6 +920,7 @@ used to send commands from Neovim to R.
 ------------------------------------------------------------------------------
 								      *R_term*
 								  *R_term_cmd*
+							       *R_silent_term*
 6.2. Terminal emulator (Linux/Unix only)~
 
 Note: The options of this section are ignored on Mac OS X, where the command
@@ -954,6 +956,11 @@ your |vimrc| the variable R_term_cmd, as in the examples below:
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
 
+The terminal error messages, if any, are shown as warning messages, unless you
+put in your |vimrc|:
+>
+   let R_silent_term = 1
+<
 
 ------------------------------------------------------------------------------
 								 *R_sleeptime*

@@ -2623,6 +2623,8 @@ function ROnJobStderr(job_id, data)
         call RWarningMsg('[NvimR Client] ' . substitute(join(a:data), '\r', '', 'g'))
     elseif a:job_id == g:rplugin_R_job
         call RWarningMsg('[R] ' . substitute(join(a:data), '\r', '', 'g'))
+    elseif a:job_id == g:rplugin_term_job
+        call RWarningMsg('[Terminal emulator] ' . substitute(join(a:data), '\r', '', 'g'))
     else
         call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
     endif
@@ -2642,7 +2644,12 @@ function ROnJobExit(job_id, data)
         if g:rplugin_clt_job
             call jobsend(g:rplugin_clt_job, "\001" . "0\n")
         endif
+        if g:rplugin_term_job
+            call jobsend(g:rplugin_term_job, "quit\n")
+        endif
         call ClearRInfo()
+    elseif a:job_id == g:rplugin_term_job
+        let g:rplugin_term_job = 0
     endif
 endfunction
 
@@ -2859,11 +2866,6 @@ endif
 " List of marks that the plugin seeks to find the block to be sent to R
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"
 
-if has("win32") || g:R_in_buffer || g:R_tmux_split || g:rplugin_is_darwin
-    let g:R_term_cmd = "none"
-    let g:R_term = "none"
-endif
-
 if filewritable('/dev/null')
     let g:rplugin_null = "'/dev/null'"
 elseif has("win32") && filewritable('NUL')
@@ -2884,6 +2886,7 @@ let g:rplugin_running_rhelp = 0
 let g:rplugin_clt_job = 0
 let g:rplugin_srv_job = 0
 let g:rplugin_R_job = 0
+let g:rplugin_term_job = 0
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
