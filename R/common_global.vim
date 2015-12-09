@@ -1817,6 +1817,11 @@ function RGetClassFor(rkeyword)
             let classfor = substitute(classfor, ' .*', '', "")
         endif
     endif
+    if classfor =~ '^"' && classfor !~ '"$'
+        let classfor = classfor . '"'
+    elseif classfor =~ "^'" && classfor !~ "'$"
+        let classfor = classfor . "'"
+    endif
     if classfor =~ "^'" && classfor =~ "'$"
         let classfor = substitute(classfor, "^'", '"', "")
         let classfor = substitute(classfor, "'$", '"', "")
@@ -1995,6 +2000,110 @@ function ShowRDoc(rkeyword)
     setlocal nomodified
     stopinsert
     redraw
+endfunction
+
+function! ROpenPDF(path)
+    if a:path == "Get Master"
+        let tmpvar = SyncTeX_GetMaster()
+        let pdfpath = tmpvar[1] . '/' . tmpvar[0] . '.pdf'
+    else
+        let pdfpath = a:path
+    endif
+    let basenm = substitute(substitute(pdfpath, '.*/', '', ''), '\.pdf$', '', '')
+
+    let olddir = getcwd()
+    if olddir != expand("%:p:h")
+        try
+            " The :cd command will fail if the cursor is in the term buffer
+            silent exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
+        catch /.*/
+        endtry
+    endif
+
+    if !filereadable(basenm . ".pdf")
+        call RWarningMsg('File not found: "' . basenm . '.pdf".')
+        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+        return
+    endif
+    if g:rplugin_pdfviewer == "none"
+        call RWarningMsg("Could not find a PDF viewer, and R_pdfviewer is not defined.")
+    else
+        if g:rplugin_pdfviewer == "okular"
+            let pcmd = "NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
+            call system(pcmd)
+        elseif g:rplugin_pdfviewer == "zathura"
+            if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
+                call system("wmctrl -a '" . basenm . ".pdf'")
+            else
+                let g:rplugin_zathura_pid[basenm] = 0
+                call RStart_Zathura(basenm)
+            endif
+            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+            return
+        elseif g:rplugin_pdfviewer == "sumatra"
+            if basenm =~ ' '
+                call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
+            endif
+            if SumatraInPath()
+                let $NVIMR_PORT = g:rplugin_myport
+                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrclient.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+                call system(g:rplugin_tmpdir . "/run_cmd.bat")
+                exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+            endif
+            return
+        elseif g:rplugin_pdfviewer == "skim"
+            call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
+        else
+            let pcmd = g:rplugin_pdfviewer . " '" . pdfpath . "' 2>/dev/null >/dev/null &"
+            call system(pcmd)
+        endif
+        if g:rplugin_has_wmctrl
+            call system("wmctrl -a '" . basenm . ".pdf'")
+        endif
+    endif
+    exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+endfunction
+
+function! RStart_Zathura(basenm)
+    " Use wmctrl to check if the pdf is already open and get Zathura's PID to
+    " close the document and kill Zathura.
+    if g:rplugin_has_wmctrl && g:rplugin_has_dbussend && filereadable("/proc/sys/kernel/pid_max")
+        let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . a:basenm . '"')
+        if len(info) > 0
+            let pid = split(info[0])[2] + 0     " + 0 to convert into number
+            let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
+            if pid > 0 && pid <= max_pid
+                " Instead of killing, it would be better to reset the backward
+                " command, but Zathura does not have a Dbus message for this,
+                " and we would have to change nvimrclient to receive NVIMR_PORT
+                " and NVIMR_SECRET as part of argv[].
+                call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
+                sleep 5m
+                call system('kill ' . pid)
+                sleep 5m
+            endif
+        endif
+    endif
+
+    let $NVIMR_PORT = g:rplugin_myport
+    let pycode = ["# -*- coding: " . &encoding . " -*-",
+                \ "import subprocess",
+                \ "import os",
+                \ "import sys",
+                \ "FNULL = open(os.devnull, 'w')",
+                \ "a1 = '--synctex-editor-command'",
+                \ "a2 = 'nvimrclient %{input} %{line}'",
+                \ "a3 = '" . a:basenm . ".pdf'",
+                \ "zpid = subprocess.Popen(['zathura', a1, a2, a3], stdout = FNULL, stderr = FNULL).pid",
+                \ "sys.stdout.write(str(zpid))" ]
+    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
+    let pid = system("NVIMR_PORT=" . g:rplugin_myport . " python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
+    if pid == 0
+        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
+    else
+        let g:rplugin_zathura_pid[a:basenm] = pid
+    endif
+    call delete(g:rplugin_tmpdir . "/start_zathura.py")
 endfunction
 
 function RSetPDFViewer()
