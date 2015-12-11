@@ -143,7 +143,11 @@ function ReadEvalReply()
         echon "\r                 "
         redraw
     endif
-    return reply
+    if reply =~ "^Error" || reply == "INVALID" || reply == "ERROR" || reply == "EMPTY" || reply == "No reply" || reply == "NO_ARGS"
+        return "R error: " . reply
+    else
+        return reply
+    endif
 endfunction
 
 function CompleteChunkOptions()
@@ -251,9 +255,7 @@ function RCompleteArgs()
         if np == 0
             call cursor(lnum, idx)
             let rkeyword0 = RGetKeyWord()
-            let classfor = RGetClassFor(rkeyword0)
-            let classfor = substitute(classfor, '\\', "", "g")
-            let classfor = substitute(classfor, '\(.\)"\(.\)', '\1\\"\2', "g")
+            let objclass = RGetFirstObjClass(rkeyword0)
             let rkeyword = '^' . rkeyword0 . "\x06"
             call cursor(cpos[1], cpos[2])
 
@@ -261,10 +263,10 @@ function RCompleteArgs()
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
                 call delete(g:rplugin_tmpdir . "/eval_reply")
                 let msg = 'nvimcom:::nvim.args("'
-                if classfor == ""
+                if objclass == ""
                     let msg = msg . rkeyword0 . '", "' . argkey . '"'
                 else
-                    let msg = msg . rkeyword0 . '", "' . argkey . '", classfor = ' . classfor
+                    let msg = msg . rkeyword0 . '", "' . argkey . '", objclass = ' . objclass
                 endif
                 if rkeyword0 == "library" || rkeyword0 == "require"
                     let isfirst = IsFirstRArg(lnum, cpos)
@@ -280,7 +282,7 @@ function RCompleteArgs()
 
                 if g:rplugin_nvimcom_port > 0
                     let g:rplugin_lastev = ReadEvalReply()
-                    if g:rplugin_lastev != "NOT_EXISTS" && g:rplugin_lastev != "NO_ARGS" && g:rplugin_lastev != "R is busy." && g:rplugin_lastev != "NOANSWER" && g:rplugin_lastev != "INVALID" && g:rplugin_lastev != "" && g:rplugin_lastev != "No reply"
+                    if g:rplugin_lastev !~ "^R error: "
                         let args = []
                         if g:rplugin_lastev[0] == "\x04" && len(split(g:rplugin_lastev, "\x04")) == 1
                             return ''
@@ -688,7 +690,7 @@ function StartR(whatr)
         endif
         let start_options += ['setwd("' . rwd . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8") warning("Your version of Nvim-R requires nvimcom-0.9-8.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.1") warning("Your version of Nvim-R requires nvimcom-0.9-8.1.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -793,8 +795,8 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.8"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.')
+        if nvimcom_version != "0.9.8.1"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.1.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -841,8 +843,6 @@ function WaitNvimcomStart()
             if g:rplugin_clt_job == 0
                 let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
             endif
-            " TODO: Delete the command below (Set nvimcom port in the nvimrclient) after increasing nvimcom version:
-            call jobsend(g:rplugin_clt_job, "\001R" . g:rplugin_nvimcom_port . "\n")
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
@@ -1006,7 +1006,7 @@ function RFormatCode() range
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call SendToNvimcom("\x08" . $NVIMR_ID . 'formatR::tidy_source("' . g:rplugin_tmpdir . '/unformatted_code", file = "' . g:rplugin_tmpdir . '/formatted_code", width.cutoff = ' . wco . ')')
     let g:rplugin_lastev = ReadEvalReply()
-    if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "UNKNOWN" || g:rplugin_lastev =~ "^Error" || g:rplugin_lastev == "INVALID" || g:rplugin_lastev == "ERROR" || g:rplugin_lastev == "EMPTY" || g:rplugin_lastev == "No reply"
+    if g:rplugin_lastev =~ "^R error: "
         call RWarningMsg(g:rplugin_lastev)
         return
     endif
@@ -1025,7 +1025,7 @@ function RInsert(...)
     call delete(g:rplugin_tmpdir . "/Rinsert")
     call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:1 . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
     let g:rplugin_lastev = ReadEvalReply()
-    if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "UNKNOWN" || g:rplugin_lastev =~ "^Error" || g:rplugin_lastev == "INVALID" || g:rplugin_lastev == "ERROR" || g:rplugin_lastev == "EMPTY" || g:rplugin_lastev == "No reply"
+    if g:rplugin_lastev =~ "^R error: "
         call RWarningMsg(g:rplugin_lastev)
     else
         if a:0 == 2 && a:2 == "newtab"
@@ -1739,8 +1739,8 @@ function SetRTextWidth(rkeyword)
     endif
 endfunction
 
-function RGetClassFor(rkeyword)
-    let classfor = ""
+function RGetFirstObjClass(rkeyword)
+    let firstobj = ""
     let line = substitute(getline("."), '#.*', '', "")
     let begin = col(".")
     if strlen(line) > begin
@@ -1751,7 +1751,7 @@ function RGetClassFor(rkeyword)
         endwhile
         let line = piece
         if line !~ '^\k*\s*('
-            return classfor
+            return firstobj
         endif
         let begin = 1
         let linelen = strlen(line)
@@ -1785,7 +1785,7 @@ function RGetClassFor(rkeyword)
                     let len = strlen(line)
                 endif
             endwhile
-            let classfor = strpart(line, 0, idx)
+            let firstobj = strpart(line, 0, idx)
         elseif line =~ '^\(\k\|\$\)*\s*[' || line =~ '^\(k\|\$\)*\s*=\s*\(\k\|\$\)*\s*[.*('
             let idx = 0
             while line[idx] != '['
@@ -1810,23 +1810,38 @@ function RGetClassFor(rkeyword)
                     let len = strlen(line)
                 endif
             endwhile
-            let classfor = strpart(line, 0, idx)
+            let firstobj = strpart(line, 0, idx)
         else
-            let classfor = substitute(line, ').*', '', "")
-            let classfor = substitute(classfor, ',.*', '', "")
-            let classfor = substitute(classfor, ' .*', '', "")
+            let firstobj = substitute(line, ').*', '', "")
+            let firstobj = substitute(firstobj, ',.*', '', "")
+            let firstobj = substitute(firstobj, ' .*', '', "")
         endif
     endif
-    if classfor =~ '^"' && classfor !~ '"$'
-        let classfor = classfor . '"'
-    elseif classfor =~ "^'" && classfor !~ "'$"
-        let classfor = classfor . "'"
+
+    " Fix some problems
+    if firstobj =~ '^"' && firstobj !~ '"$'
+        let firstobj = firstobj . '"'
+    elseif firstobj =~ "^'" && firstobj !~ "'$"
+        let firstobj = firstobj . "'"
     endif
-    if classfor =~ "^'" && classfor =~ "'$"
-        let classfor = substitute(classfor, "^'", '"', "")
-        let classfor = substitute(classfor, "'$", '"', "")
+    if firstobj =~ "^'" && firstobj =~ "'$"
+        let firstobj = substitute(firstobj, "^'", '"', "")
+        let firstobj = substitute(firstobj, "'$", '"', "")
     endif
-    return classfor
+    if firstobj =~ '='
+        let firstobj = "eval(expression(" . firstobj . "))"
+    endif
+
+    let objclass = ""
+    call SendToNvimcom("\x08" . $NVIMR_ID . "class(" . firstobj . ")")
+    if g:rplugin_nvimcom_port > 0
+        let g:rplugin_lastev = ReadEvalReply()
+        if g:rplugin_lastev !~ "^R error: "
+            let objclass = '"' . g:rplugin_lastev . '"'
+        endif
+    endif
+
+    return objclass
 endfunction
 
 " Show R's help doc in Nvim's buffer
@@ -1836,7 +1851,7 @@ function AskRDoc(rkeyword, package, getclass)
         call delete(g:rplugin_docfile)
     endif
 
-    let classfor = ""
+    let objclass = ""
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
@@ -1844,24 +1859,18 @@ function AskRDoc(rkeyword, package, getclass)
         exe "set switchbuf=" . savesb
     else
         if a:getclass
-            let classfor = RGetClassFor(a:rkeyword)
+            let objclass = RGetFirstObjClass(a:rkeyword)
         endif
-    endif
-
-    if classfor =~ '='
-        let classfor = "eval(expression(" . classfor . "))"
     endif
 
     call SetRTextWidth(a:rkeyword)
 
-    if classfor == "" && a:package == ""
+    if objclass == "" && a:package == ""
         let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L)'
     elseif a:package != ""
         let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, package="' . a:package  . '")'
     else
-        let classfor = substitute(classfor, '\\', "", "g")
-        let classfor = substitute(classfor, '\(.\)"\(.\)', '\1\\"\2', "g")
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, ' . classfor . ')'
+        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, ' . objclass . ')'
     endif
 
     call SendToNvimcom("\x08" . $NVIMR_ID . rcmd)
@@ -2225,14 +2234,14 @@ endfunction
 
 function PrintRObject(rkeyword)
     if bufname("%") =~ "Object_Browser"
-        let classfor = ""
+        let objclass = ""
     else
-        let classfor = RGetClassFor(a:rkeyword)
+        let objclass = RGetFirstObjClass(a:rkeyword)
     endif
-    if classfor == ""
+    if objclass == ""
         call g:SendCmdToR("print(" . a:rkeyword . ")")
     else
-        call g:SendCmdToR('nvim.print("' . a:rkeyword . '", ' . classfor . ")")
+        call g:SendCmdToR('nvim.print("' . a:rkeyword . '", ' . objclass . ")")
     endif
 endfunction
 
@@ -2623,7 +2632,7 @@ function BuildROmniList(pattern)
         return
     endif
     let g:rplugin_lastev = ReadEvalReply()
-    if g:rplugin_lastev == "R is busy." || g:rplugin_lastev == "No reply"
+    if g:rplugin_lastev =~ "^R error: "
         call RWarningMsg(g:rplugin_lastev)
         sleep 800m
         return
@@ -3005,7 +3014,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.1"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
