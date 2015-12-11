@@ -85,12 +85,12 @@ endfunction
 
 
 " Because this function delete files, it will not be documented.
-" If you want to try it, put in your nvimrc:
+" If you want to try it, put in your vimrc:
 "
 " let R_rm_knit_cache = 1
 "
 " If don't want to answer the question about deleting files, and
-" if you trust this code more than I do, put in your nvimrc:
+" if you trust this code more than I do, put in your vimrc:
 "
 " let R_ask_rm_knitr_cache = 0
 "
@@ -564,7 +564,7 @@ function! SyncTeX_forward(...)
     if !filereadable(basenm . ".synctex.gz")
         call RWarningMsg('SyncTeX forward cannot be done because the file "' . basenm . '.synctex.gz" is missing.')
         if g:R_latexcmd != "default" && g:R_latexcmd !~ "synctex"
-            call RWarningMsg('Note: The string "-synctex=1" is not in your R_latexcmd. Please check your nvimrc.')
+            call RWarningMsg('Note: The string "-synctex=1" is not in your R_latexcmd. Please check your vimrc.')
         endif
         exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
         return

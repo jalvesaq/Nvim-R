@@ -14,7 +14,7 @@ function StartR_OSX()
     if args_str != " "
         " https://github.com/jcfaria/Vim-R-plugin/issues/63
         " https://stat.ethz.ch/pipermail/r-sig-mac/2013-February/009978.html
-        call RWarningMsg('R.app does not support command line arguments. To pass "' . args_str . '" to R, you must put "let R_applescript = 0" in your nvimrc to run R in a terminal emulator.')
+        call RWarningMsg('R.app does not support command line arguments. To pass "' . args_str . '" to R, you must put "let R_applescript = 0" in your vimrc to run R in a terminal emulator.')
     endif
     let rlog = system("open " . rcmd)
     if v:shell_error

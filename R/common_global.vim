@@ -1952,7 +1952,7 @@ function ShowRDoc(rkeyword)
         elseif s:vimpager == "no"
             " The only way of ShowRDoc() being called when R_nvimpager=="no"
             " is the user setting the value of R_nvimpager to 'no' after
-            " Neovim startup. It should be set in the nvimrc.
+            " Neovim startup. It should be set in the vimrc.
             if g:R_in_buffer
                 let g:R_nvimpager = "vertical"
             else
@@ -3073,7 +3073,7 @@ endif
 if exists("g:R_path")
     let g:rplugin_R_path = expand(g:R_path)
     if !isdirectory(g:rplugin_R_path)
-        call RWarningMsgInp('"' . g:R_path . '" is not a directory. Fix the value of R_path in your nvimrc.')
+        call RWarningMsgInp('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
         let g:rplugin_failed = 1
         finish
     endif
@@ -3085,7 +3085,7 @@ if exists("g:R_path")
         endif
     endif
     if !executable(g:rplugin_R)
-        call RWarningMsgInp('"' . g:rplugin_R . '" not found. Fix the value of R_path in your nvimrc.')
+        call RWarningMsgInp('"' . g:rplugin_R . '" not found. Fix the value of R_path in your vimrc.')
         let g:rplugin_failed = 1
         finish
     endif

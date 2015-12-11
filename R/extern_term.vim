@@ -120,7 +120,7 @@ call RSetDefaultValue("g:R_silent_term", 0)
 " Choose a terminal (code adapted from screen.vim)
 if exists("g:R_term")
     if !executable(g:R_term)
-        call RWarningMsgInp("'" . g:R_term . "' not found. Please change the value of 'R_term' in your nvimrc.")
+        call RWarningMsgInp("'" . g:R_term . "' not found. Please change the value of 'R_term' in your vimrc.")
         let g:R_term = "xterm"
     endif
 endif
@@ -139,7 +139,7 @@ if !exists("g:R_term")
 endif
 
 if !exists("g:R_term") && !exists("g:R_term_cmd")
-    call RWarningMsgInp("Please, set the variable 'g:R_term_cmd' in your .nvimrc. Read the plugin documentation for details.")
+    call RWarningMsgInp("Please, set the variable 'g:R_term_cmd' in your vimrc. Read the plugin documentation for details.")
     let g:rplugin_failed = 1
     finish
 endif
