@@ -1468,18 +1468,17 @@ to R function knit2pdf).
 							  *R_insert_mode_cmds*
 6.24. Allow R commands in insert mode~
 
-Nvim-R commands are designed to work in insert mode as well as normal mode.
-However, depending on your <LocalLeader>, this can make it very difficult to
-write R packages or Sweave files.  For example, if <LocalLeader> is set to the
-`\` character, typing `\dQuote` in a .Rd file tries to send the command!
+Nvim-R commands are enabled for Normal mode, but most of them can also be
+enabled in Insert mode. However, depending on your <LocalLeader>, this can
+make it very difficult to write R packages or Sweave files.  For example, if
+<LocalLeader> is set to the `\` character, typing `\dQuote` in a .Rd file
+tries to send the command!
 
-The option R_insert_mode_cmds disables commands in insert mode.  To
-use it, add the following to your |vimrc|:
+If you want to enable commands in Insert mode, add the following to your
+|vimrc|:
 >
-   let g:R_insert_mode_cmds = 0
+   let R_insert_mode_cmds = 1
 <
-The default value is 1, for consistency with earlier versions.
-
 See also: |Nvim-R-localleader|.
 
 
