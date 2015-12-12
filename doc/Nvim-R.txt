@@ -793,6 +793,9 @@ is running:
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
 |R_sleeptime|         Time for paste command on R Console (Windows only)
+|R_set_home_env|      Set the value of $HOME for R (Windows only)
+|R_save_win_pos|      Save positions of R and GVim windows (Windows only)
+|R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
 |R_assign|            Convert '_' into ' <- '
 |R_assign_map|        Choose what to convert into ' <- '
 |R_rnowebchunk|       Convert '<' into '<<>>=\n@' in Rnoweb files
@@ -964,16 +967,39 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 								 *R_sleeptime*
+							      *R_set_home_env*
+							      *R_save_win_pos*
+							   *R_arrange_windows*
 6.3. Time for the paste command on Windows~
 
 On Windows, when running Rgui.exe, the plugin copies the command to be sent to
 R in the clipboard and paste it on the R Console. Then, it waits 100
 miliseconds before bringing Neovim window to the foreground. If this time is
-too short, the <C-V> command will effect the Neovim window, and the editor
-may enter Visual Block mode. If the time is too long, the delay will be
-annoying. You can adjust this waiting time in your |vimrc|. Example:
+too short, the <C-V> command will effect the Neovim window, and the editor may
+enter Visual Block mode. If the time is too long, the delay will be annoying.
+You can adjust this waiting time in your |vimrc|. Example:
 >
    let R_sleeptime = 300
+<
+By default, Nvim-R will save the positions of R Console and Neovim windows
+when you quit R with the <LocalLeader>rq command, and it will restore the
+positions of the windows when you start R. If you do not like this behavior,
+you can put in your |vimrc|:
+>
+   let R_save_win_pos = 0
+   let R_arrange_windows = 0
+<
+If you want R and GVim windows always in a specific arrangement, regardless of
+their state when you have quited R for the last time, you should arrange them
+in the way you want, quit R, change in your |vimrc| only the value of
+R_save_win_pos and, finally, quit Vim.
+
+The plugin sets `$HOME` as the Windows register value for "Personal" "Shell
+Folders" which is the same value set by R. However, if you have set `$HOME`
+yourself with the intention of changing the default value of `$HOME` assumed
+by R, you will want to put in your |vimrc|:
+>
+   let R_set_home_env = 0
 <
 
 ------------------------------------------------------------------------------

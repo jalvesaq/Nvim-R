@@ -4,6 +4,7 @@ let g:rplugin_sumatra_in_path = 0
 let g:rplugin_python_initialized = 0
 
 call RSetDefaultValue("g:R_sleeptime", 100)
+call RSetDefaultValue("g:R_set_home_env", 1)
 call RSetDefaultValue("g:R_i386", 0)
 
 " Avoid invalid values defined by the user
@@ -71,20 +72,24 @@ function StartR_Windows()
     endif
 
     " R and Vim use different values for the $HOME variable.
-    let saved_home = $HOME
-    call writefile(['reg.exe QUERY "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"'], g:rplugin_tmpdir . "/run_cmd.bat")
-    let prs = system(g:rplugin_tmpdir . "/run_cmd.bat")
-    if len(prs) > 0
-        let prs = substitute(prs, '.*REG_SZ\s*', '', '')
-        let prs = substitute(prs, '\n', '', 'g')
-        let prs = substitute(prs, '\r', '', 'g')
-        let prs = substitute(prs, '\s*$', '', 'g')
-        let $HOME = prs
+    if g:R_set_home_env
+        let saved_home = $HOME
+        call writefile(['reg.exe QUERY "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"'], g:rplugin_tmpdir . "/run_cmd.bat")
+        let prs = system(g:rplugin_tmpdir . "/run_cmd.bat")
+        if len(prs) > 0
+            let prs = substitute(prs, '.*REG_SZ\s*', '', '')
+            let prs = substitute(prs, '\n', '', 'g')
+            let prs = substitute(prs, '\r', '', 'g')
+            let prs = substitute(prs, '\s*$', '', 'g')
+            let $HOME = prs
+        endif
     endif
 
     call system("start " . g:rplugin_R . ' ' . join(g:R_args))
 
-    let $HOME = saved_home
+    if g:R_set_home_env
+        let $HOME = saved_home
+    endif
 
     let g:SendCmdToR = function('SendCmdToR_Windows')
     if WaitNvimcomStart()
