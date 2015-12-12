@@ -143,7 +143,7 @@ function ReadEvalReply()
         echon "\r                 "
         redraw
     endif
-    if reply =~ "^Error" || reply == "INVALID" || reply == "ERROR" || reply == "EMPTY" || reply == "No reply" || reply == "NO_ARGS"
+    if reply == "No reply" || reply =~ "^Error" || reply == "INVALID" || reply == "ERROR" || reply == "EMPTY" || reply == "NO_ARGS" || reply == "NOT_EXISTS"
         return "R error: " . reply
     else
         return reply
@@ -690,7 +690,7 @@ function StartR(whatr)
         endif
         let start_options += ['setwd("' . rwd . '")']
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.1") warning("Your version of Nvim-R requires nvimcom-0.9-8.1.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.2") warning("Your version of Nvim-R requires nvimcom-0.9-8.2.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -795,8 +795,8 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.8.1"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.1.')
+        if nvimcom_version != "0.9.8.2"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.2.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -1833,7 +1833,7 @@ function RGetFirstObjClass(rkeyword)
     endif
 
     let objclass = ""
-    call SendToNvimcom("\x08" . $NVIMR_ID . "class(" . firstobj . ")")
+    call SendToNvimcom("\x08" . $NVIMR_ID . "nvimcom:::nvim.getclass(" . firstobj . ")")
     if g:rplugin_nvimcom_port > 0
         let g:rplugin_lastev = ReadEvalReply()
         if g:rplugin_lastev !~ "^R error: "
@@ -3014,7 +3014,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.1"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.2"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
