@@ -195,11 +195,11 @@ function CompleteChunkOptions()
     call sort(ktopt)
 
     for kopt in ktopt
-      if kopt =~ newbase
-        let tmp1 = split(kopt, ";")
-        let tmp2 = {'word': tmp1[0], 'menu': tmp1[1]}
-        call add(rr, tmp2)
-      endif
+        if kopt =~ newbase
+            let tmp1 = split(kopt, ";")
+            let tmp2 = {'word': tmp1[0], 'menu': tmp1[1]}
+            call add(rr, tmp2)
+        endif
     endfor
     call complete(idx1 + 1, rr)
 endfunction
@@ -1448,7 +1448,7 @@ function SendFHChunkToR()
                 " Next run child chunk and continue
                 call KnitChild(curbuf[idx], 'stay')
                 let idx += 1
-            " Regular R chunk
+                " Regular R chunk
             else
                 let idx += 1
                 while curbuf[idx] !~ endchk && idx < here

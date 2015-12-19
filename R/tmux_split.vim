@@ -1,13 +1,13 @@
 
 " Adapted from screen plugin:
 function TmuxActivePane()
-  let line = system("tmux list-panes | grep \'(active)$'")
-  let paneid = matchstr(line, '\v\%\d+ \(active\)')
-  if !empty(paneid)
-    return matchstr(paneid, '\v^\%\d+')
-  else
-    return matchstr(line, '\v^\d+')
-  endif
+    let line = system("tmux list-panes | grep \'(active)$'")
+    let paneid = matchstr(line, '\v\%\d+ \(active\)')
+    if !empty(paneid)
+        return matchstr(paneid, '\v^\%\d+')
+    else
+        return matchstr(line, '\v^\d+')
+    endif
 endfunction
 
 function StartR_TmuxSplit(rcmd)

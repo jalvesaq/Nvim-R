@@ -14,7 +14,7 @@ function StartR_ExternalTerm(rcmd)
 
         if g:R_term == "rxvt" || g:R_term == "urxvt"
             let cnflines = cnflines + [
-                    \ "set terminal-overrides 'rxvt*:smcup@:rmcup@'" ]
+                        \ "set terminal-overrides 'rxvt*:smcup@:rmcup@'" ]
         endif
 
         call writefile(cnflines, g:rplugin_tmpdir . "/tmux.conf")
