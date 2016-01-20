@@ -68,7 +68,7 @@ function StartR_ExternalTerm(rcmd)
                     \ '    fi',
                     \ 'done']
         call writefile(initterm, g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-        let g:rplugin_term_job = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')})
+        let g:rplugin_jobs["Terminal emulator"] = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')})
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')

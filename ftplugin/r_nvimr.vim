@@ -44,11 +44,12 @@ function! ShowRout()
 
     if has("win32")
         let rcmd = 'Rcmd.exe BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
+        let g:rplugin_jobs["Rcmd.exe"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     else
         let rcmd = g:rplugin_R . " CMD BATCH --no-restore --no-save '" . expand("%") . "' '" . s:routfile . "'"
+        let g:rplugin_jobs["R CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     endif
 
-    call jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
 endfunction
 
 " Convert R script into Rmd, md and, then, html.

@@ -103,10 +103,10 @@ function StartObjBrowser_Tmux()
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
                 \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
-                \ 'let g:rplugin_clt_job = jobstart("nvimrclient", g:rplugin_job_handlers)',
-                \ 'call jobsend(g:rplugin_clt_job, "\001V' . g:rplugin_myport . '\n")',
-                \ 'call jobsend(g:rplugin_clt_job, "\001R' . g:rplugin_nvimcom_port . '\n")',
-                \ 'let g:rplugin_srv_job = jobstart("nvimrserver", g:rplugin_job_handlers)'], objbrowserfile)
+                \ 'let g:rplugin_jobs["Nvim-R Client"] = jobstart("nvimrclient", g:rplugin_job_handlers)',
+                \ 'call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001V' . g:rplugin_myport . '\n")',
+                \ 'call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001R' . g:rplugin_nvimcom_port . '\n")',
+                \ 'let g:rplugin_jobs["Nvim-R Server"] = jobstart("nvimrserver", g:rplugin_job_handlers)'], objbrowserfile)
 
     if g:R_objbr_place =~ "left"
         let panw = system("tmux list-panes | cat")

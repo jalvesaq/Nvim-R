@@ -12,7 +12,7 @@ function ExeOnRTerm(cmd)
 endfunction
 
 function SendCmdToR_Neovim(...)
-    if g:rplugin_R_job
+    if g:rplugin_jobs["R"]
         if g:R_ca_ck
             let cmd = "\001" . "\013" . a:1
         else
@@ -56,9 +56,9 @@ function SendCmdToR_Neovim(...)
         endif
 
         if a:0 == 2 && a:2 == 0
-            call jobsend(g:rplugin_R_job, cmd)
+            call jobsend(g:rplugin_jobs["R"], cmd)
         else
-            call jobsend(g:rplugin_R_job, cmd . "\n")
+            call jobsend(g:rplugin_jobs["R"], cmd . "\n")
         endif
         return 1
     else
@@ -95,7 +95,7 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
-    let g:rplugin_R_job = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
+    let g:rplugin_jobs["R"] = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
     let g:rplugin_R_bufname = bufname("%")
     let g:rplugin_R_width = 0
     let b:objbrtitle = objbrttl

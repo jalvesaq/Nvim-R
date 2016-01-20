@@ -95,7 +95,7 @@ function StartR_Windows()
     if WaitNvimcomStart()
         if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
             " ArrangeWindows
-            call jobsend(g:rplugin_clt_job, "\005" . g:rplugin_compldir . "\n")
+            call jobsend(g:rplugin_jobs["Nvim-R Client"], "\005" . g:rplugin_compldir . "\n")
         endif
         if g:R_after_start != ''
             call system(g:R_after_start)
@@ -114,11 +114,11 @@ function SendCmdToR_Windows(...)
     "call setreg('+', cmd)
 
     " SendToRConsole
-    call jobsend(g:rplugin_clt_job, "\003" . cmd)
+    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\003" . cmd)
 
     " Raise Neovim window
     exe "sleep " . g:rplugin_sleeptime
-    call jobsend(g:rplugin_clt_job, "\007 \n")
+    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\007 \n")
 
     "call setreg('+', save_clip)
     return 1

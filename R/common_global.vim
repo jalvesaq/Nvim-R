@@ -847,15 +847,15 @@ function WaitNvimcomStart()
                     endif
                 endif
             endif
-            if g:rplugin_clt_job == 0
-                let g:rplugin_clt_job = jobstart(nvc, g:rplugin_job_handlers)
+            if g:rplugin_jobs["Nvim-R Client"] == 0
+                let g:rplugin_jobs["Nvim-R Client"] = jobstart(nvc, g:rplugin_job_handlers)
             endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvs)
-            if g:rplugin_srv_job == 0
-                let g:rplugin_srv_job = jobstart(nvs, g:rplugin_job_handlers)
+            if g:rplugin_jobs["Nvim-R Server"] == 0
+                let g:rplugin_jobs["Nvim-R Server"] = jobstart(nvs, g:rplugin_job_handlers)
             else
                 call RSendMyPort()
             endif
@@ -962,28 +962,28 @@ function RBrOpenCloseLs_Nvim(status)
 endfunction
 
 function SendToNvimcom(cmd)
-    if g:rplugin_clt_job == 0
+    if g:rplugin_jobs["Nvim-R Client"] == 0
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_clt_job, "\002R" . a:cmd . "\n")
+    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002R" . a:cmd . "\n")
 endfunction
 
 function SendToOtherNvim(cmd)
-    if g:rplugin_clt_job == 0
+    if g:rplugin_jobs["Nvim-R Client"] == 0
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_clt_job, "\002O" . $NVIMR_SECRET . a:cmd . "\n")
+    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002O" . $NVIMR_SECRET . a:cmd . "\n")
 endfunction
 
 function RSendMyPort()
-    if g:rplugin_clt_job
-        call jobsend(g:rplugin_clt_job, "\001S" . g:rplugin_myport . "\n")
+    if g:rplugin_jobs["Nvim-R Client"]
+        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001S" . g:rplugin_myport . "\n")
         if &filetype == "rbrowser" && g:R_tmux_split
             call SendToNvimcom("\002" . g:rplugin_myport)
             call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
-            call SendToOtherNvim('call jobsend(g:rplugin_clt_job, "\001O' . g:rplugin_myport . '\n")')
+            call SendToOtherNvim('call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001O' . g:rplugin_myport . '\n")')
         else
             call SendToNvimcom("\001" . g:rplugin_myport)
         endif
@@ -1595,7 +1595,7 @@ endfunction
 function RClearConsole()
     if has("win32")
         " RClearConsole
-        call jobsend(g:rplugin_clt_job, "\006\n")
+        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\006\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -1660,7 +1660,7 @@ function RQuit(how)
 
     if g:R_save_win_pos
         " SaveWinPos
-        call jobsend(g:rplugin_clt_job, "\004" . $NVIMR_COMPLDIR . "\n")
+        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
     call g:SendCmdToR(qcmd)
@@ -2109,25 +2109,19 @@ function! RStart_Zathura(basenm)
         endif
     endif
 
-    let $NVIMR_PORT = g:rplugin_myport
-    let pycode = ["# -*- coding: " . &encoding . " -*-",
-                \ "import subprocess",
-                \ "import os",
-                \ "import sys",
-                \ "FNULL = open(os.devnull, 'w')",
-                \ "a1 = '--synctex-editor-command'",
-                \ "a2 = 'nvimrclient %{input} %{line}'",
-                \ "a3 = '" . a:basenm . ".pdf'",
-                \ "zpid = subprocess.Popen(['zathura', a1, a2, a3], stdout = FNULL, stderr = FNULL).pid",
-                \ "sys.stdout.write(str(zpid))" ]
-    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
-    let pid = system("NVIMR_PORT=" . g:rplugin_myport . " python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
-    if pid == 0
-        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
-    else
-        let g:rplugin_zathura_pid[a:basenm] = pid
+    " TODO: Delete this paragraph after Neovim 0.2 is released:
+    if !exists("*jobpid")
+        call RWarningMsg("Neovim function 'jobpid()' does not exist. Please, update Neovim.")
+        return
     endif
-    call delete(g:rplugin_tmpdir . "/start_zathura.py")
+
+    let $NVIMR_PORT = g:rplugin_myport
+    let g:rplugin_jobs["Zathura"] = jobstart(["zathura", "--synctex-editor-command", "nvimrclient %{input} %{line}", a:basenm . ".pdf"], {"detach": 1, "on_stderr": function('ROnJobStderr')})
+    if g:rplugin_jobs["Zathura"] < 1
+        call RWarningMsg("Failed to run Zathura...")
+    else
+        let g:rplugin_zathura_pid[a:basenm] = jobpid(g:rplugin_jobs["Zathura"])
+    endif
 endfunction
 
 function RSetPDFViewer()
@@ -2596,13 +2590,13 @@ function RBufEnter()
 endfunction
 
 function RVimLeave()
-    if g:rplugin_clt_job
-        if g:rplugin_srv_job
-            call jobsend(g:rplugin_clt_job, "\002SQUIT_NVINSERVER_NOW\n")
+    if g:rplugin_jobs["Nvim-R Client"]
+        if g:rplugin_jobs["Nvim-R Server"]
+            call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002SQUIT_NVINSERVER_NOW\n")
         endif
-        call jobstop(g:rplugin_clt_job)
-    elseif g:rplugin_srv_job
-        call jobstop(g:rplugin_srv_job)
+        call jobstop(g:rplugin_jobs["Nvim-R Client"])
+    elseif g:rplugin_jobs["Nvim-R Server"]
+        call jobstop(g:rplugin_jobs["Nvim-R Server"])
     endif
     call delete(g:rplugin_rsource)
     call delete(g:rplugin_tmpdir . "/start_options.R")
@@ -2750,39 +2744,36 @@ function ROnJobStdout(job_id, data)
 endfunction
 
 function ROnJobStderr(job_id, data)
-    if a:job_id == g:rplugin_srv_job
-        call RWarningMsg('[Nvim-R Server] ' . substitute(join(a:data), '\r', '', 'g'))
-    elseif a:job_id == g:rplugin_clt_job
-        call RWarningMsg('[NvimR Client] ' . substitute(join(a:data), '\r', '', 'g'))
-    elseif a:job_id == g:rplugin_R_job
-        call RWarningMsg('[R] ' . substitute(join(a:data), '\r', '', 'g'))
-    elseif a:job_id == g:rplugin_term_job
-        call RWarningMsg('[Terminal emulator] ' . substitute(join(a:data), '\r', '', 'g'))
-    else
-        call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
-    endif
+    for key in keys(g:rplugin_jobs)
+        if g:rplugin_jobs[key] == a:job_id
+            call RWarningMsg('[' . key . '] ' . substitute(join(a:data), '\r', '', 'g'))
+            return
+        endif
+    endfor
+    call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
 endfunction
 
 function ROnJobExit(job_id, data)
-    if a:job_id == g:rplugin_clt_job
-        let g:rplugin_clt_job = 0
-    elseif a:job_id == g:rplugin_srv_job
-        let g:rplugin_srv_job = 0
-    elseif a:job_id == g:rplugin_R_job
-        let g:rplugin_R_job = 0
+    if a:job_id == g:rplugin_jobs["R"]
+        let g:rplugin_jobs["R"] = 0
         if exists("g:rplugin_R_bufname")
             unlet g:rplugin_R_bufname
         endif
         " Set nvimcom port to 0 in nvimrclient
-        if g:rplugin_clt_job
-            call jobsend(g:rplugin_clt_job, "\001" . "0\n")
+        if g:rplugin_jobs["Nvim-R Client"]
+            call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001" . "0\n")
         endif
-        if g:rplugin_term_job
-            call jobsend(g:rplugin_term_job, "quit\n")
+        if g:rplugin_jobs["Terminal emulator"]
+            call jobsend(g:rplugin_jobs["Terminal emulator"], "quit\n")
         endif
         call ClearRInfo()
-    elseif a:job_id == g:rplugin_term_job
-        let g:rplugin_term_job = 0
+    else
+        for key in keys(g:rplugin_jobs)
+            if g:rplugin_jobs[key] == a:job_id
+                let g:rplugin_jobs[key] = 0
+                break
+            endif
+        endfor
     endif
 endfunction
 
@@ -3016,10 +3007,7 @@ let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
 let g:rplugin_running_rhelp = 0
-let g:rplugin_clt_job = 0
-let g:rplugin_srv_job = 0
-let g:rplugin_R_job = 0
-let g:rplugin_term_job = 0
+let g:rplugin_jobs = {"Nvim-R Server": 0, "Nvim-R Client": 0, "R": 0, "Terminal emulator": 0}
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
