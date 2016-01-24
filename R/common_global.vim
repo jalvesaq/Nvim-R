@@ -2613,7 +2613,6 @@ function RVimLeave()
     call delete(g:rplugin_tmpdir . "/unformatted_code")
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/openR")
     call delete(g:rplugin_tmpdir . "/run_cmd.bat")
     if executable("rmdir")
         call system("rmdir '" . g:rplugin_tmpdir . "'")
@@ -2762,9 +2761,6 @@ function ROnJobExit(job_id, data)
         " Set nvimcom port to 0 in nvimrclient
         if g:rplugin_jobs["Nvim-R Client"]
             call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001" . "0\n")
-        endif
-        if g:rplugin_jobs["Terminal emulator"]
-            call jobsend(g:rplugin_jobs["Terminal emulator"], "quit\n")
         endif
         call ClearRInfo()
     else

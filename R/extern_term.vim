@@ -58,17 +58,9 @@ function StartR_ExternalTerm(rcmd)
         endif
     else
         let initterm = ['cd "' . getcwd() . '"',
-                    \ opencmd,
-                    \ 'while [ 1 ]  ',
-                    \ 'do',
-                    \ '    read x',
-                    \ '    if [ "$x" = "quit" ]',
-                    \ '    then',
-                    \ '        exit 0',
-                    \ '    fi',
-                    \ 'done']
+                    \ opencmd ]
         call writefile(initterm, g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-        let g:rplugin_jobs["Terminal emulator"] = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')})
+        let g:rplugin_jobs["Terminal emulator"] = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')
@@ -78,6 +70,7 @@ function StartR_ExternalTerm(rcmd)
         endif
     endif
     call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+    call delete(g:rplugin_tmpdir . "/openR")
 endfunction
 
 function SendCmdToR_Term(...)
@@ -189,7 +182,7 @@ if g:R_term == "xterm" || g:R_term == "uxterm"
 endif
 
 if g:R_term == "rxvt" || g:R_term == "urxvt"
-    let g:rplugin_termcmd = g:R_term . " -cd '" . expand("%:p:h") . "' -title R -xrm '*iconPixmap: " . g:rplugin_home . "/bitmaps/ricon.xbm' -e"
+    let g:rplugin_termcmd = g:R_term . " -title R -xrm '*iconPixmap: " . g:rplugin_home . "/bitmaps/ricon.xbm' -e"
 endif
 
 " Override default settings:
