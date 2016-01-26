@@ -32,22 +32,14 @@ function StartR_ExternalTerm(rcmd)
             call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
             let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         else
-            if g:rplugin_termcmd =~ "gnome-terminal" || g:rplugin_termcmd =~ "xfce4-terminal" || g:rplugin_termcmd =~ "terminal"
-                let opencmd = printf("%s 'tmux -L NvimR -2 %s new-session -s %s \"%s\"' &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
-            else
-                let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\" &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
-            endif
+            let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\" &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
         endif
     else
         if g:rplugin_is_darwin
             call RWarningMsg("Tmux session with R is already running")
             return
         endif
-        if g:rplugin_termcmd =~ "gnome-terminal" || g:rplugin_termcmd =~ "xfce4-terminal" || g:rplugin_termcmd =~ "terminal"
-            let opencmd = printf("%s 'tmux -L NvimR -2 %s attach-session -d -t %s' &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
-        else
-            let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
-        endif
+        let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
     endif
 
     if g:R_silent_term
@@ -119,7 +111,7 @@ if exists("g:R_term")
 endif
 
 if !exists("g:R_term")
-    let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'terminal', 'Eterm',
+    let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'Eterm',
                 \ 'rxvt', 'urxvt', 'aterm', 'roxterm', 'terminator', 'lxterminal', 'xterm']
     for s:term in s:terminals
         if executable(s:term)
@@ -137,52 +129,28 @@ if !exists("g:R_term") && !exists("g:R_term_cmd")
     finish
 endif
 
-let g:rplugin_termcmd = g:R_term . " -e"
+let g:rplugin_termcmd = g:R_term
 
-if g:R_term == "gnome-terminal" || g:R_term == "xfce4-terminal" || g:R_term == "terminal" || g:R_term == "lxterminal"
-    " Cannot set gnome-terminal icon: http://bugzilla.gnome.org/show_bug.cgi?id=126081
-    if g:R_nvim_wd
-        let g:rplugin_termcmd = g:R_term . " -e"
-    else
-        let g:rplugin_termcmd = g:R_term . " --working-directory='" . expand("%:p:h") . "' -e"
+if g:R_term =~ '^\(gnome-terminal\|xfce4-terminal\|roxterm\|terminator\|Eterm\|aterm\|lxterminal\|rxvt\|urxvt\)$'
+    let g:rplugin_termcmd = g:rplugin_termcmd . " --title R"
+elseif g:R_term == '^\(xterm\|uxterm\|lxterm\)$'
+    let g:rplugin_termcmd = g:rplugin_termcmd . " -title R"
+endif
+
+if !g:R_nvim_wd
+    if g:R_term =~ '^\(gnome-terminal\|xfce4-terminal\|terminator\|lxterminal\)$'
+        let g:rplugin_termcmd = g:R_term . " --working-directory='" . expand("%:p:h") . "'"
+    elseif g:R_term == "konsole"
+        let g:rplugin_termcmd = "konsole --workdir '" . expand("%:p:h") . "'"
+    elseif g:R_term == "roxterm"
+        let g:rplugin_termcmd = "roxterm --directory='" . expand("%:p:h") . "'"
     endif
 endif
 
-if g:R_term == "terminator"
-    if g:R_nvim_wd
-        let g:rplugin_termcmd = "terminator --title R -x"
-    else
-        let g:rplugin_termcmd = "terminator --working-directory='" . expand("%:p:h") . "' --title R -x"
-    endif
-endif
-
-if g:R_term == "konsole"
-    if g:R_nvim_wd
-        let g:rplugin_termcmd = "konsole --icon " . g:rplugin_home . "/bitmaps/ricon.png -e"
-    else
-        let g:rplugin_termcmd = "konsole --workdir '" . expand("%:p:h") . "' --icon " . g:rplugin_home . "/bitmaps/ricon.png -e"
-    endif
-endif
-
-if g:R_term == "Eterm"
-    let g:rplugin_termcmd = "Eterm --icon " . g:rplugin_home . "/bitmaps/ricon.png -e"
-endif
-
-if g:R_term == "roxterm"
-    " Cannot set icon: http://bugzilla.gnome.org/show_bug.cgi?id=126081
-    if g:R_nvim_wd
-        let g:rplugin_termcmd = "roxterm --title R -e"
-    else
-        let g:rplugin_termcmd = "roxterm --directory='" . expand("%:p:h") . "' --title R -e"
-    endif
-endif
-
-if g:R_term == "xterm" || g:R_term == "uxterm"
-    let g:rplugin_termcmd = g:R_term . " -e"
-endif
-
-if g:R_term == "rxvt" || g:R_term == "urxvt"
-    let g:rplugin_termcmd = g:R_term . " -title R -xrm '*iconPixmap: " . g:rplugin_home . "/bitmaps/ricon.xbm' -e"
+if g:R_term == "gnome-terminal" || g:R_term == "xfce4-terminal"
+    let g:rplugin_termcmd = g:rplugin_termcmd . " -x"
+else
+    let g:rplugin_termcmd = g:rplugin_termcmd . " -e"
 endif
 
 " Override default settings:

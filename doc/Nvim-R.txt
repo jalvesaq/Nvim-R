@@ -933,15 +933,16 @@ If |R_in_buffer| = 0 and the X Window System is running and Tmux is installed,
 then R will run in an external terminal emulator. The plugin uses the first
 terminal emulator that it finds in the following list:
 
-   1. gnome-terminal,
-   2. konsole,
-   3. xfce4-terminal,
-   4. Eterm,
-   5. (u)rxvt,
-   6. aterm,
-   7. roxterm,
-   8. terminator,
-   9. xterm.
+    1. gnome-terminal,
+    2. konsole,
+    3. xfce4-terminal,
+    4. Eterm,
+    5. (u)rxvt,
+    6. aterm,
+    7. roxterm,
+    8. terminator,
+    9. lxterminal
+   10. xterm.
 
 If Nvim does not select your favorite terminal emulator, you may define it in
 your |vimrc| by setting the variable R_term, as shown below:
@@ -952,11 +953,14 @@ If your terminal emulator is not listed above, or if you are not satisfied
 with the way your terminal emulator is called by the plugin, you may define in
 your |vimrc| the variable R_term_cmd, as in the examples below:
 >
-   let R_term_cmd = "gnome-terminal --title R -e"
-   let R_term_cmd = "terminator --title R -x"
+   let R_term_cmd = "xterm -title R -e"
+   let R_term_cmd = "xfce4-terminal --icon=/path/to/icons/R.png --title=R -x"
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
+
+Note: Terminal emulators that require the command to be executed to be quoted
+(such as `termit`) are not supported.
 
 The terminal error messages, if any, are shown as warning messages, unless you
 put in your |vimrc|:
