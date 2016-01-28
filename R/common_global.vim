@@ -2953,7 +2953,7 @@ if has("win32")
     let g:R_in_buffer = 0
 endif
 
-if has("gui_running") || g:R_applescript || g:R_in_buffer || $TMUX == "" || has("gui_running")
+if (has("gui_running") && $NVIM_TUI_ENABLE_TRUE_COLOR != "1") || g:R_applescript || g:R_in_buffer || $TMUX == ""
     let g:R_tmux_split = 0
 endif
 
