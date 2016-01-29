@@ -26,10 +26,10 @@ For Neovim 0.1.0
 
 This plugin improves Nvim's support for editing R code and makes it possible
 to integrate Nvim with R. It is the successor of Vim-R-plugin which may be
-discontinued in the future. When Neovim is released, the stable version of
-this plugin will be available available at:
+discontinued in the future. Stable versions of this plugin are available
+available at:
 
-    http://www.lepem.ufc.br/jaa/NvimR.html
+    https://github.com/jalvesaq/Nvim-R/releases
 
 Feedback is welcomed. Please submit bug reports to the developers. Do not like
 a feature? Tell us and we may add an option to disable it. If you have any
@@ -84,7 +84,6 @@ Nvim-R (see |R_source|).
   * SyncTeX support.
   * Most of the plugin's behavior is customizable.
 
-For screenshots see: http://www.lepem.ufc.br/jaa/NvimR.html
 
 ==============================================================================
 							 *Nvim-R-installation*
@@ -108,7 +107,7 @@ Before installing the plugin, you should install its dependencies:
 
    R >= 3.0.0: http://www.r-project.org/
 
-   nvimcom 0.9.8: http://www.lepem.ufc.br/jaa/nvimcom.html
+   nvimcom 0.9.8: https://github.com/jalvesaq/nvimcom/releases
 
    Additional dependencies for editing Rnoweb documents:~
 
@@ -138,7 +137,7 @@ Before installing the plugin, you should install its dependencies:
                  whenever the terminal is resized.
 		 (Optional if |R_in_buffer| and not required if using R.app)
 
-   colorout:     http://www.lepem.ufc.br/jaa/colorout.html
+   colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
 		 (Optional if |R_in_buffer| and not required if using R.app)
 
@@ -175,7 +174,7 @@ Please, see |Nvim-R-vimrc-setup| for more suggestions of configuration.
 
 Now, install the version of Nvim-R released for Neovim 0.1.0:
 
-    http://www.lepem.ufc.br/jaa/NvimR.html
+    https://github.com/jalvesaq/Nvim-R/releases
 
 Note: If you use the development version of Neovim, you should also use the
 development versions of Nvim-R and nvimcom:
@@ -201,11 +200,6 @@ read them? Type the command |:messages| in Normal mode to see them again.
 If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
 |R_path|).
-
-Are you using Debian, Ubuntu or other Debian based Linux distribution? If yes,
-you may prefer to install the Debian package available at:
-
-   http://www.lepem.ufc.br/jaa/vimr
 
 Did you see the message "nvimcom port not found"? This means that R is not
 running, the nvimcom package is not installed (or is installed but is not
@@ -2436,9 +2430,11 @@ below is for a terminal emulator that supports 256 colors (see |:highlight|):
    endif
 <
 To know what number corresponds to your preferred color (among the 256
-possibilities), hover you mouse pointer over the table of colors at the end
-of http://www.lepem.ufc.br/jaa/colorout.html
-
+possibilities), hover you mouse pointer over the table of colors built by:
+>
+   library("colorout")
+   show256Colors()
+<
 If you prefer that R output is highlighted using you current |:colorscheme|,
 put in your |vimrc|:
 >
