@@ -64,6 +64,41 @@ nmap <Space> <Plug>RDSendLine
 
 Please, read the file *doc/Nvim-R.txt* for usage details.
 
+## The communication between Neovim and R
+
+The Diagram below shows the three paths of communication between
+Neovim and R:
+
+  - The black path is followed by all commands that you trigger in the
+    editor and that you can see being pasted into R Console. There are
+    three different ways of sending the commands to R Console:
+
+     - When running R in a Neovim built-in terminal, the function
+       `jobsend()` is used to send code to R Console.
+
+     - When running R in an external terminal emulator, Tmux is
+         used to send commands to R Console.
+
+     - On Windows operating system, the nvimclient application
+         uses the Windows API to copy the text into the clipboard and
+         then paste it into the R Console.
+
+  - The blue path is followed by the few commands that you trigger, but that
+    are not pasted into R Console and do not output anything in R Console;
+    their results are seen in the editor itself. These are the commands to
+    do omnicompletion (of names of objects and function arguments), start
+    and manipulate the Object Browser (`\ro`, `\r=` and `\r-`), call R help
+    (`\rh` or `:Rhelp`), insert the output of an R command (`:Rinsert`) and
+    format selected text (`:Rformat`).
+
+  - The red path is followed by R messages that tell the editor to
+    update the Object Browser, update the syntax highlight to include
+    newly loaded libraries and open the PDF output after weaving an Rnoweb
+    file and compiling the LaTeX result.
+
+
+![Neovim-R communication](https://dadoseteorias.files.wordpress.com/2016/01/nvimrcom.png "Neovim-R communication")
+
 [vim-plug]: https://github.com/junegunn/vim-plug
 [Vundle]: https://github.com/gmarik/Vundle.vim
 [Pathogen]: https://github.com/tpope/vim-pathogen
