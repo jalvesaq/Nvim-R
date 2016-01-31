@@ -47,7 +47,11 @@ if !exists("g:rplugin_R_path")
 endif
 
 if !exists("g:R_args")
-    let g:R_args = ["--sdi"]
+    if g:R_in_buffer
+        let g:R_args = ["--ess"]
+    else
+        let g:R_args = ["--sdi"]
+    endif
 endif
 
 let g:R_R_window_title = "R Console"

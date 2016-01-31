@@ -2862,7 +2862,6 @@ call RSetDefaultValue("g:R_objbr_opendf",      1)
 call RSetDefaultValue("g:R_objbr_openlist",    0)
 call RSetDefaultValue("g:R_objbr_allnames",    0)
 call RSetDefaultValue("g:R_objbr_labelerr",    1)
-call RSetDefaultValue("g:R_in_buffer",         1)
 call RSetDefaultValue("g:R_applescript",       0)
 call RSetDefaultValue("g:R_tmux_split",        0)
 call RSetDefaultValue("g:R_esc_term",          1)
@@ -2871,6 +2870,11 @@ call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
+if has("win32") || !exists("*termopen")
+    call RSetDefaultValue("g:R_in_buffer",     0)
+else
+    call RSetDefaultValue("g:R_in_buffer",     1)
+endif
 if g:R_in_buffer
     call RSetDefaultValue("g:R_nvimpager", "'vertical'")
 else
@@ -2946,11 +2950,6 @@ if g:rplugin_is_darwin
     endif
 else
     let g:R_applescript = 0
-endif
-
-" Neovim terminal does not work on Windows yet
-if has("win32")
-    let g:R_in_buffer = 0
 endif
 
 if (has("gui_running") && $NVIM_TUI_ENABLE_TRUE_COLOR != "1") || g:R_applescript || g:R_in_buffer || $TMUX == ""
