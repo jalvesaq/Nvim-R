@@ -64,6 +64,33 @@ nmap <Space> <Plug>RDSendLine
 
 Please, read the file *doc/Nvim-R.txt* for usage details.
 
+## Screenshots
+
+The animated GIF below shows R running in a Neovim terminal buffer. We can note:
+
+   1. The editor has some code to load Afrobarometer data on Mozambique, R is
+      running below the editor and the Object Browser is on the right side. On
+      the R Console, we can see messages inform the packages [setwidth] and
+      [nvimcom] were loaded. The messages are in blue because they were
+      colorized by the package [colorout].
+
+   2. When the command `library("foreign")` is sent to R, the string *read.spss*
+      turns blue because it is immediately recognized as a loaded function
+      (the Vim color scheme used is [southernlights]).
+
+   3. When Mozambique's data.frame is created, it is automatically displayed
+      in the Object Browser. Messages about unrecognized types are in blue
+      because they were sent to *stderr*, and the line *Warning messages* is in
+      red because colorout recognized it as a warning.
+
+   4. When the "label" attributes are applied to the data.frame elements, the
+      labels show up in the Object Browser.
+
+   5. The last slide shows the output of `summary`. It also features omni
+      completion in action: we can see the elements of *m* that start with "D".
+
+![Nvim-R screenshot](https://dadoseteorias.files.wordpress.com/2016/01/nvim-r.gif "Nvim-R screenshot")
+
 ## The communication between Neovim and R
 
 The Diagram below shows the three paths of communication between
@@ -104,3 +131,6 @@ Neovim and R:
 [Pathogen]: https://github.com/tpope/vim-pathogen
 [Neovim]: https://github.com/neovim/neovim
 [nvimcom]: https://github.com/jalvesaq/nvimcom
+[setwidth]: https://cran.r-project.org/web/packages/setwidth/index.html
+[southernlights]: https://github.com/jalvesaq/southernlights
+[colorout]: https://github.com/jalvesaq/colorout
