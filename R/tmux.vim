@@ -5,17 +5,22 @@ if !executable('tmux')
     finish
 endif
 
-let s:tmuxversion = system("tmux -V")
-let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1', '')
-if strlen(s:tmuxversion) != 3
-    let s:tmuxversion = "1.0"
+if system("uname") =~ "OpenBSD"
+    " Tmux does not have -V option on OpenBSD: https://github.com/jcfaria/Vim-R-plugin/issues/200
+    let g:rplugin_tmux_version = "2.1"
+else
+    let s:tmuxversion = system("tmux -V")
+    let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1', '')
+    if strlen(s:tmuxversion) != 3
+        let s:tmuxversion = "1.0"
+    endif
+    if s:tmuxversion < "1.8"
+        call RWarningMsgInp("Nvim-R requires Tmux >= 1.8")
+        let g:rplugin_failed = 1
+        finish
+    endif
+    unlet s:tmuxversion
 endif
-if s:tmuxversion < "1.8"
-    call RWarningMsgInp("Nvim-R requires Tmux >= 1.8")
-    let g:rplugin_failed = 1
-    finish
-endif
-unlet s:tmuxversion
 
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
