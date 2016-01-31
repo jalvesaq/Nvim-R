@@ -67,6 +67,10 @@ function StartR_TmuxSplit(rcmd)
 endfunction
 
 function StartObjBrowser_Tmux()
+    if g:rplugin_myport == 0
+        call RWarningMsg("Nvimcom server port not defined yet.")
+        return
+    endif
     if exists("b:rplugin_extern_ob")
         " This is the Object Browser
         echoerr "StartObjBrowser_Tmux() called."
@@ -95,6 +99,7 @@ function StartObjBrowser_Tmux()
                 \ 'set filetype=rbrowser',
                 \ 'let $PATH = "' . g:rplugin_nvimcom_bin_dir . '" . ":" . $PATH',
                 \ 'let g:rplugin_nvimcom_port = "' . g:rplugin_nvimcom_port . '"',
+                \ 'let $NVIMCOMPORT = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let b:objbrtitle = "' . b:objbrtitle . '"',
                 \ 'let b:rplugin_extern_ob = 1',
                 \ 'set shortmess=atI',
@@ -105,7 +110,6 @@ function StartObjBrowser_Tmux()
                 \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
                 \ 'let g:rplugin_jobs["Nvim-R Client"] = jobstart("nvimrclient", g:rplugin_job_handlers)',
                 \ 'call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001V' . g:rplugin_myport . '\n")',
-                \ 'call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001R' . g:rplugin_nvimcom_port . '\n")',
                 \ 'let g:rplugin_jobs["Nvim-R Server"] = jobstart("nvimrserver", g:rplugin_job_handlers)'], objbrowserfile)
 
     if g:R_objbr_place =~ "left"
