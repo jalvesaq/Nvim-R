@@ -27,7 +27,11 @@ setlocal iskeyword=@,48-57,_,.
 function! FixRdoc()
     let lnr = line("$")
     for ii in range(1, lnr)
-        call setline(ii, substitute(getline(ii), "_\010", "", "g"))
+        let lii = getline(ii)
+        let lii = substitute(lii, "_\010", "", "g")
+        let lii = substitute(lii, '<URL: \(.\{-}\)>', ' |\1|', 'g')
+        let lii = substitute(lii, '<email: \(.\{-}\)>', ' |\1|', 'g')
+        call setline(ii, lii)
     endfor
 
     " Mark the end of Examples
@@ -55,7 +59,7 @@ function! FixRdoc()
         if ii < doclength
             let ii -= 1
             if getline(ii) =~ "^$"
-                call setline(ii, "\t")
+                call setline(ii, " \t")
             endif
         endif
     endif
