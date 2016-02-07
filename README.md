@@ -89,7 +89,7 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
    5. The last slide shows the output of `summary`. It also features omni
       completion in action: we can see the elements of *m* that start with "D".
 
-![Nvim-R screenshot](https://dadoseteorias.files.wordpress.com/2016/01/nvim-r.gif "Nvim-R screenshot")
+![Nvim-R screenshots](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/Nvim-R.gif "Nvim-R screenshots")
 
 ## The communication between Neovim and R
 

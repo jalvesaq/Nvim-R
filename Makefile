@@ -123,7 +123,7 @@ deb:
 	Enhances: nvim\n\
 	Section: text\n\
 	Priority: extra\n\
-	Homepage: http://www.lepem.ufc.br/jaa/Nvim-R.html\n\
+	Homepage: https://github.com/jalvesaq/Nvim-R\n\
 	Description: Plugin to work with R\n\
 	 This filetype plugin has the following main features:\n\
 	       - Start/Close R.\n\
