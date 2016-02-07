@@ -1746,7 +1746,7 @@ from "Custom Text Editor" as exemplified:
      Configure Okular
      Editor
      Dropdown menu: Custom Text Editor
-           Command: nvimrclient '%f' %l
+           Command: nclientserver '%f' %l
 <
 Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
@@ -1761,7 +1761,7 @@ In Skim click in the drop down menu and fill the fields:
    Settings
    Sync
    Preset: Custom
-   Command: nvimrclient
+   Command: nclientserver
    Arguments: '%file' %line
 <
 
@@ -2632,7 +2632,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.0 (2015-11-12)
+0.9.0 (2016-02-07)
 
  * Initial release of Nvim-R for Neovim 0.1.0.
 

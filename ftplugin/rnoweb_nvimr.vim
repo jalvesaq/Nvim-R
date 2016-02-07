@@ -434,7 +434,7 @@ function! SyncTeX_backward(fname, ln)
         if has("gui_running")
             if has("win32")
                 "call rpcnotify(0, 'Gui', 'Foreground')
-                call jobsend(g:rplugin_jobs["Nvim-R Client"], "\007 \n")
+                call jobsend(g:rplugin_jobs["ClientServer"], "\007 \n")
             else
                 call foreground()
             endif
@@ -602,7 +602,7 @@ function! SyncTeX_forward(...)
         endif
         if SumatraInPath()
             let $NVIMR_PORT = g:rplugin_myport
-            call writefile(['start SumatraPDF.exe -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nvimrclient.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+            call writefile(['start SumatraPDF.exe -reuse-instance -forward-search ' . basenm . '.tex ' . texln . ' -inverse-search "nclientserver.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
             call system(g:rplugin_tmpdir . "/run_cmd.bat")
         endif
     elseif g:rplugin_pdfviewer == "skim"
@@ -668,11 +668,11 @@ if g:rplugin_pdfviewer != "none"
         if $DISPLAY != "" && g:rplugin_pdfviewer == "evince"
             let g:rplugin_evince_loop = 0
             call Run_EvinceBackward()
-        elseif g:rplugin_nvimcom_bin_dir != "" && g:rplugin_jobs["Nvim-R Server"] == 0 && !($DISPLAY == "" && (g:rplugin_pdfviewer == "zathura" || g:rplugin_pdfviewer == "okular"))
+        elseif g:rplugin_nvimcom_bin_dir != "" && g:rplugin_jobs["ClientServer"] == 0 && !($DISPLAY == "" && (g:rplugin_pdfviewer == "zathura" || g:rplugin_pdfviewer == "okular"))
             if $PATH !~ g:rplugin_nvimcom_bin_dir
                 let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
             endif
-            let g:rplugin_jobs["Nvim-R Server"] = jobstart("nvimrserver", g:rplugin_job_handlers)
+            let g:rplugin_jobs["ClientServer"] = jobstart("nclientserver", g:rplugin_job_handlers)
         endif
     endif
 endif

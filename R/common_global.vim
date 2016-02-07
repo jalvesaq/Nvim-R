@@ -697,7 +697,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.2") warning("Your version of Nvim-R requires nvimcom-0.9-8.2.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.3") warning("Your version of Nvim-R requires nvimcom-0.9-8.3.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -802,8 +802,8 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.8.2"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.2.')
+        if nvimcom_version != "0.9.8.3"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.3.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -818,23 +818,21 @@ function WaitNvimcomStart()
             call writefile([nvimcom_version, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_bin_dir")
         endif
         if has("win32")
-            let nvc = "nvimrclient.exe"
-            let nvs = "nvimrserver.exe"
+            let nvc = "nclientserver.exe"
             if $PATH !~ g:rplugin_nvimcom_bin_dir
                 let $PATH = g:rplugin_nvimcom_bin_dir . ';' . $PATH
             endif
         else
-            let nvc = "nvimrclient"
-            let nvs = "nvimrserver"
+            let nvc = "nclientserver"
             if $PATH !~ g:rplugin_nvimcom_bin_dir
                 let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
             endif
         endif
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
-            " Set nvimcom port in the nvimrclient
+            " Set nvimcom port in the nclientserver
             let $NVIMCOMPORT = g:rplugin_nvimcom_port
             if has("win32")
-                " Set RConsole window ID in nvimrclient
+                " Set RConsole window ID in nclientserver
                 if vr[4] == "0"
                     call RWarningMsg("nvimcom did not save R window ID")
                 else
@@ -847,20 +845,15 @@ function WaitNvimcomStart()
                     endif
                 endif
             endif
-            if g:rplugin_jobs["Nvim-R Client"] == 0
-                let g:rplugin_jobs["Nvim-R Client"] = jobstart(nvc, g:rplugin_job_handlers)
+            if g:rplugin_jobs["ClientServer"] == 0
+                let g:rplugin_jobs["ClientServer"] = jobstart(nvc, g:rplugin_job_handlers)
+            else
+                " ClientServer already started by ftplugin/rnoweb_nvimr.vim
+                call jobsend(g:rplugin_jobs["ClientServer"], "\001R" . g:rplugin_nvimcom_port . "\n")
+                call SendToNvimcom("\001" . g:rplugin_myport)
             endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
-        endif
-        if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvs)
-            if g:rplugin_jobs["Nvim-R Server"] == 0
-                let g:rplugin_jobs["Nvim-R Server"] = jobstart(nvs, g:rplugin_job_handlers)
-            else
-                call RSendMyPort()
-            endif
-        else
-            call RWarningMsg('Application "' . nvs . '" not found.')
         endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
 
@@ -962,29 +955,28 @@ function RBrOpenCloseLs_Nvim(status)
 endfunction
 
 function SendToNvimcom(cmd)
-    if g:rplugin_jobs["Nvim-R Client"] == 0
+    if g:rplugin_jobs["ClientServer"] == 0
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002R" . a:cmd . "\n")
+    call jobsend(g:rplugin_jobs["ClientServer"], "\002R" . a:cmd . "\n")
 endfunction
 
 function SendToOtherNvim(cmd)
-    if g:rplugin_jobs["Nvim-R Client"] == 0
+    if g:rplugin_jobs["ClientServer"] == 0
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002O" . $NVIMR_SECRET . a:cmd . "\n")
+    call jobsend(g:rplugin_jobs["ClientServer"], "\002O" . $NVIMR_SECRET . a:cmd . "\n")
 endfunction
 
 function RSendMyPort()
-    if g:rplugin_jobs["Nvim-R Client"]
-        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001S" . g:rplugin_myport . "\n")
+    if g:rplugin_jobs["ClientServer"]
         if &filetype == "rbrowser" && g:R_tmux_split
             call SendToNvimcom("\002" . g:rplugin_myport)
             call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
-            call SendToOtherNvim('call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001O' . g:rplugin_myport . '\n")')
-        else
+            call SendToOtherNvim('call jobsend(g:rplugin_jobs["ClientServer"], "\001O' . g:rplugin_myport . '\n")')
+        elseif g:rplugin_nvimcom_port
             call SendToNvimcom("\001" . g:rplugin_myport)
         endif
     endif
@@ -1595,7 +1587,7 @@ endfunction
 function RClearConsole()
     if has("win32")
         " RClearConsole
-        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\006\n")
+        call jobsend(g:rplugin_jobs["ClientServer"], "\006\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -1660,7 +1652,7 @@ function RQuit(how)
 
     if g:R_save_win_pos
         " SaveWinPos
-        call jobsend(g:rplugin_jobs["Nvim-R Client"], "\004" . $NVIMR_COMPLDIR . "\n")
+        call jobsend(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
     call g:SendCmdToR(qcmd)
@@ -2070,7 +2062,7 @@ function! ROpenPDF(path)
             endif
             if SumatraInPath()
                 let $NVIMR_PORT = g:rplugin_myport
-                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrclient.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
                 call system(g:rplugin_tmpdir . "/run_cmd.bat")
                 exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
             endif
@@ -2099,7 +2091,7 @@ function! RStart_Zathura(basenm)
             if pid > 0 && pid <= max_pid
                 " Instead of killing, it would be better to reset the backward
                 " command, but Zathura does not have a Dbus message for this,
-                " and we would have to change nvimrclient to receive NVIMR_PORT
+                " and we would have to change nclientserver to receive NVIMR_PORT
                 " and NVIMR_SECRET as part of argv[].
                 call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
                 sleep 5m
@@ -2116,7 +2108,7 @@ function! RStart_Zathura(basenm)
     endif
 
     let $NVIMR_PORT = g:rplugin_myport
-    let g:rplugin_jobs["Zathura"] = jobstart(["zathura", "--synctex-editor-command", "nvimrclient %{input} %{line}", a:basenm . ".pdf"], {"detach": 1, "on_stderr": function('ROnJobStderr')})
+    let g:rplugin_jobs["Zathura"] = jobstart(["zathura", "--synctex-editor-command", "nclientserver %{input} %{line}", a:basenm . ".pdf"], {"detach": 1, "on_stderr": function('ROnJobStderr')})
     if g:rplugin_jobs["Zathura"] < 1
         call RWarningMsg("Failed to run Zathura...")
     else
@@ -2590,13 +2582,8 @@ function RBufEnter()
 endfunction
 
 function RVimLeave()
-    if g:rplugin_jobs["Nvim-R Client"]
-        if g:rplugin_jobs["Nvim-R Server"]
-            call jobsend(g:rplugin_jobs["Nvim-R Client"], "\002SQUIT_NVINSERVER_NOW\n")
-        endif
-        call jobstop(g:rplugin_jobs["Nvim-R Client"])
-    elseif g:rplugin_jobs["Nvim-R Server"]
-        call jobstop(g:rplugin_jobs["Nvim-R Server"])
+    if g:rplugin_jobs["ClientServer"]
+        call jobstop(g:rplugin_jobs["ClientServer"])
     endif
     call delete(g:rplugin_rsource)
     call delete(g:rplugin_tmpdir . "/start_options.R")
@@ -2758,9 +2745,9 @@ function ROnJobExit(job_id, data)
         if exists("g:rplugin_R_bufname")
             unlet g:rplugin_R_bufname
         endif
-        " Set nvimcom port to 0 in nvimrclient
-        if g:rplugin_jobs["Nvim-R Client"]
-            call jobsend(g:rplugin_jobs["Nvim-R Client"], "\001" . "0\n")
+        " Set nvimcom port to 0 in nclientserver
+        if g:rplugin_jobs["ClientServer"]
+            call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
         endif
         call ClearRInfo()
     else
@@ -3002,7 +2989,7 @@ let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
 let g:rplugin_running_rhelp = 0
-let g:rplugin_jobs = {"Nvim-R Server": 0, "Nvim-R Client": 0, "R": 0, "Terminal emulator": 0}
+let g:rplugin_jobs = {"ClientServer": 0, "R": 0, "Terminal emulator": 0}
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
@@ -3012,7 +2999,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.2"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.3"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
