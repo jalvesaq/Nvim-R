@@ -38,13 +38,13 @@ syn match routNumber "\<0x\([0-9]\|[a-f]\|[A-F]\)\+"
 
 " floating point number with integer and fractional parts and optional exponent
 syn match routFloat "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
-syn match routNegFlt "-\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
+syn match routNegFloat "-\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
 " floating point number with no integer part and optional exponent
 syn match routFloat "\<\.\d\+\([Ee][-+]\=\d\+\)\="
-syn match routNegFlt "-\<\.\d\+\([Ee][-+]\=\d\+\)\="
+syn match routNegFloat "-\<\.\d\+\([Ee][-+]\=\d\+\)\="
 " floating point number with no fractional part and optional exponent
 syn match routFloat "\<\d\+[Ee][-+]\=\d\+"
-syn match routNegFlt "-\<\d\+[Ee][-+]\=\d\+"
+syn match routNegFloat "-\<\d\+[Ee][-+]\=\d\+"
 
 " complex number
 syn match routComplex "\<\d\+i"
@@ -143,7 +143,7 @@ if exists("g:rout_follow_colorscheme") && g:rout_follow_colorscheme
     hi def link routFloat	Float
     hi def link routComplex	Number
     hi def link routNegNum	Number
-    hi def link routNegFlt	Float
+    hi def link routNegFloat	Float
     hi def link routDate	Number
     hi def link routTrue	Boolean
     hi def link routFalse	Boolean
@@ -154,117 +154,35 @@ if exists("g:rout_follow_colorscheme") && g:rout_follow_colorscheme
     hi def link routError	ErrorMsg
     hi def link routWarn	WarningMsg
 else
-    if has("gui_running")
-        " Default 256 colors scheme for R output:
-        hi routInput	guifg=#9e9e9e
-        hi routNormal	guifg=#00d700
-        hi routNumber	guifg=#ffaf00
-        hi routInteger	guifg=#ffaf00
-        hi routFloat	guifg=#ffaf00
-        hi routComplex	guifg=#ffaf00
-        hi routNegNum	guifg=#ff875f
-        hi routNegFlt	guifg=#ff875f
-        hi routDate	guifg=#d7af5f
-        hi routFalse	guifg=#ff5f5f
-        hi routTrue	guifg=#5fd787
-        hi routInf      guifg=#00afff
-        hi routConst	guifg=#00af5f
-        hi routString	guifg=#5fffaf
-        hi routError	guifg=#ffffff guibg=#c00000
-        hi routWarn	guifg=#c00000
-        hi routIndex	guifg=#87afaf
-    elseif &t_Co == 256
-        " Default 256 colors scheme for R output:
-        hi routInput	ctermfg=247
-        hi routNormal	ctermfg=40
-        hi routNumber	ctermfg=214
-        hi routInteger	ctermfg=214
-        hi routFloat	ctermfg=214
-        hi routComplex	ctermfg=214
-        hi routNegNum	ctermfg=209
-        hi routNegFlt	ctermfg=209
-        hi routDate	ctermfg=179
-        hi routFalse	ctermfg=203
-        hi routTrue	ctermfg=78
-        hi routInf      ctermfg=39
-        hi routConst	ctermfg=35
-        hi routString	ctermfg=85
-        hi routError	ctermfg=15 ctermbg=1
-        hi routWarn	ctermfg=1
-        hi routIndex	ctermfg=109
-    else
-        " Default 16 colors scheme for R output:
-        hi routInput	ctermfg=gray
-        hi routNormal	ctermfg=darkgreen
-        hi routNumber	ctermfg=darkyellow
-        hi routInteger	ctermfg=darkyellow
-        hi routFloat	ctermfg=darkyellow
-        hi routComplex	ctermfg=darkyellow
-        hi routNegNum	ctermfg=darkyellow
-        hi routNegFlt	ctermfg=darkyellow
-        hi routDate	ctermfg=darkyellow
-        hi routInf	ctermfg=darkyellow
-        hi routFalse	ctermfg=magenta
-        hi routTrue	ctermfg=darkgreen
-        hi routConst	ctermfg=magenta
-        hi routString	ctermfg=darkcyan
-        hi routError	ctermfg=white ctermbg=red
-        hi routWarn	ctermfg=red
-        hi routIndex	ctermfg=darkgreen
-    endif
-
-    " Change colors under user request:
-    if exists("g:rout_color_input")
-        exe "hi routInput " . g:rout_color_input
-    endif
-    if exists("g:rout_color_normal")
-        exe "hi routNormal " . g:rout_color_normal
-    endif
-    if exists("g:rout_color_number")
-        exe "hi routNumber " . g:rout_color_number
-    endif
-    if exists("g:rout_color_integer")
-        exe "hi routInteger " . g:rout_color_integer
-    endif
-    if exists("g:rout_color_float")
-        exe "hi routFloat " . g:rout_color_float
-    endif
-    if exists("g:rout_color_complex")
-        exe "hi routComplex " . g:rout_color_complex
-    endif
-    if exists("g:rout_color_negnum")
-        exe "hi routNegNum " . g:rout_color_negnum
-    endif
-    if exists("g:rout_color_negfloat")
-        exe "hi routNegFlt " . g:rout_color_negfloat
-    endif
-    if exists("g:rout_color_date")
-        exe "hi routDate " . g:rout_color_date
-    endif
-    if exists("g:rout_color_false")
-        exe "hi routFalse " . g:rout_color_false
-    endif
-    if exists("g:rout_color_true")
-        exe "hi routTrue " . g:rout_color_true
-    endif
-    if exists("g:rout_color_inf")
-        exe "hi routInf " . g:rout_color_inf
-    endif
-    if exists("g:rout_color_constant")
-        exe "hi routConst " . g:rout_color_constant
-    endif
-    if exists("g:rout_color_string")
-        exe "hi routString " . g:rout_color_string
-    endif
-    if exists("g:rout_color_error")
-        exe "hi routError " . g:rout_color_error
-    endif
-    if exists("g:rout_color_warn")
-        exe "hi routWarn " . g:rout_color_warn
-    endif
-    if exists("g:rout_color_index")
-        exe "hi routIndex " . g:rout_color_index
-    endif
+    function s:SetGroupColor(group, cgui, c256, c16)
+        if exists("g:rout_color_" . tolower(a:group))
+            exe "hi rout" . a:group . eval("g:rout_color_" . tolower(a:group))
+        elseif has("gui_running")
+            exe "hi rout" . a:group . "guifg=" . a:cgui
+        elseif &t_Co == 256
+            exe "hi rout" . a:group . "ctermfg=" . a:c256
+        else
+            exe "hi rout" . a:group . "ctermfg=" . a:c16
+        endif
+    endfunction
+    call s:SetGroupColor("Input ",    "#9e9e9e",               "247",          "gray")
+    call s:SetGroupColor("Normal ",   "#00d700",               "40",           "darkgreen")
+    call s:SetGroupColor("Number ",   "#ffaf00",               "214",          "darkyellow")
+    call s:SetGroupColor("Integer ",  "#ffaf00",               "214",          "darkyellow")
+    call s:SetGroupColor("Float ",    "#ffaf00",               "214",          "darkyellow")
+    call s:SetGroupColor("Complex ",  "#ffaf00",               "214",          "darkyellow")
+    call s:SetGroupColor("NegNum ",   "#ff875f",               "209",          "darkyellow")
+    call s:SetGroupColor("NegFloat ", "#ff875f",               "209",          "darkyellow")
+    call s:SetGroupColor("Date ",     "#d7af5f",               "179",          "darkyellow")
+    call s:SetGroupColor("False ",    "#ff5f5f",               "203",          "darkyellow")
+    call s:SetGroupColor("True ",     "#5fd787",               "78",           "magenta")
+    call s:SetGroupColor("Inf ",      "#00afff",               "39",           "darkgreen")
+    call s:SetGroupColor("Const ",    "#00af5f",               "35",           "magenta")
+    call s:SetGroupColor("String ",   "#5fffaf",               "85",           "darkcyan")
+    call s:SetGroupColor("Error ",    "#ffffff guibg=#c00000", "15 ctermbg=1", "white ctermbg=red")
+    call s:SetGroupColor("Warn ",     "#c00000",               "1",            "red")
+    call s:SetGroupColor("Index ",    "#87afaf",               "109",          "darkgreen")
+    delfunction s:SetGroupColor
 endif
 
 let   b:current_syntax = "rout"
