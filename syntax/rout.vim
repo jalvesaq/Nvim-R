@@ -157,12 +157,10 @@ else
     function s:SetGroupColor(group, cgui, c256, c16)
         if exists("g:rout_color_" . tolower(a:group))
             exe "hi rout" . a:group . eval("g:rout_color_" . tolower(a:group))
-        elseif has("gui_running")
-            exe "hi rout" . a:group . "guifg=" . a:cgui
         elseif &t_Co == 256
-            exe "hi rout" . a:group . "ctermfg=" . a:c256
+            exe "hi rout" . a:group . "ctermfg=" . a:c256 . " guifg=" . a:cgui
         else
-            exe "hi rout" . a:group . "ctermfg=" . a:c16
+            exe "hi rout" . a:group . "ctermfg=" . a:c16 . " guifg=" . a:cgui
         endif
     endfunction
     call s:SetGroupColor("Input ",    "#9e9e9e",               "247",          "gray")
