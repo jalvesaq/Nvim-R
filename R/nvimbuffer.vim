@@ -1,14 +1,11 @@
 " This file contains code used only when R run in Neovim buffer
 
 function ExeOnRTerm(cmd)
-    let curbuf = bufname("%")
-    let savesb = &switchbuf
-    set switchbuf=useopen
+    let curwin = winnr()
     exe 'sb ' . g:rplugin_R_bufname
     exe a:cmd
     call cursor("$", 1)
-    exe 'sb ' . curbuf
-    exe 'set switchbuf=' . savesb
+    exe curwin . 'wincmd w'
 endfunction
 
 function SendCmdToR_Neovim(...)
