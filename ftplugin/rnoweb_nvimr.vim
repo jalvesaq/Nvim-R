@@ -570,18 +570,7 @@ function! SyncTeX_forward(...)
         return
     endif
 
-    if g:rplugin_pdfviewer == "okular"
-        call system("NVIMR_PORT=" . g:rplugin_myport . " okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
-    elseif g:rplugin_pdfviewer == "evince"
-        if g:rplugin_evince_loop < 2
-            let g:rplugin_jobs["Python (Evince forward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
-        else
-            let g:rplugin_evince_loop = 0
-        endif
-        if g:rplugin_has_wmctrl
-            call system("wmctrl -a '" . basenm . ".pdf'")
-        endif
-    elseif g:rplugin_pdfviewer == "zathura"
+    if g:rplugin_pdfviewer == "zathura"
         if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
             if SyncTeX_forward_Zathura(basenm, texln, 0) == 0
                 " The user closed Zathura and later opened the pdf manually
@@ -596,6 +585,17 @@ function! SyncTeX_forward(...)
             call SyncTeX_forward_Zathura(basenm, texln, 1)
         endif
         call system("wmctrl -a '" . basenm . ".pdf'")
+    elseif g:rplugin_pdfviewer == "okular"
+        call system("NVIMR_PORT=" . g:rplugin_myport . " okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
+    elseif g:rplugin_pdfviewer == "evince"
+        if g:rplugin_evince_loop < 2
+            let g:rplugin_jobs["Python (Evince forward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
+        else
+            let g:rplugin_evince_loop = 0
+        endif
+        if g:rplugin_has_wmctrl
+            call system("wmctrl -a '" . basenm . ".pdf'")
+        endif
     elseif g:rplugin_pdfviewer == "sumatra"
         if basenm =~ ' '
             call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')

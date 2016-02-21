@@ -2039,41 +2039,36 @@ function! ROpenPDF(path)
         exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
         return
     endif
-    if g:rplugin_pdfviewer == "none"
-        call RWarningMsg("Could not find a PDF viewer, and R_pdfviewer is not defined.")
-    else
-        if g:rplugin_pdfviewer == "okular"
-            let pcmd = "NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
-            call system(pcmd)
-        elseif g:rplugin_pdfviewer == "zathura"
-            if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
-                call system("wmctrl -a '" . basenm . ".pdf'")
-            else
-                let g:rplugin_zathura_pid[basenm] = 0
-                call RStart_Zathura(basenm)
-            endif
-            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-            return
-        elseif g:rplugin_pdfviewer == "sumatra"
-            if basenm =~ ' '
-                call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
-            endif
-            if SumatraInPath()
-                let $NVIMR_PORT = g:rplugin_myport
-                call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
-                call system(g:rplugin_tmpdir . "/run_cmd.bat")
-                exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-            endif
-            return
-        elseif g:rplugin_pdfviewer == "skim"
-            call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
-        else
-            let pcmd = g:rplugin_pdfviewer . " '" . pdfpath . "' 2>/dev/null >/dev/null &"
-            call system(pcmd)
-        endif
-        if g:rplugin_has_wmctrl
+    if g:rplugin_pdfviewer == "zathura"
+        if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
             call system("wmctrl -a '" . basenm . ".pdf'")
+        else
+            let g:rplugin_zathura_pid[basenm] = 0
+            call RStart_Zathura(basenm)
         endif
+        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+        return
+    elseif g:rplugin_pdfviewer == "okular"
+        let pcmd = "NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
+        call system(pcmd)
+    elseif g:rplugin_pdfviewer == "evince"
+        let pcmd = "evince '" . pdfpath . "' 2>/dev/null >/dev/null &"
+        call system(pcmd)
+    elseif g:rplugin_pdfviewer == "sumatra"
+        if basenm =~ ' '
+            call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
+        endif
+        if SumatraInPath()
+            let $NVIMR_PORT = g:rplugin_myport
+            call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
+            call system(g:rplugin_tmpdir . "/run_cmd.bat")
+            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+        endif
+    elseif g:rplugin_pdfviewer == "skim"
+        call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
+    endif
+    if g:rplugin_has_wmctrl
+        call system("wmctrl -a '" . basenm . ".pdf'")
     endif
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
@@ -2115,58 +2110,35 @@ function! RStart_Zathura(basenm)
 endfunction
 
 function RSetPDFViewer()
-    if exists("g:R_pdfviewer") && g:R_pdfviewer != "none"
-        let g:rplugin_pdfviewer = tolower(g:R_pdfviewer)
-    else
-        " Try to guess what PDF viewer is used:
-        if has("win32")
-            let g:rplugin_pdfviewer = "sumatra"
-            return
-        elseif g:rplugin_is_darwin
-            let g:rplugin_pdfviewer = "skim"
-        elseif executable("zathura")
-            let vv = split(system("zathura --version"))[1]
-            if vv < '0.3.1'
-                call RWarningMsg("Zathura version must be >= 0.3.1")
-            endif
-            let g:rplugin_pdfviewer = "zathura"
-        elseif executable("evince")
-            let g:rplugin_pdfviewer = "evince"
-        elseif executable("okular")
-            let g:rplugin_pdfviewer = "okular"
-        else
-            let g:rplugin_pdfviewer = "none"
-            if $R_PDFVIEWER == ""
-                let pdfvl = ["xdg-open"]
-            else
-                let pdfvl = [$R_PDFVIEWER, "xdg-open"]
-            endif
-            " List from R configure script:
-            let pdfvl += ["xpdf", "gv", "gnome-gv", "ggv", "kpdf", "gpdf", "kghostview,", "acroread", "acroread4"]
-            for prog in pdfvl
-                if executable(prog)
-                    let g:rplugin_pdfviewer = prog
-                    break
+    let g:rplugin_pdfviewer = tolower(g:R_pdfviewer)
+
+    if !has("win32") && !g:rplugin_is_darwin
+        if g:rplugin_pdfviewer == "zathura"
+            if executable("zathura")
+                let vv = split(system("zathura --version"))[1]
+                if vv < '0.3.1'
+                    call RWarningMsgInp("Zathura version must be >= 0.3.1")
                 endif
-            endfor
-        endif
-    endif
-
-    if executable("wmctrl")
-        let g:rplugin_has_wmctrl = 1
-    else
-        let g:rplugin_has_wmctrl = 0
-    endif
-
-    if g:rplugin_pdfviewer == "zathura"
-        if g:rplugin_has_wmctrl == 0
-            let g:rplugin_pdfviewer = "none"
-            call RWarningMsgInp("The application wmctrl must be installed to use Zathura as PDF viewer.")
-        else
+            else
+                call RWarningMsgInp('Please, either install "zathura" or set the value of R_pdfviewer.')
+            endif
             if executable("dbus-send")
                 let g:rplugin_has_dbussend = 1
             else
                 let g:rplugin_has_dbussend = 0
+            endif
+        endif
+
+        if g:rplugin_pdfviewer != "zathura" && g:rplugin_pdfviewer != "okular" && g:rplugin_pdfviewer != "evince"
+            call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '"')
+        endif
+
+        if executable("wmctrl")
+            let g:rplugin_has_wmctrl = 1
+        else
+            let g:rplugin_has_wmctrl = 0
+            if &filetype == "rnoweb"
+                call RWarningMsgInp("The application wmctrl must be installed to edit Rnoweb effectively.")
             endif
         endif
     endif
@@ -2860,6 +2832,13 @@ call RSetDefaultValue("g:R_latexcmd", "'default'")
 call RSetDefaultValue("g:R_texerr",             1)
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
 call RSetDefaultValue("g:R_indent_commented",  1)
+if has("win32")
+    let g:R_pdfviewer = "sumatra"
+elseif g:rplugin_is_darwin
+    let g:R_pdfviewer = "skim"
+else
+    call RSetDefaultValue("g:R_pdfviewer", "'zathura'")
+endif
 
 if !exists("g:r_indent_ess_comments")
     let g:r_indent_ess_comments = 0
