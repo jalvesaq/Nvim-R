@@ -786,6 +786,7 @@ is running:
 
 |R_in_buffer|         Run R in Neovim buffer
 |R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
+|R_close_term|        Close terminal buffer after R quited
 |R_hl_term|           Syntax highlight terminal as rout file type
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
@@ -852,10 +853,11 @@ is running:
 
 
 ------------------------------------------------------------------------------
-								 *R_esc_term*
-								 *R_hl_term*
-								 *R_setwidth*
-								 *R_in_buffer*
+								*R_esc_term*
+								*R_close_term*
+								*R_hl_term*
+								*R_setwidth*
+								*R_in_buffer*
 6.1. R in Neovim buffer~
 
 By default, R runs in a Neovim buffer created with the command |:term|. The
@@ -865,6 +867,12 @@ prefer to use the default <C-\><C-N> to go to Normal mode, put in your
 >
    let R_esc_term = 0
 <
+Neovim does not close its built-in terminal emulator when the application
+running in it quits, but Nvim-R does close it for you. If you rather prefer
+that the terminal remains open after R quits, put in your |vimrc|:
+>
+   let R_close_term = 0
+>
 You may either use the package colorout (Unix only) to colorize R output or
 let Nvim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to

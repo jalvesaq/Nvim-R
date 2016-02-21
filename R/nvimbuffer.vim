@@ -104,6 +104,9 @@ function StartR_Neovim()
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>
     endif
+    if g:R_close_term
+        autocmd TermClose <buffer> call feedkeys('<cr>')
+    endif
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()
