@@ -64,6 +64,22 @@ function SendCmdToR_Neovim(...)
     endif
 endfunction
 
+function OnTermClose()
+    if exists("g:rplugin_R_bufname")
+        exe "sbuffer " . g:rplugin_R_bufname
+        unlet g:rplugin_R_bufname
+        startinsert
+        if g:R_close_term
+            call feedkeys('<cr>')
+        endif
+    endif
+
+    " Set nvimcom port to 0 in nclientserver
+    if g:rplugin_jobs["ClientServer"]
+        call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
+    endif
+endfunction
+
 function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         " We could run 'call RQuit("restartR")' instead of returning if it was
@@ -104,9 +120,7 @@ function StartR_Neovim()
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>
     endif
-    if g:R_close_term
-        autocmd TermClose <buffer> call feedkeys('<cr>')
-    endif
+    autocmd TermClose <buffer> call OnTermClose()
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()

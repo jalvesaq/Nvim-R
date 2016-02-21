@@ -1654,7 +1654,14 @@ function RQuit(how)
         call jobsend(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
+    " Must be in term buffer to get TermClose event triggered
+    if g:R_in_buffer && exists("g:rplugin_R_bufname")
+        exe "sbuffer " . g:rplugin_R_bufname
+        startinsert
+    endif
+
     call g:SendCmdToR(qcmd)
+
     if g:R_tmux_split
         if a:how == "save"
             sleep 200m
@@ -1665,20 +1672,12 @@ function RQuit(how)
             call g:SendCmdToR("exit")
             let g:R_ca_ck = ca_ck
         endif
+        sleep 50m
+        call CloseExternalOB()
     endif
 
     sleep 50m
-
-    if g:R_tmux_split
-        call CloseExternalOB()
-    elseif g:R_in_buffer && exists("g:rplugin_R_bufname")
-        exe "sbuffer " . g:rplugin_R_bufname
-        startinsert
-    endif
-
-    if !g:R_in_buffer
-        call ClearRInfo()
-    endif
+    call ClearRInfo()
 endfunction
 
 " knit the current buffer content
@@ -2739,24 +2738,12 @@ function ROnJobStderr(job_id, data)
 endfunction
 
 function ROnJobExit(job_id, data)
-    if a:job_id == g:rplugin_jobs["R"]
-        let g:rplugin_jobs["R"] = 0
-        if exists("g:rplugin_R_bufname")
-            unlet g:rplugin_R_bufname
+    for key in keys(g:rplugin_jobs)
+        if g:rplugin_jobs[key] == a:job_id
+            let g:rplugin_jobs[key] = 0
+            break
         endif
-        " Set nvimcom port to 0 in nclientserver
-        if g:rplugin_jobs["ClientServer"]
-            call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
-        endif
-        call ClearRInfo()
-    else
-        for key in keys(g:rplugin_jobs)
-            if g:rplugin_jobs[key] == a:job_id
-                let g:rplugin_jobs[key] = 0
-                break
-            endif
-        endfor
-    endif
+    endfor
 endfunction
 
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
@@ -2939,7 +2926,7 @@ else
     let g:R_applescript = 0
 endif
 
-if (has("gui_running") && $NVIM_TUI_ENABLE_TRUE_COLOR != "1") || g:R_applescript || g:R_in_buffer || $TMUX == ""
+if has("gui_running") || g:R_applescript || g:R_in_buffer || $TMUX == ""
     let g:R_tmux_split = 0
 endif
 
