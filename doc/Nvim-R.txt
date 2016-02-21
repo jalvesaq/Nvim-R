@@ -151,8 +151,10 @@ Put the following lines in your `~/Rprofile` (you don't need `colorout` and
    if(interactive()){
        # library(colorout) # Uncomment if you use it
        # library(setwidth) # Uncomment if you use it
-       options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
-       library(nvimcom)
+       if(Sys.getenv("NVIMR_TMPDIR") != ""){
+           options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
+           library(nvimcom)
+       }
    }
 <
 If you do not know where your .Rprofile is, do the following command in R
@@ -1597,25 +1599,27 @@ way, put in |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *R_after_start*
-6.31 System command to execute after R startup~
+6.31 System command to be executed after R startup~
 
-If you want that Nvim executes a command right after R startup, set the value
-of R_after_start in your |vimrc|.
+If you want that Nvim executes a external command right after R startup, set
+the value of R_after_start in your |vimrc|.
 
-For example, if you are using GNvim and running R in the Gnome-terminal,
-`~/bin` is in your path, and you want to resize and change the positions of
-GNvim and the Terminal windows, you may create a script `~/bin/after_R_start`
-with the following contents
+Nvim-R stores the he environment variable $WINDOWID of the terminal where R is
+running as $RCONSOLE. Thus, if you are running R in a external terminal
+emulator on Linux, `~/bin` is in your path, and you want to resize and change
+the positions of the terminals containing Neovim and R, you may create a
+script `~/bin/after_R_start` similar to the following:
 >
    #!/bin/sh
-   wmctrl -F -r R -e 0,0,200,1200,800
-   wmctrl -r GVIM -e 0,300,40,1200,800
+   wmctrl -i -r $RCONSOLE -e 0,0,200,1200,800
+   wmctrl -i -r $WINDOWID -e 0,300,40,1200,800
+   wmctrl -i -r $WINDOWID -b remove,maximized_vert,maximized_horz
+
 <
-make the script executable, and put in your |vimrc|:
+Then, make the script executable, and put in your |vimrc|:
 >
-   if has("gui_running")
-       let R_after_start = "after_R_start"
-   endif
+   let R_in_buffer = 0
+   let R_after_start = "after_R_start"
 <
 
 ------------------------------------------------------------------------------
@@ -2409,28 +2413,43 @@ Finally, if you want to use vi key bindings in Bash or other shell:
 								 *rout_colors*
 9.20. Syntax highlight of .Rout files~
 
-You can set the foreground colors of R output in your |vimrc|. The example
-below is for a terminal emulator that supports 256 colors (see |:highlight|):
+You can set the both foreground background colors of R output in your |vimrc|.
+The example below is for either a gui version of Neovim or a terminal
+interface with `$NVIM_TUI_ENABLE_TRUE_COLOR=1` (see |:highlight|):
+>
+   if has("gui_running") || $NVIM_TUI_ENABLE_TRUE_COLOR == 1
+     let rout_color_input    = 'guifg=#9e9e9e'
+     let rout_color_normal   = 'guifg=#ff5f00'
+     let rout_color_number   = 'guifg=#ffaf00'
+     let rout_color_integer  = 'guifg=#feaf00'
+     let rout_color_float    = 'guifg=#fdaf00'
+     let rout_color_complex  = 'guifg=#fcaf00'
+     let rout_color_negnum   = 'guifg=#d7afff'
+     let rout_color_negfloat = 'guifg=#d6afff'
+     let rout_color_date     = 'guifg=#00d7af'
+     let rout_color_true     = 'guifg=#5dd685'
+     let rout_color_false    = 'guifg=#ff5d5e'
+     let rout_color_inf      = 'guifg=#10aed7'
+     let rout_color_constant = 'guifg=#5fafcf'
+     let rout_color_string   = 'guifg=#5fd7af'
+     let rout_color_error    = 'guifg=#ffffff guibg=#c40000'
+     let rout_color_warn     = 'guifg=#d00000'
+     let rout_color_index    = 'guifg=#d0d080'
+   endif
+<
+If you are running Neovim with 256 colors, you could use lines like these:
 >
    if &t_Co == 256
-       let rout_color_input    = 'ctermfg=247'
-       let rout_color_normal   = 'ctermfg=39'
-       let rout_color_number   = 'ctermfg=51'
-       let rout_color_integer  = 'ctermfg=51'
-       let rout_color_float    = 'ctermfg=51'
-       let rout_color_complex  = 'ctermfg=51'
-       let rout_color_negnum   = 'ctermfg=183'
-       let rout_color_negfloat = 'ctermfg=183'
-       let rout_color_date     = 'ctermfg=43'
-       let rout_color_true     = 'ctermfg=78'
-       let rout_color_false    = 'ctermfg=203'
-       let rout_color_inf      = 'ctermfg=39'
-       let rout_color_constant = 'ctermfg=75'
-       let rout_color_string   = 'ctermfg=79'
-       let rout_color_error    = 'ctermfg=15 ctermbg=1'
-       let rout_color_warn     = 'ctermfg=1'
-       let rout_color_index    = 'ctermfg=186'
+     let rout_color_input    = 'ctermfg=247'
+     let rout_color_normal   = 'ctermfg=39'
+     " etc.
    endif
+<
+You can also set both true colors and 256 colors at the same time:
+>
+   let rout_color_input    = 'ctermfg=247 guifg=#9e9e9e'
+   let rout_color_normal   = 'ctermfg=39 guifg=#ff5f00'
+   " etc.
 <
 To know what number corresponds to your preferred color (among the 256
 possibilities), hover you mouse pointer over the table of colors built by:

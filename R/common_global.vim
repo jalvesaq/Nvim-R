@@ -697,7 +697,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.3") warning("Your version of Nvim-R requires nvimcom-0.9-8.3.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.4") warning("Your version of Nvim-R requires nvimcom-0.9-8.4.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -802,8 +802,9 @@ function WaitNvimcomStart()
         let nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
-        if nvimcom_version != "0.9.8.3"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.3.')
+        let $RCONSOLE = vr[4]
+        if nvimcom_version != "0.9.8.4"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.4.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -831,12 +832,10 @@ function WaitNvimcomStart()
         if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
             " Set nvimcom port in the nclientserver
             let $NVIMCOMPORT = g:rplugin_nvimcom_port
+            " Set RConsole window ID in nclientserver to ArrangeWindows()
             if has("win32")
-                " Set RConsole window ID in nclientserver
-                if vr[4] == "0"
+                if $RCONSOLE == "0"
                     call RWarningMsg("nvimcom did not save R window ID")
-                else
-                    let $RCONSOLE = vr[4]
                 endif
                 if v:windowid == 0 && $WINDOWID == ""
                     call RWarningMsg("Neovim did not define $WINDOWID")
@@ -2999,7 +2998,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.3"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.4"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
