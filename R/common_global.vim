@@ -2713,6 +2713,9 @@ function ROnJobExit(job_id, data)
     for key in keys(g:rplugin_jobs)
         if g:rplugin_jobs[key] == a:job_id
             let g:rplugin_jobs[key] = 0
+            if a:data != 0
+                call RWarningMsg('"' . key . '"' . ' exited with status ' . a:data)
+            endif
             break
         endif
     endfor
