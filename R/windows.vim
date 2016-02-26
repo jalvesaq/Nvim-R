@@ -48,7 +48,7 @@ endif
 
 if !exists("g:R_args")
     if g:R_in_buffer
-        let g:R_args = ["--ess"]
+        let g:R_args = []
     else
         let g:R_args = ["--sdi"]
     endif
@@ -70,14 +70,10 @@ function SumatraInPath()
     return 0
 endfunction
 
-function StartR_Windows()
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        call RWarningMsg('R was already started.')
-    endif
-
+function SetRHome()
     " R and Vim use different values for the $HOME variable.
     if g:R_set_home_env
-        let saved_home = $HOME
+        let s:saved_home = $HOME
         call writefile(['reg.exe QUERY "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"'], g:rplugin_tmpdir . "/run_cmd.bat")
         let prs = system(g:rplugin_tmpdir . "/run_cmd.bat")
         if len(prs) > 0
@@ -88,12 +84,23 @@ function StartR_Windows()
             let $HOME = prs
         endif
     endif
+endfunction
 
-    call system("start " . g:rplugin_R . ' ' . join(g:R_args))
-
-    if g:R_set_home_env
-        let $HOME = saved_home
+function UnsetRHome()
+    if exists("s:saved_home")
+        let $HOME = s:saved_home
+        unlet s:saved_home
     endif
+endfunction
+
+function StartR_Windows()
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        call RWarningMsg('R was already started.')
+    endif
+
+    call SetRHome()
+    call system("start " . g:rplugin_R . ' ' . join(g:R_args))
+    call UnsetRHome()
 
     let g:SendCmdToR = function('SendCmdToR_Windows')
     if WaitNvimcomStart()

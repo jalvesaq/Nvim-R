@@ -108,7 +108,13 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
+    if has("win32")
+        call SetRHome()
+    endif
     let g:rplugin_jobs["R"] = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
+    if has("win32")
+        call UnsetRHome()
+    endif
     let g:rplugin_R_bufname = bufname("%")
     let g:rplugin_R_width = 0
     let b:objbrtitle = objbrttl
