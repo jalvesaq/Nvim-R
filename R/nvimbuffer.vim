@@ -96,13 +96,13 @@ function StartR_Neovim()
     let curbufnm = bufname("%")
     set switchbuf=useopen
     if g:R_vsplit
-        if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 16)
+        if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
             silent exe "belowright " . g:R_rconsole_width . "vnew"
         else
             silent belowright vnew
         endif
     else
-        if g:R_rconsole_height > 6 && g:R_rconsole_height < (winheight(0) - 6)
+        if g:R_rconsole_height > 0 && g:R_rconsole_height < (winheight(0) - 1)
             silent exe "belowright " . g:R_rconsole_height . "new"
         else
             silent belowright new
