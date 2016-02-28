@@ -106,10 +106,10 @@ function! RBrowserDoubleClick()
     if line(".") == 1
         if g:rplugin_curview == "libraries"
             let g:rplugin_curview = "GlobalEnv"
-            call UpdateOB("GlobalEnv")
+            call SendToNvimcom("\004G RBrowserDoubleClick")
         else
             let g:rplugin_curview = "libraries"
-            call UpdateOB("libraries")
+            call SendToNvimcom("\004L RBrowserDoubleClick")
         endif
         return
     endif
@@ -303,9 +303,6 @@ endfunction
 
 function! OnOBBufUnload()
     call SendToNvimcom("\004Stop updating info [OB BufUnload].")
-    if exists("b:rplugin_extern_ob")
-        call SendToOtherNvim("let g:rplugin_ob_port = 0")
-    endif
 endfunction
 
 nmap <buffer><silent> <CR> :call RBrowserDoubleClick()<CR>

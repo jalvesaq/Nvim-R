@@ -816,7 +816,7 @@ function WaitNvimcomStart()
                 let g:rplugin_jobs["ClientServer"] = jobstart(nvc, g:rplugin_job_handlers)
             else
                 " ClientServer already started by ftplugin/rnoweb_nvimr.vim
-                call jobsend(g:rplugin_jobs["ClientServer"], "\001R" . g:rplugin_nvimcom_port . "\n")
+                call jobsend(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
                 call SendToNvimcom("\001" . g:rplugin_myport)
             endif
         else
@@ -839,8 +839,6 @@ function WaitNvimcomStart()
 endfunction
 
 function StartObjBrowser_Nvim()
-    let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")
-
     " Either load or reload the Object Browser
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
@@ -900,25 +898,8 @@ function RObjBrowser()
     return
 endfunction
 
-function RBrOpenCloseLs_Nvim(status)
-    if !exists("g:rplugin_curview")
-        return
-    endif
-    if a:status == 1 && g:rplugin_curview == "libraries"
-        echohl WarningMsg
-        echon "GlobalEnv command only."
-        sleep 1
-        echohl Normal
-        normal! :<Esc>
-        return
-    endif
-    if g:rplugin_curview == "GlobalEnv"
-        let stt = a:status
-    else
-        let stt = a:status + 2
-    endif
-
-    call SendToNvimcom("\007" . stt)
+function RBrOpenCloseLs(stt)
+    call SendToNvimcom("\007" . a:stt)
 endfunction
 
 function SendToNvimcom(cmd)
@@ -926,32 +907,18 @@ function SendToNvimcom(cmd)
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_jobs["ClientServer"], "\002R" . a:cmd . "\n")
-endfunction
-
-function SendToOtherNvim(cmd)
-    if g:rplugin_jobs["ClientServer"] == 0
-        call RWarningMsg("Neovim client not running.")
-        return
-    endif
-    call jobsend(g:rplugin_jobs["ClientServer"], "\002O" . $NVIMR_SECRET . a:cmd . "\n")
-endfunction
-
-function RSendMyPort()
-    if g:rplugin_jobs["ClientServer"]
-        if &filetype == "rbrowser" && g:R_tmux_split
-            call SendToNvimcom("\002" . g:rplugin_myport)
-            call SendToOtherNvim('let g:rplugin_ob_port = ' . g:rplugin_myport)
-            call SendToOtherNvim('call jobsend(g:rplugin_jobs["ClientServer"], "\001O' . g:rplugin_myport . '\n")')
-        elseif g:rplugin_nvimcom_port
-            call SendToNvimcom("\001" . g:rplugin_myport)
-        endif
-    endif
+    call jobsend(g:rplugin_jobs["ClientServer"], "\002" . a:cmd . "\n")
 endfunction
 
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
-    call RSendMyPort()
+    if g:rplugin_jobs["ClientServer"]
+        if &filetype == "rbrowser" && g:R_tmux_split
+            call SendToNvimcom("\002" . g:rplugin_myport)
+        elseif g:rplugin_nvimcom_port
+            call SendToNvimcom("\001" . g:rplugin_myport)
+        endif
+    endif
 endfunction
 
 function RFormatCode() range
@@ -2198,7 +2165,7 @@ function RAction(rcmd)
                         let pkg = ""
                     endif
                     if exists("b:rplugin_extern_ob")
-                        call SendToOtherNvim('call AskRDoc("' . rkeyword . '", "' . pkg . '", 0)')
+                        call AskRDoc(rkeyword, pkg, 0)
                         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
                         if v:shell_error
                             call RWarningMsg(slog)
@@ -2346,8 +2313,8 @@ function RControlMaps()
     " Build list of objects for omni completion
     "-------------------------------------
     call RCreateMaps("nvi", '<Plug>RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
-    call RCreateMaps("nvi", '<Plug>ROpenLists',        'r=', ':call g:RBrOpenCloseLs(1)')
-    call RCreateMaps("nvi", '<Plug>RCloseLists',       'r-', ':call g:RBrOpenCloseLs(0)')
+    call RCreateMaps("nvi", '<Plug>ROpenLists',        'r=', ':call RBrOpenCloseLs(1)')
+    call RCreateMaps("nvi", '<Plug>RCloseLists',       'r-', ':call RBrOpenCloseLs(0)')
 endfunction
 
 

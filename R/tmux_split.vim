@@ -70,7 +70,6 @@ function StartObjBrowser_Tmux()
         return
     endif
 
-    let g:RBrOpenCloseLs = function("RBrOpenCloseLs_TmuxNeovim")
     " Force Neovim to update the window size
     mode
 
@@ -100,9 +99,8 @@ function StartObjBrowser_Tmux()
                 \ 'set laststatus=0',
                 \ 'set noruler',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
-                \ 'let g:RBrOpenCloseLs = function("RBrOpenCloseLs_Nvim")',
-                \ 'let g:rplugin_jobs["ClientServer"] = jobstart("nclientserver", g:rplugin_job_handlers)',
-                \ 'call jobsend(g:rplugin_jobs["ClientServer"], "\001O' . g:rplugin_myport . '\n")'], objbrowserfile)
+                \ 'let g:rplugin_jobs["ClientServer"] = jobstart("nclientserver", g:rplugin_job_handlers)'],
+                \ objbrowserfile)
 
     if g:R_objbr_place =~ "left"
         let panw = system("tmux list-panes | cat")
@@ -155,12 +153,6 @@ function StartObjBrowser_Tmux()
     " Force Neovim to update the window size
     mode
     return
-endfunction
-
-function RBrOpenCloseLs_TmuxNeovim(status)
-    if g:rplugin_ob_port
-        call SendToOtherNvim('call RBrOpenCloseLs_Nvim(' . a:status . ')')
-    endif
 endfunction
 
 function SendCmdToR_TmuxSplit(...)
