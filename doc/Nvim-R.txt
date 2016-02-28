@@ -5,8 +5,8 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.0
-For Neovim 0.1.0
+Version: 0.9.1
+For Neovim 0.1.2
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -24,8 +24,8 @@ For Neovim 0.1.0
 							     *Nvim-R-overview*
 1. Overview~
 
-This plugin improves Nvim's support for editing R code and makes it possible
-to integrate Nvim with R. It is the successor of Vim-R-plugin which may be
+This plugin improves Neovim's support for editing R code and makes it possible
+to integrate Neovim with R. It is the successor of Vim-R-plugin which may be
 discontinued in the future. Stable versions of this plugin are available
 available at:
 
@@ -69,7 +69,7 @@ Nvim-R (see |R_source|).
     packages).
   * Auto-completion of function arguments.
   * Auto-completion of knitr chunk options.
-  * Ability to see R's documentation in an Nvim buffer:
+  * Ability to see R's documentation in an Neovim buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
         available room).
@@ -107,7 +107,7 @@ Before installing the plugin, you should install its dependencies:
 
    R >= 3.0.0: http://www.r-project.org/
 
-   nvimcom 0.9.8: https://github.com/jalvesaq/nvimcom/releases
+   nvimcom 0.9-9: https://github.com/jalvesaq/nvimcom/releases
 
    Additional dependencies for editing Rnoweb documents:~
 
@@ -116,7 +116,7 @@ Before installing the plugin, you should install its dependencies:
 
    PDF viewer with SyncTeX support and capable of automatically reloading
    documents. This is required only if you edit Rnoweb files.
-      On Linux and other Unixes systems: Zathura, Evince or Okular.
+      On Linux and other Unixes systems: Zathura (recommended), Evince or Okular.
       On OS X: Skim.
       On Windows: SumatraPDF.
 
@@ -205,7 +205,7 @@ message instead, you may want to set the path to the R executable (see
 
 Did you see the message "nvimcom port not found"? This means that R is not
 running, the nvimcom package is not installed (or is installed but is not
-loaded), or R was not started by Nvim.
+loaded), or R was not started by Neovim.
 
 
 ------------------------------------------------------------------------------
@@ -246,9 +246,9 @@ Note: It is recommended the use of different keys for <Leader> and
 <LocalLeader> to avoid clashes between filetype plugins and general plugins
 key binds. See |filetype-plugins|, |maplocalleader| and |Nvim-R-localleader|.
 
-To use the plugin, open a .R, .Rnw, .Rd, .Rmd or .Rrst file with Nvim and type
-<LocalLeader>rf. Then, you will be able to use the plugin key bindings to send
-commands to R.
+To use the plugin, open a .R, .Rnw, .Rd, .Rmd or .Rrst file with Neovim and
+type <LocalLeader>rf. Then, you will be able to use the plugin key bindings to
+send commands to R.
 
 This plugin has many key bindings, which correspond with menu entries. In the
 list below, the backslash represents the <LocalLeader>. Not all menu items and
@@ -394,11 +394,11 @@ Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
 commands that send a single line of code to R, then the plugin will send to R
 the command to knit the child document.
 
-After the commands that send, sweave or knit the current buffer, Nvim will save
-the current buffer if it has any pending changes before performing the tasks.
-After <LocalLeader>ao, Nvim will run "R CMD BATCH --no-restore --no-save" on
-the current file and show the resulting .Rout file in a new tab. Please see
-|R_routnotab| if you prefer that the file is open in a new split
+After the commands that send, sweave or knit the current buffer, Neovim will
+save the current buffer if it has any pending changes before performing the
+tasks. After <LocalLeader>ao, Neovim will run "R CMD BATCH --no-restore
+--no-save" on the current file and show the resulting .Rout file in a new tab.
+Please see |R_routnotab| if you prefer that the file is open in a new split
 window. Note: The command <LocalLeader>ao, silently writes the current buffer
 to its file if it was modified and deletes the .Rout file if it exists.
 
@@ -427,7 +427,7 @@ in each case:
    summary(x)
    summary(m)
 <
-To get help on an R topic, you can also type in Nvim (Normal mode):
+To get help on an R topic, you can also type in Neovim (Normal mode):
 >
    :Rhelp topic
 <
@@ -453,9 +453,9 @@ backward (see |popupmenu-completion|). For rnoweb, rmd and rrst file types,
 CTRL-X CTRL-A can also be used to complete knitr chunk options if the cursor
 is inside the chunk header.
 
-Note: If you are using Nvim in a Tmux session, and if you configured CTRL-A to
-be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to do
-CTRL-A twice to pass a single CTRL-A to Nvim.
+Note: If you are using Neovim in a Tmux session, and if you configured CTRL-A
+to be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to
+do CTRL-A twice to pass a single CTRL-A to Neovim.
 
 If R is not running or if it is running but is busy the completion will be
 based on information from the packages listed by |R_start_libs|
@@ -473,9 +473,9 @@ You can source all .R files in a directory with the Normal mode command
 								     *Rinsert*
 The command  `:Rinsert` <cmd>  inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
-and pasting the output R from its console to Nvim. For example, to insert the
-output of `dput(levels(var))`, where `var` is a factor vector, we could do in
-Nvim:
+and pasting the output R from its console to Neovim. For example, to insert
+the output of `dput(levels(var))`, where `var` is a factor vector, we could do
+in Neovim:
 >
    :Rinsert dput(levels(var))
 <
@@ -533,10 +533,10 @@ such feature is the highlight of R functions. However, functions are
 highlighted only if their libraries are loaded by R (but see
 |R_start_libs|).
 
-Note: If you have too many loaded packages Nvim may be unable to load the list
-of functions for syntax highlight.
+Note: If you have too many loaded packages Neovim may be unable to load the
+list of functions for syntax highlight.
 
-Nvim can automatically complete the names of R objects when CTRL-X CTRL-O is
+Neovim can automatically complete the names of R objects when CTRL-X CTRL-O is
 pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
@@ -555,11 +555,11 @@ have their names completed. When you load a new library in R, only the current
 buffer has the highlighting of function names immediately updated. If you have
 other buffers open, they will be updated when you enter them.
 
-Nvim uses one file to store the names of .GlobalEnv objects and a list of files
-for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
-directory and is deleted when you quit Nvim. The other files are stored in the
-`$NVIMR_COMPLDIR` directory and remain available until you manually delete
-them.
+Neovim uses one file to store the names of .GlobalEnv objects and a list of
+files for all other objects. The .GlobalEnv list is stored in the
+`$NVIMR_TMPDIR` directory and is deleted when you quit Neovim. The other files
+are stored in the `$NVIMR_COMPLDIR` directory and remain available until you
+manually delete them.
 
 
 ------------------------------------------------------------------------------
@@ -643,13 +643,13 @@ line.
 
 Note: While typing comments the leader comment string is automatically added
 to new lines when you reach 'textwidth' but not when you press <Enter>.
-Please, read the Nvim help about 'formatoptions' and |fo-table|. For example,
+Please, read the Neovim help about 'formatoptions' and |fo-table|. For example,
 you can add the following line to your |vimrc| if you want the comment string
 being added after <Enter>:
 >
    autocmd FileType r setlocal formatoptions-=t formatoptions+=croql
 <
-Tip: You can use Nvim substitution command `:%s/#.*//` to delete all comments
+Tip: You can use Neovim substitution command `:%s/#.*//` to delete all comments
 in a buffer (see |:s| and |pattern-overview|).
 
 
@@ -657,13 +657,13 @@ in a buffer (see |:s| and |pattern-overview|).
 								  *RBuildTags*
 4.6. Build a tags file to jump to function definitions~
 
-Nvim can jump to functions defined in other files if you press CTRL-] over the
-name of a function, but it needs a tags file to be able to find the function
-definition (see |tags-and-searches|). The command `:RBuildTags` calls the R
-function `rtags()` to build the tags file for the R scripts in the current
-directory. Please read |Nvim-R-tagsfile| to learn how to create a tags file
-referencing source code located in other directories, including the entire R
-source code.
+Neovim can jump to functions defined in other files if you press CTRL-] over
+the name of a function, but it needs a tags file to be able to find the
+function definition (see |tags-and-searches|). The command `:RBuildTags` calls
+the R function `rtags()` to build the tags file for the R scripts in the
+current directory. Please read |Nvim-R-tagsfile| to learn how to create a tags
+file referencing source code located in other directories, including the
+entire R source code.
 
 
 ==============================================================================
@@ -671,7 +671,7 @@ source code.
 5. Known bugs and workarounds~
 
 Known bugs that will not be fixed are listed in this section. Some of them can
-not be fixed because they depend on missing features in either R or Nvim;
+not be fixed because they depend on missing features in either R or Neovim;
 others would be very time consuming to fix without breaking anything.
 
 
@@ -704,42 +704,44 @@ operator. See: https://github.com/jcfaria/Vim-R-plugin/issues/94
 ------------------------------------------------------------------------------
 5.4. Wrong message that "R is busy" (Windows only)~
 
-On Windows, when code is sent from Nvim to R Console, the nvimcom library sets
-the value of the internal variable `r_is_busy` to 1. The value is set back to
-0 when any code is successfully evaluated. If you send invalid code to R,
-there will be no successful evaluation of code and, thus, the value of
+On Windows, when code is sent from Neovim to R Console, the nvimcom library
+sets the value of the internal variable `r_is_busy` to 1. The value is set
+back to 0 when any code is successfully evaluated. If you send invalid code to
+R, there will be no successful evaluation of code and, thus, the value of
 `r_is_busy` will remain set to 1. Then, if you try to update the object
 browser, see the R documentation for any function, or do other tasks that
 require the hidden evaluation of code by R, the nvimcom library will refuse to
-do the tasks to avoid any risk of corrupting R's memory. It will tell Nvim that
-"R is busy" and Nvim will display this message. Everything should work as
-expected again after any valid code is executed in the R Console.
+do the tasks to avoid any risk of corrupting R's memory. It will tell Neovim
+that "R is busy" and Neovim will display this message. Everything should work
+as expected again after any valid code is executed in the R Console.
 
 The nvimcom library is started with the state `busy`.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Nvim~
+5.5. R must be started by Neovim~
 
-The communication between Nvim and R will work only if R was started by Nvim
-through the <LocalLeader>rf command because the plugin was designed to connect
-each Nvim instance with its own R instance.
+The communication between Neovim and R will work only if R was started by
+Neovim through the <LocalLeader>rf command because the plugin was designed to
+connect each Neovim instance with its own R instance.
 
-If you start R before Nvim, it will not inherit from Nvim the environment
+If you start R before Neovim, it will not inherit from Neovim the environment
 variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and NVIMR_SECRET. The first
 one is the path used by the R package nvimcom to save temporary files used by
-Nvim-R to: perform omnicompletion, show R documentation in an Nvim buffer, and
-update the Object Browser. The two last ones are used by Nvim-R and by nvimcom
-to know that the connections are valid. If you use Nvim to start R, but then
-close Nvim, some variables will become outdated. Additionally, Nvim-R sets
-the value of its internal variable SendCmdToR from SendCmdToR_fake to the
-appropriate value when R is successfully started. It is possible to set the
-values of all those variables manually, but, as you can see below, it is not
-practical to do so. If you have either started R before Nvim or closed Nvim
-and opened it again and really want full communication between Nvim and R, you
-can try the following (not all procedures are necessary for all cases):
+Nvim-R to: perform omnicompletion, show R documentation in an Neovim buffer,
+and update the Object Browser. The two last ones are used by Neovim-R and by
+nvimcom to know that the connections are valid. Unless you are running R in a
+Neovim's built-in terminal (which is the default on Unix), if you use Neovim
+to start R, but then close Neovim, some variables will become outdated.
+Additionally, Nvim-R sets the value of its internal variable SendCmdToR from
+SendCmdToR_fake to the appropriate value when R is successfully started. It is
+possible to set the values of all those variables manually, but, as you can
+see below, it is not practical to do so. If you have either started R before
+Neovim or closed Neo-1vim and opened it again and really want full
+communication between Neovim and R, you can try the following (not all
+procedures are necessary for all cases):
 
-   In Normal mode Nvim do:
+   In Normal mode Neovim do:
 >
    :echo g:rplugin_tmpdir
    :echo g:rplugin_compldir
@@ -749,14 +751,14 @@ can try the following (not all procedures are necessary for all cases):
    In R do:
 >
    detach("package:nvimcom", unload = TRUE)
-   Sys.setenv(NVIMR_TMPDIR="T")    # where "T" is what Nvim has echoed
-   Sys.setenv(NVIMR_ID="I")        # where "I" is what Nvim has echoed
-   Sys.setenv(NVIMR_SECRET"="S")   # where "S" is what Nvim has echoed
-   Sys.setenv(NVIMR_COMPLDIR"="C") # where "C" is what Nvim has echoed
+   Sys.setenv(NVIMR_TMPDIR="T")    # where "T" is what nvim has echoed
+   Sys.setenv(NVIMR_ID="I")        # where "I" is what nvim has echoed
+   Sys.setenv(NVIMR_SECRET"="S")   # where "S" is what nvim has echoed
+   Sys.setenv(NVIMR_COMPLDIR"="C") # where "C" is what nvim has echoed
    library(nvimcom)
 <
-If you are running R in a Tmux session (see |Nvim-R-Tmux|) Nvim will also need
-to know the name of Tmux session and Tmux pane where R is running.
+If you are running R in a Tmux session (see |Nvim-R-Tmux|) Neovim will also
+need to know the name of Tmux session and Tmux pane where R is running.
 
 So, in R do:
 >
@@ -766,12 +768,12 @@ So, in R do:
 >
    <Ctrl-A>:display-message -p '#S'<Enter><Enter>
 <
-And in Normal mode Nvim do:
+And in Normal mode Neovim do:
 >
    :let rplugin_rconsole_pane = "X"
    :let rplugin_tmuxsname = "Y"
 <
-Finally, do one of the commands below in Normal mode Nvim, according to how R
+Finally, do one of the commands below in Normal mode Neovim, according to how R
 is running:
 >
    let SendCmdToR = function('SendCmdToR_TmuxSplit')
@@ -804,7 +806,7 @@ is running:
 |R_objbr_openlist|    Display lists open in the Object Browser
 |R_objbr_allnames|    Display hidden objects in the Object Browser
 |R_objbr_labelerr|    Show error if "label" attribute is invalid
-|R_nvimpager|         Use Nvim to see R documentation
+|R_nvimpager|         Use Neovim to see R documentation
 |R_editor_w|          Minimum width of R script buffer
 |R_help_w|            Desired width of R documentation buffer
 |R_path|              Directory where R is
@@ -843,7 +845,7 @@ is running:
 |R_show_args|         Show extra information during omnicompletion
 |R_args_in_stline|    Set 'statusline' to function arguments
 |R_nvimcom_wait|      Time to wait for nvimcom loading
-|R_nvim_wd|           Start R in Nvim's working directory
+|R_nvim_wd|           Start R in Neovim's working directory
 |R_after_start|       System command to execute after R startup
 |R_user_maps_only|    Only set user specified key bindings
 |R_tmpdir|            Where temporary files are created
@@ -860,13 +862,27 @@ is running:
 								*R_in_buffer*
 6.1. R in Neovim buffer~
 
-By default, R runs in a Neovim buffer created with the command |:term|. The
-<Esc> key will be mapped to stop Insert mode and go to Normal mode. If you
-prefer to use the default <C-\><C-N> to go to Normal mode, put in your
+By default, R runs in a Neovim buffer created with the command |:term|, and
+the <Esc> key is mapped to stop the Terminal mode and go to Normal mode. You
+should avoid the R function `vi()` and use `edit()` instead because Nvim-R
+sets the option "editor" to a function that makes the object to be edited in a
+new tab when `R_esc_term` = 1 (the default value). If you call `vi()`, you may
+be trapped in Insert mode in the nested Vim.
+
+If you want to set you own external editor, set the option "editor" after
+loading nvimcom in your Rprofile. Example:
+>
+   library(nvimcom)
+   options(editor = "leafpad")
+<
+If you want to use `vi`, `vim` or `nvim` in Neovim's terminal, put in your
 |vimrc|:
 >
    let R_esc_term = 0
 <
+Then, you will have to press the default <C-\><C-N> to go from Terminal to
+Normal mode.
+
 Neovim does not close its built-in terminal emulator when the application
 running in it quits, but Nvim-R does close it for you. If you rather prefer
 that the terminal remains open after R quits, put in your |vimrc|:
@@ -874,10 +890,10 @@ that the terminal remains open after R quits, put in your |vimrc|:
    let R_close_term = 0
 >
 You may either use the package colorout (Unix only) to colorize R output or
-let Nvim highlight the terminal contents as it was a .Rout file type. Two
+let Neovim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
 zero in a different color and the distinction between stdout and stderr. The
-value of R_hl_term (0 or 1) determines whether Nvim should syntax highlight
+value of R_hl_term (0 or 1) determines whether Neovim should syntax highlight
 the R output, and its default value will be set to 1 if the package colorout
 is not loaded at the moment that you send the first command to R console.
 If you prefer do not rely on the auto detection of colorout, you should set
@@ -950,7 +966,7 @@ terminal emulator that it finds in the following list:
     9. lxterminal
    10. xterm.
 
-If Nvim does not select your favorite terminal emulator, you may define it in
+If Neovim does not select your favorite terminal emulator, you may define it in
 your |vimrc| by setting the variable R_term, as shown below:
 >
    let R_term = "xterm"
@@ -1029,7 +1045,7 @@ work on GVim):
 >
    let R_assign_map = "<M-->"
 <
-Note: If you are using Nvim in a terminal emulator, you have to put in your
+Note: If you are using Neovim in a terminal emulator, you have to put in your
 |vimrc|:
 >
    set <M-->=^[-
@@ -1037,7 +1053,7 @@ Note: If you are using Nvim in a terminal emulator, you have to put in your
 <
 where `^[` is obtained by pressing CTRL-V CTRL-[ in Insert mode.
 
-Note: You can't map <C-=>, as StatET does because in Nvim only alphabetic
+Note: You can't map <C-=>, as StatET does because in Neovim only alphabetic
 letters can be mapped in combination with the CTRL key.
 
 To completely disable this feature, put in your |vimrc|:
@@ -1096,7 +1112,7 @@ respectively, `data.frames` and `lists`. The options are ignored for
 `data.frames` and `lists` of libraries which are always started closed.
 
 If an object R's workspace has the attribute `"label"`, it is displayed in
-Nvim's Object Browser. If the `"label"` attribute is not of class
+Neovim's Object Browser. If the `"label"` attribute is not of class
 `"character"`, and if  `R_objbr_labelerr` is `1`, an error message is printed
 in the Object Browser.
 
@@ -1105,11 +1121,11 @@ in the Object Browser.
 								 *R_nvimpager*
 								 *R_editor_w*
 								 *R_help_w*
-6.6. Nvim as pager for R help~
+6.6. Neovim as pager for R help~
 
 6.6.1. Quick setup~
 
-If you do not want to see R documentation in an Nvim buffer, put in your
+If you do not want to see R documentation in an Neovim buffer, put in your
 |vimrc|:
 >
    let R_nvimpager = "no"
@@ -1117,8 +1133,8 @@ If you do not want to see R documentation in an Nvim buffer, put in your
 This option can only be set to "no" in the |vimrc|. It will be automatically
 changed to a suitable value if it is set to "no" after Neovim startup.
 
-If you want to see R documentation in Nvim, but are not satisfied with the way
-it works, please, read the subsection 6.5.2 below.
+If you want to see R documentation in Neovim, but are not satisfied with the
+way it works, please, read the subsection 6.5.2 below.
 
 ------------------------------------------------------------------------------
 6.6.2. Details and other options:~
@@ -1139,12 +1155,12 @@ The valid values of R_nvimpager are:
                  This is the default if R_in_buffer = 1.
    "horizontal": Split the window horizontally.
    "tabnew"    : Show the help document in a new tab.
-   "no"        : Do not show R documentation in Nvim.
+   "no"        : Do not show R documentation in Neovim.
 
 The window will be considered large enough if it has more columns than
 R_editor_w + R_help_w. These variables control the minimum
 width of the editor window and the help window, and their default values are,
-respectively, 66 and 46. Thus, if you want to have more control over Nvim's
+respectively, 66 and 46. Thus, if you want to have more control over Neovim's
 behavior while opening R's documentations, you will want to set different
 values to some variables in your |vimrc|, as in the example:
 >
@@ -1157,13 +1173,13 @@ values to some variables in your |vimrc|, as in the example:
 								      *R_app*
 6.7. R path~
 
-Nvim will run the first R executable in the path. You can set an alternative R
-path in your |vimrc| as in the examples:
+Neovim will run the first R executable in the path. You can set an alternative
+R path in your |vimrc| as in the examples:
 >
    let R_path = "/path/to/my/preferred/R/version/bin"
    let R_path = "C:\\Program Files\\R\\R-3.1.2\\bin\\i386"
 <
-On Windows, Nvim will try to find the R install path in the Windows Registry.
+On Windows, Neovim will try to find the R install path in the Windows Registry.
 
 You can set a different R version for specific R scripts in your |vimrc|.
 Example:
@@ -1221,10 +1237,10 @@ scripts, put the following in your |vimrc|:
 								 *R_routnotab*
 6.11. How to automatically open the .Rout file~
 
-After the command <LocalLeader>ao, Nvim will save the current buffer if it has
-any pending changes, run `R CMD BATCH --no-restore --no-save` on the current
-file and show the resulting .Rout file in a new tab. If you prefer that the
-file is open in a new split window, put in your |vimrc|:
+After the command <LocalLeader>ao, Neovim will save the current buffer if it
+has any pending changes, run `R CMD BATCH --no-restore --no-save` on the
+current file and show the resulting .Rout file in a new tab. If you prefer
+that the file is open in a new split window, put in your |vimrc|:
 >
    let R_routnotab = 1
 <
@@ -1290,7 +1306,7 @@ vertically, put in your |vimrc|:
 You can also set the initial number of lines and columns of the R window:
 >
    let R_rconsole_height = 15
-   let R_rconsole_width = 15
+   let R_rconsole_width = 40
 <
 
 ------------------------------------------------------------------------------
@@ -1309,15 +1325,16 @@ your |vimrc|:
 							       *R_specialplot*
 6.16. Special R functions~
 
-The R function `args()` lists the arguments of a function, but not the arguments
-of its methods. If you want that the plugin calls the function
+The R function `args()` lists the arguments of a function, but not the
+arguments of its methods. If you want that the plugin calls the function
 `nvim.list.args()` after <LocalLeader>ra, you have to add to your |vimrc|:
 >
    let R_listmethods = 1
 <
-By default, R makes a scatterplot of numeric vectors. The function `nvim.plot()`
-do both a histogram and a boxplot. The function can be called by the plugin
-after <LocalLeader>rg if you put the following line in your |vimrc|:
+By default, R makes a scatterplot of numeric vectors. The function
+`nvim.plot()` do both a histogram and a boxplot. The function can be called by
+the plugin after <LocalLeader>rg if you put the following line in your
+|vimrc|:
 >
    let R_specialplot = 1
 <
@@ -1410,9 +1427,9 @@ type.
 When one types <C-a> in the R Console the cursor goes to the beginning of the
 line and when one types <C-k> the characters to the right of the cursor are
 deleted. This is useful to avoid characters left on the R Console being mixed
-with commands sent by Nvim. However, sending <C-a> may be problematic if using
-Tmux. The Nvim-R will add <C-a><C-k> to every command if you put
-in your |vimrc|:
+with commands sent by Neovim. However, sending <C-a> may be problematic if
+using Tmux. The Nvim-R will add <C-a><C-k> to every command if you put in your
+|vimrc|:
 >
    let R_ca_ck = 1
 <
@@ -1440,13 +1457,11 @@ the X server) you may want to put in your |vimrc|:
        let R_openpdf = 1
    endif
 <
-Note: If the pdf is already open, some pdf readers will automatically update
-the pdf; others will lock the pdf file and prevent R from successfully
-compiling it again. You can change the value of R_pdfviewer in your
-|vimrc| to define what PDF viewer will be called. Example:
->
-   let R_pdfviewer = "zathura"
-<
+On Windows, Nvim-R will call Sumatra to open the PDF, and, on Mac OS X, it
+will call Skim. On Linux, you can change the value of R_pdfviewer in your
+|vimrc| to define what PDF viewer will be called. Valid values are "zathura"
+(default, and the one best integrated with Nvim-R), "evince" and "okular".
+
 If editing an Rmd file, you can produce the html result with <LocalLeader>kh.
 The html file will be automatically opened if you put the following in your
 |vimrc|:
@@ -1511,7 +1526,7 @@ you prefer to remove only visible objects, put in your |vimrc|:
 								    *R_source*
 6.26. Source additional scripts~
 
-This variable should contain a comma separated list of Nvim scripts to be
+This variable should contain a comma separated list of Neovim scripts to be
 sourced by Nvim-R. These scripts may provide additional
 functionality and/or change the behavior of Nvim-R. If you have such
 scripts, put in your |vimrc|:
@@ -1543,8 +1558,8 @@ emulator.
 							    *R_args_in_stline*
 6.28. Function arguments~
 
-If you want that Nvim shows a preview window with the function arguments as you
-do omnicompletion, put in your |vimrc|:
+If you want that Neovim shows a preview window with the function arguments as
+you do omnicompletion, put in your |vimrc|:
 >
    let R_show_args = 1
 <
@@ -1552,7 +1567,7 @@ The preview window is not shown by default because it is more convenient to
 run <Ctrl-X><Ctrl-A> to complete the function arguments. The preview window
 will be shown only if "preview" is also included in your 'completeopt'.
 
-If you want that function arguments are displayed in Nvim's status line when
+If you want that function arguments are displayed in Neovim's status line when
 you insert `(`, put in your |vimrc|:
 >
    let R_args_in_stline = 1
@@ -1561,7 +1576,7 @@ The status line is restored when `)` is typed. This option is useful only if
 the window has a status line. See |laststatus|. If the string with the list of
 arguments is longer than the status line width, the list is not displayed
 completely. This argument is incompatible with any plugin that changes the
-status line because it is always restored to the value that it had at Nvim's
+status line because it is always restored to the value that it had at Neovim's
 startup. Functions of .GlobalEnv do not have their arguments displayed.
 
 
@@ -1587,13 +1602,13 @@ skip this step:
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
-6.30 Start R in working directory of Nvim~
+6.30 Start R in working directory of Neovim~
 
 When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
 package nvimcom runs the command `setwd()` with the directory of the file
 being edited as argument, that is, the R working directory becomes the same
 directory of the R file. If you want R's working directory to be the same as
-Nvim's working directory, put in your |vimrc|:
+Neovim's working directory, put in your |vimrc|:
 >
    let R_nvim_wd = 1
 <
@@ -1609,7 +1624,7 @@ way, put in |vimrc|:
 							       *R_after_start*
 6.31 System command to be executed after R startup~
 
-If you want that Nvim executes a external command right after R startup, set
+If you want that Neovim executes a external command right after R startup, set
 the value of R_after_start in your |vimrc|.
 
 Nvim-R stores the he environment variable $WINDOWID of the terminal where R is
@@ -1687,7 +1702,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.35 SyncTeX support (Linux only)~
+6.35 SyncTeX support~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -1699,17 +1714,11 @@ has support for the SyncTeX systems of five applications:
    Windows: SumatraPDF
 
 On Linux, the application `wmctrl` is required to raise both the PDF viewer
-and Nvim windows.
+and Neovim windows.
 
 To completely disable SyncTeX support, put in your |vimrc|:
 >
    let R_synctex = 0
-<
-On Linux, if you have more than one PDF viewer installed, and Nvim-R is not
-opening your preferred one, you can choose one in your |vimrc|. Examples:
->
-   let R_pdfviewer = "evince"
-   let R_pdfviewer = "okular"
 <
 You do not have to do anything special in your Rnoweb document if you are
 using the knitr package, and are editing single file Rnoweb documents.
@@ -1741,15 +1750,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.35.1 Notes on Zathura and Evince~
-
-No additional configuration is required for Evince and Zathura.
-
-For backward search, hold the CTRL key and left-click in the PDF.
-
-
-------------------------------------------------------------------------------
-6.35.2 Okular configuration~
+6.35.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -1764,10 +1765,11 @@ Note: If the PDF document is already open the first time that you jump to it,
 and if Okular was not started with the `--unique` argument, another instance
 of Okular will be started.
 
-------------------------------------------------------------------------------
-6.35.3 Skim configuration~
 
-In Skim click in the drop down menu and fill the fields:
+------------------------------------------------------------------------------
+6.35.1 Skim configuration~
+
+In Skim, click in the drop down menu and fill the fields:
 >
    Skim
    Settings
@@ -1783,7 +1785,7 @@ In Skim click in the drop down menu and fill the fields:
 
 When creating custom key bindings for Nvim-R, it is necessary to
 create three maps for most functions because the way the function is called is
-different in each Nvim mode. Thus, key bindings must be made for Normal mode,
+different in each Neovim mode. Thus, key bindings must be made for Normal mode,
 Insert mode, and Visual mode.
 
 To customize a key binding you should put in your |vimrc| something like:
@@ -1795,10 +1797,10 @@ To customize a key binding you should put in your |vimrc| something like:
 The above example shows how to change key binding used to start R from
 <LocalLeader>rf to <LocalLeader>sr.
 
-Only the custom key bindings for Normal mode are shown in Nvim's menu, but you
-can type |:map| to see the complete list of current mappings, and below is the
-list of the names for custom key bindings (the prefix RE means "echo";
-RD, "cursor down"; RED, both "echo" and "down"):
+Only the custom key bindings for Normal mode are shown in Neovim's menu, but
+you can type |:map| to see the complete list of current mappings, and below is
+the list of the names for custom key bindings (the prefix RE means "echo"; RD,
+"cursor down"; RED, both "echo" and "down"):
 
    Star/Close R~
    RStart
@@ -1906,8 +1908,8 @@ ad-hoc commands to R. This function takes the name of an R function such as
 command.
 
 For example, if your cursor is sitting on top of the object called gender and
-you call the RAction function, with an argument such as levels, Nvim will pass
-the command `levels(gender)` to R, which will show you the levels of the
+you call the RAction function, with an argument such as levels, Neovim will
+pass the command `levels(gender)` to R, which will show you the levels of the
 object gender. To make it even easier to use this and other functions, you
 could write custom key bindings in your |vimrc|, as in the examples below:
 >
@@ -1940,8 +1942,8 @@ details.
 A copy of the GNU General Public License is available at
 http://www.r-project.org/Licenses/
 
-The files released with Nvim runtime files are distributed under the Nvim
-Charityware license.
+The files released with Neovim runtime files are distributed under either Vim
+or Neovim license.
 
 The following files are part of the plugin and should be in your ~/.nvim
 directory after the installation:
@@ -1979,9 +1981,9 @@ syntax/rout.vim
 								 *Nvim-R-tips*
 9. FAQ and tips~
 
-9.1. Is it possible to stop R from within Nvim?~
+9.1. Is it possible to stop R from within Neovim?~
 
-Yes. In Normal mode do `:RStop` and Nvim will send SIGINT to R which is the
+Yes. In Normal mode do `:RStop` and Neovim will send SIGINT to R which is the
 same signal sent when you press CTRL-C into R's Console.
 
 
@@ -2001,12 +2003,12 @@ and in your |vimrc| (see |R_nvimpager|):
 							    *Nvim-R-showmarks*
 9.3. How do marked blocks work?~
 
-Nvim allows you to put several marks (bookmarks) in buffers. The most commonly
-used marks are the lowercase alphabet letters. If the cursor is between any
-two marks, the plugin will send the lines between them to R if you press
-<LocalLeader>bb. If the cursor is above the first mark, the plugin will send
-from the beginning of the file to the mark. If the cursor is below the last
-mark, the plugin will send from the mark to the end of the file. The mark
+Neovim allows you to put several marks (bookmarks) in buffers. The most
+commonly used marks are the lowercase alphabet letters. If the cursor is
+between any two marks, the plugin will send the lines between them to R if you
+press <LocalLeader>bb. If the cursor is above the first mark, the plugin will
+send from the beginning of the file to the mark. If the cursor is below the
+last mark, the plugin will send from the mark to the end of the file. The mark
 above the cursor is included and the mark below is excluded from the block to
 be sent to R. To create a mark, press m<letter> in Normal mode.
 
@@ -2049,10 +2051,10 @@ You may also want to remap <C-x><C-o>:
 
    http://stackoverflow.com/questions/2269005/how-can-i-change-the-keybinding-used-to-autocomplete-in-vim
 
-Note: Not all mappings work in all versions of Nvim. Some mappings may not work
-on GVim on Windows, and others may not work on Nvim running in a terminal
-emulator or in Linux Console. The use of <Shift>, <Alt> and <Fn> keys in
-mappings are particularly problematic. See:
+Note: Not all mappings work in all versions of Neovim. Some mappings may not
+work on GVim on Windows, and others may not work on Neovim running in a
+terminal emulator or in Linux Console. The use of <Shift>, <Alt> and <Fn> keys
+in mappings are particularly problematic. See:
 
    https://github.com/jcfaria/Vim-R-plugin/issues/111
 
@@ -2073,12 +2075,12 @@ your |vimrc| (before any mapping command):
 							     *Nvim-R-tagsfile*
 9.7. Use a tags file to jump to function definitions~
 
-Nvim can jump to a function definition if it finds a "tags" file with the
+Neovim can jump to a function definition if it finds a "tags" file with the
 information about the place where the function is defined. To generate the
 tags file, use the R function `rtags()`, which will build an Emacs tags file.
-If Nvim was compiled with the feature |emacs_tags|, it will be able to read the
-tags file. Otherwise, you can use the nvimcom function `etags2ctags()` to
-convert the Emacs tags file into an Nvim one. To jump to a function
+If Neovim was compiled with the feature |emacs_tags|, it will be able to read
+the tags file. Otherwise, you can use the nvimcom function `etags2ctags()` to
+convert the Emacs tags file into an Neovim one. To jump to a function
 definition, put the cursor over the function name and hit CTRL-]. Please, read
 |tagsrch.txt| for details on how to use tags files, specially the section
 |tags-option|.
@@ -2104,9 +2106,9 @@ Note: While defining the autocmd, the Rtags path must be put before RsrcTags.
 Example on how to test whether your setup is ok:
 
    1. Type `mapply()` in an R script and save the buffer.
-   2. Press CTRL-] over "mapply" (Nvim should jump to "mapply.R").
+   2. Press CTRL-] over "mapply" (Neovim should jump to "mapply.R").
    3. Locate the string "do_mapply", which is the name of a C function.
-   4. Press CTRL-] over "do_mapply" (Nvim sould jump to "mapply.c").
+   4. Press CTRL-] over "do_mapply" (Neovim sould jump to "mapply.c").
 
 
 ------------------------------------------------------------------------------
@@ -2114,8 +2116,8 @@ Example on how to test whether your setup is ok:
 9.8. Indenting setup~
 
 Note: In Normal mode, type |==| to indent the current line and gg=G to format
-the entire buffer (see |gg|, |=| and |G| for details). These are Nvim commands;
-they are not specific to R code.
+the entire buffer (see |gg|, |=| and |G| for details). These are Neovim
+commands; they are not specific to R code.
 
 The Nvim-R includes a script to automatically indent R files. By
 default, the script aligns function arguments if they span for multiple lines.
@@ -2126,9 +2128,9 @@ If you prefer do not have the arguments of functions aligned, put in your
 <
 By default, all lines beginning with a comment character, `#`, get the same
 indentation level of the normal R code. Users of Emacs/ESS may be used to have
-lines beginning with a single `#` indented in the 40th column, `##` indented as R
-code, and `###` not indented. If you prefer that lines beginning with comment
-characters are aligned as they are by Emacs/ESS, put in your |vimrc|:
+lines beginning with a single `#` indented in the 40th column, `##` indented
+as R code, and `###` not indented. If you prefer that lines beginning with
+comment characters are aligned as they are by Emacs/ESS, put in your |vimrc|:
 >
    let r_indent_ess_comments = 1
 <
@@ -2156,7 +2158,7 @@ Below is an example of indentation with and without this option enabled:
 Notes: (1) Not all code indented by Emacs/ESS will be indented by the
            Nvim-R in the same way, and, in some circumstances it may be
            necessary to make changes in the code to get it properly indented
-           by Nvim (you may have to either put or remove braces and line
+           by Neovim (you may have to either put or remove braces and line
            breaks).
        (2) Indenting is not a file type plugin option. It is a feature defined
            in indent/r.vim. That is why it is documented in this section.
@@ -2166,19 +2168,19 @@ Notes: (1) Not all code indented by Emacs/ESS will be indented by the
 							      *Nvim-R-folding*
 9.9. Folding setup~
 
-Nvim has several methods of folding text (see |fold-methods| and
+Neovim has several methods of folding text (see |fold-methods| and
 |fold-commands|). To enable the syntax method of folding for R files, put in
 your |vimrc|:
 >
    let r_syntax_folding = 1
 <
-With the above option, Nvim will load R files with all folds closed. If you
+With the above option, Neovim will load R files with all folds closed. If you
 prefer to start editing files with all folds open, put in your |vimrc|:
 >
    set nofoldenable
 <
-Notes: (1) Enabling folding may slow down Nvim. (2) Folding is not a file type
-plugin option. It is a feature defined in syntax/r.vim.
+Notes: (1) Enabling folding may slow down Neovim. (2) Folding is not a file
+type plugin option. It is a feature defined in syntax/r.vim.
 
 Note: Indentation of R code is very slow because the indentation algorithm
 sometimes goes backwards looking for an opening parenthesis or brace or for
@@ -2192,7 +2194,7 @@ develop a better algorithm in the future.
 ------------------------------------------------------------------------------
 9.10. Highlight chunk header as R code~
 
-By default, Nvim will highlight chunk headers of RMarkdown and
+By default, Neovim will highlight chunk headers of RMarkdown and
 RreStructuredText with a single color. When the code is processed by knitr,
 chunk headers should contain valid R code and, thus, you may want to highlight
 them as such. You can do this by putting in your |vimrc|:
@@ -2204,9 +2206,9 @@ them as such. You can do this by putting in your |vimrc|:
 ------------------------------------------------------------------------------
 9.11. Automatically close parenthesis~
 
-Some people want Nvim automatically inserting a closing parenthesis, bracket or
-brace when an open one has being typed. The page below explains how to achieve
-this goal:
+Some people want Neovim automatically inserting a closing parenthesis, bracket
+or brace when an open one has being typed. The page below explains how to
+achieve this goal:
 
    http://vim.wikia.com/wiki/Automatically_append_closing_characters
 
@@ -2214,18 +2216,18 @@ this goal:
 ------------------------------------------------------------------------------
 9.12. Automatic line breaks~
 
-By default, while editing R code, Nvim does not break lines when you are typing
-if you reach the column defined by the 'textwidth' option. If you prefer that
-Nvim breaks the R code automatically put in your |vimrc|:
+By default, while editing R code, Neovim does not break lines when you are
+typing if you reach the column defined by the 'textwidth' option. If you
+prefer that Neovim breaks the R code automatically put in your |vimrc|:
 >
    autocmd FileType r setlocal formatoptions+=t
 <
 
 ------------------------------------------------------------------------------
-9.13. Nvim with 256 colors in a terminal emulator (Linux/Unix only)~
+9.13. Neovim with 256 colors in a terminal emulator (Linux/Unix only)~
 
-If you want 256 colors support in Nvim, install the package ncurses-term. Then
-put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
+If you want 256 colors support in Neovim, install the package ncurses-term.
+Then put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
 
 You have to search the internet for color schemes supporting 256 colors,
 download and copy them to ~/.nvim/colors. You may use the command
@@ -2265,7 +2267,7 @@ which will toggle the "always on top" state of the X11 device window.
 Alternatively, you can right click on the X11 device window title bar and
 choose "Always on top". This is useful to emulate a feature present in R IDEs
 which can display R plots in a separate panel. Although we can not embed an R
-graphical device in Nvim, we can at least make it always visible over the
+graphical device in Neovim, we can at least make it always visible over the
 terminal emulator or the GVim window.
 
 
@@ -2279,13 +2281,14 @@ the R package "debug":
    library(debug)
    mtrace(function_name)
 <
-Once the library is installed and loaded, you should use `mtrace(function_name)`
-to enable the debugging of a function. Then, the next time that the function
-is called it will enter in debugging mode. Once debugging a function, you can
-hit <Enter> to evaluate the current line, `go(n)` to go to line `n` in the
-function and `qqq()` to quit the function (See debug's help for details). A
-useful tip is to click on the title bar of the debug window and choose "Always
-on top" or a similar option provided by your desktop manager.
+Once the library is installed and loaded, you should use
+`mtrace(function_name)` to enable the debugging of a function. Then, the next
+time that the function is called it will enter in debugging mode. Once
+debugging a function, you can hit <Enter> to evaluate the current line,
+`go(n)` to go to line `n` in the function and `qqq()` to quit the function
+(See debug's help for details). A useful tip is to click on the title bar of
+the debug window and choose "Always on top" or a similar option provided by
+your desktop manager.
 
 
 ------------------------------------------------------------------------------
@@ -2327,7 +2330,7 @@ See also: |R_latexcmd|.
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
 
-Here are some suggestions of configuration of Nvim, Bash and R. To
+Here are some suggestions of configuration for Neovim, Bash and R. To
 understand what you are doing, and change the configuration to your taste,
 please read this document from the beginning.
 
@@ -2354,7 +2357,7 @@ please read this document from the beginning.
    vmap <Space> <Plug>RDSendSelection
    nmap <Space> <Plug>RDSendLine
 
-   " The lines below are suggestions for Nvim in general and are not
+   " The lines below are suggestions for Neovim in general and are not
    " specific to the improvement of Nvim-R.
 
    " Highlight the last searched pattern:
@@ -2363,7 +2366,7 @@ please read this document from the beginning.
    " Show where the next pattern is as you type it:
    set incsearch
 
-   " By default, Nvim indents code by 8 spaces. Most people prefer 4
+   " By default, Neovim indents code by 8 spaces. Most people prefer 4
    " spaces:
    set sw=4
 
@@ -2492,7 +2495,7 @@ Then, start Tmux before starting Neovim:
    exit
 <
 In this case, when you start R, the terminal window is split in two regions:
-one for Nvim and the other for Tmux. Then, it's useful (but not required) to
+one for Neovim and the other for Tmux. Then, it's useful (but not required) to
 know some Tmux commands. After you finished editing the file, you have to type
 `exit` to quit the Tmux session.
 
@@ -2534,7 +2537,7 @@ configuration file:
 <
 
 Tmux automatically renames window titles to the command currently running.
-Nvim-R sets the title of the window where Nvim and R are running to "NvimR".
+Nvim-R sets the title of the window where Neovim and R are running to "NvimR".
 This title will be visible only if Tmux status bar is "on", and it is useful
 only if you have created new windows with the <C-a>c command. You can change
 the value of R_tmux_title to either set a different title or let Tmux set the
@@ -2543,9 +2546,9 @@ title automatically. Examples:
    let R_tmux_title = "Nvim-R"
    let R_tmux_title = "automatic"
 <
-The Object Browser will be created in an independent Nvim instance in a Tmux
-pane. If you prefer the Object Browser always created as an Nvim split window,
-put in your |vimrc|:
+The Object Browser will be created in an independent Neovim instance in a Tmux
+pane. If you prefer the Object Browser always created as an Neovim split
+window, put in your |vimrc|:
 >
    let R_tmux_ob = 0
 <
@@ -2598,21 +2601,21 @@ terminal emulator:
   man tmux
 <
 Note: Because <C-a> was configured as the Tmux escape character, it will not
-be passed to applications running under Tmux. To send <C-a> to either R or Nvim
-you have to type <C-a><C-a>.
+be passed to applications running under Tmux. To send <C-a> to either R or
+Neovim you have to type <C-a><C-a>.
 
 
 Copying and pasting~
 
-You do not need to copy code from Nvim to R because you can use the plugin's
-shortcuts to send the code. For pasting the output of R commands into Nvim's
+You do not need to copy code from Neovim to R because you can use the plugin's
+shortcuts to send the code. For pasting the output of R commands into Neovim's
 buffer, you can use the command :|Rinsert|. If you want to copy text from an
 application running inside the Tmux to another application also running in
 Tmux, as explained in the previous subsection, you can enter in Tmux
 copy/scroll mode, select the text, copy it, switch to the other application
 pane and, then, paste.
 
-However, if you want to copy something from either Nvim or R to another
+However, if you want to copy something from either Neovim or R to another
 application not running inside Tmux, Tmux may prevent the X server from
 capturing the text selected by the mouse. This can be prevented by
 pressing the <Shift> key, as it suspends the capturing of mouse events
@@ -2624,8 +2627,8 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 
 Remote access~
 
-The Nvim-R can not send commands from a local Nvim to a remote R, but
-you can access the remote machine through ssh and run Tmux, Nvim and R in the
+The Nvim-R can not send commands from a local Neovim to a remote R, but
+you can access the remote machine through ssh and run Tmux, Neovim and R in the
 remote machine. Tmux should not be running in the local machine because some
 environment variables could pass from the local to the remote Tmux and make
 the plugin confuse.
@@ -2639,13 +2642,13 @@ step-by-step procedure to run Nvim-R remotely:
   - Start Tmux:
       tmux
 
-  - Start Nvim:
+  - Start Neovim:
       nvim script.R
 
-  - Use Nvim to start an R session:
+  - Use Neovim to start an R session:
       <LocalLeader>rf
 
-  - Send code from Nvim to R, and, then, detach Nvim and R with <C-a>d
+  - Send code from Neovim to R, and, then, detach Neovim and R with <C-a>d
     The command will be <C-b>d if you have not set <C-a> as the escape
     character in your ~/.tmux.conf.
 
@@ -2659,7 +2662,11 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.0 (2016-02-07)
+0.9.1 (2016-02-27)
+
+ * New option: R_close_term.
+
+0.9.0 (2015-11-03)
 
  * Initial release of Nvim-R for Neovim 0.1.0.
 
