@@ -678,6 +678,10 @@ function StartR(whatr)
     else
         let start_options += ['options(nvimcom.nvimpager = TRUE)']
     endif
+    if g:R_in_buffer && g:R_esc_term
+        let start_options += ['options(editor = nvimcom:::nvim.edit)']
+    endif
+
     let rwd = ""
     if g:R_nvim_wd == 0
         let rwd = expand("%:p:h")
@@ -697,7 +701,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.8.4") warning("Your version of Nvim-R requires nvimcom-0.9-8.4.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.9") warning("Your version of Nvim-R requires nvimcom-0.9-9.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -740,20 +744,6 @@ function StartR(whatr)
     endif
 
     echon
-endfunction
-
-" To be called by edit() in R running in Neovim buffer.
-function ShowRObject(fname)
-    call RWarningMsg("ShowRObject not implemented yet: '" . a:fname . "'")
-    let fcont = readfile(a:fname)
-    let s:finalA = g:rplugin_tmpdir . "/nvimcom_edit_" . $NVIMR_ID . "_A"
-    let finalB = g:rplugin_tmpdir . "/nvimcom_edit_" . $NVIMR_ID . "_B"
-    let finalB = substitute(finalB, ' ', '\\ ', 'g')
-    exe "tabnew " . finalB
-    call setline(".", fcont)
-    set ft=r
-    stopinsert
-    autocmd BufUnload <buffer> call delete(s:finalA) | unlet s:finalA | startinsert
 endfunction
 
 " Send SIGINT to R
@@ -803,8 +793,8 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
-        if nvimcom_version != "0.9.8.4"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-8.4.')
+        if nvimcom_version != "0.9.9"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-9.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -2968,7 +2958,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.8.4"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.9"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
