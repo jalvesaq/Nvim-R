@@ -32,10 +32,10 @@ function StartR_TmuxSplit(rcmd)
     else
         let tcmd .= "-l " . g:R_rconsole_height
     endif
-    if !g:R_restart
-        " Let Tmux automatically kill the panel when R quits.
-        let tcmd .= " '" . a:rcmd . "'"
-    endif
+
+    " Let Tmux automatically kill the panel when R quits.
+    let tcmd .= " '" . a:rcmd . "'"
+
     let rlog = system(tcmd)
     if v:shell_error
         call RWarningMsg(rlog)
@@ -48,13 +48,6 @@ function StartR_TmuxSplit(rcmd)
         return
     endif
     let g:SendCmdToR = function('SendCmdToR_TmuxSplit')
-    if g:R_restart
-        sleep 200m
-        let ca_ck = g:R_ca_ck
-        let g:R_ca_ck = 0
-        call g:SendCmdToR(a:rcmd)
-        let g:R_ca_ck = ca_ck
-    endif
     let g:rplugin_last_rcmd = a:rcmd
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)

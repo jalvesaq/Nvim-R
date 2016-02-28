@@ -623,11 +623,6 @@ endfunction
 
 " Start R
 function StartR(whatr)
-    if g:R_only_in_tmux && $TMUX_PANE == ""
-        call RWarningMsg("Not inside Tmux (and option R_only_in_tmux = 1).")
-        return
-    endif
-
     if !isdirectory(g:rplugin_tmpdir)
         call mkdir(g:rplugin_tmpdir, "p", 0700)
     endif
@@ -719,15 +714,8 @@ function StartR(whatr)
         return
     endif
 
-    " R was already started. Should restart it or warn?
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        if g:R_restart
-            call RQuit("restartR")
-            let g:rplugin_nvimcom_port = 0
-            sleep 100m
-        elseif IsSendCmdToRFake()
-            return
-        endif
+    if IsSendCmdToRFake()
+        return
     endif
 
     let args_str = join(g:rplugin_r_args)
@@ -751,16 +739,6 @@ function StopR()
     if g:rplugin_r_pid
         call system("kill -s SIGINT " . g:rplugin_r_pid)
     endif
-endfunction
-
-function OpenRScratch()
-    below 6split R_Scratch
-    set filetype=r
-    setlocal noswapfile
-    set buftype=nofile
-    nmap <buffer><silent> <Esc> :quit<CR>
-    nmap <buffer><silent> q :quit<CR>
-    startinsert
 endfunction
 
 function WaitNvimcomStart()
@@ -1656,12 +1634,6 @@ function RQuit(how)
         if a:how == "save"
             sleep 200m
         endif
-        if g:R_restart
-            let ca_ck = g:R_ca_ck
-            let g:R_ca_ck = 0
-            call g:SendCmdToR("exit")
-            let g:R_ca_ck = ca_ck
-        endif
         sleep 50m
         call CloseExternalOB()
     endif
@@ -2006,7 +1978,7 @@ function ShowRDoc(rkeyword)
     redraw
 endfunction
 
-function! ROpenPDF(path)
+function ROpenPDF(path)
     if a:path == "Get Master"
         let tmpvar = SyncTeX_GetMaster()
         let pdfpath = tmpvar[1] . '/' . tmpvar[0] . '.pdf'
@@ -2063,7 +2035,7 @@ function! ROpenPDF(path)
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
 
-function! RStart_Zathura(basenm)
+function RStart_Zathura(basenm)
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
     if g:rplugin_has_wmctrl && g:rplugin_has_dbussend && filereadable("/proc/sys/kernel/pid_max")
@@ -2782,7 +2754,6 @@ call RSetDefaultValue("g:R_nvim_wd",           0)
 call RSetDefaultValue("g:R_source_args",    "''")
 call RSetDefaultValue("g:R_commented_lines",   0)
 call RSetDefaultValue("g:R_after_start",    "''")
-call RSetDefaultValue("g:R_restart",           0)
 call RSetDefaultValue("g:R_vsplit",            0)
 call RSetDefaultValue("g:R_csv_warn",          1)
 call RSetDefaultValue("g:R_rconsole_width",   -1)
@@ -2791,7 +2762,6 @@ call RSetDefaultValue("g:R_tmux_title","'NvimR'")
 call RSetDefaultValue("g:R_listmethods",       0)
 call RSetDefaultValue("g:R_specialplot",       0)
 call RSetDefaultValue("g:R_notmuxconf",        0)
-call RSetDefaultValue("g:R_only_in_tmux",      0)
 call RSetDefaultValue("g:R_routnotab",         0)
 call RSetDefaultValue("g:R_editor_w",         66)
 call RSetDefaultValue("g:R_help_w",           46)
