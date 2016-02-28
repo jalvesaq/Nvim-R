@@ -424,6 +424,7 @@ function! SyncTeX_backward(fname, ln)
             let rnwln = a:ln
         else
             call RWarningMsg("Could not find '" . basenm . ".Rnw'.")
+            return
         endif
     endif
 
@@ -640,7 +641,7 @@ function! Run_EvinceBackward()
     endif
     if !did_evince
         call add(g:rplugin_evince_list, basenm)
-        let g:rplugin_jobs["Python (Evince backward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf", "nvim"], g:rplugin_job_handlers)
+        let g:rplugin_jobs["Python (Evince backward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf"], g:rplugin_job_handlers)
     endif
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
