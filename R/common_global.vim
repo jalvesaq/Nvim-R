@@ -696,7 +696,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.9") warning("Your version of Nvim-R requires nvimcom-0.9-9.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.10") warning("Your version of Nvim-R requires nvimcom-0.9-10.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -771,8 +771,8 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
-        if nvimcom_version != "0.9.9"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-9.')
+        if nvimcom_version != "0.9.10"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-10.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -2895,7 +2895,7 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.9"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.10"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines

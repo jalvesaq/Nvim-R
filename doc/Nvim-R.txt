@@ -107,7 +107,7 @@ Before installing the plugin, you should install its dependencies:
 
    R >= 3.0.0: http://www.r-project.org/
 
-   nvimcom 0.9-9: https://github.com/jalvesaq/nvimcom/releases
+   nvimcom 0.9-10: https://github.com/jalvesaq/nvimcom/releases
 
    Additional dependencies for editing Rnoweb documents:~
 
@@ -2647,7 +2647,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.1 (2016-02-27)
+0.9.1 (2016-02-28)
 
  * New option: R_close_term.
  * Delete option: R_restart.
