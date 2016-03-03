@@ -698,7 +698,10 @@ Normal, Visual and Insert modes.
 5.3. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
-operator. See: https://github.com/jcfaria/Vim-R-plugin/issues/94
+operator. Also, only current function scope is sent to R. See:
+
+   https://github.com/jcfaria/Vim-R-plugin/issues/94
+   https://github.com/jalvesaq/Nvim-R/issues/34
 
 
 ------------------------------------------------------------------------------
@@ -1988,8 +1991,8 @@ and in your |vimrc| (see |R_nvimpager|):
 							    *Nvim-R-showmarks*
 9.3. How do marked blocks work?~
 
-Neovim allows you to put several marks (bookmarks) in buffers. The most
-commonly used marks are the lowercase alphabet letters. If the cursor is
+Neovim allows you to put several marks (bookmarks) in buffers (see |mark|). The
+most commonly used marks are the lowercase alphabet letters. If the cursor is
 between any two marks, the plugin will send the lines between them to R if you
 press <LocalLeader>bb. If the cursor is above the first mark, the plugin will
 send from the beginning of the file to the mark. If the cursor is below the
@@ -1997,8 +2000,8 @@ last mark, the plugin will send from the mark to the end of the file. The mark
 above the cursor is included and the mark below is excluded from the block to
 be sent to R. To create a mark, press m<letter> in Normal mode.
 
-We recommended the use of vim-signature which show what lines have marks
-defined. The plugins are available at:
+We recommended the use of either ShowMarks or vim-signature which show what
+lines have marks defined. The plugins are available at:
 
    http://www.vim.org/scripts/script.php?script_id=152
    https://github.com/kshenoy/vim-signature
@@ -2647,7 +2650,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.1 (2016-02-28)
+0.9.1 (2016-03-01)
 
  * New option: R_close_term.
  * Delete option: R_restart.
