@@ -1310,6 +1310,14 @@ You can also set the initial number of lines and columns of the R window:
    let R_rconsole_height = 15
    let R_rconsole_width = 40
 <
+Note: If running R in a Neovim buffer, the number of lines and columns will
+automatically change if you switch between horizontal and vertical splits (see
+|CTRL-W_K| and |CTRL-W_H|). You may request Neovim to try to keep the minimum
+width and height of a specific window by setting the options 'winwidth' and
+'winheight'. So, if the window is split horizontally and you want a small R
+Console window, you should set a large value for 'winheight' in the script
+window.
+
 
 ------------------------------------------------------------------------------
 							       *R_applescript*
