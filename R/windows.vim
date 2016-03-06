@@ -134,4 +134,3 @@ function SendCmdToR_Windows(...)
     "call setreg('+', save_clip)
     return 1
 endfunction
-

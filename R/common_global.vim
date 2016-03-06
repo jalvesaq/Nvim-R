@@ -630,6 +630,12 @@ function StartR(whatr)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
 
+    if $R_DEFAULT_PACKAGES == ""
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
+        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+    endif
+
     if a:whatr =~ "custom"
         call inputsave()
         let r_args = input('Enter parameters for R: ')

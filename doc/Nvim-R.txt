@@ -136,32 +136,17 @@ Before installing the plugin, you should install its dependencies:
                  The library setwidth adjusts the value of `options("width")`
                  whenever the terminal is resized.
 		 (Optional if |R_in_buffer| and not required if using R.app)
+		 You should put in your Rprofile: `library(setwidth)`
 
    colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
 		 (Optional if |R_in_buffer| and not required if using R.app)
+		 You should put in your Rprofile: `library(colorout)`
 
    Tmux >= 1.8:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
 		 terminal emulator (see |R_in_buffer|).
 
-Put the following lines in your `~/Rprofile` (you don't need `colorout` and
-`setwidth` if you either are on Windows or will run R.app on OS X):
->
-   if(interactive()){
-       # library(colorout) # Uncomment if you use it
-       # library(setwidth) # Uncomment if you use it
-       if(Sys.getenv("NVIMR_TMPDIR") != ""){
-           options(nvimcom.verbose = 1) # To know nvimcom was successfully loaded
-           library(nvimcom)
-       }
-   }
-<
-If you do not know where your .Rprofile is, do the following command in R
-Console to open it:
->
-   edit(file = "~/.Rprofile")
-<
 You may want to improve the configuration of your |vimrc| for a better use of
 the plugin. You need to activate plugins and indentation according to
 'filetype'. You should have at least the following options at the top or at
@@ -1587,14 +1572,6 @@ higher value for the variable in your |vimrc|. Example:
 >
    let R_nvimcom_wait = 10000
 <
-Note: You should have the line  `library(nvimcom)`  in your `~/.Rprofile`.
-
-If you are using the plugin as a global plugin for a REPL different than R
-(python, julia, etc), you can set |R_nvimcom_wait| to a negative number to
-skip this step:
->
-   let R_nvimcom_wait = -1
-<
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
@@ -2376,14 +2353,9 @@ please read this document from the beginning.
    ~/.Rprofile~
 >
    if(interactive()){
-       options(nvimcom.verbose = 1)
-       # Load the required libraries:
+       # Suggested libraries:
        library(colorout)
        library(setwidth)
-       if(Sys.getenv("NVIMR_TMPDIR") != ""){
-	   options(nvimcom.verbose = 1)
-	   library(nvimcom)
-       }
 
        # Use text based web browser to navigate through R docs after help.start():
        options(browser = function(u) .C("nvimcom_msg_to_nvim",
