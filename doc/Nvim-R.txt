@@ -740,7 +740,7 @@ Additionally, Nvim-R sets the value of its internal variable SendCmdToR from
 SendCmdToR_fake to the appropriate value when R is successfully started. It is
 possible to set the values of all those variables manually, but, as you can
 see below, it is not practical to do so. If you have either started R before
-Neovim or closed Neo-1vim and opened it again and really want full
+Neovim or closed Neovim and opened it again and really want full
 communication between Neovim and R, you can try the following (not all
 procedures are necessary for all cases):
 
