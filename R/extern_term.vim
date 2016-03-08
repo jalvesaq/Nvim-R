@@ -21,7 +21,7 @@ function StartR_ExternalTerm(rcmd)
         let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') . ' NVIMR_ID=' . $NVIMR_ID . ' NVIMR_SECRET=' . $NVIMR_SECRET . ' ' . a:rcmd
+    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') . ' NVIMR_ID=' . $NVIMR_ID . ' NVIMR_SECRET=' . $NVIMR_SECRET . ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES . ' ' . a:rcmd
 
     call system("tmux -L NvimR has-session -t " . g:rplugin_tmuxsname)
     if v:shell_error

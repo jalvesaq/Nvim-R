@@ -15,7 +15,8 @@ function StartR_TmuxSplit(rcmd)
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
-                \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ]
+                \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
+                \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
     if &t_Co == 256
         call extend(tmuxconf, ['set default-terminal "' . $TERM . '"'])
     endif
