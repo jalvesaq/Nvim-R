@@ -1939,7 +1939,7 @@ ftplugin/rnoweb_nvimr.vim
 ftplugin/rrst_nvimr.vim
 R/common_buffer.vim
 R/common_global.vim
-R/hi_fun.vim
+R/functions.vim
 R/gui_running.vim
 R/nvimbuffer.vim
 R/osx.vim

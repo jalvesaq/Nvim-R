@@ -69,7 +69,7 @@ deb:
 	  - R/extern_term.vim\n\
 	  - R/tmux.vim\n\
 	  - R/tmux_split.vim\n\
-	  - R/hi_fun.vim\n\
+	  - R/functions.vim\n\
 	  - R/gui_running.vim\n\
 	  - R/nvimbuffer.vim\n\
 	  - R/osx.vim\n\
