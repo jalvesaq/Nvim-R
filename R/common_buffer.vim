@@ -64,8 +64,8 @@ if exists("*RCheckLibList")
 endif
 
 if g:R_hi_fun
-    runtime R/functions.vim
-    autocmd Syntax <buffer> runtime R/functions.vim
+    runtime R/hi_fun.vim
+    autocmd Syntax <buffer> runtime R/hi_fun.vim
 endif
 
 if g:R_assign == 3
