@@ -802,6 +802,7 @@ is running:
 |R_args|              Arguments to pass to R
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
+|R_hi_fun|            Highlight R functions
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_rcomment_string|   String to comment code with \xx and \o
@@ -1208,7 +1209,8 @@ value of R_start_libs:
 
 ------------------------------------------------------------------------------
 							    *Rout_more_colors*
-6.10. More colorful syntax highlight of .Rout files~
+							    *R_hi_fun*
+6.10. Syntax highlight: functions and .Rout files~
 
 By default, the R commands in .Rout files are highlighted with the color of
 comments, and only the output of commands has some of its elements highlighted
@@ -1218,6 +1220,11 @@ If you prefer that R commands in the R output are highlighted as they are in R
 scripts, put the following in your |vimrc|:
 >
    let Rout_more_colors = 1
+<
+If you want to disable the syntax highlight of R functions put in your
+|vimrc|:
+>
+   let R_hi_fun = 0
 <
 
 ------------------------------------------------------------------------------
@@ -2265,17 +2272,8 @@ your desktop manager.
 
 
 ------------------------------------------------------------------------------
-9.17. Disable syntax highlight of R functions~
-
-If you want to disable the syntax highlight of R functions put in your
-|vimrc|:
->
-   autocmd Syntax * syntax clear rFunction
-<
-
-------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.18. Integration with LaTeX-Box~
+9.17. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
@@ -2298,7 +2296,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.19. Suggested setup for Nvim-R~
+9.18. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2390,7 +2388,7 @@ Finally, if you want to use vi key bindings in Bash or other shell:
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.20. Syntax highlight of .Rout files~
+9.19. Syntax highlight of .Rout files~
 
 You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Neovim or a terminal
@@ -2444,7 +2442,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.21 Integration with Tmux~
+9.20 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as

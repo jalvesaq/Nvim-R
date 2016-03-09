@@ -2768,6 +2768,14 @@ call RSetDefaultValue("g:R_latexcmd", "'default'")
 call RSetDefaultValue("g:R_texerr",             1)
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
 call RSetDefaultValue("g:R_indent_commented",  1)
+
+call RSetDefaultValue("g:R_hi_fun", 1)
+if !g:R_hi_fun
+    " Declare empty function to be called by nvimcom
+    function FillRLibList()
+    endfunction
+endif
+
 if has("win32")
     let g:R_pdfviewer = "sumatra"
 elseif g:rplugin_is_darwin
