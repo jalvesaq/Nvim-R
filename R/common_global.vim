@@ -621,6 +621,45 @@ function IsSendCmdToRFake()
     return 0
 endfunction
 
+function CheckNvimcomVersion()
+    let neednew = 0
+    if g:rplugin_nvimcom_home == "0"
+        let neednew = 1
+    else
+        if !filereadable(g:rplugin_nvimcom_home . "/DESCRIPTION")
+            let neednew = 1
+        else
+            let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
+            let nvers = substitute(ndesc[1], "Version: ", "", "")
+            if nvers != "0.9-11"
+                let neednew = 1
+            endif
+        endif
+    endif
+
+    if neednew
+        echo "Updating nvimcom... "
+        if has("win32")
+            call SetRHome()
+            let slog = system("Rcmd.exe INSTALL " . g:rplugin_home . "/R/nvimcom")
+            call UnsetRHome()
+        else
+            let slog = system("R CMD INSTALL '" . g:rplugin_home . "/R/nvimcom'")
+        endif
+        if v:shell_error
+            let logl = split(slog, "\n")
+            exe len(logl) . "split" . " Error_building_nvimcom"
+            call setline(1, logl)
+            set nomodified
+            redraw
+            call RWarningMsg("Failed to build nvimcom")
+            sleep 1
+        else
+            echon "OK!"
+        endif
+    endif
+endfunction
+
 " Start R
 function StartR(whatr)
     if !isdirectory(g:rplugin_tmpdir)
@@ -629,6 +668,8 @@ function StartR(whatr)
     call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+
+    call CheckNvimcomVersion()
 
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
@@ -791,7 +832,7 @@ function WaitNvimcomStart()
         endif
         if nvimcom_bin_dir != g:rplugin_nvimcom_bin_dir
             let g:rplugin_nvimcom_bin_dir = nvimcom_bin_dir
-            call writefile([nvimcom_version, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_bin_dir")
+            call writefile([nvimcom_version, nvimcom_home, nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
         endif
         if has("win32")
             let nvc = "nclientserver.exe"
@@ -2896,11 +2937,15 @@ let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_lastev = ""
 
+let g:rplugin_nvimcom_version = "0"
+let g:rplugin_nvimcom_home = ""
 let g:rplugin_nvimcom_bin_dir = ""
-if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
-    let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.11"
-        let g:rplugin_nvimcom_bin_dir = s:filelines[1]
+if filereadable(g:rplugin_compldir . "/nvimcom_info")
+    let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_info")
+    if len(s:filelines) == 3 && s:filelines[0] == "0.9.11"
+        let g:rplugin_nvimcom_version = s:filelines[0]
+        let g:rplugin_nvimcom_home = s:filelines[1]
+        let g:rplugin_nvimcom_bin_dir = s:filelines[2]
     endif
     unlet s:filelines
 endif

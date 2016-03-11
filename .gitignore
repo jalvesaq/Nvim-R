@@ -1,1 +1,10 @@
 doc/tags
+R/nvimcom/src/*.o
+R/nvimcom/src/apps/*.o
+R/nvimcom/src/*.so
+R/nvimcom/src/*.dll
+R/nvimcom/src/apps/*.o
+R/nvimcom/src/apps/*.so
+R/nvimcom/src/apps/*.dll
+R/nvimcom/src/apps/nclientserver
+R/nvimcom/src/apps/nclientserver.exe

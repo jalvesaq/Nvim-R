@@ -1,0 +1,21 @@
+CC?=gcc
+ifeq "$(WIN)" "64"
+    CFLAGS+=-m64 -mwindows -std=gnu99 -O3 -Wall -DWIN32
+    LDFLAGS+=-m64 -shared -s -static-libgcc
+else
+    CFLAGS+=-m32 -mwindows -std=gnu99 -O3 -Wall -DWIN32
+    LDFLAGS+=-m32 -shared -s -static-libgcc
+endif
+
+all: nclientserver.exe libNvimR.dll
+
+# Note: -lWs2_32 must be after the object files
+nclientserver.exe: nclientserver.c
+	$(CC) $(CFLAGS) nclientserver.c -o nclientserver.exe -lWs2_32
+
+libNvimR.dll: nvimr.c
+	$(CC) $(CFLAGS) -c nvimr.c -o nvimr.o
+	$(CC) $(LDFLAGS) -o libNvimR.dll nvimr.o
+
+clean:
+

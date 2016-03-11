@@ -1,0 +1,9 @@
+
+.PHONY: all nvimapps
+
+all: $(SHLIB) nvimapps
+
+$(SHLIB):
+
+nvimapps:
+	(cd apps; make)

@@ -102,18 +102,23 @@ Before installing the plugin, you should install its dependencies:
 
    Main dependencies:~
 
-   Neovim 0.1.2: https://github.com/neovim/neovim/releases
-		 See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
+   Neovim 0.1.2:
+      https://github.com/neovim/neovim/releases
+      See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-		 or Vim >= 7.4.1468: http://www.vim.org/download.php
-		 Vim must be compiled with |+channel|, |+job| and |+conceal|
-		 features. In Normal mode, do `:version`  to check if your Vim
-		 has these features.
+   or Vim >= 7.4.1468:
+      http://www.vim.org/download.php
+      Vim must be compiled with |+channel|, |+job| and |+conceal| features.
+      In Normal mode, do `:version`  to check if your Vim has these features.
 
 
-   R >= 3.0.0: http://www.r-project.org/
+   R >= 3.0.0:
+      http://www.r-project.org/
 
-   nvimcom 0.9-10: https://github.com/jalvesaq/nvimcom/releases
+   Note: The R package `nvimcom` is included in Nvim-R and is automatically
+   installed and updated whenever necessary. The Nvim-R plugin sets the
+   environment variable `R_DEFAULT_PACKAGES`, including `nvimcom` in the list
+   of packages to be loaded on R startup.
 
    Additional dependencies for editing Rnoweb documents:~
 
@@ -169,12 +174,6 @@ Please, see |Nvim-R-vimrc-setup| for more suggestions of configuration.
 Now, install Nvim-R:
 
     https://github.com/jalvesaq/Nvim-R/releases
-
-Note: If you use the development version of Neovim, you should also use the
-development versions of Nvim-R and nvimcom:
-
-    https://github.com/jalvesaq/Nvim-R
-    https://github.com/jalvesaq/nvimcom
 
 
 ------------------------------------------------------------------------------
@@ -1944,6 +1943,9 @@ ftplugin/rhelp_nvimr.vim
 ftplugin/rmd_nvimr.vim
 ftplugin/rnoweb_nvimr.vim
 ftplugin/rrst_nvimr.vim
+syntax/rbrowser.vim
+syntax/rdoc.vim
+syntax/rout.vim
 R/common_buffer.vim
 R/common_global.vim
 R/flag.vim
@@ -1962,9 +1964,37 @@ R/extern_term.vim
 R/windows.vim
 R/nvimrcom.vim
 R/vimrcom.vim
-syntax/rbrowser.vim
-syntax/rdoc.vim
-syntax/rout.vim
+R/nvimcom/DESCRIPTION
+R/nvimcom/NAMESPACE
+R/nvimcom/NEWS
+R/nvimcom/README.md
+R/nvimcom/man/etags2ctags.Rd
+R/nvimcom/man/nvimcom-package.Rd
+R/nvimcom/man/nvim.interlace.rmd.Rd
+R/nvimcom/man/nvim.interlace.rnoweb.Rd
+R/nvimcom/man/nvim.interlace.rrst.Rd
+R/nvimcom/man/nvim.list.args.Rd
+R/nvimcom/man/nvim.names.Rd
+R/nvimcom/man/nvim.plot.Rd
+R/nvimcom/man/nvim.print.Rd
+R/nvimcom/man/nvim.srcdir.Rd
+R/nvimcom/R/etags2ctags.R
+R/nvimcom/R/nvim.bol.R
+R/nvimcom/R/nvimcom.R
+R/nvimcom/R/nvim.help.R
+R/nvimcom/R/nvim.interlace.R
+R/nvimcom/R/nvim.print.R
+R/nvimcom/R/nvim.srcdir.R
+R/nvimcom/R/specialfuns.R
+R/nvimcom/src/apps
+R/nvimcom/src/install.libs.R
+R/nvimcom/src/Makevars
+R/nvimcom/src/Makevars.win
+R/nvimcom/src/nvimcom.c
+R/nvimcom/src/apps/Makefile
+R/nvimcom/src/apps/Makefile.win
+R/nvimcom/src/apps/nclientserver.c
+R/nvimcom/src/apps/nvimr.c
 
 
 ==============================================================================
@@ -2367,8 +2397,9 @@ please read this document from the beginning.
        library(setwidth)
 
        # Use text based web browser to navigate through R docs after help.start():
-       options(browser = function(u) .C("nvimcom_msg_to_nvim",
-                                        paste0('StartTxtBrowser("w3m", "', u, '")')))
+       if(Sys.getenv("NVIMR_TMPDIR") != "")
+           options(browser = function(u) .C("nvimcom_msg_to_nvim",
+                                            paste0('StartTxtBrowser("w3m", "', u, '")')))
    }
 <
 
@@ -2639,7 +2670,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.1 (2016-03-10)
+0.9.1 (2016-03-11)
 
  * Support Vim.
  * New option: R_close_term.
