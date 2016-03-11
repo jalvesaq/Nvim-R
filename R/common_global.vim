@@ -702,7 +702,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.10") warning("Your version of Nvim-R requires nvimcom-0.9-10.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.11") warning("Your version of Nvim-R requires nvimcom-0.9-11.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -777,8 +777,9 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
-        if nvimcom_version != "0.9.10"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-10.')
+        call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
+        if nvimcom_version != "0.9.11"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-11.')
             sleep 1
         endif
         if isdirectory(nvimcom_home . "/bin/x64")
@@ -813,22 +814,21 @@ function WaitNvimcomStart()
                 endif
                 if v:windowid == 0 && $WINDOWID == ""
                     call RWarningMsg("Neovim did not define $WINDOWID")
-                    if v:windowid != 0 && $WINDOWID == ""
-                        let $WINDOWID = v:windowid
-                    endif
+                endif
+                if v:windowid != 0 && $WINDOWID == ""
+                    let $WINDOWID = v:windowid
                 endif
             endif
-            if g:rplugin_jobs["ClientServer"] == 0
-                let g:rplugin_jobs["ClientServer"] = jobstart(nvc, g:rplugin_job_handlers)
+            if !IsJobRunning("ClientServer")
+                let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
             else
                 " ClientServer already started by ftplugin/rnoweb_nvimr.vim
-                call jobsend(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
                 call SendToNvimcom("\001" . g:rplugin_myport)
             endif
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
-        call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
 
         if g:R_tmux_split
             " Environment variables persists across Tmux windows.
@@ -909,16 +909,16 @@ function RBrOpenCloseLs(stt)
 endfunction
 
 function SendToNvimcom(cmd)
-    if g:rplugin_jobs["ClientServer"] == 0
+    if !IsJobRunning("ClientServer")
         call RWarningMsg("Neovim client not running.")
         return
     endif
-    call jobsend(g:rplugin_jobs["ClientServer"], "\002" . a:cmd . "\n")
+    call JobStdin(g:rplugin_jobs["ClientServer"], "\002" . a:cmd . "\n")
 endfunction
 
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
-    if g:rplugin_jobs["ClientServer"]
+    if IsJobRunning("ClientServer")
         if &filetype == "rbrowser" && g:R_tmux_split
             call SendToNvimcom("\002" . g:rplugin_myport)
         elseif g:rplugin_nvimcom_port
@@ -1527,7 +1527,7 @@ endfunction
 function RClearConsole()
     if has("win32")
         " RClearConsole
-        call jobsend(g:rplugin_jobs["ClientServer"], "\006\n")
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\006\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -1592,7 +1592,7 @@ function RQuit(how)
 
     if g:R_save_win_pos
         " SaveWinPos
-        call jobsend(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
     " Must be in term buffer to get TermClose event triggered
@@ -2008,6 +2008,37 @@ function ROpenPDF(path)
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
 
+function StartZathuraNeovim(basenm)
+    let g:rplugin_jobs["Zathura"] = jobstart(["zathura",
+                \ "--synctex-editor-command",
+                \ "nclientserver %{input} %{line}", a:basenm . ".pdf"],
+                \ {"detach": 1, "on_stderr": function('ROnJobStderr')})
+    if g:rplugin_jobs["Zathura"] < 1
+        call RWarningMsg("Failed to run Zathura...")
+    else
+        let g:rplugin_zathura_pid[a:basenm] = jobpid(g:rplugin_jobs["Zathura"])
+    endif
+endfunction
+
+function StartZathuraVim(basenm)
+    let pycode = ["# -*- coding: " . &encoding . " -*-",
+                \ "import subprocess",
+                \ "import os",
+                \ "import sys",
+                \ "FNULL = open(os.devnull, 'w')",
+                \ "a3 = '" . a:basenm . ".pdf'",
+                \ "zpid = subprocess.Popen(['zathura', '--synctex-editor-command', 'nclientserver %{input} %{line}', a3], stdout = FNULL, stderr = FNULL).pid",
+                \ "sys.stdout.write(str(zpid))" ]
+    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
+    let pid = system("python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
+    if pid == 0
+        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
+    else
+        let g:rplugin_zathura_pid[a:basenm] = pid
+    endif
+    call delete(g:rplugin_tmpdir . "/start_zathura.py")
+endfunction
+
 function RStart_Zathura(basenm)
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
@@ -2029,18 +2060,11 @@ function RStart_Zathura(basenm)
         endif
     endif
 
-    " TODO: Delete this paragraph after Neovim 0.2 is released:
-    if !exists("*jobpid")
-        call RWarningMsg("Neovim function 'jobpid()' does not exist. Please, update Neovim.")
-        return
-    endif
-
     let $NVIMR_PORT = g:rplugin_myport
-    let g:rplugin_jobs["Zathura"] = jobstart(["zathura", "--synctex-editor-command", "nclientserver %{input} %{line}", a:basenm . ".pdf"], {"detach": 1, "on_stderr": function('ROnJobStderr')})
-    if g:rplugin_jobs["Zathura"] < 1
-        call RWarningMsg("Failed to run Zathura...")
+    if exists("*jobpid")
+        call StartZathuraNeovim(a:basenm)
     else
-        let g:rplugin_zathura_pid[a:basenm] = jobpid(g:rplugin_jobs["Zathura"])
+        call StartZathuraVim(a:basenm)
     endif
 endfunction
 
@@ -2487,8 +2511,8 @@ function RBufEnter()
 endfunction
 
 function RVimLeave()
-    if g:rplugin_jobs["ClientServer"]
-        call jobstop(g:rplugin_jobs["ClientServer"])
+    if IsJobRunning("ClientServer")
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\x08Quit\n")
     endif
     call delete(g:rplugin_rsource)
     call delete(g:rplugin_tmpdir . "/start_options.R")
@@ -2620,42 +2644,6 @@ function RSourceOtherScripts()
     endif
 endfunction
 
-function ROnJobStdout(job_id, data)
-    for cmd in a:data
-        let cmd = substitute(cmd, '\r', '', 'g')
-        if cmd == ""
-            continue
-        endif
-        if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
-            exe cmd
-        else
-            call RWarningMsg("[Job] Unknown command: " . cmd)
-        endif
-    endfor
-endfunction
-
-function ROnJobStderr(job_id, data)
-    for key in keys(g:rplugin_jobs)
-        if g:rplugin_jobs[key] == a:job_id
-            call RWarningMsg('[' . key . '] ' . substitute(join(a:data), '\r', '', 'g'))
-            return
-        endif
-    endfor
-    call RWarningMsg('[Unknown job] ' . substitute(join(a:data), '\r', '', 'g'))
-endfunction
-
-function ROnJobExit(job_id, data)
-    for key in keys(g:rplugin_jobs)
-        if g:rplugin_jobs[key] == a:job_id
-            let g:rplugin_jobs[key] = 0
-            if a:data != 0
-                call RWarningMsg('"' . key . '"' . ' exited with status ' . a:data)
-            endif
-            break
-        endif
-    endfor
-endfunction
-
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call g:SendCmdToR('rtags(ofile = "TAGS")')
@@ -2752,10 +2740,13 @@ call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
-if has("win32") || !exists("*termopen")
+if has("win32")
     call RSetDefaultValue("g:R_in_buffer",     0)
 else
     call RSetDefaultValue("g:R_in_buffer",     1)
+endif
+if !exists("*termopen")
+    let g:R_in_buffer = 0
 endif
 if g:R_in_buffer
     call RSetDefaultValue("g:R_nvimpager", "'vertical'")
@@ -2899,7 +2890,6 @@ let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_status_line = &statusline
 let g:rplugin_running_objbr = 0
 let g:rplugin_running_rhelp = 0
-let g:rplugin_jobs = {"ClientServer": 0, "R": 0, "Terminal emulator": 0}
 let g:rplugin_r_pid = 0
 let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
@@ -2909,13 +2899,17 @@ let g:rplugin_lastev = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_bin_dir")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_bin_dir")
-    if len(s:filelines) == 2 && s:filelines[0] == "0.9.10"
+    if len(s:filelines) == 2 && s:filelines[0] == "0.9.11"
         let g:rplugin_nvimcom_bin_dir = s:filelines[1]
     endif
     unlet s:filelines
 endif
 
-let g:rplugin_job_handlers = {'on_stdout': function('ROnJobStdout'), 'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit')}
+if has("nvim")
+    runtime R/nvimrcom.vim
+else
+    runtime R/vimrcom.vim
+endif
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0

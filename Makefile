@@ -69,6 +69,7 @@ deb:
 	  - R/extern_term.vim\n\
 	  - R/tmux.vim\n\
 	  - R/tmux_split.vim\n\
+	  - R/flag.vim\n\
 	  - R/functions.vim\n\
 	  - R/gui_running.vim\n\
 	  - R/nvimbuffer.vim\n\
@@ -79,6 +80,8 @@ deb:
 	  - R/synctex_evince_backward.py\n\
 	  - R/synctex_evince_forward.py\n\
 	  - R/windows.vim\n\
+	  - R/vimrcom.vim\n\
+	  - R/nvimrcom.vim\n\
 	  - syntax/rbrowser.vim\n\
 	  - syntax/rdoc.vim\n\
 	  - syntax/rout.vim\n\

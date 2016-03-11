@@ -1,7 +1,7 @@
 ### Nvim-R
 
-This is the development code of Nvim-R which improves Neovim's support to edit
-R code (it does not support Vim). It started as a copy of the
+This is the development code of Nvim-R which improves the support to edit
+R code by both Vim and Neovim. It started as a copy of the
 [Vim-R-plugin](https://github.com/jcfaria/Vim-R-plugin).
 
 ## Installation
@@ -91,15 +91,15 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
 
 ![Nvim-R screenshots](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/Nvim-R.gif "Nvim-R screenshots")
 
-## The communication between Neovim and R
+## The communication between R and either Vim or Neovim
 
 In addition to sending lines of code to R Console, Nvim-R and R communicate
 with each other through TCP connections. The R package *nvimcom* runs a TCP
-server that receives messages from Neovim, and it also sends messages through
-a TCP connection to Neovim. Moreover, *nvimcom* includes the application
-*nclientserver* which is never used by R itself, but is run by Neovim,
+server that receives messages from either Vim/Neovim, and it also sends messages through
+a TCP connection to Vim/Neovim. Moreover, *nvimcom* includes the application
+*nclientserver* which is never used by R itself, but is run by Vim/Neovim,
 providing both a TCP client and a TCP server. The Diagram below shows the
-three paths of communication between Neovim and R:
+three paths of communication between Vim/Neovim and R:
 
   - The black path is followed by all commands that you trigger in the editor
     and that you can see being pasted into R Console. There are three
@@ -113,7 +113,8 @@ three paths of communication between Neovim and R:
 
      - On Windows operating system, the nclientserver.exe application includes
        Windows API calls to copy the text into the clipboard and then paste it
-       into the R Console.
+       into the R Console. There is also a dll that does the same. NeovimQt
+       uses the application and GVim uses the dll.
 
   - The blue path is followed by the few commands that you trigger, but that
     are not pasted into R Console and do not output anything in R Console;
@@ -129,7 +130,7 @@ three paths of communication between Neovim and R:
     compiling the LaTeX result.
 
 
-![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/nvimcom/master/man/figures/nvimrcom.png "Neovim-R communication")
+![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
 
 [vim-plug]: https://github.com/junegunn/vim-plug
 [Vundle]: https://github.com/gmarik/Vundle.vim

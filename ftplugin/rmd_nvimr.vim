@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin") || !has("nvim")
+if exists("g:disable_r_ftplugin")
     finish
 endif
 

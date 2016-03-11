@@ -52,7 +52,13 @@ function StartR_ExternalTerm(rcmd)
         let initterm = ['cd "' . getcwd() . '"',
                     \ opencmd ]
         call writefile(initterm, g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-        let g:rplugin_jobs["Terminal emulator"] = jobstart("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'", {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
+        if has("nvim")
+            let g:rplugin_jobs["Terminal emulator"] = StartJob("sh '" . g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh'",
+                        \ {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
+        else
+            let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
+                        \ {'out-cb': function('ROnJobStderr'), 'err-cb': function('ROnJobExit')})
+        endif
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')

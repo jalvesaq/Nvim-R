@@ -10,6 +10,7 @@ ftplugin/rrst_nvimr.vim
 R/common_buffer.vim
 R/common_global.vim
 R/extern_term.vim
+R/flag.vim
 R/functions.vim
 R/gui_running.vim
 R/nvimbuffer.vim
@@ -22,6 +23,8 @@ R/synctex_evince_forward.py
 R/tmux.vim
 R/tmux_split.vim
 R/windows.vim
+R/vimrcom.vim
+R/nvimrcom.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim
 syntax/rout.vim

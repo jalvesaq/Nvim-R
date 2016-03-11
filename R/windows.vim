@@ -1,7 +1,6 @@
 " This file contains code used only on Windows
 
 let g:rplugin_sumatra_in_path = 0
-let g:rplugin_python_initialized = 0
 
 call RSetDefaultValue("g:R_sleeptime", 100)
 call RSetDefaultValue("g:R_set_home_env", 1)
@@ -99,19 +98,57 @@ function StartR_Windows()
     endif
 
     call SetRHome()
-    call system("start " . g:rplugin_R . ' ' . join(g:R_args))
+    if has("nvim")
+        call system("start " . g:rplugin_R . ' ' . join(g:R_args))
+    else
+        silent exe "!start " . g:rplugin_R . ' ' . join(g:R_args)
+    endif
     call UnsetRHome()
 
     let g:SendCmdToR = function('SendCmdToR_Windows')
     if WaitNvimcomStart()
         if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
             " ArrangeWindows
-            call jobsend(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
+            call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
         endif
         if g:R_after_start != ''
             call system(g:R_after_start)
         endif
     endif
+endfunction
+
+function SendCmdToR_GVim(cmd)
+    let save_clip = getreg('+')
+    call setreg('+', a:cmd)
+
+    if has("win64")
+        let ndll = substitute(g:rplugin_nvimcom_bin_dir, "/i386", "/x64", "") . "/libNvimR.dll"
+    else
+        let ndll = substitute(g:rplugin_nvimcom_bin_dir, "/x64", "/i386", "") . "/libNvimR.dll"
+    endif
+    if !filereadable(ndll)
+        call RWarningMsg('"' . ndll . '" not readable')
+        return
+    endif
+    let repl = libcall(ndll, "SendToRConsole", a:cmd)
+    if repl != "OK"
+        call RWarningMsg(repl)
+        call ClearRInfo()
+    endif
+    call foreground()
+
+    call setreg('+', save_clip)
+endfunction
+
+function SendCmdToR_NeovimQt(cmd)
+    " FIXME: save and restore clipboard contents in Neovim too
+
+    " SendToRConsole
+    call JobStdin(g:rplugin_jobs["ClientServer"], "\003" . cmd)
+
+    " Raise Neovim window
+    exe "sleep " . g:rplugin_sleeptime
+    call JobStdin(g:rplugin_jobs["ClientServer"], "\007 \n")
 endfunction
 
 function SendCmdToR_Windows(...)
@@ -120,17 +157,10 @@ function SendCmdToR_Windows(...)
     else
         let cmd = a:1 . "\n"
     endif
-    " FIXME: save and restore clipboard contents
-    "let save_clip = getreg('+')
-    "call setreg('+', cmd)
-
-    " SendToRConsole
-    call jobsend(g:rplugin_jobs["ClientServer"], "\003" . cmd)
-
-    " Raise Neovim window
-    exe "sleep " . g:rplugin_sleeptime
-    call jobsend(g:rplugin_jobs["ClientServer"], "\007 \n")
-
-    "call setreg('+', save_clip)
+    if has("nvim")
+        call SendCmdToR_NeovimQt(cmd)
+    else
+        call SendCmdToR_GVim(cmd)
+    endif
     return 1
 endfunction

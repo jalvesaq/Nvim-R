@@ -1,4 +1,8 @@
 
+if exists("*TmuxActivePane")
+    finish
+endif
+
 " Adapted from screen plugin:
 function TmuxActivePane()
     let line = system("tmux list-panes | grep \'(active)$'")
@@ -99,8 +103,9 @@ function StartObjBrowser_Tmux()
                 \ 'set rulerformat=%3(%l%)',
                 \ 'set laststatus=0',
                 \ 'set noruler',
+                \ 'runtime R/tmux_split.vim',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
-                \ 'let g:rplugin_jobs["ClientServer"] = jobstart("nclientserver", g:rplugin_job_handlers)'],
+                \ 'let g:rplugin_jobs["ClientServer"] = StartJob("nclientserver", g:rplugin_job_handlers)'],
                 \ objbrowserfile)
 
     if g:R_objbr_place =~ "left"

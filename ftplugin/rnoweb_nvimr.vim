@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin") || !has("nvim")
+if exists("g:disable_r_ftplugin")
     finish
 endif
 
@@ -432,18 +432,18 @@ function! SyncTeX_backward(fname, ln)
     let rnwf = substitute(rnwf, '^\./', '', '')
 
     if GoToBuf(rnwbn, rnwf, basedir, rnwln)
-        if has("gui_running")
-            if has("win32")
-                "call rpcnotify(0, 'Gui', 'Foreground')
-                call jobsend(g:rplugin_jobs["ClientServer"], "\007 \n")
-            else
-                call foreground()
-            endif
-        elseif g:rplugin_has_wmctrl
+        if g:rplugin_has_wmctrl
             if v:windowid != 0
                 call system("wmctrl -ia " . v:windowid)
             elseif $WINDOWID != ""
                 call system("wmctrl -ia " . $WINDOWID)
+            endif
+        elseif has("gui_running")
+            if has("win32") && has("nvim")
+                "call rpcnotify(0, 'Gui', 'Foreground')
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\007 \n")
+            else
+                call foreground()
             endif
         endif
     endif
@@ -590,7 +590,7 @@ function! SyncTeX_forward(...)
         call system("NVIMR_PORT=" . g:rplugin_myport . " okular --unique " . basenm . ".pdf#src:" . texln . substitute(expand("%:p:h"), ' ', '\\ ', 'g') . "/./" . substitute(basenm, ' ', '\\ ', 'g') . ".tex 2> /dev/null >/dev/null &")
     elseif g:rplugin_pdfviewer == "evince"
         if g:rplugin_evince_loop < 2
-            let g:rplugin_jobs["Python (Evince forward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
+            let g:rplugin_jobs["Python (Evince forward)"] = StartJob(["python", g:rplugin_home . "/R/synctex_evince_forward.py",  basenm . ".pdf", string(texln), basenm . ".tex"], g:rplugin_job_handlers)
         else
             let g:rplugin_evince_loop = 0
         endif
@@ -641,7 +641,7 @@ function! Run_EvinceBackward()
     endif
     if !did_evince
         call add(g:rplugin_evince_list, basenm)
-        let g:rplugin_jobs["Python (Evince backward)"] = jobstart(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf"], g:rplugin_job_handlers)
+        let g:rplugin_jobs["Python (Evince backward)"] = StartJob(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf"], g:rplugin_job_handlers)
     endif
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
 endfunction
@@ -669,11 +669,16 @@ if g:rplugin_pdfviewer != "none"
         if $DISPLAY != "" && g:rplugin_pdfviewer == "evince"
             let g:rplugin_evince_loop = 0
             call Run_EvinceBackward()
-        elseif g:rplugin_nvimcom_bin_dir != "" && g:rplugin_jobs["ClientServer"] == 0 && !($DISPLAY == "" && (g:rplugin_pdfviewer == "zathura" || g:rplugin_pdfviewer == "okular"))
-            if $PATH !~ g:rplugin_nvimcom_bin_dir
-                let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
+        elseif g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0 && !($DISPLAY == "" && (g:rplugin_pdfviewer == "zathura" || g:rplugin_pdfviewer == "okular"))
+            if !has("win32")
+                if $PATH !~ g:rplugin_nvimcom_bin_dir
+                    let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
+                endif
+                if v:windowid != 0 && $WINDOWID == ""
+                    let $WINDOWID = v:windowid
+                endif
+                let g:rplugin_jobs["ClientServer"] = StartJob("nclientserver", g:rplugin_job_handlers)
             endif
-            let g:rplugin_jobs["ClientServer"] = jobstart("nclientserver", g:rplugin_job_handlers)
         endif
     endif
 endif

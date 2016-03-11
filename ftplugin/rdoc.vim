@@ -4,7 +4,7 @@
 
 
 " Only do this when not yet done for this buffer
-if exists("b:did_rdoc_ftplugin") || !has("nvim")
+if exists("b:did_rdoc_ftplugin")
     finish
 endif
 

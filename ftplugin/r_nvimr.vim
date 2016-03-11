@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin") || !has("nvim")
+if exists("g:disable_r_ftplugin")
     finish
 endif
 
@@ -44,12 +44,15 @@ function! ShowRout()
 
     if has("win32")
         let rcmd = 'Rcmd.exe BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
-        let g:rplugin_jobs["Rcmd.exe"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     else
         let rcmd = g:rplugin_R . " CMD BATCH --no-restore --no-save '" . expand("%") . "' '" . s:routfile . "'"
-        let g:rplugin_jobs["R CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     endif
-
+    if has("nvim")
+        let g:rplugin_jobs["R_CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
+    else
+        let rjob = job_start(rcmd, {'close-cb': function('GetRCmdBatchOutput')})
+        let g:rplugin_jobs["R_CMD"] = job_getchannel(rjob)
+    endif
 endfunction
 
 " Convert R script into Rmd, md and, then, html.
