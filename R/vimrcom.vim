@@ -1,5 +1,5 @@
-if !exists("*job_getchannel")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1468. If using Vim, both +channel and +job features must be enabled.")
+if !exists("*job_getchannel") || !has("patch-7.4.1538")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1538. If using Vim, both +channel and +job features must be enabled.")
     let g:rplugin_failed = 1
     finish
 endif
