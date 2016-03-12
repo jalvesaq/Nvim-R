@@ -631,7 +631,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-11"
+            if nvers != "0.9-12"
                 let neednew = 1
             endif
         endif
@@ -743,7 +743,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.11") warning("Your version of Nvim-R requires nvimcom-0.9-11.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.12") warning("Your version of Nvim-R requires nvimcom-0.9-12.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -813,27 +813,26 @@ function WaitNvimcomStart()
     sleep 200m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        let nvimcom_version = vr[0]
-        let nvimcom_home = vr[1]
+        let g:rplugin_nvimcom_version = vr[0]
+        let g:rplugin_nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if nvimcom_version != "0.9.11"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-11.')
+        if g:rplugin_nvimcom_version != "0.9.12"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-12.')
             sleep 1
         endif
-        if isdirectory(nvimcom_home . "/bin/x64")
-            let nvimcom_bin_dir = nvimcom_home . "/bin/x64"
-        elseif isdirectory(nvimcom_home . "/bin/i386")
-            let nvimcom_bin_dir = nvimcom_home . "/bin/i386"
+        if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
+            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin/x64"
+        elseif isdirectory(g:rplugin_nvimcom_home . "/bin/i386")
+            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin/i386"
         else
-            let nvimcom_bin_dir = nvimcom_home . "/bin"
+            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin"
         endif
-        if nvimcom_bin_dir != g:rplugin_nvimcom_bin_dir
-            let g:rplugin_nvimcom_bin_dir = nvimcom_bin_dir
-            call writefile([nvimcom_version, nvimcom_home, nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
-        endif
+
+        call writefile([g:rplugin_nvimcom_version, g:rplugin_nvimcom_home, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
+
         if has("win32")
             let nvc = "nclientserver.exe"
             if $PATH !~ g:rplugin_nvimcom_bin_dir
@@ -2942,7 +2941,7 @@ let g:rplugin_nvimcom_home = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_info")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_info")
-    if len(s:filelines) == 3 && s:filelines[0] == "0.9.11"
+    if len(s:filelines) == 3
         let g:rplugin_nvimcom_version = s:filelines[0]
         let g:rplugin_nvimcom_home = s:filelines[1]
         let g:rplugin_nvimcom_bin_dir = s:filelines[2]

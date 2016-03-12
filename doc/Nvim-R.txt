@@ -857,11 +857,9 @@ is running:
 6.1. R in Neovim buffer~
 
 By default, R runs in a Neovim buffer created with the command |:term|, and
-the <Esc> key is mapped to stop the Terminal mode and go to Normal mode. You
-should avoid the R function `vi()` and use `edit()` instead because Nvim-R
-sets the option "editor" to a function that makes the object to be edited in a
-new tab when `R_esc_term` = 1 (the default value). If you call `vi()`, you may
-be trapped in Insert mode in the nested Vim.
+the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
+Nvim-R sets the option "editor" to a function that makes the object to be
+edited in a new tab when `R_esc_term` = 1 (the default value).
 
 If you want to set you own external editor, set the option "editor" after
 loading nvimcom in your Rprofile. Example:

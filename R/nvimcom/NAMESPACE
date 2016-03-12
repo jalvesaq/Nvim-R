@@ -1,3 +1,4 @@
 export(nvim.list.args, nvim.srcdir, nvim.plot, nvim.interlace.rnoweb,
-nvim.interlace.rrst, nvim.print, nvim.names, etags2ctags, nvim.interlace.rmd)
+nvim.interlace.rrst, nvim.print, nvim.names, etags2ctags,
+nvim.interlace.rmd,vi)
 importFrom(tools, Rd2txt_options, texi2dvi)

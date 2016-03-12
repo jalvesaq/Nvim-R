@@ -68,7 +68,6 @@
     }
 }
 
-
 nvim.edit <- function(name, file, title)
 {
     if(file != "")
@@ -95,7 +94,12 @@ nvim.edit <- function(name, file, title)
     x <- eval(parse(editf))
     unlink(initial)
     unlink(editf)
-    return(invisible(x))
+    x
+}
+
+vi <- function(name = NULL, file = "")
+{
+    nvim.edit(name, file)
 }
 
 nvim_capture_source_output <- function(s, o)
