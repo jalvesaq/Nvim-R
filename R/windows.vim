@@ -47,9 +47,9 @@ endif
 
 if !exists("g:R_args")
     if g:R_in_buffer
-        let g:R_args = []
+        let g:R_args = ["--no-save"]
     else
-        let g:R_args = ["--sdi"]
+        let g:R_args = ["--sdi", "--no-save"]
     endif
 endif
 

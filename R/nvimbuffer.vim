@@ -110,6 +110,8 @@ function StartR_Neovim()
     endif
     let g:rplugin_jobs["R"] = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
     if has("win32")
+        redraw
+        call jobsend(g:rplugin_jobs["R"], g:rplugin_R . " " . join(g:rplugin_r_args) . " && exit\r\n")
         call UnsetRHome()
     endif
     let g:rplugin_R_bufname = bufname("%")

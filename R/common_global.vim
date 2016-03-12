@@ -1620,6 +1620,11 @@ endfunction
 
 " Quit R
 function RQuit(how)
+    if g:R_in_buffer && has("win32")
+        call RWarningMsg("RQuit not implemented yet for R_in_buffer on Windows.")
+        return
+    endif
+
     if exists("b:quit_command")
         let qcmd = b:quit_command
     else
@@ -2780,11 +2785,7 @@ call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
-if has("win32")
-    call RSetDefaultValue("g:R_in_buffer",     0)
-else
-    call RSetDefaultValue("g:R_in_buffer",     1)
-endif
+call RSetDefaultValue("g:R_in_buffer",         1)
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
