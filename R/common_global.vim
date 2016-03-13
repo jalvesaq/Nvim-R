@@ -958,8 +958,9 @@ endfunction
 
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
+    let $NVIMR_PORT = a:p
     if IsJobRunning("ClientServer")
-        if &filetype == "rbrowser" && g:R_tmux_split
+        if exists("b:rplugin_extern_ob")
             call SendToNvimcom("\002" . g:rplugin_myport)
         elseif g:rplugin_nvimcom_port
             call SendToNvimcom("\001" . g:rplugin_myport)
