@@ -729,7 +729,15 @@ clipboard contents are lost permanently.
 
 
 ------------------------------------------------------------------------------
-5.6. R must be started by Vim/Neovim~
+5.6. First command sent to Rgui fails (NeovimQt on Windows)~
+
+The first attempt of sending code to R Console (Rgui) results in the CTRL-V
+being received by NeovimQt. Neovim enters Visual Block mode and we have to
+press <Esc> to go back to normal mode. This problem does not affect Gvim.
+
+
+------------------------------------------------------------------------------
+5.7. R must be started by Vim/Neovim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
