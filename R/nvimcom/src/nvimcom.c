@@ -82,12 +82,10 @@ static ListStatus *firstList = NULL;
 static char *loadedlibs[64];
 static char *builtlibs[64];
 
-// Defined in R source code (src/gnuwin32/rui.c)
-extern void Rconsolecmd(char *cmd);
-
 #ifdef WIN32
 SOCKET sfd;
 static int tid;
+extern void Rconsolecmd(char *cmd); // Defined in R: src/gnuwin32/rui.c
 #else
 static int sfd = -1;
 static pthread_t tid;
@@ -945,6 +943,7 @@ static void nvimcom_parse_received_msg(char *buf)
                 nvimcom_fire();
 #endif
             break;
+#ifdef WIN32
         case 5:
             bbuf = buf;
             bbuf++;
@@ -953,6 +952,7 @@ static void nvimcom_parse_received_msg(char *buf)
                 Rconsolecmd(bbuf);
             }
             break;
+#endif
         case 6: // Toggle list status
 #ifdef WIN32
             if(r_is_busy)

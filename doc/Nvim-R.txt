@@ -787,7 +787,6 @@ is running:
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
-|R_sleeptime|         Time for paste command on R Console (Windows only)
 |R_set_home_env|      Set the value of $HOME for R (Windows only)
 |R_save_win_pos|      Save positions of R and GVim windows (Windows only)
 |R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
@@ -983,21 +982,11 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-								 *R_sleeptime*
 							      *R_set_home_env*
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 6.3. Time for the paste command on Windows~
 
-On Windows, when running Rgui.exe, the plugin copies the command to be sent to
-R in the clipboard and paste it on the R Console. Then, it waits 100
-miliseconds before bringing Vim window to the foreground. If this time is
-too short, the <C-V> command will effect the Vim window, and the editor may
-enter Visual Block mode. If the time is too long, the delay will be annoying.
-You can adjust this waiting time in your |vimrc|. Example:
->
-   let R_sleeptime = 300
-<
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
 positions of the windows when you start R. If you do not like this behavior,
@@ -1992,7 +1981,6 @@ R/nvimcom/src/nvimcom.c
 R/nvimcom/src/apps/Makefile
 R/nvimcom/src/apps/Makefile.win
 R/nvimcom/src/apps/nclientserver.c
-R/nvimcom/src/apps/nvimr.c
 
 
 ==============================================================================

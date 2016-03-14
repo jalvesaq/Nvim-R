@@ -2,20 +2,8 @@
 
 let g:rplugin_sumatra_in_path = 0
 
-call RSetDefaultValue("g:R_sleeptime", 100)
 call RSetDefaultValue("g:R_set_home_env", 1)
 call RSetDefaultValue("g:R_i386", 0)
-
-" Avoid invalid values defined by the user
-exe "let s:sleeptimestr = " . '"' . g:R_sleeptime . '"'
-let s:sleeptime = str2nr(s:sleeptimestr)
-if s:sleeptime < 1 || s:sleeptime > 1000
-    let g:R_sleeptime = 100
-endif
-unlet s:sleeptimestr
-unlet s:sleeptime
-
-let g:rplugin_sleeptime = g:R_sleeptime . 'm'
 
 if !exists("g:rplugin_R_path")
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin_tmpdir . "/run_cmd.bat")

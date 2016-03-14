@@ -1,5 +1,5 @@
-if !exists("*job_getchannel") || !has("patch-7.4.1538")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1538. If using Vim, both +channel and +job features must be enabled.")
+if !exists("*job_getchannel") || !has("patch-7.4.1553")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1553. If using Vim, both +channel and +job features must be enabled.")
     let g:rplugin_failed = 1
     finish
 endif
@@ -64,3 +64,15 @@ let g:rplugin_job_handlers = {
             \ 'out-cb':   function('ROnJobStdout'),
             \ 'err-cb':   function('ROnJobStderr'),
             \ 'close-cb': function('ROnJobExit')}
+
+
+" Check if Vim-R-plugin is installed
+let s:ff = globpath(&rtp, "r-plugin/functions.vim")
+let s:ft = globpath(&rtp, "ftplugin/r*_rplugin.vim")
+if s:ff != "" || s:ft != ""
+    let s:ff = substitute(s:ff, "functions.vim", "", "g")
+    call RWarningMsgInp("Nvim-R conflicts with Vim-R-plugin. Please, uninstall Vim-R-plugin.\n" .
+                \ "At least the following directories and files are from a Vim-R-plugin installation:\n" . s:ff . "\n" . s:ft . "\n")
+endif
+unlet s:ff
+unlet s:ft

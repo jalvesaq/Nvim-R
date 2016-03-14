@@ -631,7 +631,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-12"
+            if nvers != "0.9-13"
                 let neednew = 1
             endif
         endif
@@ -743,7 +743,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.12") warning("Your version of Nvim-R requires nvimcom-0.9-12.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.13") warning("Your version of Nvim-R requires nvimcom-0.9-13.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -819,8 +819,8 @@ function WaitNvimcomStart()
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != "0.9.12"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-12.')
+        if g:rplugin_nvimcom_version != "0.9.13"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-13.')
             sleep 1
         endif
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
@@ -1566,9 +1566,9 @@ endfunction
 
 " Clear the console screen
 function RClearConsole()
-    if has("win32")
+    if !has("win32")
         " RClearConsole
-        call JobStdin(g:rplugin_jobs["ClientServer"], "\006\n")
+        "call JobStdin(g:rplugin_jobs["ClientServer"], "\006\n")
     else
         call g:SendCmdToR("\014", 0)
     endif

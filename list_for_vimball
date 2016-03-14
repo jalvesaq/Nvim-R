@@ -57,4 +57,3 @@ R/nvimcom/src/nvimcom.c
 R/nvimcom/src/apps/Makefile
 R/nvimcom/src/apps/Makefile.win
 R/nvimcom/src/apps/nclientserver.c
-R/nvimcom/src/apps/nvimr.c
