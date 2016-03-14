@@ -117,50 +117,12 @@ function StartR_Windows()
     endif
 endfunction
 
-function SendCmdToR_GVim(cmd)
-    let save_clip = getreg('+')
-    call setreg('+', a:cmd)
-
-    if has("win64")
-        let ndll = substitute(g:rplugin_nvimcom_bin_dir, "/i386", "/x64", "") . "/libNvimR.dll"
-    else
-        let ndll = substitute(g:rplugin_nvimcom_bin_dir, "/x64", "/i386", "") . "/libNvimR.dll"
-    endif
-    if !filereadable(ndll)
-        call RWarningMsg('"' . ndll . '" not readable')
-        return
-    endif
-    let repl = libcall(ndll, "SendToRConsole", a:cmd)
-    if repl != "OK"
-        call RWarningMsg(repl)
-        call ClearRInfo()
-    endif
-    call foreground()
-
-    call setreg('+', save_clip)
-endfunction
-
-function SendCmdToR_NeovimQt(cmd)
-    " FIXME: save and restore clipboard contents in Neovim too
-
-    " SendToRConsole
-    call JobStdin(g:rplugin_jobs["ClientServer"], "\003" . cmd)
-
-    " Raise Neovim window
-    exe "sleep " . g:rplugin_sleeptime
-    call JobStdin(g:rplugin_jobs["ClientServer"], "\007 \n")
-endfunction
-
 function SendCmdToR_Windows(...)
     if g:R_ca_ck
         let cmd = "\001" . "\013" . a:1 . "\n"
     else
         let cmd = a:1 . "\n"
     endif
-    if has("nvim")
-        call SendCmdToR_NeovimQt(cmd)
-    else
-        call SendCmdToR_GVim(cmd)
-    endif
+    call JobStdin(g:rplugin_jobs["ClientServer"], "\003" . cmd)
     return 1
 endfunction

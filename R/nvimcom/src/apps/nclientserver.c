@@ -350,24 +350,13 @@ static void SendToRConsole(char *aString){
     }
 
     SendToServer(NvimcomPort, "\003Set R as busy [SendToRConsole()]");
-    SetForegroundWindow(RConsole);
 
-    const size_t len = strlen(aString) + 1;
-    HGLOBAL h =  GlobalAlloc(GMEM_MOVEABLE, len);
-    memcpy(GlobalLock(h), aString, len);
-    GlobalUnlock(h);
-    OpenClipboard(0);
-    EmptyClipboard();
-    SetClipboardData(CF_TEXT, h);
-    CloseClipboard();
+    char msg[512];
+    snprintf(msg, 510, "\005%s%s", getenv("NVIMR_ID"), aString);
+    SendToServer(NvimcomPort, msg);
 
-    // This is the most inefficient way of sending Ctrl+V. See:
-    // http://stackoverflow.com/questions/27976500/postmessage-ctrlv-without-raising-the-window
-    keybd_event(VK_CONTROL, 0, 0, 0);
-    keybd_event(VkKeyScan('V'), 0, KEYEVENTF_EXTENDEDKEY | 0, 0);
-    // Sleep(0.05);
-    keybd_event(VkKeyScan('V'), 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    // Necessary to force RConsole to process the line
+    PostMessage(RConsole, WM_NULL, 0, 0);
 }
 
 static void RClearConsole(){
@@ -663,7 +652,6 @@ int main(int argc, char **argv){
 #ifdef WIN32
             case 3: // SendToRConsole
                 msg++;
-                strncat(line, "\n", 1023);
                 SendToRConsole(msg);
                 break;
             case 4: // SaveWinPos

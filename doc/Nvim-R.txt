@@ -713,31 +713,7 @@ The nvimcom library is started with the state `busy`.
 
 
 ------------------------------------------------------------------------------
-5.5. Clipboard contents lost (Windows only)~
-
-When sending lines of code to Rgui.exe, GVim does the following:
-
-  1. Copy the contents of the clipboard into a temporary variable.
-  2. Copy the command to the clipboard.
-  3. Raise R window and send CTRL-V to it.
-  4. Raise GVim window.
-  5. Restore the clipboard contents.
-
-That is, the original clipboard contents are not available while the command
-is being sent to R. Neovim-Qt does not follow the steps 1 and 5, and the
-clipboard contents are lost permanently.
-
-
-------------------------------------------------------------------------------
-5.6. First command sent to Rgui fails (NeovimQt on Windows)~
-
-The first attempt of sending code to R Console (Rgui) results in the CTRL-V
-being received by NeovimQt. Neovim enters Visual Block mode and we have to
-press <Esc> to go back to normal mode. This problem does not affect Gvim.
-
-
-------------------------------------------------------------------------------
-5.7. R must be started by Vim/Neovim~
+5.5. R must be started by Vim/Neovim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -2692,7 +2668,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.1 (2016-03-12)
+0.9.1 (2016-03-14)
 
  * Support Vim.
  * New option: R_close_term.

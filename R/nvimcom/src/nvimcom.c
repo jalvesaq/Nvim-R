@@ -82,6 +82,9 @@ static ListStatus *firstList = NULL;
 static char *loadedlibs[64];
 static char *builtlibs[64];
 
+// Defined in R source code (src/gnuwin32/rui.c)
+extern void Rconsolecmd(char *cmd);
+
 #ifdef WIN32
 SOCKET sfd;
 static int tid;
@@ -941,6 +944,14 @@ static void nvimcom_parse_received_msg(char *buf)
             if(objbr_auto != 0)
                 nvimcom_fire();
 #endif
+            break;
+        case 5:
+            bbuf = buf;
+            bbuf++;
+            if(strstr(bbuf, getenv("NVIMR_ID")) == bbuf){
+                bbuf += strlen(getenv("NVIMR_ID"));
+                Rconsolecmd(bbuf);
+            }
             break;
         case 6: // Toggle list status
 #ifdef WIN32
