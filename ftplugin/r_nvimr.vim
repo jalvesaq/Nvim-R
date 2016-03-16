@@ -50,7 +50,7 @@ function! ShowRout()
     if has("nvim")
         let g:rplugin_jobs["R_CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     else
-        let rjob = job_start(rcmd, {'close-cb': function('GetRCmdBatchOutput')})
+        let rjob = job_start(rcmd, {'close_cb': function('GetRCmdBatchOutput')})
         let g:rplugin_jobs["R_CMD"] = job_getchannel(rjob)
     endif
 endfunction

@@ -86,6 +86,12 @@ function StartObjBrowser_Tmux()
     let objbrowserfile = g:rplugin_tmpdir . "/objbrowserInit"
     let tmxs = " "
 
+    if has("nvim")
+        let jopt = '{"on_stdout": "ROnJobStdout", "on_stderr": "ROnJobStderr"}'
+    else
+        let jopt = '{"out_cb": "ROnJobStdout", "err_cb": "ROnJobStderr"}'
+    endif
+
     call writefile([
                 \ 'let g:rplugin_editor_pane = "' . g:rplugin_editor_pane . '"',
                 \ 'let g:rplugin_rconsole_pane = "' . g:rplugin_rconsole_pane . '"',
@@ -94,7 +100,6 @@ function StartObjBrowser_Tmux()
                 \ 'let g:rplugin_tmuxsname = "' . g:rplugin_tmuxsname . '"',
                 \ 'let b:rscript_buffer = "' . bufname("%") . '"',
                 \ 'set filetype=rbrowser',
-                \ 'let $PATH = "' . g:rplugin_nvimcom_bin_dir . '" . ":" . $PATH',
                 \ 'let g:rplugin_nvimcom_port = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let $NVIMCOMPORT = "' . g:rplugin_nvimcom_port . '"',
                 \ 'let b:objbrtitle = "' . b:objbrtitle . '"',
@@ -105,7 +110,8 @@ function StartObjBrowser_Tmux()
                 \ 'set noruler',
                 \ 'runtime R/tmux_split.vim',
                 \ 'let g:SendCmdToR = function("SendCmdToR_TmuxSplit")',
-                \ 'let g:rplugin_jobs["ClientServer"] = StartJob("nclientserver", g:rplugin_job_handlers)'],
+                \ 'let g:rplugin_jobs["ClientServer"] = StartJob("nclientserver", ' . jopt . ')',
+                \ 'sleep 150m',],
                 \ objbrowserfile)
 
     if g:R_objbr_place =~ "left"
@@ -132,7 +138,7 @@ function StartObjBrowser_Tmux()
         let obpane = g:rplugin_editor_pane
     endif
 
-    let cmd = "tmux split-window -h -l " . panewidth . " -t " . obpane . ' "TERM=' . $TERM . ' nvim ' . " -c 'source " . substitute(objbrowserfile, ' ', '\\ ', 'g') . "'" . '"'
+    let cmd = "tmux split-window -h -l " . panewidth . " -t " . obpane . ' "TERM=' . $TERM . ' ' . v:progname . " -c 'source " . substitute(objbrowserfile, ' ', '\\ ', 'g') . "'" . '"'
     let rlog = system(cmd)
     if v:shell_error
         let rlog = substitute(rlog, '\n', ' ', 'g')

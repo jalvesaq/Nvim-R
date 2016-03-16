@@ -57,7 +57,7 @@ function StartR_ExternalTerm(rcmd)
                         \ {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
         else
             let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
-                        \ {'out-cb': function('ROnJobStderr'), 'err-cb': function('ROnJobExit')})
+                        \ {'out_cb': function('ROnJobStderr'), 'err_cb': function('ROnJobExit')})
         endif
     endif
 

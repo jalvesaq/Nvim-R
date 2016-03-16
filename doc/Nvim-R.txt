@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.1
-For Neovim 0.1.2 and Vim 7.4.1468
+For Neovim 0.1.2 and Vim 7.4.1579
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -106,7 +106,7 @@ Before installing the plugin, you should install its dependencies:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 7.4.1468:
+   or Vim >= 7.4.1579:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version`  to check if your Vim has these features.
