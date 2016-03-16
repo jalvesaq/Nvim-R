@@ -7,3 +7,4 @@ $(SHLIB):
 
 nvimapps:
 	(cd apps; make)
+

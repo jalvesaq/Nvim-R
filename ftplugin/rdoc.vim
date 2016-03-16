@@ -31,6 +31,10 @@ function! FixRdoc()
         let lii = substitute(lii, "_\010", "", "g")
         let lii = substitute(lii, '<URL: \(.\{-}\)>', ' |\1|', 'g')
         let lii = substitute(lii, '<email: \(.\{-}\)>', ' |\1|', 'g')
+        if &encoding == "utf-8"
+            let lii = substitute(lii, "\x91", "‘", 'g')
+            let lii = substitute(lii, "\x92", "’", 'g')
+        endif
         call setline(ii, lii)
     endfor
 

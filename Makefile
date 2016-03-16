@@ -14,3 +14,10 @@ vimball:
 	sed -i -e "s/^$(PLUGINVERSION) (201[0-9]-[0-9][0-9]-[0-9][0-9])$$/$(PLUGINVERSION) ($(PLUGINRELEASEDATE))/" doc/Nvim-R.txt
 	nvim -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
 	mv Nvim-R.vmb /tmp
+
+clean:
+	rm -f R/nvimcom/src/nvimcom.o
+	rm -f R/nvimcom/src/nvimcom.so
+	rm -f R/nvimcom/src/nvimcom.dll
+	rm -f R/nvimcom/src/apps/nclientserver
+	rm -f R/nvimcom/src/apps/nclientserver.exe

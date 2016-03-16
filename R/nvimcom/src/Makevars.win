@@ -9,3 +9,4 @@ $(SHLIB):
 
 nvimapps:
 	(cd apps; make -f Makefile.win)
+

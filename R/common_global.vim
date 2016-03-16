@@ -631,7 +631,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-13"
+            if nvers != "0.9-14"
                 let neednew = 1
             endif
         endif
@@ -743,7 +743,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.13") warning("Your version of Nvim-R requires nvimcom-0.9-13.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.14") warning("Your version of Nvim-R requires nvimcom-0.9-14.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -819,8 +819,8 @@ function WaitNvimcomStart()
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != "0.9.13"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-13.')
+        if g:rplugin_nvimcom_version != "0.9.14"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-14.')
             sleep 1
         endif
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
@@ -852,9 +852,6 @@ function WaitNvimcomStart()
                 if $RCONSOLE == "0"
                     call RWarningMsg("nvimcom did not save R window ID")
                 endif
-                if v:windowid == 0 && $WINDOWID == ""
-                    call RWarningMsg("Neovim did not define $WINDOWID")
-                endif
                 if v:windowid != 0 && $WINDOWID == ""
                     let $WINDOWID = v:windowid
                 endif
@@ -862,8 +859,12 @@ function WaitNvimcomStart()
             if !IsJobRunning("ClientServer")
                 let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
             else
-                " ClientServer already started by ftplugin/rnoweb_nvimr.vim
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
+                " ClientServer already started
+                if has("win32")
+                    call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . " " . $RCONSOLE . "\n")
+                else
+                    call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
+                endif
                 call SendToNvimcom("\001" . g:rplugin_myport)
             endif
         else
@@ -1566,9 +1567,10 @@ endfunction
 
 " Clear the console screen
 function RClearConsole()
-    if !has("win32")
-        " RClearConsole
-        "call JobStdin(g:rplugin_jobs["ClientServer"], "\006\n")
+    if has("win32") && !g:R_in_buffer
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\006\n")
+        sleep 50m
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\007\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -2830,6 +2832,10 @@ else
     call RSetDefaultValue("g:R_rcomment_string", "'# '")
 endif
 
+if g:R_in_buffer
+    let g:R_save_win_pos = 0
+    let g:R_arrange_windows  = 0
+endif
 if has("win32")
     call RSetDefaultValue("g:R_save_win_pos",    1)
     call RSetDefaultValue("g:R_arrange_windows", 1)

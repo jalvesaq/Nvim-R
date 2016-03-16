@@ -910,11 +910,6 @@ static void nvimcom_parse_received_msg(char *buf)
             nvimcom_fire();
 #endif
             break;
-#ifdef WIN32
-        case 3: // Set R as busy
-            r_is_busy = 1;
-            break;
-#endif
         case 4: // Change value of objbr_auto
             if(buf[1] == 'G'){
                 objbr_auto = 1;
@@ -949,6 +944,7 @@ static void nvimcom_parse_received_msg(char *buf)
             bbuf++;
             if(strstr(bbuf, getenv("NVIMR_ID")) == bbuf){
                 bbuf += strlen(getenv("NVIMR_ID"));
+                r_is_busy = 1;
                 Rconsolecmd(bbuf);
             }
             break;
@@ -1368,4 +1364,3 @@ void nvimcom_Stop()
     }
     nvimcom_initialized = 0;
 }
-

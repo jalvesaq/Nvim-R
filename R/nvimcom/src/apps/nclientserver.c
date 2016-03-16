@@ -349,13 +349,16 @@ static void SendToRConsole(char *aString){
         return;
     }
 
-    SendToServer(NvimcomPort, "\003Set R as busy [SendToRConsole()]");
+    // FIXME: Delete this code when $WINDOWID is implemented in NeovimQt
+    if(!NvimHwnd)
+        NvimHwnd = GetForegroundWindow();
 
     char msg[512];
     snprintf(msg, 510, "\005%s%s", getenv("NVIMR_ID"), aString);
     SendToServer(NvimcomPort, msg);
+    Sleep(0.02);
 
-    // Necessary to force RConsole to process the line
+    // Necessary to force RConsole to actually process the line
     PostMessage(RConsole, WM_NULL, 0, 0);
 }
 
@@ -372,6 +375,8 @@ static void RClearConsole(){
     Sleep(0.05);
     keybd_event(VkKeyScan('L'), 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    Sleep(0.05);
+    PostMessage(RConsole, WM_NULL, 0, 0);
 }
 
 static void SaveWinPos(char *cachedir){
@@ -590,8 +595,9 @@ int main(int argc, char **argv){
         NvimHwnd = (HWND)atol(getenv("WINDOWID"));
 #endif
     } else {
-        fprintf(stderr, "$WINDOWID not defined\n");
-        fflush(stderr);
+        //fprintf(stderr, "$WINDOWID not defined\n");
+        //fflush(stderr);
+        // FIXME: Delete this code when $WINDOWID is implemented in NeovimQt
         NvimHwnd = FindWindow(NULL, "Neovim");
         if(!NvimHwnd){
             fprintf(stderr, "\"Neovim\" window not found\n");
@@ -639,10 +645,22 @@ int main(int argc, char **argv){
         switch(*msg){
             case 1: // SetPort
                 msg++;
-                strncpy(NvimcomPort, msg, 15);
 #ifdef WIN32
+                char *p = msg;
+                while(*p != ' ')
+                    p++;
+                *p = 0;
+                p++;
+                strncpy(NvimcomPort, msg, 15);
+#ifdef _WIN64
+                RConsole = (HWND)atoll(p);
+#else
+                RConsole = (HWND)atol(p);
+#endif
                 if(msg[0] == '0')
                     RConsole = NULL;
+#else
+                strncpy(NvimcomPort, msg, 15);
 #endif
                 break;
             case 2: // Send message

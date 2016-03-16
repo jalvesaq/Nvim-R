@@ -66,12 +66,12 @@ endfunction
 
 function OnTermClose()
     if exists("g:rplugin_R_bufname")
-        exe "sbuffer " . g:rplugin_R_bufname
-        unlet g:rplugin_R_bufname
-        startinsert
-        if g:R_close_term
-            call feedkeys('<cr>')
+        if g:rplugin_R_bufname == bufname("%")
+            if g:R_close_term
+                call feedkeys('<cr>')
+            endif
         endif
+        unlet g:rplugin_R_bufname
     endif
 
     " Set nvimcom port to 0 in nclientserver

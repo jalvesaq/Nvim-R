@@ -439,9 +439,15 @@ function! SyncTeX_backward(fname, ln)
                 call system("wmctrl -ia " . $WINDOWID)
             endif
         elseif has("gui_running")
-            if has("win32") && has("nvim")
-                "call rpcnotify(0, 'Gui', 'Foreground')
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\007 \n")
+            if has("win32")
+                " Attempt 1
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\007\n")
+
+                " Attempt 2
+                " if has("nvim")
+                "     call rpcnotify(0, 'Gui', 'Foreground')
+                " else
+                "     call foreground()
             else
                 call foreground()
             endif

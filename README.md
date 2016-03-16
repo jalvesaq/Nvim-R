@@ -27,6 +27,12 @@ open it with `nvim` and do:</p>
 Then, press the space bar a few time to ensure the installation of all
 files.
 
+The Nvim-R source code includes the R package nvimcom, which has C code that
+needs compilation. Nvim-R will build and install nvimcom automatically, and it
+will also update it automatically whenever necessary. A C compiler (e.g. `gcc`
+or `clang`) is necessary. On Windows, you have to install
+[Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+
 Please, read the plugin's documentation for instructions on usage.
 
 Below is a sample `init.vim`:
