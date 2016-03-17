@@ -102,11 +102,12 @@ endfunction
 " The Object Browser can run in a Tmux pane only if Neovim is inside a Tmux session
 let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 
+call RSetDefaultValue("g:R_silent_term", 0)
+
 if g:rplugin_is_darwin
+    let g:R_term = "xterm"
     finish
 endif
-
-call RSetDefaultValue("g:R_silent_term", 0)
 
 " Choose a terminal (code adapted from screen.vim)
 if exists("g:R_term")
