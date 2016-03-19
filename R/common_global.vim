@@ -3024,7 +3024,7 @@ if exists("g:R_path")
         let g:rplugin_failed = 1
         finish
     endif
-    if $PATH !~ g:rplugin_R_path && $PATH !~ g:R_path
+    if $PATH !~ g:rplugin_R_path
         if has("win32")
             let $PATH = g:rplugin_R_path . ';' . $PATH
         else
