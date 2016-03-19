@@ -1,5 +1,11 @@
 " This file contains code used only on OS X
 
+if isdirectory("/Applications/R64.app")
+    let g:rplugin_r64app = 1
+else
+    let g:rplugin_r64app = 0
+endif
+
 function StartR_OSX()
     if IsSendCmdToRFake()
         return

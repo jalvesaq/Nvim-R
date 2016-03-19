@@ -2877,13 +2877,6 @@ if g:rplugin_is_darwin
     if !exists("g:macvim_skim_app_path")
         let g:macvim_skim_app_path = '/Applications/Skim.app'
     endif
-    if g:R_applescript
-        if isdirectory("/Applications/R64.app")
-            let g:rplugin_r64app = 1
-        else
-            let g:rplugin_r64app = 0
-        endif
-    endif
 else
     let g:R_applescript = 0
 endif
@@ -3009,14 +3002,18 @@ if &filetype != "rbrowser"
 endif
 
 " Set the name of R executable
-if has("win32")
-    if g:R_in_buffer
-        let g:rplugin_R = "Rterm.exe"
-    else
-        let g:rplugin_R = "Rgui.exe"
-    endif
+if exists("g:R_app")
+    let g:rplugin_R = g:R_app
 else
-    let g:rplugin_R = "R"
+    if has("win32")
+        if g:R_in_buffer
+            let g:rplugin_R = "Rterm.exe"
+        else
+            let g:rplugin_R = "Rgui.exe"
+        endif
+    else
+        let g:rplugin_R = "R"
+    endif
 endif
 
 " Add R directory to the $PATH
@@ -3035,7 +3032,7 @@ if exists("g:R_path")
         endif
     endif
     if !executable(g:rplugin_R)
-        call RWarningMsgInp('"' . g:rplugin_R . '" not found. Fix the value of R_path in your vimrc.')
+        call RWarningMsgInp('"' . g:rplugin_R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
         let g:rplugin_failed = 1
         finish
     endif
