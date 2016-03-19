@@ -18,7 +18,7 @@ follow its instructions on how to install plugins from github.
 To install a stable version of the plugin, download the Vimball file
 `Nvim-R.vmb` from
 [Nvim-R/releases](https://github.com/jalvesaq/Nvim-R/releases),
-open it with `nvim` and do:</p>
+open it and do:</p>
 
 ```
 :so %

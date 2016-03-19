@@ -5,7 +5,7 @@
 ###########################################################
 
 PLUGINHOME=`pwd`
-PLUGINVERSION=0.9.1
+PLUGINVERSION=0.9.2
 PLUGINRELEASEDATE=`date +"%Y-%m-%d"`
 
 vimball:

@@ -5,8 +5,8 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.1
-For Neovim 0.1.2 and Vim 7.4.1579
+Version: 0.9.2
+For Neovim >= 0.1.2 and Vim >= 7.4.1579
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -57,8 +57,6 @@ Nvim-R (see |R_source|).
       - Special highlighting for R output (.Rout files).
       - Spell check only strings and comments.
       - Fold code when foldmethod=syntax.
-  * Syntax highlighting for RHelp, RMarkdown and RreStructuredText.
-  * Smart indentation for R, RHelp, Rnoweb, RMarkdown and RreStructuredText.
   * Integrated communication with R:
       - Start/Close R.
       - Send lines, selection, paragraphs, functions, blocks, entire file.
@@ -102,7 +100,7 @@ Before installing the plugin, you should install its dependencies:
 
    Main dependencies:~
 
-   Neovim 0.1.2:
+   Neovim >= 0.1.2:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -124,7 +122,7 @@ Before installing the plugin, you should install its dependencies:
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
        If you can't install Rtools, you may want to install the windows binary
-       `nvimcom.zip` (not yet) released with Nvim-R:
+       `nvimcom.zip` released with Nvim-R:
        https://github.com/jalvesaq/Nvim-R/releases
 
      - The Nvim-R plugin sets the environment variable `R_DEFAULT_PACKAGES`,
@@ -166,7 +164,7 @@ Before installing the plugin, you should install its dependencies:
 		 (Optional if |R_in_buffer| and not required if using R.app)
 		 You should put in your Rprofile: `library(colorout)`
 
-   Tmux >= 1.8:  http://tmux.sourceforge.net
+   Tmux >= 2.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
 		 terminal emulator (see |R_in_buffer|) or if you are using
 		 Vim.
@@ -2670,9 +2668,13 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.1 (2016-03-16)
+0.9.2 (2016-03-19)
 
  * Support Vim.
+ * New option: R_app.
+
+0.9.1 (2016-02-28)
+
  * New option: R_close_term.
  * Delete option: R_restart.
 
