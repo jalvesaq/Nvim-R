@@ -47,11 +47,20 @@ function SumatraInPath()
     if g:rplugin_sumatra_in_path
         return 1
     endif
+    if $PATH =~ "SumatraPDF"
+        let g:rplugin_sumatra_in_path = 1
+        return 1
+    endif
+
+    " $ProgramFiles has different values for win32 and win64
     if executable($ProgramFiles . "\\SumatraPDF\\SumatraPDF.exe")
-        if $PATH !~ "SumatraPDF"
-            let $PATH = $ProgramFiles . "\\SumatraPDF;" . $PATH
-            let g:rplugin_sumatra_in_path = 1
-        endif
+        let $PATH = $ProgramFiles . "\\SumatraPDF;" . $PATH
+        let g:rplugin_sumatra_in_path = 1
+        return 1
+    endif
+    if executable($ProgramFiles . " (x86)\\SumatraPDF\\SumatraPDF.exe")
+        let $PATH = $ProgramFiles . " (x86)\\SumatraPDF;" . $PATH
+        let g:rplugin_sumatra_in_path = 1
         return 1
     endif
     return 0
