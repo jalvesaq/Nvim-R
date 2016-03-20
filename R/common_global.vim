@@ -59,6 +59,14 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
+if !has("nvim")
+    if !exists("*job_getchannel") || !has("patch-7.4.1579")
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1579.\nIf using Vim, both +channel and +job features must be enabled.\n")
+        let g:rplugin_failed = 1
+        finish
+    endif
+endif
+
 " Set default value of some variables:
 function RSetDefaultValue(var, val)
     if !exists(a:var)

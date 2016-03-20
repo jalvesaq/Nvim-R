@@ -1,9 +1,3 @@
-if !exists("*job_getchannel") || !has("patch-7.4.1579")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1579. If using Vim, both +channel and +job features must be enabled.")
-    let g:rplugin_failed = 1
-    finish
-endif
-
 function JobStdin(ch, cmd)
     call ch_sendraw(a:ch, a:cmd)
 endfunction
