@@ -2130,7 +2130,7 @@ function RSetPDFViewer()
     if !has("win32") && !g:rplugin_is_darwin
         if g:rplugin_pdfviewer == "zathura"
             if executable("zathura")
-                let vv = split(system("zathura --version"))[1]
+                let vv = split(system("zathura --version 2>/dev/null"))[1]
                 if vv < '0.3.1'
                     call RWarningMsgInp("Zathura version must be >= 0.3.1")
                 endif
