@@ -629,6 +629,19 @@ function IsSendCmdToRFake()
     return 0
 endfunction
 
+function ShowRSysLog(slog, fname, msg)
+    let logl = split(a:slog, "\n")
+    exe len(logl) . "split " . a:fname
+    call setline(1, logl)
+    set nomodified
+    redraw
+    call RWarningMsg(a:msg)
+    if has("win32")
+        call UnsetRHome()
+    endif
+    sleep 1
+endfunction
+
 function CheckNvimcomVersion()
     let neednew = 0
     if g:rplugin_nvimcom_home == "0"
@@ -645,27 +658,34 @@ function CheckNvimcomVersion()
         endif
     endif
 
+    " Nvim-R might have been installed as root in a non writable directory.
+    " We have to build nvimcom in a writable directory before installing it.
     if neednew
         echo "Updating nvimcom... "
+        exe "cd " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g')
         if has("win32")
             call SetRHome()
-            let slog = system("Rcmd.exe INSTALL " . g:rplugin_home . "/R/nvimcom")
-            call UnsetRHome()
-        else
-            let slog = system("R CMD INSTALL '" . g:rplugin_home . "/R/nvimcom'")
         endif
+        let slog = system('R CMD build "' . g:rplugin_home . '/R/nvimcom"')
         if v:shell_error
-            let logl = split(slog, "\n")
-            exe len(logl) . "split" . " Error_building_nvimcom"
-            call setline(1, logl)
-            set nomodified
-            redraw
-            call RWarningMsg("Failed to build nvimcom")
-            sleep 1
+            call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
+            return 0
         else
-            echon "OK!"
+            let slog = system("R CMD INSTALL nvimcom_0.9-14.tar.gz")
+            if v:shell_error
+                call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
+                return 0
+            else
+                echon "OK!"
+            endif
         endif
+        if has("win32")
+            call UnsetRHome()
+        endif
+        call delete("nvimcom_0.9-14.tar.gz")
+        cd -
     endif
+    return 1
 endfunction
 
 " Start R
@@ -677,7 +697,9 @@ function StartR(whatr)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
 
-    call CheckNvimcomVersion()
+    if !CheckNvimcomVersion()
+        return
+    endif
 
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
