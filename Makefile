@@ -20,4 +20,5 @@ clean:
 	rm -f R/nvimcom/src/nvimcom.so
 	rm -f R/nvimcom/src/nvimcom.dll
 	rm -f R/nvimcom/src/apps/nclientserver
+	rm -f R/nvimcom/src/apps/nclientserver.o
 	rm -f R/nvimcom/src/apps/nclientserver.exe
