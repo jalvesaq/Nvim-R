@@ -5,14 +5,20 @@
 ###########################################################
 
 PLUGINHOME=`pwd`
-PLUGINVERSION=0.9.2
+PLUGINVERSION=0.9.3
 PLUGINRELEASEDATE=`date +"%Y-%m-%d"`
+
+ifeq (, $(shell which nvim))
+    VIMEXEC=vim
+else
+    VIMEXEC=nvim
+endif
 
 vimball:
 	# Update the version date in doc/Nvim-R.txt header and in the news
 	sed -i -e "s/^Version: [0-9].[0-9].[0-9].[0-9]/Version: $(PLUGINVERSION)/" doc/Nvim-R.txt
 	sed -i -e "s/^$(PLUGINVERSION) (201[0-9]-[0-9][0-9]-[0-9][0-9])$$/$(PLUGINVERSION) ($(PLUGINRELEASEDATE))/" doc/Nvim-R.txt
-	nvim -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
+	$(VIMEXEC) -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
 	mv Nvim-R.vmb /tmp
 
 clean:

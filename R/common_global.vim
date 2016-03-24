@@ -902,7 +902,7 @@ function WaitNvimcomStart()
         endif
 
         if g:R_tmux_split
-            " Environment variables persists across Tmux windows.
+            " Environment variables persist across Tmux windows.
             " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
             " when R was not started by Neovim:
             call system("tmux set-environment -u NVIMR_TMPDIR")
