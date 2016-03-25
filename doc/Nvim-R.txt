@@ -1629,6 +1629,25 @@ Then, make the script executable, and put in your |vimrc|:
    let R_in_buffer = 0
    let R_after_start = "after_R_start"
 <
+Similarly, on Mac OS X, the script below (developed by songcai) will bring the
+focus to Neovim terminal window:
+>
+   #!/usr/bin/env osascript
+
+   --Raise the Terminal window containing name ".R".
+   tell application "Terminal"
+     set index of window 1 where name contains ".R" to 1
+     delay 0.05
+     activate window 1
+   end tell
+
+   --Click the title bar of the raised window to bring focus to it.
+   tell application "System Events"
+     tell process "Terminal"
+       click menu item (name of window 1) of menu of menu bar item "Window" of menu bar 1
+     end tell
+   end tell
+<
 
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
