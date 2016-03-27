@@ -211,7 +211,7 @@ function! RBrowserFindParent(word, curline, curpos)
     if curline > 1
         let line = substitute(line, '^.\{-}\(.\)#', '\1#', "")
         let line = substitute(line, '^ *', '', "")
-        if line =~ " " || line =~ '^.#[0-9]'
+        if line =~ " " || line =~ '^.#[0-9]' || line =~ '-'
             let line = substitute(line, '\(.\)#\(.*\)$', '\1#`\2`', "")
         endif
         if line =~ '<#'
@@ -255,7 +255,7 @@ function! RBrowserGetName(cleantail, cleantick)
     let word = substitute(word, '<#$', '@', '')
     let word = substitute(word, '.#$', '', '')
 
-    if word =~ ' ' || word =~ '^[0-9]'
+    if word =~ ' ' || word =~ '^[0-9]' || word =~ '-'
         let word = '`' . word . '`'
     endif
 
