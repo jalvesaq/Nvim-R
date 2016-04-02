@@ -1,7 +1,11 @@
 " Check whether Tmux is OK
 if !executable('tmux')
-    let g:R_in_buffer = 1
-    let g:R_tmux_ob = 0
+    if has("nvim")
+        let g:R_in_buffer = 1
+        let g:R_tmux_ob = 0
+    else
+        call RWarningMsgInp("tmux executable not found")
+    endif
     finish
 endif
 
