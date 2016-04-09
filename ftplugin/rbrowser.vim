@@ -55,20 +55,18 @@ function! UpdateOB(what)
     let g:rplugin_upobcnt = 1
 
     let rplugin_switchedbuf = 0
-    if g:R_tmux_ob == 0
-        redir => s:bufl
-        silent buffers
-        redir END
-        if s:bufl !~ "Object_Browser"
-            let g:rplugin_upobcnt = 0
-            return "Object_Browser not listed"
-        endif
-        if exists("g:rplugin_curbuf") && g:rplugin_curbuf != "Object_Browser"
-            let savesb = &switchbuf
-            set switchbuf=useopen,usetab
-            sil noautocmd sb Object_Browser
-            let rplugin_switchedbuf = 1
-        endif
+    redir => s:bufl
+    silent buffers
+    redir END
+    if s:bufl !~ "Object_Browser"
+        let g:rplugin_upobcnt = 0
+        return "Object_Browser not listed"
+    endif
+    if exists("g:rplugin_curbuf") && g:rplugin_curbuf != "Object_Browser"
+        let savesb = &switchbuf
+        set switchbuf=useopen,usetab
+        sil noautocmd sb Object_Browser
+        let rplugin_switchedbuf = 1
     endif
 
     setlocal modifiable
@@ -90,7 +88,7 @@ function! UpdateOB(what)
     endif
     call setline(1, fcntt)
     call cursor(curline, curcol)
-    if bufname("%") =~ "Object_Browser" || exists("b:rplugin_extern_ob")
+    if bufname("%") =~ "Object_Browser"
         setlocal nomodifiable
     endif
     if rplugin_switchedbuf
@@ -322,16 +320,6 @@ endif
 
 au BufEnter <buffer> stopinsert
 au BufUnload <buffer> call OnOBBufUnload()
-
-if g:R_tmux_ob
-    " Fix problems caused by some plugins
-    if exists("g:loaded_surround") && mapcheck("ds", "n") != ""
-        nunmap ds
-    endif
-    if exists("g:loaded_showmarks ")
-        autocmd! ShowMarks
-    endif
-endif
 
 let s:envstring = tolower($LC_MESSAGES . $LC_ALL . $LANG)
 if s:envstring =~ "utf-8" || s:envstring =~ "utf8"

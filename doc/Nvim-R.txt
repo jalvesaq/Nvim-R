@@ -2571,12 +2571,6 @@ title automatically. Examples:
    let R_tmux_title = "Nvim-R"
    let R_tmux_title = "automatic"
 <
-The Object Browser will be created in an independent Vim instance in a Tmux
-pane. If you prefer the Object Browser always created as an Vim split
-window, put in your |vimrc|:
->
-   let R_tmux_ob = 0
-<
 
 Key bindings and mouse support~
 
@@ -2687,7 +2681,7 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.3 (2016-03-23)
+0.9.3 (2016-03-26)
 
  * Build nvimcom even when Nvim-R directory in non-writable.
 

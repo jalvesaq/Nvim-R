@@ -964,13 +964,7 @@ function RObjBrowser()
 
     let g:rplugin_running_objbr = 1
 
-    if !exists("b:rplugin_extern_ob")
-        if g:R_tmux_ob
-            call StartObjBrowser_Tmux()
-        else
-            call StartObjBrowser_Nvim()
-        endif
-    endif
+    call StartObjBrowser_Nvim()
     let g:rplugin_running_objbr = 0
     return
 endfunction
@@ -991,9 +985,7 @@ function RSetMyPort(p)
     let g:rplugin_myport = a:p
     let $NVIMR_PORT = a:p
     if IsJobRunning("ClientServer")
-        if exists("b:rplugin_extern_ob")
-            call SendToNvimcom("\002" . g:rplugin_myport)
-        elseif g:rplugin_nvimcom_port
+        if g:rplugin_nvimcom_port
             call SendToNvimcom("\001" . g:rplugin_myport)
         endif
     endif
@@ -2266,19 +2258,11 @@ function RAction(rcmd)
             if g:R_nvimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
             else
-                if bufname("%") =~ "Object_Browser" || exists("b:rplugin_extern_ob")
+                if bufname("%") =~ "Object_Browser"
                     if g:rplugin_curview == "libraries"
                         let pkg = RBGetPkgName()
                     else
                         let pkg = ""
-                    endif
-                    if exists("b:rplugin_extern_ob")
-                        call AskRDoc(rkeyword, pkg, 0)
-                        let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
-                        if v:shell_error
-                            call RWarningMsg(slog)
-                        endif
-                        return
                     endif
                 endif
                 call AskRDoc(rkeyword, "", 1)
@@ -2913,12 +2897,6 @@ endif
 
 if has("gui_running") || g:R_applescript || g:R_in_buffer || $TMUX == ""
     let g:R_tmux_split = 0
-endif
-
-if g:R_tmux_split
-    call RSetDefaultValue("g:R_tmux_ob", 1)
-else
-    let g:R_tmux_ob = 0
 endif
 
 if !g:R_in_buffer && !g:R_tmux_split
