@@ -55,11 +55,18 @@ function! ShowRout()
     endif
 endfunction
 
-" Convert R script into Rmd, md and, then, html.
+" Convert R script into Rmd, md and, then, html -- using knitr::spin()
 function! RSpin()
     update
     call g:SendCmdToR('require(knitr); .vim_oldwd <- getwd(); setwd("' . expand("%:p:h") . '"); spin("' . expand("%:t") . '"); setwd(.vim_oldwd); rm(.vim_oldwd)')
 endfunction
+
+" Convert R script into Rmd, md and, then, html -- using rmarkdown::render()
+function! RRender()
+    update
+    call g:SendCmdToR('require(rmarkdown); .vim_oldwd <- getwd(); setwd("' . expand("%:p:h") . '"); render("' . expand("%:t") . '"); setwd(.vim_oldwd); rm(.vim_oldwd)')
+endfunction
+
 
 " Default IsInRCode function when the plugin is used as a global plugin
 function! DefaultIsInRCode(vrb)
@@ -82,6 +89,7 @@ call RCreateMaps("ni", '<Plug>RShowRout',     'ao', ':call ShowRout()')
 " Knitr::spin
 " -------------------------------------
 call RCreateMaps("ni", '<Plug>RSpinFile',     'ks', ':call RSpin()')
+call RCreateMaps("ni", '<Plug>RRenderFile',     'kr', ':call RRender()')
 
 call RCreateSendMaps()
 call RControlMaps()
