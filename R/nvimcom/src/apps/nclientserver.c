@@ -548,7 +548,7 @@ int main(int argc, char **argv){
     }
 
     if(getenv("DEBUG_NVIMR")){
-        df = fopen("nclientserver_debug", "w");
+        df = fopen("/tmp/nclientserver_debug", "w");
         if(df){
             fprintf(df, "NVIMR_SECRET=%s NVIMCOMPORT=%s\n",
                     getenv("NVIMR_SECRET"), getenv("NVIMCOMPORT"));
