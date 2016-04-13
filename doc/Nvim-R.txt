@@ -5,8 +5,8 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.3
-For Neovim >= 0.1.2 and Vim >= 7.4.1579
+Version: 0.9.4 (development)
+For Neovim >= 0.1.2 and Vim >= 7.4.1722
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -104,7 +104,7 @@ Before installing the plugin, you should install its dependencies:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 7.4.1579:
+   or Vim >= 7.4.1722:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
@@ -330,12 +330,13 @@ Command
   . Sweave, BibTeX and PDF (cur file) (Linux/Unix)     \sb
   --------------------------------------------------------
   . Knit (cur file)                                    \kn
-  . Knit and PDF (cur file)                            \kp
   . Knit, BibTeX and PDF (cur file) (Linux/Unix)       \kb
-  . Knit and Beamer PDF (cur file) (only .Rmd)         \kl
-  . Knit and ODT (cur file) (only .Rmd)                \ko
-  . Knit and Word Document (cur file) (only .Rmd)      \kw
-  . Knit and HTML (cur file, verbose) (only .Rmd)      \kh
+  . Knit and PDF (cur file)                            \kp
+  . Knit and Beamer PDF (cur file)                     \kl
+  . Knit and HTML (cur file, verbose)                  \kh
+  . Knit and ODT (cur file)                            \ko
+  . Knit and Word Document (cur file)                  \kw
+  . Markdown render (cur file)                         \kr
   . Spin (cur file) (only .R)                          \ks
   --------------------------------------------------------
   . Open PDF (cur file)                                \op
@@ -1469,9 +1470,9 @@ will call Skim. On Linux, you can change the value of R_pdfviewer in your
 |vimrc| to define what PDF viewer will be called. Valid values are "zathura"
 (default, and the one best integrated with Nvim-R), "evince" and "okular".
 
-If editing an Rmd file, you can produce the html result with <LocalLeader>kh.
-The html file will be automatically opened if you put the following in your
-|vimrc|:
+If editing an Rmd file, you can produce the html result with <LocalLeader>kh
+(it may also work with other file types). The html file will be automatically
+opened if you put the following in your |vimrc|:
 >
    let R_openhtml = 1
 <
@@ -2680,6 +2681,12 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
+
+0.9.4 (2016-04-11)
+
+ * Delete option R_tmux_ob. The Object Browser will always start in a Vim
+   split window, not in a Tmux split pane.
+ * Minor bug fixes.
 
 0.9.3 (2016-03-26)
 

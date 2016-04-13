@@ -162,49 +162,37 @@ function MakeRMenu()
         call RCreateMenuItem("nvi", 'Command.Set\ working\ directory\ (cur\ file\ path)', '<Plug>RSetwd', 'rd', ':call RSetWD()')
     endif
     "-------------------------------
-    if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || g:R_never_unmake_menu
-        if &filetype == "rnoweb" || g:R_never_unmake_menu
-            menu R.Command.-Sep5- <nul>
-            call RCreateMenuItem("nvi", 'Command.Sweave\ (cur\ file)', '<Plug>RSweave', 'sw', ':call RSweave()')
-            call RCreateMenuItem("nvi", 'Command.Sweave\ and\ PDF\ (cur\ file)', '<Plug>RMakePDF', 'sp', ':call RMakePDF("nobib", 0)')
-            call RCreateMenuItem("nvi", 'Command.Sweave,\ BibTeX\ and\ PDF\ (cur\ file)', '<Plug>RBibTeX', 'sb', ':call RMakePDF("bibtex", 0)')
-        endif
-        menu R.Command.-Sep6- <nul>
-        if &filetype == "rnoweb"
-            call RCreateMenuItem("nvi", 'Command.Knit\ (cur\ file)', '<Plug>RKnit', 'kn', ':call RKnitRnw()')
-        else
-            call RCreateMenuItem("nvi", 'Command.Knit\ (cur\ file)', '<Plug>RKnit', 'kn', ':call RKnit()')
-        endif
-        if &filetype == "rnoweb" || g:R_never_unmake_menu
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ PDF\ (cur\ file)', '<Plug>RMakePDFK', 'kp', ':call RMakePDF("nobib", 1)')
-            call RCreateMenuItem("nvi", 'Command.Knit,\ BibTeX\ and\ PDF\ (cur\ file)', '<Plug>RBibTeXK', 'kb', ':call RMakePDF("bibtex", 1)')
-        endif
-        if &filetype == "rmd" || g:R_never_unmake_menu
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ PDF\ (cur\ file)', '<Plug>RMakePDFK', 'kp', ':call RMakeRmd("pdf_document")')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ Beamer\ PDF\ (cur\ file)', '<Plug>RMakePDFKb', 'kl', ':call RMakeRmd("beamer_presentation")')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ HTML\ (cur\ file)', '<Plug>RMakeHTML', 'kh', ':call RMakeRmd("html_document")')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ ODT\ (cur\ file)', '<Plug>RMakeODT', 'ko', ':call RMakeRmd("odt")')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ Word\ Document\ (cur\ file)', '<Plug>RMakeWord', 'kw', ':call RMakeRmd("word_document")')
-        endif
-        if &filetype == "rrst" || g:R_never_unmake_menu
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ PDF\ (cur\ file)', '<Plug>RMakePDFK', 'kp', ':call RMakePDFrrst()')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ HTML\ (cur\ file)', '<Plug>RMakeHTML', 'kh', ':call RMakeHTMLrrst("html")')
-            call RCreateMenuItem("nvi", 'Command.Knit\ and\ ODT\ (cur\ file)', '<Plug>RMakeODT', 'ko', ':call RMakeHTMLrrst("odt")')
-        endif
+    if &filetype == "rnoweb" || g:R_never_unmake_menu
+        menu R.Command.-Sep5- <nul>
+        call RCreateMenuItem("nvi", 'Command.Sweave\ (cur\ file)', '<Plug>RSweave', 'sw', ':call RSweave()')
+        call RCreateMenuItem("nvi", 'Command.Sweave\ and\ PDF\ (cur\ file)', '<Plug>RMakePDF', 'sp', ':call RMakePDF("nobib", 0)')
+        call RCreateMenuItem("nvi", 'Command.Sweave,\ BibTeX\ and\ PDF\ (cur\ file)', '<Plug>RBibTeX', 'sb', ':call RMakePDF("bibtex", 0)')
+    endif
+    menu R.Command.-Sep6- <nul>
+    if &filetype == "rnoweb"
+        call RCreateMenuItem("nvi", 'Command.Knit\ (cur\ file)', '<Plug>RKnit', 'kn', ':call RKnitRnw()')
+        call RCreateMenuItem("nvi", 'Command.Knit,\ BibTeX\ and\ PDF\ (cur\ file)', '<Plug>RBibTeXK', 'kb', ':call RMakePDFK("bibtex", 1)')
+    else
+        call RCreateMenuItem("nvi", 'Command.Knit\ (cur\ file)', '<Plug>RKnit', 'kn', ':call RKnit()')
+    endif
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ PDF\ (cur\ file)', '<Plug>RMakePDFK', 'kp', ':call RMakeRmd("pdf_document")')
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ Beamer\ PDF\ (cur\ file)', '<Plug>RMakePDFKb', 'kl', ':call RMakeRmd("beamer_presentation")')
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ HTML\ (cur\ file)', '<Plug>RMakeHTML', 'kh', ':call RMakeRmd("html_document")')
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ ODT\ (cur\ file)', '<Plug>RMakeODT', 'ko', ':call RMakeRmd("odt")')
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ Word\ Document\ (cur\ file)', '<Plug>RMakeWord', 'kw', ':call RMakeRmd("word_document")')
+    call RCreateMenuItem("nvi", 'Command.Markdown\ render\ (cur\ file)', '<Plug>RMakeRmd', 'kr', ':call RMakeRmd("default")')
+    if &filetype == "r" || g:R_never_unmake_menu
+        call RCreateMenuItem("nvi", 'Command.Spin\ (cur\ file)', '<Plug>RSpin', 'ks', ':call RSpin()')
+    endif
+    if ($DISPLAY != "" && g:R_synctex && &filetype == "rnoweb") || g:R_never_unmake_menu
         menu R.Command.-Sep61- <nul>
-        if ($DISPLAY != "" && g:R_synctex && &filetype == "rnoweb") || g:R_never_unmake_menu
-            call RCreateMenuItem("nvi", 'Command.Open\ PDF\ (cur\ file)', '<Plug>ROpenPDF', 'op', ':call ROpenPDF("Get Master")')
-            call RCreateMenuItem("nvi", 'Command.Search\ forward\ (SyncTeX)', '<Plug>RSyncFor', 'gp', ':call SyncTeX_forward()')
-            call RCreateMenuItem("nvi", 'Command.Go\ to\ LaTeX\ (SyncTeX)', '<Plug>RSyncTex', 'gt', ':call SyncTeX_forward(1)')
-        endif
+        call RCreateMenuItem("nvi", 'Command.Open\ PDF\ (cur\ file)', '<Plug>ROpenPDF', 'op', ':call ROpenPDF("Get Master")')
+        call RCreateMenuItem("nvi", 'Command.Search\ forward\ (SyncTeX)', '<Plug>RSyncFor', 'gp', ':call SyncTeX_forward()')
+        call RCreateMenuItem("nvi", 'Command.Go\ to\ LaTeX\ (SyncTeX)', '<Plug>RSyncTex', 'gt', ':call SyncTeX_forward(1)')
     endif
     "-------------------------------
-    if &filetype == "r" || g:R_never_unmake_menu
-        menu R.Command.-Sep71- <nul>
-        call RCreateMenuItem("nvi", 'Command.Spin\ (cur\ file)', '<Plug>RSpinFile', 'ks', ':call RSpin()')
-    endif
-    menu R.Command.-Sep72- <nul>
     if &filetype == "r" || &filetype == "rnoweb" || g:R_never_unmake_menu
+        menu R.Command.-Sep72- <nul>
         nmenu <silent> R.Command.Build\ tags\ file\ (cur\ dir)<Tab>:RBuildTags :call g:SendCmdToR('rtags(ofile = "TAGS")')<CR>
         imenu <silent> R.Command.Build\ tags\ file\ (cur\ dir)<Tab>:RBuildTags <Esc>:call g:SendCmdToR('rtags(ofile = "TAGS")')<CR>a
     endif
