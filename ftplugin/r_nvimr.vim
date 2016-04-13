@@ -55,7 +55,7 @@ function! ShowRout()
     endif
 endfunction
 
-" Convert R script into Rmd, md and, then, html.
+" Convert R script into Rmd, md and, then, html -- using knitr::spin()
 function! RSpin()
     update
     call g:SendCmdToR('require(knitr); .vim_oldwd <- getwd(); setwd("' . expand("%:p:h") . '"); spin("' . expand("%:t") . '"); setwd(.vim_oldwd); rm(.vim_oldwd)')

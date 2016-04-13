@@ -2310,6 +2310,38 @@ function RAction(rcmd)
     endif
 endfunction
 
+" render a document with rmarkdown
+function! RMakeRmd(t)
+    update
+
+    if a:t == "odt"
+        if has("win32")
+            let g:rplugin_soffbin = "soffice.exe"
+        else
+            let g:rplugin_soffbin = "soffice"
+        endif
+        if !executable(g:rplugin_soffbin)
+            call RWarningMsg("Is Libre Office installed? Cannot convert into ODT: '" . g:rplugin_soffbin . "' not found.")
+            return
+        endif
+    endif
+
+    let rmddir = expand("%:p:h")
+    if has("win32")
+        let rmddir = substitute(rmddir, '\\', '/', 'g')
+    endif
+    if a:t == "default"
+        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
+    else
+        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
+    endif
+    if (g:R_openhtml  == 0 && a:t == "html_document") || (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation" || a:t == "word_document"))
+        let rcmd .= ", view = FALSE"
+    endif
+    let rcmd = rcmd . ', envir = ' . g:R_rmd_environment . ')'
+    call g:SendCmdToR(rcmd)
+endfunction
+
 redir => s:ikblist
 silent imap
 redir END
@@ -2407,6 +2439,15 @@ function RControlMaps()
     call RCreateMaps("nvi", '<Plug>RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
     call RCreateMaps("nvi", '<Plug>ROpenLists',        'r=', ':call RBrOpenCloseLs(1)')
     call RCreateMaps("nvi", '<Plug>RCloseLists',       'r-', ':call RBrOpenCloseLs(0)')
+
+    " Render script with rmarkdown
+    "-------------------------------------
+    call RCreateMaps("nvi", '<Plug>RMakeRmd',       'kr', ':call RMakeRmd("default")')
+    call RCreateMaps("nvi", '<Plug>RMakePDFK',      'kp', ':call RMakeRmd("pdf_document")')
+    call RCreateMaps("nvi", '<Plug>RMakePDFKb',     'kl', ':call RMakeRmd("beamer_presentation")')
+    call RCreateMaps("nvi", '<Plug>RMakeWord',      'kw', ':call RMakeRmd("word_document")')
+    call RCreateMaps("nvi", '<Plug>RMakeHTML',      'kh', ':call RMakeRmd("html_document")')
+    call RCreateMaps("nvi", '<Plug>RMakeODT',       'ko', ':call RMakeRmd("odt")')
 endfunction
 
 
