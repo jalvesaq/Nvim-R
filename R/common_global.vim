@@ -60,8 +60,8 @@ function RWarningMsgInp(wmsg)
 endfunction
 
 if !has("nvim")
-    if !exists("*job_getchannel") || !has("patch-7.4.1579")
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1579.\nIf using Vim, both +channel and +job features must be enabled.\n")
+    if !exists("*job_getchannel") || !has("patch-7.4.1722")
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1722.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
         let g:rplugin_failed = 1
         finish
     endif
@@ -975,7 +975,7 @@ endfunction
 
 function SendToNvimcom(cmd)
     if !IsJobRunning("ClientServer")
-        call RWarningMsg("Neovim client not running.")
+        call RWarningMsg("ClientServer not running.")
         return
     endif
     call JobStdin(g:rplugin_jobs["ClientServer"], "\002" . a:cmd . "\n")
