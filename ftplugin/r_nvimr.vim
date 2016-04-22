@@ -13,7 +13,7 @@ endif
 " need be defined after the global ones:
 runtime R/common_buffer.vim
 
-function! GetRCmdBatchOutput()
+function! GetRCmdBatchOutput(...)
     if filereadable(s:routfile)
         let curpos = getpos(".")
         if g:R_routnotab == 1
@@ -43,9 +43,9 @@ function! ShowRout()
     silent update
 
     if has("win32")
-        let rcmd = 'Rcmd.exe BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
+        let rcmd = g:rplugin_Rcmd . ' CMD BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
     else
-        let rcmd = g:rplugin_R . " CMD BATCH --no-restore --no-save '" . expand("%") . "' '" . s:routfile . "'"
+        let rcmd = [g:rplugin_Rcmd, "CMD", "BATCH", "--no-restore", "--no-save", expand("%"),  s:routfile]
     endif
     if has("nvim")
         let g:rplugin_jobs["R_CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
