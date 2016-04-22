@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.4 (development)
-For Neovim >= 0.1.2 and Vim >= 7.4.1722
+For Neovim >= 0.1.3 and Vim >= 7.4.1722
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -100,7 +100,7 @@ Before installing the plugin, you should install its dependencies:
 
    Main dependencies:~
 
-   Neovim >= 0.1.2:
+   Neovim >= 0.1.3:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -814,7 +814,7 @@ is running:
 |R_editor_w|          Minimum width of R script buffer
 |R_help_w|            Desired width of R documentation buffer
 |R_path|              Directory where R is
-|R_app|               Name of R application
+|R_app|, |R_cmd|        Names of R applications
 |R_args|              Arguments to pass to R
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
@@ -1163,7 +1163,8 @@ values to some variables in your |vimrc|, as in the example:
 ------------------------------------------------------------------------------
 								      *R_path*
 								      *R_app*
-6.7. R path and application name~
+								      *R_cmd*
+6.7. R path and application names~
 
 Vim will run the first R executable in the path. You can set an alternative
 path to R in your |vimrc| as in the examples:
@@ -1182,6 +1183,16 @@ By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
 Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
 buffer and `"Rgui.exe"` otherwise. If your R binary has a different name, you
 should set the value of `R_app` in your |vimrc|.
+
+By default the plugin will call the application `R` to run the following
+commands:
+>
+   R CMD build nvimcom
+   R CMD install nvimcom
+   R CMD BATCH current_script.R
+<
+If it is necessary to call a different application to run the above commands
+in your system, you should set the value of `R_cmd` in your |vimrc|.
 
 
 ------------------------------------------------------------------------------
@@ -2682,10 +2693,11 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.4 (2016-04-11)
+0.9.4 (2016-04-21)
 
  * Delete option R_tmux_ob. The Object Browser will always start in a Vim
    split window, not in a Tmux split pane.
+ * New option: R_cmd
  * Minor bug fixes.
 
 0.9.3 (2016-03-26)

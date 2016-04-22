@@ -61,7 +61,7 @@ endfunction
 
 if !has("nvim")
     if !exists("*job_getchannel") || !has("patch-7.4.1722")
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.2 or Vim >= 7.4.1722.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.3 or Vim >= 7.4.1722.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
         let g:rplugin_failed = 1
         finish
     endif
@@ -666,12 +666,12 @@ function CheckNvimcomVersion()
         if has("win32")
             call SetRHome()
         endif
-        let slog = system('R CMD build "' . g:rplugin_home . '/R/nvimcom"')
+        let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
         if v:shell_error
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
-            let slog = system("R CMD INSTALL nvimcom_0.9-14.tar.gz")
+            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-14.tar.gz")
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
                 return 0
@@ -3053,6 +3053,9 @@ endif
 " Set the name of R executable
 if exists("g:R_app")
     let g:rplugin_R = g:R_app
+    if !has("win32") && !exists("g:R_cmd")
+        let g:R_cmd = g:R_app
+    endif
 else
     if has("win32")
         if g:R_in_buffer
@@ -3063,6 +3066,13 @@ else
     else
         let g:rplugin_R = "R"
     endif
+endif
+
+" Set the name of R executable to be used in `R CMD`
+if exists("g:R_cmd")
+    let g:rplugin_Rcmd = g:R_cmd
+else
+    let g:rplugin_Rcmd = "R"
 endif
 
 " Add R directory to the $PATH
