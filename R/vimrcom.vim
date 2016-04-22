@@ -33,7 +33,7 @@ function ROnJobStderr(job_id, msg)
     endif
 endfunction
 
-function ROnJobExit(job_id)
+function ROnJobExit(job_id, exit_stt)
     let key = GetJobTitle(a:job_id)
     if key != "Job"
         let g:rplugin_jobs[key] = "no"
