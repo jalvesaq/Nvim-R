@@ -26,7 +26,7 @@ function! GetRCmdBatchOutput(...)
             normal! gT
         endif
     else
-        call RWarningMsg("The file '" . s:routfile . "' is not readable.")
+        call RWarningMsg("The file '" . s:routfile . "' either does not exist or not readable.")
     endif
 endfunction
 
