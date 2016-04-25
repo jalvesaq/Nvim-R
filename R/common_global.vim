@@ -807,8 +807,6 @@ function StartR(whatr)
     else
         call StartR_ExternalTerm(rcmd)
     endif
-
-    echon
 endfunction
 
 " Send SIGINT to R
@@ -909,8 +907,13 @@ function WaitNvimcomStart()
         endif
         return 1
     else
-        call RWarningMsg("The package nvimcom wasn't loaded yet.")
-        sleep 500m
+        let msg = "The package nvimcom wasn't loaded yet. Please, see  :h nvimcom-not-loaded"
+        if g:R_tmux_split
+            call RWarningMsgInp(msg)
+        else
+            call RWarningMsg(msg)
+            sleep 500m
+        endif
         return 0
     endif
 endfunction
