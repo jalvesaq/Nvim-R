@@ -33,10 +33,13 @@ function ROnJobStderr(job_id, msg)
     endif
 endfunction
 
-function ROnJobExit(job_id, exit_stt)
+function ROnJobExit(job_id, stts)
     let key = GetJobTitle(a:job_id)
     if key != "Job"
         let g:rplugin_jobs[key] = "no"
+    endif
+    if a:stts != 0
+        call RWarningMsg('"' . key . '"' . ' exited with status ' . a:stts)
     endif
 endfunction
 
