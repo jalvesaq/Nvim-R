@@ -61,7 +61,7 @@ endfunction
 
 if !has("nvim")
     if !exists("*job_getchannel") || !has("patch-7.4.1722")
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.3 or Vim >= 7.4.1722.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.4 or Vim >= 7.4.1722.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
         let g:rplugin_failed = 1
         finish
     endif
@@ -619,11 +619,19 @@ endfunction
 
 function IsSendCmdToRFake()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        if exists("g:maplocalleader")
-            call RWarningMsg("As far as I know, R is already running. Did you quit it from within Nvim (" . g:maplocalleader . "rq if not remapped)?")
-        else
-            call RWarningMsg("As far as I know, R is already running. Did you quit it from within Nvim (\\rq if not remapped)?")
-        endif
+        redir => nkblist
+        silent nmap
+        redir END
+        let nkbls = split(nkblist, "\n")
+        let qcmd = "\\rq"
+        for nkb in nkbls
+            if stridx(nkb, "RQuit('nosave')") > 0
+                let qls = split(nkb, " ")
+                let qcmd = qls[1]
+                break
+            endif
+        endfor
+        call RWarningMsg("As far as I know, R is already running. If it is not running, did you quit it from within ". v:progname . " (command " . qcmd . ")?")
         return 1
     endif
     return 0
