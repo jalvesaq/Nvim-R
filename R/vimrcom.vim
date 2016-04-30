@@ -28,9 +28,7 @@ endfunction
 
 function ROnJobStderr(job_id, msg)
     let msg = substitute(a:msg, '\n', '', 'g')
-    if msg != "DETACH"
-        call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . msg)
-    endif
+    call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . msg)
 endfunction
 
 function ROnJobExit(job_id, stts)
