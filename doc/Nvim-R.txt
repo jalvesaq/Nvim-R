@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.4 (development)
-For Neovim >= 0.1.3 and Vim >= 7.4.1722
+For Neovim >= 0.1.4 and Vim >= 7.4.1722
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -100,7 +100,7 @@ Before installing the plugin, you should install its dependencies:
 
    Main dependencies:~
 
-   Neovim >= 0.1.3:
+   Neovim >= 0.1.4:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
