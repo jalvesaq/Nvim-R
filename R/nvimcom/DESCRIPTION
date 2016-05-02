@@ -5,7 +5,7 @@ Title: Intermediate the communication between R and either Neovim or Vim
 Author: Jakson Aquino
 Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 Depends: R (>= 3.0.0)
-Suggests: knitr, rmarkdown, devtools
+Suggests: knitr, rmarkdown
 Imports: tools
 Description: Provide a service to intermediate the communication between R and either Neovim or Vim.
 License: GPL (>= 2)
