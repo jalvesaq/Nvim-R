@@ -262,7 +262,7 @@ function RCompleteArgs()
         endif
         if np == 0
             call cursor(lnum, idx)
-            let rkeyword0 = RGetKeyWord()
+            let rkeyword0 = RGetKeyword(0)
             let objclass = RGetFirstObjClass(rkeyword0)
             let rkeyword = '^' . rkeyword0 . "\x06"
             call cursor(cpos[1], cpos[2])
@@ -1072,7 +1072,7 @@ endfunction
 
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
-function RGetKeyWord()
+function RGetKeyword(colon)
     " Go back some columns if character under cursor is not valid
     let save_cursor = getpos(".")
     let curline = line(".")
@@ -1087,7 +1087,11 @@ function RGetKeyWord()
         let i -= 1
     endwhile
     let save_keyword = &iskeyword
-    setlocal iskeyword=@,48-57,_,.,$,@-@
+    if a:colon
+        setlocal iskeyword=@,48-57,_,.,:,$,@-@
+    else
+        setlocal iskeyword=@,48-57,_,.,$,@-@
+    endif
     let rkeyword = expand("<cword>")
     exe "setlocal iskeyword=" . save_keyword
     call setpos(".", save_cursor)
@@ -2211,7 +2215,7 @@ endfunction
 
 function DisplayArgs()
     if &filetype == "r" || b:IsInRCode(0)
-        let rkeyword = RGetKeyWord()
+        let rkeyword = RGetKeyword(0)
         let s:sttl_str = g:rplugin_status_line
         let fargs = "Not a function"
         for omniL in g:rplugin_omni_lines
@@ -2261,7 +2265,11 @@ function RAction(rcmd)
     if &filetype == "rbrowser"
         let rkeyword = RBrowserGetName(1, 0)
     else
-        let rkeyword = RGetKeyWord()
+        if a:rcmd == "help" || (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
+            let rkeyword = RGetKeyword(0)
+        else
+            let rkeyword = RGetKeyword(1)
+        endif
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
