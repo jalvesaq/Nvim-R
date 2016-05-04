@@ -92,6 +92,12 @@ function AddToRLibList(lib)
 
             " List of objects for omni completion
             let olist = readfile(omf[0])
+
+            " Library setwidth has no functions
+            if len(olist) == 0 || (len(olist) == 1 && len(olist[0]) < 3)
+                return
+            endif
+
             let g:rplugin_omni_lines += olist
 
             " List of objects for :Rhelp completion

@@ -64,12 +64,21 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
             else
                 frm <- formals(funcname)
         } else {
-            idx <- grep(paste(":", pkg, "$", sep = ""), search())
-            ff <- "NULL"
-            tr <- try(ff <- get(paste(funcname, ".default", sep = ""), pos = idx), silent = TRUE)
-            if(class(tr)[1] == "try-error")
-                ff <- get(funcname, pos = idx)
-            frm <- formals(ff)
+            idx <- grep(paste0(":", pkg, "$"), search())
+            if(length(idx)){
+                ff <- "NULL"
+                tr <- try(ff <- get(paste(funcname, ".default", sep = ""), pos = idx), silent = TRUE)
+                if(class(tr)[1] == "try-error")
+                    ff <- get(funcname, pos = idx)
+                frm <- formals(ff)
+            } else {
+                if(!isNamespaceLoaded(pkg))
+                    loadNamespace(pkg)
+                ff <- getAnywhere(funcname)
+                idx <- grep(pkg, ff$where)
+                if(length(idx))
+                    frm <- formals(ff$objs[[idx]])
+            }
         }
     }
 

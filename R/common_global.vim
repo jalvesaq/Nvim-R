@@ -262,19 +262,26 @@ function RCompleteArgs()
         endif
         if np == 0
             call cursor(lnum, idx)
-            let rkeyword0 = RGetKeyword(0)
-            let objclass = RGetFirstObjClass(rkeyword0)
+            let rkeyword0 = RGetKeyword(1)
+            if rkeyword0 =~ "::"
+                let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
+                let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
+                let objclass = ""
+            else
+                let objclass = RGetFirstObjClass(rkeyword0)
+                let pkg = ""
+            endif
             let rkeyword = '^' . rkeyword0 . "\x06"
             call cursor(cpos[1], cpos[2])
 
             " If R is running, use it
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
                 call delete(g:rplugin_tmpdir . "/eval_reply")
-                let msg = 'nvimcom:::nvim.args("'
-                if objclass == ""
-                    let msg = msg . rkeyword0 . '", "' . argkey . '"'
-                else
-                    let msg = msg . rkeyword0 . '", "' . argkey . '", objclass = ' . objclass
+                let msg = 'nvimcom:::nvim.args("' . rkeyword0 . '", "' . argkey . '"'
+                if objclass != ""
+                    let msg = msg . ', objclass = ' . objclass
+                elseif pkg != ""
+                    let msg = msg . ', pkg = ' . pkg
                 endif
                 if rkeyword0 == "library" || rkeyword0 == "require"
                     let isfirst = IsFirstRArg(lnum, cpos)
@@ -660,7 +667,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-14"
+            if nvers != "0.9-15"
                 let neednew = 1
             endif
         endif
@@ -679,7 +686,7 @@ function CheckNvimcomVersion()
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
-            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-14.tar.gz")
+            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-15.tar.gz")
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
                 return 0
@@ -690,7 +697,7 @@ function CheckNvimcomVersion()
         if has("win32")
             call UnsetRHome()
         endif
-        call delete("nvimcom_0.9-14.tar.gz")
+        call delete("nvimcom_0.9-15.tar.gz")
         cd -
     endif
     return 1
@@ -781,7 +788,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.14") warning("Your version of Nvim-R requires nvimcom-0.9-14.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.15") warning("Your version of Nvim-R requires nvimcom-0.9-15.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -855,8 +862,8 @@ function WaitNvimcomStart()
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != "0.9.14"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-14.')
+        if g:rplugin_nvimcom_version != "0.9.15"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-15.')
             sleep 1
         endif
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
@@ -2707,25 +2714,44 @@ function CompleteR(findstart, base)
     if a:findstart
         let line = getline('.')
         let start = col('.') - 1
-        while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.' || line[start - 1] =~ '\$' || line[start - 1] =~ '@')
+        while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.' || line[start - 1] =~ '\$' || line[start - 1] =~ '@' || line[start - 1] =~ ':')
             let start -= 1
         endwhile
         return start
     else
-        call BuildROmniList(a:base)
         let resp = []
+
         if strlen(a:base) == 0
             return resp
         endif
 
         if len(g:rplugin_omni_lines) == 0
-            call add(resp, {'word': a:base, 'menu': " [ List is empty. Is nvimcom library loaded? ]"})
+            call add(resp, {'word': a:base, 'menu': " [ List is empty. Was nvimcom library ever loaded? ]"})
         endif
 
-        let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
+        if a:base =~ ":::"
+            return resp
+        elseif a:base =~ "::"
+            let newbase = substitute(a:base, ".*::", "", "")
+            let prefix = substitute(a:base, "::.*", "::", "")
+            let pkg = substitute(a:base, "::.*", "", "")
+        else
+            let newbase = a:base
+            let prefix = ""
+            let pkg = ""
+        endif
+
+        if pkg == ""
+            call BuildROmniList(a:base)
+            let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
+        else
+            let flines = g:rplugin_omni_lines
+        endif
+
         " The char '$' at the end of 'a:base' is treated as end of line, and
         " the pattern is never found in 'line'.
-        let newbase = '^' . substitute(a:base, "\\$$", "", "")
+        let newbase = '^' . substitute(newbase, "\\$$", "", "")
+
         for line in flines
             if line =~ newbase
                 " Skip elements of lists unless the user is really looking for them.
@@ -2737,16 +2763,18 @@ function CompleteR(findstart, base)
                 if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
                     continue
                 endif
-                let tmp1 = split(line, "\x06", 1)
+                let sln = split(line, "\x06", 1)
+                if pkg != "" && sln[3] != pkg
+                    continue
+                endif
                 if g:R_show_args
-                    let info = tmp1[4]
+                    let info = sln[4]
                     let info = substitute(info, "\t", ", ", "g")
                     let info = substitute(info, "\x07", " = ", "g")
-                    let tmp2 = {'word': tmp1[0], 'menu': tmp1[1] . ' ' . tmp1[3], 'info': info}
+                    call add(resp, {'word': prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
                 else
-                    let tmp2 = {'word': tmp1[0], 'menu': tmp1[1] . ' ' . tmp1[3]}
+                    call add(resp, {'word': prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
                 endif
-                call add(resp, tmp2)
             endif
         endfor
 
