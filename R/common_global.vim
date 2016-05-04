@@ -2745,17 +2745,17 @@ function CompleteR(findstart, base)
             call BuildROmniList(a:base)
             let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
         else
-            let isloaded = 0
-            for lib in g:rplugin_loaded_lists
-                if lib == pkg
-                    let isloaded = 1
-                    break
+            let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
+            if len(omf) == 1
+                let olist = readfile(omf[0])
+                if len(olist) == 0 || (len(olist) == 1 && len(olist[0]) < 3)
+                    return resp
                 endif
-            endfor
-            if !isloaded
+                let flines = olist
+            else
+                call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
+                return resp
             endif
-            call AddToRLibList(pkg)
-            let flines = g:rplugin_omni_lines
         endif
 
         " The char '$' at the end of 'a:base' is treated as end of line, and
