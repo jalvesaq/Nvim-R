@@ -2719,7 +2719,7 @@ function CompleteR(findstart, base)
         endif
 
         if len(g:rplugin_omni_lines) == 0
-            call add(resp, {'word': a:base, 'menu': " [ List is empty. Did you load nvimcom package? ]"})
+            call add(resp, {'word': a:base, 'menu': " [ List is empty. Is nvimcom library loaded? ]"})
         endif
 
         let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
@@ -2728,12 +2728,13 @@ function CompleteR(findstart, base)
         let newbase = '^' . substitute(a:base, "\\$$", "", "")
         for line in flines
             if line =~ newbase
-                " Skip cols of data frames unless the user is really looking for them.
-                if a:base !~ '\$' && line =~ '\$'
+                " Skip elements of lists unless the user is really looking for them.
+                " Skip lists if the user is looking for one of its elements.
+                if (a:base !~ '\$' && line =~ '\$') || (a:base =~ '\$' && line !~ '\$')
                     continue
                 endif
-                " Skip slots of S4 objects unless the user is really looking for them.
-                if a:base !~ '@' && line =~ '@'
+                " Idem with S4 objects
+                if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
                     continue
                 endif
                 let tmp1 = split(line, "\x06", 1)
