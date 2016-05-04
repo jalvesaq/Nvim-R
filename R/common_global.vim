@@ -2745,6 +2745,16 @@ function CompleteR(findstart, base)
             call BuildROmniList(a:base)
             let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
         else
+            let isloaded = 0
+            for lib in g:rplugin_loaded_lists
+                if lib == pkg
+                    let isloaded = 1
+                    break
+                endif
+            endfor
+            if !isloaded
+            endif
+            call AddToRLibList(pkg)
             let flines = g:rplugin_omni_lines
         endif
 
