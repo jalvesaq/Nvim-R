@@ -329,7 +329,7 @@ function RCompleteArgs()
             endif
 
             " If R isn't running, use the prebuilt list of objects
-            let flines = g:rplugin_globalenvlines + g:rplugin_omni_lines
+            let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
             for omniL in flines
                 if omniL =~ rkeyword && omniL =~ "\x06function\x06function\x06"
                     let tmp1 = split(omniL, "\x06")
