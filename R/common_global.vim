@@ -667,7 +667,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-15"
+            if nvers != "0.9-16"
                 let neednew = 1
             endif
         endif
@@ -686,7 +686,7 @@ function CheckNvimcomVersion()
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
-            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-15.tar.gz")
+            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-16.tar.gz")
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
                 return 0
@@ -697,7 +697,7 @@ function CheckNvimcomVersion()
         if has("win32")
             call UnsetRHome()
         endif
-        call delete("nvimcom_0.9-15.tar.gz")
+        call delete("nvimcom_0.9-16.tar.gz")
         cd -
     endif
     return 1
@@ -788,7 +788,7 @@ function StartR(whatr)
             let start_options += ['setwd("' . rwd . '")']
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.15") warning("Your version of Nvim-R requires nvimcom-0.9-15.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.16") warning("Your version of Nvim-R requires nvimcom-0.9-16.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -853,7 +853,7 @@ function WaitNvimcomStart()
     endwhile
     echon "\r                              "
     redraw
-    sleep 200m
+    sleep 300m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let g:rplugin_nvimcom_version = vr[0]
@@ -862,8 +862,8 @@ function WaitNvimcomStart()
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != "0.9.15"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-15.')
+        if g:rplugin_nvimcom_version != "0.9.16"
+            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-16.')
             sleep 1
         endif
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
@@ -2705,6 +2705,52 @@ function BuildROmniList(pattern)
     let g:rplugin_globalenvlines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
 endfunction
 
+function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
+    let resp = []
+    for line in a:olines
+        if line =~ a:newbase
+            " Skip elements of lists unless the user is really looking for them.
+            " Skip lists if the user is looking for one of its elements.
+            if (a:base !~ '\$' && line =~ '\$') || (a:base =~ '\$' && line !~ '\$')
+                continue
+            endif
+            " Idem with S4 objects
+            if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
+                continue
+            endif
+            let sln = split(line, "\x06", 1)
+            if a:pkg != "" && sln[3] != a:pkg
+                continue
+            endif
+            if len(a:toplev)
+                " Do not show an object from a package if it was masked by a
+                " toplevel object in .GlobalEnv
+                let masked = 0
+                let pkgobj = substitute(sln[0], "\\$.*", "", "")
+                let pkgobj = substitute(pkgobj, "@.*", "", "")
+                for tplv in a:toplev
+                    if tplv == pkgobj
+                        let masked = 1
+                        continue
+                    endif
+                endfor
+                if masked
+                    continue
+                endif
+            endif
+            if g:R_show_args
+                let info = sln[4]
+                let info = substitute(info, "\t", ", ", "g")
+                let info = substitute(info, "\x07", " = ", "g")
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
+            else
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
+            endif
+        endif
+    endfor
+    return resp
+endfunction
+
 function CompleteR(findstart, base)
     if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") && b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
         let Ofun = function(b:rplugin_nonr_omnifunc)
@@ -2741,52 +2787,31 @@ function CompleteR(findstart, base)
             let pkg = ""
         endif
 
-        if pkg == ""
-            call BuildROmniList(a:base)
-            let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
-        else
-            let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
-            if len(omf) == 1
-                let olist = readfile(omf[0])
-                if len(olist) == 0 || (len(olist) == 1 && len(olist[0]) < 3)
-                    return resp
-                endif
-                let flines = olist
-            else
-                call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
-                return resp
-            endif
-        endif
-
         " The char '$' at the end of 'a:base' is treated as end of line, and
         " the pattern is never found in 'line'.
         let newbase = '^' . substitute(newbase, "\\$$", "", "")
 
-        for line in flines
-            if line =~ newbase
-                " Skip elements of lists unless the user is really looking for them.
-                " Skip lists if the user is looking for one of its elements.
-                if (a:base !~ '\$' && line =~ '\$') || (a:base =~ '\$' && line !~ '\$')
-                    continue
-                endif
-                " Idem with S4 objects
-                if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
-                    continue
-                endif
-                let sln = split(line, "\x06", 1)
-                if pkg != "" && sln[3] != pkg
-                    continue
-                endif
-                if g:R_show_args
-                    let info = sln[4]
-                    let info = substitute(info, "\t", ", ", "g")
-                    let info = substitute(info, "\x07", " = ", "g")
-                    call add(resp, {'word': prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
-                else
-                    call add(resp, {'word': prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
-                endif
+        if pkg == ""
+            call BuildROmniList(a:base)
+            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_globalenvlines, [])
+            if filereadable(g:rplugin_tmpdir . "/nvimbol_finished")
+                let toplev = readfile(g:rplugin_tmpdir . "/nvimbol_finished")
+            else
+                let toplev = []
             endif
-        endfor
+            let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
+        else
+            let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
+            if len(omf) == 1
+                let olines = readfile(omf[0])
+                if len(olines) == 0 || (len(olines) == 1 && len(olines[0]) < 3)
+                    return resp
+                endif
+                let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, olines, [])
+            else
+                call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
+            endif
+        endif
 
         return resp
     endif

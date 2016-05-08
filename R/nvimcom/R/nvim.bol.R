@@ -144,7 +144,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
                 if(length(grep(paste0("^", pattern), obj)) > 0)
                     nvim.omni.line(obj, ".GlobalEnv", ".GlobalEnv", 0, maxlevel)
         sink()
-        writeLines(text = "Finished",
+        writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
         return(invisible(NULL))
     }
