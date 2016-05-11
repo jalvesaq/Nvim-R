@@ -779,13 +779,18 @@ function StartR(whatr)
         if has("win32")
             let rwd = substitute(rwd, '\\', '/', 'g')
         endif
-        if has("win32") && &encoding == "utf-8"
-            let start_options += ['.nvim.rwd <- "' . rwd . '"']
-            let start_options += ['Encoding(.nvim.rwd) <- "UTF-8"']
-            let start_options += ['setwd(.nvim.rwd)']
-            let start_options += ['rm(.nvim.rwd)']
-        else
-            let start_options += ['setwd("' . rwd . '")']
+
+        " `rwd` will not be a real directory if editing a file on the internet
+        " with netrw plugin
+        if isdirectory(rwd)
+            if has("win32") && &encoding == "utf-8"
+                let start_options += ['.nvim.rwd <- "' . rwd . '"']
+                let start_options += ['Encoding(.nvim.rwd) <- "UTF-8"']
+                let start_options += ['setwd(.nvim.rwd)']
+                let start_options += ['rm(.nvim.rwd)']
+            else
+                let start_options += ['setwd("' . rwd . '")']
+            endif
         endif
     endif
     let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.16") warning("Your version of Nvim-R requires nvimcom-0.9-16.", call. = FALSE)']
