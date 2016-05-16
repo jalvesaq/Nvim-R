@@ -659,7 +659,7 @@ endfunction
 
 function CheckNvimcomVersion()
     let neednew = 0
-    if g:rplugin_nvimcom_home == "0"
+    if g:rplugin_nvimcom_home == ""
         let neednew = 1
     else
         if !filereadable(g:rplugin_nvimcom_home . "/DESCRIPTION")
@@ -667,7 +667,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != "0.9-16"
+            if nvers != s:required_nvimcom
                 let neednew = 1
             endif
         endif
@@ -686,7 +686,7 @@ function CheckNvimcomVersion()
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
-            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_0.9-16.tar.gz")
+            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
                 return 0
@@ -697,7 +697,7 @@ function CheckNvimcomVersion()
         if has("win32")
             call UnsetRHome()
         endif
-        call delete("nvimcom_0.9-16.tar.gz")
+        call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
         cd -
     endif
     return 1
@@ -793,7 +793,11 @@ function StartR(whatr)
             endif
         endif
     endif
-    let start_options += ['if(utils::packageVersion("nvimcom") != "0.9.16") warning("Your version of Nvim-R requires nvimcom-0.9-16.", call. = FALSE)']
+    let start_options += ['if(utils::packageVersion("nvimcom") != "' .
+                \ s:required_nvimcom_dot .
+                \ '") warning("Your version of Nvim-R requires nvimcom-' .
+                \ s:required_nvimcom .
+                \ '.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
     if g:R_in_buffer
@@ -867,8 +871,9 @@ function WaitNvimcomStart()
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != "0.9.16"
-            call RWarningMsg('This version of Nvim-R requires nvimcom 0.9-16.')
+        if g:rplugin_nvimcom_version != s:required_nvimcom_dot
+            call RWarningMsg('This version of Nvim-R requires nvimcom ' .
+                        \ s:required_nvimcom . '.')
             sleep 1
         endif
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
@@ -3073,6 +3078,11 @@ let g:rplugin_myport = 0
 let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_lastev = ""
+
+let s:filelines = readfile(g:rplugin_home . "/R/nvimcom/DESCRIPTION")
+let s:required_nvimcom = substitute(s:filelines[1], "Version: ", "", "")
+let s:required_nvimcom_dot = substitute(s:required_nvimcom, "-", ".", "")
+unlet s:filelines
 
 let g:rplugin_nvimcom_version = "0"
 let g:rplugin_nvimcom_home = ""
