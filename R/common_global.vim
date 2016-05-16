@@ -681,6 +681,10 @@ function CheckNvimcomVersion()
         if has("win32")
             call SetRHome()
         endif
+
+        " The user libs directory may not exist yet if R was just upgraded
+        call system("echo '" . 'dir.create(Sys.getenv("R_LIBS_USER")[1L], showWarnings=FALSE, recursive=TRUE)' . "' | R --no-save")
+
         let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
         if v:shell_error
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
@@ -932,7 +936,16 @@ function WaitNvimcomStart()
         endif
         return 1
     else
-        let msg = "The package nvimcom wasn't loaded yet. Please, see  :h nvimcom-not-loaded"
+        if filereadable(g:rplugin_compldir . "/nvimcom_info")
+            " The information on nvimcom home might be invalid if R was upgraded
+            call delete(g:rplugin_compldir . "/nvimcom_info")
+            let g:rplugin_nvimcom_version = "0"
+            let g:rplugin_nvimcom_home = ""
+            let g:rplugin_nvimcom_bin_dir = ""
+            let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
+        else
+            let msg = "The package nvimcom wasn't loaded yet. Please, see  :h nvimcom-not-loaded"
+        endif
         if g:R_tmux_split
             call RWarningMsgInp(msg)
         else
