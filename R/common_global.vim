@@ -683,7 +683,7 @@ function CheckNvimcomVersion()
         endif
 
         " The user libs directory may not exist yet if R was just upgraded
-        let slog = system('R --no-save', 'dir.create(Sys.getenv("R_LIBS_USER")[1L], showWarnings=FALSE, recursive=TRUE)')
+        let slog = system('R --no-save', ['dir.create(Sys.getenv("R_LIBS_USER")[1L], showWarnings=FALSE, recursive=TRUE)'])
         if v:shell_error
             call RWarningMsg(slog)
         endif
