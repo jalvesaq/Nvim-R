@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.4 (development)
-For Neovim >= 0.1.4 and Vim >= 7.4.1722
+For Neovim >= 0.1.4 and Vim >= 7.4.1829
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -104,7 +104,7 @@ Before installing the plugin, you should install its dependencies:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 7.4.1722:
+   or Vim >= 7.4.1829:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
@@ -455,10 +455,9 @@ To get help on an R topic, you can also type in Vim (Normal mode):
 The command may be abbreviated to `:Rh` and you can either press <Tab> to
 trigger the autocompletion of R objects names or hit CTRL-D to list the
 possible completions (see |cmdline-completion| for details on the various ways
-of getting command-line completion). The list of objects used for
-completion is the same available for omnicompletion (see
-|R_start_libs|). You may close the R documentation buffer by
-simply pressing `q`.
+of getting command-line completion). The list of objects used for completion
+is the same available for omnicompletion (see |R_start_libs|). You may close
+the R documentation buffer by simply pressing `q`.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
 will show it in a new tab. If the csv.vim plugin is not installed, Nvim-R
@@ -2712,12 +2711,13 @@ step-by-step procedure to run Nvim-R remotely:
 10. News~
 
 
-0.9.4 (2016-04-21)
+0.9.4 (2016-05-16)
 
  * Delete option R_tmux_ob. The Object Browser will always start in a Vim
    split window, not in a Tmux split pane.
  * New option: R_cmd
  * Minor bug fixes.
+ * Require Neovim >= 0.1.4 or Vim >= 7.4.1829.
 
 0.9.3 (2016-03-26)
 
