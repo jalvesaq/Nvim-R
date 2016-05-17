@@ -676,18 +676,35 @@ function CheckNvimcomVersion()
     " Nvim-R might have been installed as root in a non writable directory.
     " We have to build nvimcom in a writable directory before installing it.
     if neednew
-        echo "Updating nvimcom... "
         exe "cd " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g')
         if has("win32")
             call SetRHome()
         endif
 
         " The user libs directory may not exist yet if R was just upgraded
-        let slog = system('R --no-save', ['dir.create(Sys.getenv("R_LIBS_USER")[1L], showWarnings=FALSE, recursive=TRUE)'])
+        let rcode = [ 'sink("' . g:rplugin_tmpdir . '/libpaths")',
+                    \ 'cat(.libPaths()[1L],',
+                    \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
+                    \ '    sep = "\n")',
+                    \ 'sink()']
+        let slog = system('R --no-save', rcode)
         if v:shell_error
             call RWarningMsg(slog)
+            return 0
         endif
+        let libpaths = readfile(g:rplugin_tmpdir . "/libpaths")
+        if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2)
+            if !isdirectory(expand(libpaths[1]))
+                let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
+                if resp[0] == "y" || resp[0] == "Y"
+                    call mkdir(expand(libpaths[1]), "p")
+                endif
+                echo " "
+            endif
+        endif
+        call delete(g:rplugin_tmpdir . "/libpaths")
 
+        echo "Updating nvimcom... "
         let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
         if v:shell_error
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
@@ -705,7 +722,7 @@ function CheckNvimcomVersion()
             call UnsetRHome()
         endif
         call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
-        cd -
+        silent cd -
     endif
     return 1
 endfunction
