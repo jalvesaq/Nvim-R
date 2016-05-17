@@ -3,7 +3,7 @@
 #
 # Many snippets have starred versions, i.e., versions
 # that end with an asterisk (`*`). These snippets use
-# vim's `"*` register---i.e., the contents of the 
+# vim's `"*` register---i.e., the contents of the
 # system clipboard---to insert text.
 
 # Insert Title Block
@@ -76,21 +76,21 @@ snippet [^:
 snippet [^:*
 	[^${1:id}]: ${2:`@*`}
 
-# 
+#
 
 # library()
 snippet req
 	require(${1:}, quietly = TRUE)
 # If Condition
 snippet if
-	if ( ${1:condition} ) 
-	{ 
-		${2:} 
+	if ( ${1:condition} )
+	{
+		${2:}
 	}
 snippet el
-	else 
-	{ 
-		${1:} 
+	else
+	{
+		${1:}
 	}
 
 # Function
@@ -99,7 +99,7 @@ snippet fun
 		function
 	(
 	 	${3:}
-	) 
+	)
 	{
 	  ${4:}
 	}
@@ -123,16 +123,16 @@ snippet cmdarg
 	if (length(args) == 0)
 	    stop("Please give ${1:}!")
 	if (!all(file.exists(args)))
-	     stop("Couln't find input files!") 
+	     stop("Couln't find input files!")
 
 snippet getopt
 	require('getopt', quietly = TRUE)
 	opt_spec <- matrix(c(
 					'help',     'h', 0, "logical", 	"Getting help",
-					'file',     'f', 1, "character","File to process" 
+					'file',     'f', 1, "character","File to process"
 	                ), ncol = 5, byrow = TRUE)
 	opt <- getopt(spec = opt_spec)
-	if ( !is.null(opt$help) || is.null(commandArgs()) )   {    
+	if ( !is.null(opt$help) || is.null(commandArgs()) )   {
 	    cat(getopt(spec = opt_spec, usage = TRUE, command = "yourCmd"))
 	    q(status=0)
 	}
@@ -141,7 +141,7 @@ snippet getopt
 
 snippet optparse
 	require("optparse", quietly = TRUE)
-	option_list <- 
+	option_list <-
 	    list(make_option(c("-n", "--add_numbers"), action="store_true", default=FALSE,
 	                     help="Print line number at the beginning of each line [default]")
 	         )

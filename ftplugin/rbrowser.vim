@@ -80,7 +80,7 @@ function! UpdateOB(what)
     endif
     let save_unnamed_reg = @@
     sil normal! ggdG
-    let @@ = save_unnamed_reg 
+    let @@ = save_unnamed_reg
     if wht == "GlobalEnv"
         let fcntt = readfile(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     else
@@ -121,7 +121,7 @@ function! RBrowserDoubleClick()
             call SendToNvimcom("\006" . key)
         endif
     else
-        let key = substitute(key, '`', '', "g") 
+        let key = substitute(key, '`', '', "g")
         if key !~ "^package:"
             let key = "package:" . RBGetPkgName() . '-' . key
         endif

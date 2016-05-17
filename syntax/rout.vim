@@ -5,7 +5,7 @@
 
 if exists("b:current_syntax")
     finish
-endif 
+endif
 
 setlocal iskeyword=@,48-57,_,.
 
@@ -33,7 +33,7 @@ syn match routInteger "\<\d\+[Ee]+\=\d\+L"
 " number with no fractional part or exponent
 syn match routNumber "\<\d\+\>"
 syn match routNegNum "-\<\d\+\>"
-" hexadecimal number 
+" hexadecimal number
 syn match routNumber "\<0x\([0-9]\|[a-f]\|[A-F]\)\+"
 
 " floating point number with integer and fractional parts and optional exponent

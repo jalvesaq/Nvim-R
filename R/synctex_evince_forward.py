@@ -55,8 +55,8 @@ class EvinceWindowProxy:
                 EvinceWindowProxy.daemon = EvinceWindowProxy.bus.get_object(EV_DAEMON_NAME,
                                                 EV_DAEMON_PATH,
                                                 follow_name_owner_changes=True)
-            EvinceWindowProxy.bus.add_signal_receiver(self._on_doc_loaded, signal_name="DocumentLoaded", 
-                                                      dbus_interface = EV_WINDOW_IFACE, 
+            EvinceWindowProxy.bus.add_signal_receiver(self._on_doc_loaded, signal_name="DocumentLoaded",
+                                                      dbus_interface = EV_WINDOW_IFACE,
                                                       sender_keyword='sender')
             self._get_dbus_name(False)
 
@@ -67,7 +67,7 @@ class EvinceWindowProxy:
     def _on_doc_loaded(self, uri, **keyargs):
         if uri == self.uri and self._handler is None:
             self.handle_find_document_reply(keyargs['sender'])
-        
+
     def _get_dbus_name(self, spawn):
         EvinceWindowProxy.daemon.FindDocument(self.uri,spawn,
                      reply_handler=self.handle_find_document_reply,
@@ -100,7 +100,7 @@ class EvinceWindowProxy:
             window_obj = EvinceWindowProxy.bus.get_object(self.dbus_name, window_list[0])
             self.window = dbus.Interface(window_obj,EV_WINDOW_IFACE)
         else:
-            #That should never happen. 
+            #That should never happen.
             sys.stderr.write("GetWindowList returned empty list")
             sys.stderr.flush()
 
@@ -121,7 +121,7 @@ class EvinceWindowProxy:
     def _syncview_handler(self, window_list):
         self.handle_get_window_list_reply(window_list)
 
-        if self.status == CLOSED: 
+        if self.status == CLOSED:
             return False
         self.window.SyncView(self._tmp_syncview[0],self._tmp_syncview[1], self._tmp_syncview[2], dbus_interface="org.gnome.evince.Window")
         del self._tmp_syncview
@@ -143,4 +143,4 @@ def sync_view(ev_window, path_input, line_number):
 
 GObject.timeout_add(400, sync_view, a, path_input, line_number)
 loop = GObject.MainLoop()
-loop.run() 
+loop.run()

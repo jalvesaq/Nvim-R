@@ -16,7 +16,7 @@
 "
 " Authors: Jakson Alves de Aquino <jalvesaq@gmail.com>
 "          Jose Claudio Faria
-"          
+"
 "          Based on previous work by Johannes Ranke
 "
 " Please see doc/Nvim-R.txt for usage details.
