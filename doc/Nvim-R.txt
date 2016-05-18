@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.4 (development)
+Version: 0.9.5
 For Neovim >= 0.1.4 and Vim >= 7.4.1829
 
  1. Overview                                    |Nvim-R-overview|
@@ -1011,9 +1011,9 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							      *R_set_home_env*
 							      *R_save_win_pos*
 							   *R_arrange_windows*
+							      *R_set_home_env*
 6.3. Time for the paste command on Windows~
 
 By default, Nvim-R will save the positions of R Console and Vim windows
@@ -1144,7 +1144,7 @@ This option can only be set to "no" in the |vimrc|. It will be automatically
 changed to a suitable value if it is set to "no" after Vim startup.
 
 If you want to see R documentation in Vim, but are not satisfied with the
-way it works, please, read the subsection 6.5.2 below.
+way it works, please, read the subsection 6.6.2 below.
 
 ------------------------------------------------------------------------------
 6.6.2. Details and other options:~
@@ -2114,6 +2114,10 @@ selection". You may find it a good idea to map them to the space bar in your
    vmap <Space> <Plug>RDSendSelection
    nmap <Space> <Plug>RDSendLine
 <
+If you want to press <C-Enter> to send lines to R, see:
+
+   https://github.com/jalvesaq/Nvim-R/issues/64
+
 You may also want to remap <C-x><C-o>:
 
    http://stackoverflow.com/questions/2269005/how-can-i-change-the-keybinding-used-to-autocomplete-in-vim
@@ -2710,6 +2714,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
+
+0.9.5 (2016-05-18)
+
+ * Ask whether R_LIBS_USER directory should be created.
 
 0.9.4 (2016-05-16)
 
