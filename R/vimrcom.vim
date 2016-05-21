@@ -56,9 +56,9 @@ endfunction
 
 let g:rplugin_jobs = {"ClientServer": "no", "R": "no", "Terminal emulator": "no"}
 let g:rplugin_job_handlers = {
-            \ 'out_cb':   function('ROnJobStdout'),
-            \ 'err_cb':   function('ROnJobStderr'),
-            \ 'close_cb': function('ROnJobExit')}
+            \ 'out_cb':  'ROnJobStdout',
+            \ 'err_cb':  'ROnJobStderr',
+            \ 'exit_cb': 'ROnJobExit'}
 
 
 " Check if Vim-R-plugin is installed

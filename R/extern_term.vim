@@ -21,28 +21,36 @@ function StartR_ExternalTerm(rcmd)
         let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') . ' NVIMR_ID=' . $NVIMR_ID . ' NVIMR_SECRET=' . $NVIMR_SECRET . ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES . ' ' . a:rcmd
+    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') .
+                \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') .
+                \ ' NVIMR_ID=' . $NVIMR_ID .
+                \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
+                \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES . ' ' . a:rcmd
 
     call system("tmux -L NvimR has-session -t " . g:rplugin_tmuxsname)
     if v:shell_error
         if g:rplugin_is_darwin
             let rcmd = 'TERM=screen-256color ' . rcmd
-            let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'", tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'",
+                        \ tmuxcnf, g:rplugin_tmuxsname, rcmd)
             call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
             call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
             let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         else
-            let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\" &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+            let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\"",
+                        \ g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
         endif
     else
         if g:rplugin_is_darwin
             call RWarningMsg("Tmux session with R is already running")
             return
         endif
-        let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s &", g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
+        let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s",
+                    \ g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
     endif
 
     if g:R_silent_term
+        let opencmd .= " &"
         let rlog = system(opencmd)
         if v:shell_error
             call RWarningMsg(rlog)
@@ -57,7 +65,7 @@ function StartR_ExternalTerm(rcmd)
                         \ {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
         else
             let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
-                        \ {'out_cb': function('ROnJobStderr'), 'err_cb': function('ROnJobExit')})
+                        \ {'err_cb': 'ROnJobStderr', 'exit_cb': 'ROnJobExit'})
         endif
     endif
 
