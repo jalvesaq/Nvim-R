@@ -126,22 +126,8 @@ function! RKnitRmCache()
     endif
 endfunction
 
-" knit the current buffer content
-function! RKnitRnw()
-    update
-    let rnwdir = expand("%:p:h")
-    if has("win32")
-        let rnwdir = substitute(rnwdir, '\\', '/', 'g')
-    endif
-    if g:R_synctex == 0
-        call g:SendCmdToR('nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '", buildpdf = FALSE, synctex = FALSE)')
-    else
-        call g:SendCmdToR('nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '", buildpdf = FALSE)')
-    endif
-endfunction
-
-" Sweave and compile the current buffer content
-function! RMakePDF(bibtex, knit)
+" Weave and compile the current buffer content
+function! RWeave(bibtex, knit, pdf)
     if g:rplugin_nvimcom_port == 0
         call RWarningMsg("The nvimcom package is required to make and open the PDF.")
     endif
@@ -154,6 +140,10 @@ function! RMakePDF(bibtex, knit)
 
     if a:knit == 0
         let pdfcmd = pdfcmd . ', knit = FALSE'
+    endif
+
+    if a:pdf == 0
+        let pdfcmd = pdfcmd . ', buildpdf = FALSE'
     endif
 
     if g:rplugin_has_latexmk == 0
@@ -172,16 +162,12 @@ function! RMakePDF(bibtex, knit)
         let pdfcmd = pdfcmd . ", bibtex = TRUE"
     endif
 
-    if g:R_openpdf == 0
+    if a:pdf == 0 || g:R_openpdf == 0 || b:pdf_is_open
         let pdfcmd = pdfcmd . ", view = FALSE"
-    else
-        if g:R_openpdf == 1
-            if b:pdf_is_open == 0
-                let b:pdf_is_open = 1
-            else
-                let pdfcmd = pdfcmd . ", view = FALSE"
-            endif
-        endif
+    endif
+
+    if a:pdf && g:R_openpdf == 1
+        let b:pdf_is_open = 1
     endif
 
     if a:knit == 0 && exists("g:R_sweaveargs")
@@ -189,10 +175,7 @@ function! RMakePDF(bibtex, knit)
     endif
 
     let pdfcmd = pdfcmd . ")"
-    let ok = g:SendCmdToR(pdfcmd)
-    if ok == 0
-        return
-    endif
+    call g:SendCmdToR(pdfcmd)
 endfunction
 
 " Send Sweave chunk to R
@@ -213,23 +196,6 @@ function! RnwSendChunkToR(e, m)
     endif
 endfunction
 
-" Sweave the current buffer content
-function! RSweave()
-    update
-    let rnwdir = expand("%:p:h")
-    if has("win32")
-        let rnwdir = substitute(rnwdir, '\\', '/', 'g')
-    endif
-    let scmd = 'nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '", knit = FALSE, buildpdf = FALSE'
-    if exists("g:R_sweaveargs")
-        let scmd .= ', ' . g:R_sweaveargs
-    endif
-    if g:R_synctex == 0
-        let scmd .= ", synctex = FALSE"
-    endif
-    call g:SendCmdToR(scmd . ')')
-endfunction
-
 if g:R_rnowebchunk == 1
     " Write code chunk in rnoweb files
     inoremap <buffer><silent> < <Esc>:call RWriteChunk()<CR>a
@@ -242,7 +208,11 @@ let b:PreviousRChunk = function("RnwPreviousChunk")
 let b:NextRChunk = function("RnwNextChunk")
 let b:SendChunkToR = function("RnwSendChunkToR")
 
-let b:pdf_is_open = 0
+" Check if b:pdf_is_open already exists because this script is called when
+" FillRLibList() is called
+if !exists("b:pdf_is_open")
+    let b:pdf_is_open = 0
+endif
 
 
 "==========================================================================
@@ -255,15 +225,15 @@ call RControlMaps()
 call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
 
 " Only .Rnw files use these functions:
-call RCreateMaps("nvi", '<Plug>RSweave',      'sw', ':call RSweave()')
-call RCreateMaps("nvi", '<Plug>RMakePDF',     'sp', ':call RMakePDF("nobib", 0)')
-call RCreateMaps("nvi", '<Plug>RBibTeX',      'sb', ':call RMakePDF("bibtex", 0)')
+call RCreateMaps("nvi", '<Plug>RSweave',      'sw', ':call RWeave("nobib", 0, 0)')
+call RCreateMaps("nvi", '<Plug>RMakePDF',     'sp', ':call RWeave("nobib", 0, 1)')
+call RCreateMaps("nvi", '<Plug>RBibTeX',      'sb', ':call RWeave("bibtex", 0, 1)')
 if exists("g:R_rm_knit_cache") && g:R_rm_knit_cache == 1
     call RCreateMaps("nvi", '<Plug>RKnitRmCache', 'kr', ':call RKnitRmCache()')
 endif
-call RCreateMaps("nvi", '<Plug>RKnit',        'kn', ':call RKnitRnw()')
-call RCreateMaps("nvi", '<Plug>RMakePDFK',    'kp', ':call RMakePDF("nobib", 1)')
-call RCreateMaps("nvi", '<Plug>RBibTeXK',     'kb', ':call RMakePDF("bibtex", 1)')
+call RCreateMaps("nvi", '<Plug>RKnit',        'kn', ':call RWeave("nobib", 1, 0)')
+call RCreateMaps("nvi", '<Plug>RMakePDFK',    'kp', ':call RWeave("nobib", 1, 1)')
+call RCreateMaps("nvi", '<Plug>RBibTeXK',     'kb', ':call RWeave("bibtex", 1, 1)')
 call RCreateMaps("nvi", '<Plug>RIndent',      'si', ':call RnwToggleIndentSty()')
 call RCreateMaps("ni",  '<Plug>RSendChunk',   'cc', ':call b:SendChunkToR("silent", "stay")')
 call RCreateMaps("ni",  '<Plug>RESendChunk',  'ce', ':call b:SendChunkToR("echo", "stay")')
