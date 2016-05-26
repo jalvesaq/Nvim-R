@@ -50,6 +50,12 @@ endif
 
 let g:rplugin_lastft = &filetype
 
+" Check if b:pdf_is_open already exists because this script is called when
+" FillRLibList() is called
+if !exists("b:pdf_is_open")
+    let b:pdf_is_open = 0
+endif
+
 if !exists("g:SendCmdToR")
     let g:SendCmdToR = function('SendCmdToR_fake')
 endif

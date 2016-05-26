@@ -208,12 +208,6 @@ let b:PreviousRChunk = function("RnwPreviousChunk")
 let b:NextRChunk = function("RnwNextChunk")
 let b:SendChunkToR = function("RnwSendChunkToR")
 
-" Check if b:pdf_is_open already exists because this script is called when
-" FillRLibList() is called
-if !exists("b:pdf_is_open")
-    let b:pdf_is_open = 0
-endif
-
 
 "==========================================================================
 " Key bindings and menu items

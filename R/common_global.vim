@@ -2406,6 +2406,8 @@ function! RMakeRmd(t)
     endif
     if (g:R_openhtml  == 0 && a:t == "html_document") || (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation" || a:t == "word_document"))
         let rcmd .= ", view = FALSE"
+    else
+        let b:pdf_is_open = 1
     endif
     let rcmd = rcmd . ', envir = ' . g:R_rmd_environment . ')'
     call g:SendCmdToR(rcmd)
