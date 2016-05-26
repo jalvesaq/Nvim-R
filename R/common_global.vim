@@ -2404,9 +2404,10 @@ function! RMakeRmd(t)
     else
         let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
     endif
-    if (g:R_openhtml  == 0 && a:t == "html_document") || (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation" || a:t == "word_document"))
+    if b:pdf_is_open || (g:R_openhtml  == 0 && a:t == "html_document") ||
+                \ (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation" || a:t == "word_document"))
         let rcmd .= ", view = FALSE"
-    else
+    elseif g:R_openpdf == 1 && (a:t == "pdf_document" || a:t == "beamer_presentation")
         let b:pdf_is_open = 1
     endif
     let rcmd = rcmd . ', envir = ' . g:R_rmd_environment . ')'
