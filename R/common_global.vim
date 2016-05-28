@@ -2940,7 +2940,6 @@ call RSetDefaultValue("g:R_assign_map",    "'_'")
 call RSetDefaultValue("g:R_args_in_stline",    0)
 call RSetDefaultValue("g:R_rnowebchunk",       1)
 call RSetDefaultValue("g:R_strict_rst",        1)
-call RSetDefaultValue("g:R_openpdf",           2)
 call RSetDefaultValue("g:R_synctex",           1)
 call RSetDefaultValue("g:R_openhtml",          0)
 call RSetDefaultValue("g:R_nvim_wd",           0)
@@ -2995,12 +2994,16 @@ if !g:R_hi_fun
     endfunction
 endif
 
-if has("win32")
-    let g:R_pdfviewer = "sumatra"
-elseif g:rplugin_is_darwin
+if g:rplugin_is_darwin
+    call RSetDefaultValue("g:R_openpdf", 1)
     let g:R_pdfviewer = "skim"
 else
-    call RSetDefaultValue("g:R_pdfviewer", "'zathura'")
+    call RSetDefaultValue("g:R_openpdf", 2)
+    if has("win32")
+        let g:R_pdfviewer = "sumatra"
+    else
+        call RSetDefaultValue("g:R_pdfviewer", "'zathura'")
+    endif
 endif
 
 if !exists("g:r_indent_ess_comments")

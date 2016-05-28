@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.5
+Version: 0.9.6
 For Neovim >= 0.1.4 and Vim >= 7.4.1829
 
  1. Overview                                    |Nvim-R-overview|
@@ -1014,7 +1014,7 @@ put in your |vimrc|:
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 							      *R_set_home_env*
-6.3. Time for the paste command on Windows~
+6.3. Windows specific options~
 
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
@@ -1494,6 +1494,8 @@ the X server) you may want to put in your |vimrc|:
        let R_openpdf = 1
    endif
 <
+The default value of `R_openpdf` is 1 on Mac OS X and 2 on other systems.
+
 On Windows, Nvim-R will call Sumatra to open the PDF, and, on Mac OS X, it
 will call Skim. On Linux, you can change the value of R_pdfviewer in your
 |vimrc| to define what PDF viewer will be called. Valid values are "zathura"
@@ -2714,6 +2716,9 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
+0.9.6 (2016-05-18)
+
+ * Minor bug fixes.
 
 0.9.5 (2016-05-18)
 
