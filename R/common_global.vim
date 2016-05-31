@@ -2876,9 +2876,17 @@ function RSourceOtherScripts()
     endif
 endfunction
 
+function RBuildTags()
+    if filereadable("TAGS")
+        call RWarningMsg('The file "TAGS" exists. Please, delete it and try again.')
+        return
+    endif
+    call g:SendCmdToR('rtags(ofile = "TAGS"); etags2ctags("TAGS", "tags"); unlink("TAGS")')
+endfunction
+
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
-command RBuildTags :call g:SendCmdToR('rtags(ofile = "TAGS")')
+command RBuildTags :call RBuildTags()
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
 command -nargs=? -complete=dir RSourceDir :call RSourceDirectory(<q-args>)
 command RStop :call StopR()

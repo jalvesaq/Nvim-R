@@ -677,13 +677,13 @@ in a buffer (see |:s| and |pattern-overview|).
 								  *RBuildTags*
 4.6. Build a tags file to jump to function definitions~
 
-Vim can jump to functions defined in other files if you press CTRL-] over
-the name of a function, but it needs a tags file to be able to find the
-function definition (see |tags-and-searches|). The command `:RBuildTags` calls
-the R function `rtags()` to build the tags file for the R scripts in the
-current directory. Please read |Nvim-R-tagsfile| to learn how to create a tags
-file referencing source code located in other directories, including the
-entire R source code.
+Vim can jump to functions defined in other files if you press CTRL-] over the
+name of a function, but it needs a tags file to be able to find the function
+definition (see |tags-and-searches|). The command `:RBuildTags` calls the R
+functions `rtags()` and `etags2ctags` to build the tags file for the R scripts
+in the current directory. Please read |Nvim-R-tagsfile| to learn how to create
+a tags file referencing source code located in other directories, including
+the entire R source code.
 
 
 ==============================================================================
@@ -2151,15 +2151,13 @@ your |vimrc| (before any mapping command):
 Vim can jump to a function definition if it finds a "tags" file with the
 information about the place where the function is defined. To generate the
 tags file, use the R function `rtags()`, which will build an Emacs tags file.
-If Vim was compiled with the feature |emacs_tags|, it will be able to read
-the tags file. Otherwise, you can use the nvimcom function `etags2ctags()` to
-convert the Emacs tags file into an Vim one. To jump to a function
-definition, put the cursor over the function name and hit CTRL-]. Please, read
-|tagsrch.txt| for details on how to use tags files, specially the section
-|tags-option|.
+You can use the nvimcom function `etags2ctags()` to convert the Emacs tags
+file into an Vim one. To jump to a function definition, put the cursor over
+the function name and hit CTRL-]. Please, read |tagsrch.txt| for details on
+how to use tags files, specially the section |tags-option|.
 
 You could, for example, download and unpack R's source code, start R inside
-the ~/.nvim directory and do the following commands:
+the ~/.cache/Nvim-R directory and do the following commands:
 >
    rtags(path = "/path/to/R/source/code", recursive = TRUE, ofile = "RTAGS")
    etags2ctags("RTAGS", "Rtags")
@@ -2171,8 +2169,8 @@ Then, you would quit R and do the following command in the terminal emulator:
 Finally, you would put the following in your |vimrc|, optionally inside an
 |autocmd-group|:
 >
-   autocmd FileType r set tags+=~/.nvim/Rtags,~/.nvim/RsrcTags
-   autocmd FileType rnoweb set tags+=~/.nvim/Rtags,~/.nvim/RsrcTags
+   autocmd FileType r set tags+=~/.cache/Nvim-R/Rtags,~/.cache/Nvim-R/RsrcTags
+   autocmd FileType rnoweb set tags+=~/.cache/Nvim-R/Rtags,~/.cache/Nvim-R/RsrcTags
 <
 Note: While defining the autocmd, the Rtags path must be put before RsrcTags.
 
@@ -2303,9 +2301,9 @@ If you want 256 colors support in Vim, install the package ncurses-term.
 Then put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
 
 You have to search the internet for color schemes supporting 256 colors,
-download and copy them to ~/.nvim/colors. You may use the command
-|:colorscheme| to try them one by one before setting your preference in your
-|vimrc|.
+download and copy them to either ~/.config/nvim/colors or ~/.vim. You may use
+the command |:colorscheme| to try them one by one before setting your
+preference in your |vimrc|.
 
 
 ------------------------------------------------------------------------------
