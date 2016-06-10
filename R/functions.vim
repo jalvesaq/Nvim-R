@@ -150,7 +150,7 @@ function FillRLibList()
     " also need to update the syntax on CursorMoved event:
     " https://github.com/neovim/neovim/issues/901
     let g:rplugin_new_libs = len(g:rplugin_loaded_lists)
-    silent exe 'set filetype=' . &filetype
+    silent exe 'set syntax=' . &syntax
     redraw
     let b:rplugin_new_libs = g:rplugin_new_libs
 endfunction
