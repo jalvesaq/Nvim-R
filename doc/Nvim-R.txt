@@ -803,6 +803,7 @@ is running:
    let SendCmdToR = function('SendCmdToR_Term')
    let SendCmdToR = function('SendCmdToR_OSX')
    let SendCmdToR = function('SendCmdToR_Windows')
+   let SendCmdToR = function('SendCmdToR_Neovim')
 <
 
 ==============================================================================
@@ -2050,14 +2051,25 @@ R/nvimcom/src/apps/nclientserver.c
 								 *Nvim-R-tips*
 9. FAQ and tips~
 
-9.1. Is it possible to stop R from within Vim?~
+9.1. How to start R automatically?~
+
+If you want that R is started automatically when you start editing an R
+script, you should create in |vimrc| auto commands for each R file type that
+you usually edit. However, you should try to start R only if it is not already
+started. Examples for R and RMarkdown:
+>
+   autocmd FileType r if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+   autocmd FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+<
+
+9.2. Is it possible to stop R from within Vim?~
 
 Yes. In Normal mode do `:RStop` and Vim will send SIGINT to R which is the
 same signal sent when you press CTRL-C into R's Console.
 
 
 ------------------------------------------------------------------------------
-9.2. Html help and custom pager~
+9.3. Html help and custom pager~
 
 If you prefer to see help pages in an html browser, put in your `~/.Rprofile`:
 >
@@ -2070,7 +2082,7 @@ and in your |vimrc| (see |R_nvimpager|):
 
 ------------------------------------------------------------------------------
 							    *Nvim-R-showmarks*
-9.3. How do marked blocks work?~
+9.4. How do marked blocks work?~
 
 Vim allows you to put several marks (bookmarks) in buffers (see |mark|). The
 most commonly used marks are the lowercase alphabet letters. If the cursor is
@@ -2089,7 +2101,7 @@ lines have marks defined. The plugins are available at:
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-snippets*
-9.4. Use snipMate~
+9.5. Use snipMate~
 
 You probably will want to use the snipMate plugin to insert snippets of code
 in your R script. The plugin may be downloaded from:
@@ -2107,7 +2119,7 @@ rhelp.snippets
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-bindings*
-9.5. Easier key bindings for most used commands~
+9.6. Easier key bindings for most used commands~
 
 The most used commands from Nvim-R probably are "Send line" and "Send
 selection". You may find it a good idea to map them to the space bar in your
@@ -2134,7 +2146,7 @@ in mappings are particularly problematic. See:
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-localleader*
-9.6. Remap the <LocalLeader>~
+9.7. Remap the <LocalLeader>~
 
 People writing Rnoweb documents may find it better to use a comma or other key
 as the <LocalLeader> instead of the default backslash (see |maplocalleader|).
@@ -2146,7 +2158,7 @@ your |vimrc| (before any mapping command):
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-tagsfile*
-9.7. Use a tags file to jump to function definitions~
+9.8. Use a tags file to jump to function definitions~
 
 Vim can jump to a function definition if it finds a "tags" file with the
 information about the place where the function is defined. To generate the
@@ -2184,7 +2196,7 @@ Example on how to test whether your setup is ok:
 
 ------------------------------------------------------------------------------
 							    *Nvim-R-indenting*
-9.8. Indenting setup~
+9.9. Indenting setup~
 
 Note: In Normal mode, type |==| to indent the current line and gg=G to format
 the entire buffer (see |gg|, |=| and |G| for details). These are Vim
@@ -2237,7 +2249,7 @@ Notes: (1) Not all code indented by Emacs/ESS will be indented by the
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-folding*
-9.9. Folding setup~
+9.10. Folding setup~
 
 Vim has several methods of folding text (see |fold-methods| and
 |fold-commands|). To enable the syntax method of folding for R files, put in
@@ -2263,7 +2275,7 @@ develop a better algorithm in the future.
 
 
 ------------------------------------------------------------------------------
-9.10. Highlight chunk header as R code~
+9.11. Highlight chunk header as R code~
 
 By default, Vim will highlight chunk headers of RMarkdown and
 RreStructuredText with a single color. When the code is processed by knitr,
@@ -2275,7 +2287,7 @@ them as such. You can do this by putting in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.11. Automatically close parenthesis~
+9.12. Automatically close parenthesis~
 
 Some people want Vim automatically inserting a closing parenthesis, bracket
 or brace when an open one has being typed. The page below explains how to
@@ -2285,7 +2297,7 @@ achieve this goal:
 
 
 ------------------------------------------------------------------------------
-9.12. Automatic line breaks~
+9.13. Automatic line breaks~
 
 By default, while editing R code, Vim does not break lines when you are
 typing if you reach the column defined by the 'textwidth' option. If you
@@ -2295,7 +2307,7 @@ prefer that Vim breaks the R code automatically put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.13. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
+9.14. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
 
 If you want 256 colors support in Vim, install the package ncurses-term.
 Then put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
@@ -2307,7 +2319,7 @@ preference in your |vimrc|.
 
 
 ------------------------------------------------------------------------------
-9.14. Run your Makefile from within R~
+9.15. Run your Makefile from within R~
 
 Do you have many Rnoweb files included in a master tex or Rnoweb file and use
 a Makefile to build the pdf? You may consider it useful to put the following
@@ -2318,7 +2330,7 @@ line in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-Rprofile*
-9.15. Edit your ~/.Rprofile~
+9.16. Edit your ~/.Rprofile~
 
 You may want to edit your `~/.Rprofile` in addition to considering the
 suggestions of |Nvim-R-R-setup| you may also want to put the following
@@ -2343,7 +2355,7 @@ terminal emulator or the GVim window.
 
 
 ------------------------------------------------------------------------------
-9.16. Debugging R functions~
+9.17. Debugging R functions~
 
 The Nvim-R-Plugin does not have debugging facilities, but you may want to use
 the R package "debug":
@@ -2364,7 +2376,7 @@ your desktop manager.
 
 ------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.17. Integration with LaTeX-Box~
+9.18. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
@@ -2387,7 +2399,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.18. Suggested setup for Nvim-R~
+9.19. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2481,7 +2493,7 @@ Finally, if you want to use vi key bindings in Bash or other shell:
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.19. Syntax highlight of .Rout files~
+9.20. Syntax highlight of .Rout files~
 
 You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
@@ -2535,7 +2547,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.20 Integration with Tmux~
+9.21 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as
@@ -2714,7 +2726,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-05-18)
+0.9.6 (2016-06-07)
 
  * Minor bug fixes.
 
