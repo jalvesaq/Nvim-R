@@ -94,23 +94,3 @@ function SendCmdToR_TmuxSplit(...)
     endif
     return 1
 endfunction
-
-function CloseExternalOB()
-    if IsExternalOBRunning()
-        sleep 300m
-        let g:rplugin_ob_port = 0
-        let qcmd = "tmux set-buffer ':quit\<C-M>' && tmux paste-buffer -t " . g:rplugin_ob_pane
-        unlet g:rplugin_ob_pane
-        call system(qcmd)
-    endif
-endfunction
-
-function IsExternalOBRunning()
-    if exists("g:rplugin_ob_pane")
-        let plst = system("tmux list-panes | cat")
-        if plst =~ g:rplugin_ob_pane
-            return 1
-        endif
-    endif
-    return 0
-endfunction

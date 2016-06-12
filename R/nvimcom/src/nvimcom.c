@@ -43,7 +43,6 @@ static int nvimcom_failure = 0;
 static int nlibs = 0;
 static int needsfillmsg = 0;
 static int openclosel = 0;
-static char obsrvr[128];
 static char edsrvr[128];
 static char nvimsecr[128];
 static char liblist[512];
@@ -504,7 +503,7 @@ static void nvimcom_write_obbr()
     }
     fprintf(f, "%s", obbrbuf1);
     fclose(f);
-    nvimcom_nvimclient("UpdateOB('GlobalEnv')", obsrvr);
+    nvimcom_nvimclient("UpdateOB('GlobalEnv')", edsrvr);
 }
 
 static void nvimcom_list_env()
@@ -791,7 +790,7 @@ static void nvimcom_list_libs()
     fclose(f);
     opendf = save_opendf;
     openls = save_openls;
-    nvimcom_nvimclient("UpdateOB('libraries')", obsrvr);
+    nvimcom_nvimclient("UpdateOB('libraries')", edsrvr);
 }
 
 Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
@@ -895,12 +894,8 @@ static void nvimcom_parse_received_msg(char *buf)
             strcpy(edsrvr, bbuf);
             nvimcom_del_newline(edsrvr);
             break;
-        case 2: // Set Object Browser server port number
-            bbuf = buf;
-            bbuf++;
+        case 2: // Start updating the Object Browser
             objbr_auto = 1;
-            strcpy(obsrvr, bbuf);
-            nvimcom_del_newline(obsrvr);
 #ifdef WIN32
             if(!r_is_busy)
                 nvimcom_list_env();

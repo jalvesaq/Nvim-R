@@ -976,7 +976,7 @@ function WaitNvimcomStart()
     endif
 endfunction
 
-function StartObjBrowser_Nvim()
+function StartObjBrowser()
     " Either load or reload the Object Browser
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
@@ -1025,7 +1025,7 @@ function RObjBrowser()
 
     let g:rplugin_running_objbr = 1
 
-    call StartObjBrowser_Nvim()
+    call StartObjBrowser()
     let g:rplugin_running_objbr = 0
     return
 endfunction
@@ -1736,14 +1736,15 @@ function RQuit(how)
         startinsert
     endif
 
+    if bufloaded(b:objbrtitle)
+        exe "bunload! " . b:objbrtitle
+        sleep 30m
+    endif
+
     call g:SendCmdToR(qcmd)
 
-    if g:R_tmux_split
-        if a:how == "save"
-            sleep 200m
-        endif
-        sleep 50m
-        call CloseExternalOB()
+    if g:R_tmux_split && a:how == "save"
+        sleep 200m
     endif
 
     sleep 50m
