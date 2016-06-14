@@ -115,8 +115,6 @@ endif
 let g:rplugin_has_pandoc = 0
 let g:rplugin_has_soffice = 0
 
-call RSetPDFViewer()
-
 call RSourceOtherScripts()
 
 if exists("b:undo_ftplugin")

@@ -2382,6 +2382,10 @@ endfunction
 
 " render a document with rmarkdown
 function! RMakeRmd(t)
+    if !exists("g:rplugin_pdfviewer")
+        call RSetPDFViewer()
+    endif
+
     update
 
     if a:t == "odt"

@@ -95,6 +95,10 @@ function! RMakeHTMLrrst(t)
 endfunction
 
 function! RMakePDFrrst()
+    if !exists("g:rplugin_pdfviewer")
+        call RSetPDFViewer()
+    endif
+
     if g:rplugin_nvimcom_port == 0
         call RWarningMsg("The nvimcom package is required to make and open the PDF.")
     endif
