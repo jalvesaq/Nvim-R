@@ -121,10 +121,8 @@ three paths of communication between Vim/Neovim and R:
      - When running R in an external terminal emulator, Tmux is used to send
        commands to R Console.
 
-     - On Windows operating system, the nclientserver.exe application includes
-       Windows API calls to copy the text into the clipboard and then paste it
-       into the R Console. There is also a dll that does the same. NeovimQt
-       uses the application and GVim uses the dll.
+     - On Windows operating system, Nvim-R sends a message to R (nvimcom)
+       which forwards the command to R Console.
 
   - The blue path is followed by the few commands that you trigger, but that
     are not pasted into R Console and do not output anything in R Console;

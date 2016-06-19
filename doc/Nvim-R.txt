@@ -742,7 +742,7 @@ The nvimcom library is started with the state `busy`.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Vim/Neovim~
+5.5. R must be started by Vim, and both must be in the same machine~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -751,60 +751,24 @@ connect each Vim instance with its own R instance.
 If you start R before Vim, it will not inherit from Vim the environment
 variables NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and NVIMR_SECRET. The first
 one is the path used by the R package nvimcom to save temporary files used by
-Nvim-R to: perform omnicompletion, show R documentation in an Vim buffer,
-and update the Object Browser. The two last ones are used by Nvim-R and by
-nvimcom to know that the connections are valid. Unless you are running R in a
-Neovim's built-in terminal (which is the default on Unix), if you use Vim
-to start R, but then close Vim, some variables will become outdated.
-Additionally, Nvim-R sets the value of its internal variable SendCmdToR from
-SendCmdToR_fake to the appropriate value when R is successfully started. It is
-possible to set the values of all those variables manually, but, as you can
-see below, it is not practical to do so. If you have either started R before
-Vim or closed Vim and opened it again and really want full
-communication between Vim and R, you can try the following (not all
-procedures are necessary for all cases):
+Nvim-R to: perform omnicompletion, show R documentation in a Vim buffer, and
+update the Object Browser. The two last ones are used by Nvim-R and by nvimcom
+to know that the connections are valid. Unless you are running R in a Neovim's
+built-in terminal (which is the default on Unix), if you use Vim to start R,
+but then close Vim, some variables will become outdated. Additionally, Nvim-R
+sets the value of its internal variable SendCmdToR from SendCmdToR_fake to the
+appropriate value when R is successfully started. It is possible to set the
+values of all those variables and start the TCP client-server manually, but it
+is not practical to do so.
 
-   In Normal mode Vim do:
->
-   :echo g:rplugin_tmpdir
-   :echo g:rplugin_compldir
-   :echo $NVIMR_ID
-   :echo $NVIMR_SECRET
-<
-   In R do:
->
-   detach("package:nvimcom", unload = TRUE)
-   Sys.setenv(NVIMR_TMPDIR="T")    # where "T" is what nvim has echoed
-   Sys.setenv(NVIMR_ID="I")        # where "I" is what nvim has echoed
-   Sys.setenv(NVIMR_SECRET"="S")   # where "S" is what nvim has echoed
-   Sys.setenv(NVIMR_COMPLDIR"="C") # where "C" is what nvim has echoed
-   library(nvimcom)
-<
-If you are running R in a Tmux session (see |Nvim-R-Tmux|) Vim will also
-need to know the name of Tmux session and Tmux pane where R is running.
+Moreover, both R and Vim must be in the same machine because the TCP
+communication between them is limited to localhost and the communication
+through cached and temporary files requires that both R and Vim have access to
+the same directories. Please, see the explanation on the communication between
+Vim and R at the end of
 
-So, in R do:
->
-   Sys.getenv("TMUX_PANE")
-<
-   and the following Tmux command:
->
-   <Ctrl-A>:display-message -p '#S'<Enter><Enter>
-<
-And in Normal mode Vim do:
->
-   :let rplugin_rconsole_pane = "X"
-   :let rplugin_tmuxsname = "Y"
-<
-Finally, do one of the commands below in Normal mode Vim, according to how R
-is running:
->
-   let SendCmdToR = function('SendCmdToR_TmuxSplit')
-   let SendCmdToR = function('SendCmdToR_Term')
-   let SendCmdToR = function('SendCmdToR_OSX')
-   let SendCmdToR = function('SendCmdToR_Windows')
-   let SendCmdToR = function('SendCmdToR_Neovim')
-<
+   https://github.com/jalvesaq/Nvim-R/blob/master/README.md
+
 
 ==============================================================================
 							      *Nvim-R-options*
@@ -830,6 +794,7 @@ is running:
 |R_objbr_allnames|    Display hidden objects in the Object Browser
 |R_objbr_labelerr|    Show error if "label" attribute is invalid
 |R_nvimpager|         Use Vim to see R documentation
+|R_open_example|      Use Vim to display R examples
 |R_editor_w|          Minimum width of R script buffer
 |R_help_w|            Desired width of R documentation buffer
 |R_path|              Directory where R is
@@ -1129,14 +1094,19 @@ in the Object Browser.
 
 
 ------------------------------------------------------------------------------
-								 *R_nvimpager*
-								 *R_editor_w*
-								 *R_help_w*
+							      *R_open_example*
+							      *R_nvimpager*
+							      *R_editor_w*
+							      *R_help_w*
 6.6. Vim as pager for R help~
 
 6.6.1. Quick setup~
 
-If you do not want to see R documentation in an Vim buffer, put in your
+If you do not want to see R examples in a Vim buffer, put in your |vimrc|:
+>
+   let R_open_example = 0
+<
+If you do not want to see R documentation in a Vim buffer, put in your
 |vimrc|:
 >
    let R_nvimpager = "no"
@@ -1389,7 +1359,7 @@ temporary file.
 
 You can add arguments to be passed to R's `source()` function. Example:
  >
-   let R_source_args = "max.deparse.length = 300"
+   let R_source_args = "print.eval = TRUE, max.deparse.length = 300"
 <
 If you want that commented lines are included in the code to be sourced, put
 in your |vimrc|:
@@ -2051,7 +2021,7 @@ R/nvimcom/src/apps/nclientserver.c
 								 *Nvim-R-tips*
 9. FAQ and tips~
 
-9.1. How to start R automatically?~
+9.1. How to start and quit R automatically?~
 
 If you want that R is started automatically when you start editing an R
 script, you should create in |vimrc| auto commands for each R file type that
@@ -2060,6 +2030,11 @@ started. Examples for R and RMarkdown:
 >
    autocmd FileType r if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
    autocmd FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
+<
+And if you want to quit automatically when quiting Vim, put in your |vimrc|
+(replace `"nosave"` with `"save"` if you want to save R's workspace):
+>
+   autocmd VimLeave * if exists("g:SendCmdToR") && string(g:SendCmdToR) != "function('SendCmdToR_fake')" | call RQuit("nosave") | endif
 <
 
 9.2. Is it possible to stop R from within Vim?~
@@ -2164,7 +2139,7 @@ Vim can jump to a function definition if it finds a "tags" file with the
 information about the place where the function is defined. To generate the
 tags file, use the R function `rtags()`, which will build an Emacs tags file.
 You can use the nvimcom function `etags2ctags()` to convert the Emacs tags
-file into an Vim one. To jump to a function definition, put the cursor over
+file into a Vim one. To jump to a function definition, put the cursor over
 the function name and hit CTRL-]. Please, read |tagsrch.txt| for details on
 how to use tags files, specially the section |tags-option|.
 
@@ -2726,8 +2701,9 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-06-07)
+0.9.6 (2016-06-19)
 
+ * New option: R_open_example.
  * Minor bug fixes.
 
 0.9.5 (2016-05-18)
