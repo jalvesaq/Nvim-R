@@ -84,3 +84,32 @@ nvim.help <- function(topic, w, objclass, package)
     return(invisible(NULL))
 }
 
+nvim.example <- function(topic)
+{
+    saved.warn <- getOption("warn")
+    options(warn = -1)
+    on.exit(options(warn = saved.warn))
+    ret <- try(example(topic, give.lines = TRUE, character.only = TRUE,
+                       package = NULL), silent = TRUE)
+    if (inherits(ret, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('", as.character(ret), "')"), PACKAGE="nvimcom")
+    } else {
+        if(is.character(ret)){
+            if(length(ret) > 0){
+                writeLines(ret, paste0(Sys.getenv("NVIMR_TMPDIR"), "/example.R"))
+                .C("nvimcom_msg_to_nvim",
+                   paste0("OpenRExample()"), PACKAGE="nvimcom")
+            } else {
+                .C("nvimcom_msg_to_nvim",
+                   paste0("RWarningMsg('There is no example for \"", topic, "\"')"),
+                   PACKAGE="nvimcom")
+            }
+        } else {
+            .C("nvimcom_msg_to_nvim",
+               paste0("RWarningMsg('There is no help for \"", topic, "\".')"),
+               PACKAGE="nvimcom")
+        }
+    }
+    return(invisible(NULL))
+}

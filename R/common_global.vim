@@ -2311,6 +2311,35 @@ function PrintRObject(rkeyword)
     endif
 endfunction
 
+function OpenRExample()
+    if bufloaded(g:rplugin_tmpdir . "/example.R")
+        exe "bunload! " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g')
+    endif
+    if g:R_nvimpager == "tabnew" || g:R_nvimpager == "tab"
+        exe "tabnew " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/example.R"
+    else
+        let nvimpager = g:R_nvimpager
+        if g:R_nvimpager == "vertical"
+            let wwidth = winwidth(0)
+            let min_e = (g:R_editor_w > 78) ? g:R_editor_w : 78
+            let min_h = (g:R_help_w > 78) ? g:R_help_w : 78
+            if wwidth < (min_e + min_h)
+                let nvimpager = "horizontal"
+            endif
+        endif
+        if nvimpager == "vertical"
+            exe "belowright vsplit " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/example.R"
+        else
+            exe "belowright split " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/example.R"
+        endif
+    endif
+    nmap <buffer><silent> q :q<CR>
+    setlocal bufhidden=wipe
+    setlocal noswapfile
+    set buftype=nofile
+    call delete(g:rplugin_tmpdir . "/example.R")
+endfunction
+
 " Call R functions for the word under cursor
 function RAction(rcmd)
     if &filetype == "rbrowser"
@@ -2372,6 +2401,10 @@ function RAction(rcmd)
                 call delete(g:rplugin_tmpdir . "/Rinsert")
                 call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
             endif
+            return
+        endif
+        if g:R_open_example && a:rcmd == "example"
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.example("' . rkeyword . '")')
             return
         endif
 
@@ -2985,6 +3018,7 @@ call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
 call RSetDefaultValue("g:R_in_buffer",         1)
+call RSetDefaultValue("g:R_open_example",      1)
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
