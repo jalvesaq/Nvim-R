@@ -98,8 +98,7 @@ nvim.example <- function(topic)
         if(is.character(ret)){
             if(length(ret) > 0){
                 writeLines(ret, paste0(Sys.getenv("NVIMR_TMPDIR"), "/example.R"))
-                .C("nvimcom_msg_to_nvim",
-                   paste0("OpenRExample()"), PACKAGE="nvimcom")
+                .C("nvimcom_msg_to_nvim", "OpenRExample()", PACKAGE="nvimcom")
             } else {
                 .C("nvimcom_msg_to_nvim",
                    paste0("RWarningMsg('There is no example for \"", topic, "\"')"),
