@@ -2265,6 +2265,7 @@ function RAskHelp(...)
 endfunction
 
 function DisplayArgs()
+    let s:displaying_args = 1
     if &filetype == "r" || b:IsInRCode(0)
         let rkeyword = RGetKeyword(0)
         let s:sttl_str = g:rplugin_status_line
@@ -2287,15 +2288,21 @@ function DisplayArgs()
         endif
     endif
     exe "normal! a("
+    let s:displaying_args = 0
 endfunction
 
 function RArgsStatusLine()
     return s:sttl_str
 endfunction
 
-function RestoreStatusLine()
+function RestoreStatusLine(p)
+    if s:displaying_args
+        return
+    endif
     exe 'set statusline=' . substitute(g:rplugin_status_line, ' ', '\\ ', 'g')
-    normal! a)
+    if a:p
+        normal! a)
+    endif
 endfunction
 
 function PrintRObject(rkeyword)
@@ -2648,7 +2655,8 @@ function RCreateEditMaps()
     endif
     if g:R_args_in_stline
         inoremap <buffer><silent> ( <Esc>:call DisplayArgs()<CR>a
-        inoremap <buffer><silent> ) <Esc>:call RestoreStatusLine()<CR>a
+        inoremap <buffer><silent> ) <Esc>:call RestoreStatusLine(1)<CR>a
+        autocmd InsertLeave <buffer> call RestoreStatusLine(0)
     endif
     if hasmapto("<Plug>RCompleteArgs", "i")
         inoremap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
@@ -3157,6 +3165,7 @@ endif
 
 let g:rplugin_firstbuffer = expand("%:p")
 let g:rplugin_status_line = &statusline
+let s:displaying_args = 0
 let g:rplugin_running_objbr = 0
 let g:rplugin_running_rhelp = 0
 let g:rplugin_r_pid = 0
