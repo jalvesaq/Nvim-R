@@ -894,12 +894,21 @@ function WaitNvimcomStart()
         let g:rplugin_nvimcom_port = vr[2]
         let g:rplugin_r_pid = vr[3]
         let $RCONSOLE = vr[4]
+        let search_list = vr[5]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         if g:rplugin_nvimcom_version != s:required_nvimcom_dot
             call RWarningMsg('This version of Nvim-R requires nvimcom ' .
                         \ s:required_nvimcom . '.')
             sleep 1
         endif
+
+        if search_list =~ "package:colorout" && !exists("g:R_hl_term")
+            let g:R_hl_term = 0
+        endif
+        if search_list =~ "package:setwidth" && !exists("g:R_setwidth")
+            let g:R_setwidth = 0
+        endif
+
         if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
             let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin/x64"
         elseif isdirectory(g:rplugin_nvimcom_home . "/bin/i386")

@@ -80,13 +80,17 @@ function OnTermClose()
     endif
 endfunction
 
+function SendCmdToR_NotYet(...)
+    call RWarningMsg("Not ready yet")
+endfunction
+
 function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
     let g:R_tmux_split = 0
 
-    let g:SendCmdToR = function('SendCmdToR_Neovim')
+    let g:SendCmdToR = function('SendCmdToR_NotYet')
 
     let edbuf = bufname("%")
     let objbrttl = b:objbrtitle
@@ -128,7 +132,9 @@ function StartR_Neovim()
     autocmd TermClose <buffer> call OnTermClose()
     exe "sbuffer " . edbuf
     stopinsert
-    call WaitNvimcomStart()
+    if WaitNvimcomStart()
+        let g:SendCmdToR = function('SendCmdToR_Neovim')
+    endif
 endfunction
 
 " To be called by edit() in R running in Neovim buffer.

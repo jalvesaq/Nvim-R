@@ -49,6 +49,7 @@
            as.integer(getOption("nvimcom.labelerr")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
+           paste(search(), collapse = " "),
            PACKAGE="nvimcom")
     }
 }
