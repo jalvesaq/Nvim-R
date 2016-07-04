@@ -2704,6 +2704,8 @@ step-by-step procedure to run Nvim-R remotely:
 0.9.6 (2016-06-19)
 
  * New option: R_open_example.
+ * Change in \aa and \ae: do not save the buffer before sending the whole file
+   to R.
  * Minor bug fixes.
 
 0.9.5 (2016-05-18)

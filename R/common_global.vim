@@ -1247,13 +1247,8 @@ endfunction
 
 " Send file to R
 function SendFileToR(e)
-    update
-    let fpath = expand("%:p")
-    if has("win32")
-        let fpath = substitute(fpath, "\\", "/", "g")
-    endif
-    let sargs = GetSourceArgs(a:e)
-    call g:SendCmdToR('base::source("' . fpath .  '"' . sargs . ')')
+    let flines = getline(1, "$")
+    call RSourceLines(flines, a:e)
 endfunction
 
 " Send block to R
