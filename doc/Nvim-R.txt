@@ -1357,7 +1357,8 @@ code between two marks or an R chunk of code), Nvim-R saves the lines in a
 temporary file and, then, sends to R the command `source()` to read the
 temporary file.
 
-You can add arguments to be passed to R's `source()` function. Example:
+By default, R's `source()` is called with the argument `print.eval=TRUE`, but
+you can change the arguments passed to it. Example:
  >
    let R_source_args = "print.eval = TRUE, max.deparse.length = 300"
 <
@@ -1568,12 +1569,14 @@ you insert `(`, put in your |vimrc|:
 >
    let R_args_in_stline = 1
 <
-The status line is restored when `)` is typed. This option is useful only if
-the window has a status line. See |laststatus|. If the string with the list of
-arguments is longer than the status line width, the list is not displayed
-completely. This argument is incompatible with any plugin that changes the
-status line because it is always restored to the value that it had at Vim's
-startup. Functions of .GlobalEnv do not have their arguments displayed.
+The status line is restored when you either type `)` or leave Insert mode.
+This option is useful only if the window has a status line. See |laststatus|.
+If the string with the list of arguments is longer than the status line width,
+the list is not displayed completely. This argument is incompatible with any
+plugin that changes the status line because it is always restored to the value
+that it had at Vim's startup. It is also incompatible with any plugin that
+automatically closes parentheses. Functions of .GlobalEnv do not have their
+arguments displayed.
 
 
 ------------------------------------------------------------------------------
@@ -2434,10 +2437,16 @@ please read this document from the beginning.
        library(colorout)
        library(setwidth)
 
-       # Use text based web browser to navigate through R docs after help.start():
-       if(Sys.getenv("NVIMR_TMPDIR") != "")
-           options(browser = function(u) .C("nvimcom_msg_to_nvim",
-                                            paste0('StartTxtBrowser("w3m", "', u, '")')))
+       # Use text based web browser to navigate through R docs after help.start()
+       # if you cannot run a graphical web browser (e.g. when you are in the
+       # Linux console):
+        if(Sys.getenv("DISPLAY") == ""){
+            if(Sys.getenv("TMUX") != "")
+                options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
+            else if(Sys.getenv("NVIMR_TMPDIR") != "")
+                options(browser = function(u) .C("nvimcom_msg_to_nvim",
+                                                 paste0('StartTxtBrowser("w3m", "', u, '")')))
+        }
    }
 <
 
@@ -2701,9 +2710,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-06-19)
+0.9.6 (2016-07-10)
 
  * New option: R_open_example.
+ * Change default value of R_source_args to "print.eval=TRUE".
  * Change in \aa and \ae: do not save the buffer before sending the whole file
    to R.
  * Minor bug fixes.
