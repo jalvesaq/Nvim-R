@@ -50,7 +50,6 @@ function SendCmdToR_OSX(...)
     endif
 
     " for some reason it doesn't like "\025"
-    let cmd = a:cmd
     let cmd = substitute(cmd, "\\", '\\\', 'g')
     let cmd = substitute(cmd, '"', '\\"', "g")
     let cmd = substitute(cmd, "'", "'\\\\''", "g")
