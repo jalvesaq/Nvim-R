@@ -92,6 +92,7 @@ endfunction
 function StartR_Windows()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         call RWarningMsg('R was already started.')
+        return
     endif
 
     call SetRHome()
