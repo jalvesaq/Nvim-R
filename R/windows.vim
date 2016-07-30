@@ -7,7 +7,19 @@ call RSetDefaultValue("g:R_i386", 0)
 
 if !exists("g:rplugin_R_path")
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin_tmpdir . "/run_cmd.bat")
-    let rip = filter(split(system(g:rplugin_tmpdir . "/run_cmd.bat"), "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
+    let ripl = system(g:rplugin_tmpdir . "/run_cmd.bat")
+    let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
+    if len(rip) == 0
+        " Normally, 32 bit applications access only 32 bit registry and...
+        " We have to try again if the user has installed R only in the other architecture.
+        if has("win64")
+            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin_tmpdir . "/run_cmd.bat")
+        else
+            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin_tmpdir . "/run_cmd.bat")
+        endif
+        let ripl = system(g:rplugin_tmpdir . "/run_cmd.bat")
+        let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
+    endif
     if len(rip) > 0
         let s:rinstallpath = substitute(rip[0], '.*InstallPath.*REG_SZ\s*', '', '')
         let s:rinstallpath = substitute(s:rinstallpath, '\n', '', 'g')
@@ -18,15 +30,18 @@ if !exists("g:rplugin_R_path")
         let g:rplugin_failed = 1
         finish
     endif
-    if isdirectory(s:rinstallpath . '\bin\i386')
-        if !isdirectory(s:rinstallpath . '\bin\x64')
-            let g:R_i386 = 1
-        endif
-        if g:R_i386
-            let $PATH = s:rinstallpath . '\bin\i386;' . $PATH
-        else
-            let $PATH = s:rinstallpath . '\bin\x64;' . $PATH
-        endif
+    let hasR32 = isdirectory(s:rinstallpath . '\bin\i386')
+    let hasR64 = isdirectory(s:rinstallpath . '\bin\x64')
+    if hasR32 && !hasR64
+        let g:R_i386 = 1
+    endif
+    if hasR64 && !hasR32
+        let g:R_i386 = 0
+    endif
+    if hasR32 && g:R_i386
+        let $PATH = s:rinstallpath . '\bin\i386;' . $PATH
+    elseif hasR64 && g:R_i386 == 0
+        let $PATH = s:rinstallpath . '\bin\x64;' . $PATH
     else
         let $PATH = s:rinstallpath . '\bin;' . $PATH
     endif
