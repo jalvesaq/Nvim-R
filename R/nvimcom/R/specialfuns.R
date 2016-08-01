@@ -38,7 +38,8 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
     frm <- NA
     funcmeth <- NA
     if(!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE){
-        if(length(grep(funcname, names(.knownS3Generics))) > 0){
+        mlen <- try(length(methods(funcname)), silent = TRUE)
+        if(class(mlen) == "integer" && mlen > 0){
             for(i in 1:length(objclass)){
                 funcmeth <- paste(funcname, ".", objclass[i], sep = "")
                 if(existsFunction(funcmeth)){
@@ -128,38 +129,16 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
 
 
 nvim.list.args <- function(ff){
-    # The code to get the list of generic methods added manually is:
-    # x <- c(names(.knownS3Generics), .S3PrimitiveGenerics, tools:::.get_internal_S3_generics())
-    # x <- x[!duplicated(x)]
-    # y <- c(names(.knownS3Generics), .S3PrimitiveGenerics)
-    # rpt <- x %in% y
-    # x <- x[!rpt]
-    # dput(x)
-    knownGenerics <- c(names(.knownS3Generics), .S3PrimitiveGenerics,
-                       "unlist", "abs", "sign", "sqrt", "floor", "ceiling",
-                       "trunc", "round", "signif", "exp", "log", "expm1",
-                       "log1p", "cos", "sin", "tan", "acos", "asin", "atan",
-                       "cosh", "sinh", "tanh", "acosh", "asinh", "atanh",
-                       "lgamma", "gamma", "digamma", "trigamma", "cumsum",
-                       "cumprod", "cummax", "cummin", "all", "any", "sum",
-                       "prod", "max", "min", "range", "Arg", "Conj", "Im",
-                       "Mod", "Re")
-
-    keyf <- paste("^", ff, "$", sep="")
-    is.generic <- (length(grep(keyf, knownGenerics)) > 0)
-    if(is.generic){
-        mm <- methods(ff)
-        l <- length(mm)
-        if(l > 0){
-            for(i in 1:l){
-                if(exists(mm[i])){
-                    cat(ff, "[method ", mm[i], "]:\n", sep="")
-                    print(args(mm[i]))
-                    cat("\n")
-                }
+    mm <- try(methods(ff), silent = TRUE)
+    if(class(mm) == "MethodsFunction" && length(mm) > 0){
+        for(i in 1:length(mm)){
+            if(exists(mm[i])){
+                cat(ff, "[method ", mm[i], "]:\n", sep="")
+                print(args(mm[i]))
+                cat("\n")
             }
-            return(invisible(NULL))
         }
+        return(invisible(NULL))
     }
     print(args(ff))
 }

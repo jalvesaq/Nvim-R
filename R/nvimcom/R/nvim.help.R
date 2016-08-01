@@ -15,8 +15,9 @@ nvim.hmsg <- function(files, header, title, delete.file)
 
 nvim.help <- function(topic, w, objclass, package)
 {
-    if(!missing(objclass) & length(grep(topic, names(.knownS3Generics))) > 0){
-        if(!missing(objclass) && objclass != ""){
+    if(!missing(objclass) && objclass != ""){
+        mlen <- try(length(methods(topic)), silent = TRUE)
+        if(class(mlen) == "integer" && mlen > 0){
             for(i in 1:length(objclass)){
                 newtopic <- paste(topic, ".", objclass[i], sep = "")
                 if(length(utils::help(newtopic))){
@@ -27,7 +28,6 @@ nvim.help <- function(topic, w, objclass, package)
         }
     }
 
-    # Requires at least R 2.12
     oldRdOp <- tools::Rd2txt_options()
     on.exit(tools::Rd2txt_options(oldRdOp))
     tools::Rd2txt_options(width = w)
