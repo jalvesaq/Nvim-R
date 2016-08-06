@@ -657,6 +657,19 @@ function ShowRSysLog(slog, fname, msg)
     sleep 1
 endfunction
 
+function CheckRtools()
+    let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
+    if Rtpath =~ "Rtools"
+        let Rtpath = substitute(Rtpath, "\\", "/", "g") . "/VERSION.txt"
+        if filereadable(Rtpath)
+            let Rtvrsn = readfile(Rtpath)
+            if Rtvrsn[0] =~ "version 3.4"
+                call RWarningMsg("Nvim-R is incompatible with Rtools 3.4 (August 2016). Please, try Rtools 3.3.")
+            endif
+        endif
+    endif
+endfunction
+
 function CheckNvimcomVersion()
     let neednew = 0
     if g:rplugin_nvimcom_home == ""
@@ -713,6 +726,9 @@ function CheckNvimcomVersion()
             let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
+                if has("win32")
+                    call CheckRtools()
+                endif
                 return 0
             else
                 echon "OK!"
