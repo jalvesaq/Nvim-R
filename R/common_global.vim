@@ -423,8 +423,9 @@ function RCommentLine(lnum, ind, cmt)
     let line = getline(a:lnum)
     call cursor(a:lnum, 0)
 
-    if line =~ '^\s*' . a:cmt
-        let line = substitute(line, '^\s*' . a:cmt . '*', '', '')
+    if line =~ '^\s*' . a:cmt || line =~ '^\s*#'
+        let line = substitute(line, '^\s*' . a:cmt, '', '')
+        let line = substitute(line, '^\s*#*', '', '')
         call setline(a:lnum, line)
         normal! ==
     else
@@ -434,7 +435,7 @@ function RCommentLine(lnum, ind, cmt)
             endwhile
             let line = strpart(line, a:ind)
         endif
-        let line = a:cmt . ' ' . line
+        let line = a:cmt . line
         call setline(a:lnum, line)
         if g:R_indent_commented
             normal! ==
@@ -449,12 +450,12 @@ function RComment(mode)
     " What comment string to use?
     if g:r_indent_ess_comments
         if g:R_indent_commented
-            let cmt = '##'
+            let cmt = '## '
         else
-            let cmt = '###'
+            let cmt = '### '
         endif
     else
-        let cmt = '#'
+        let cmt = g:R_rcomment_string
     endif
     if (&filetype == "rnoweb" || &filetype == "rhelp") && IsLineInRCode(0, fline) == 0
         let cmt = "%"
