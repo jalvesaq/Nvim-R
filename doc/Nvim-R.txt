@@ -119,17 +119,19 @@ Before installing the plugin, you should install its dependencies:
        installed and updated whenever necessary. The package requires
        compilation by a C compiler (e.g. `gcc` or `clang`).
 
-     - On Windows, you have to install Rtools to be able to build the package:
-       https://cran.r-project.org/bin/windows/Rtools/
-       If you can't install Rtools, you may want to install the latest Windows
-       binary `nvimcom.zip` released with Nvim-R:
-       https://github.com/jalvesaq/Nvim-R/releases
-
-     - The Nvim-R plugin sets the environment variable `R_DEFAULT_PACKAGES`,
-       including `nvimcom` in the list of packages to be loaded on R startup.
-       If you set the option `defaultPackages` in a .Rprofile, you should
+     - You do not need to load nvimcom in your .Rprofile because the Nvim-R
+       plugin sets the environment variable `R_DEFAULT_PACKAGES`, including
+       `nvimcom` in the list of packages to be loaded on R startup. However,
+       if you set the option `defaultPackages` in a .Rprofile, you should
        include "nvimcom" among the packages to be loaded (see
        |nvimcom-not-loaded|).
+
+     - On Windows, you have to install Rtools to be able to build the package:
+       https://cran.r-project.org/bin/windows/Rtools/
+
+       Note: I used to release the Windows binary `nvimcom.zip` along with
+       Nvim-R, but I am no longer releasing it because my Windows system is
+       not being well maintained.
 
 
    Additional dependencies for editing Rnoweb documents:~
@@ -233,8 +235,8 @@ loaded), or R was not started by Vim/Neovim.
 
 3.3.1 Customize the plugin~
 
-Please, read the section |Nvim-R-options|. Emacs/ESS users should read the
-section Indenting setup (|Nvim-R-indenting|) of this document.
+Please, read the section |Nvim-R-options|. Emacs/ESS users should also read
+|ft-r-indent|.
 
 
 ------------------------------------------------------------------------------
@@ -1159,7 +1161,7 @@ Vim will run the first R executable in the path. You can set an alternative
 path to R in your |vimrc| as in the examples:
 >
    let R_path = "/path/to/my/preferred/R/version/bin"
-   let R_path = "C:\\Program Files\\R\\R-3.1.2\\bin\\i386"
+   let R_path = "C:\\Program Files\\R\\R-3.3.1\\bin\\i386"
 <
 On Windows, Vim will try to find the R install path in the Windows Registry.
 
@@ -1257,22 +1259,17 @@ automatic indentation, put in your |vimrc|:
 >
    let R_indent_commented = 0
 <
-What string will be added to the beginning of the line depends on the values
-of R_indent_commented and r_indent_ess_comments according to the
-table below (see |Nvim-R-indenting|):
->
-   R_indent_commented   r_indent_ess_comments   string
-                 1                        0                #
-                 0                        0                #
-                 1                        1                ##
-                 0                        1                ###
-<
 The string used to comment text with <LocalLeader>xc, <LocalLeader>xu,
 <LocalLeader>xx and <LocalLeader>o is defined by R_rcomment_string.
 Example:
 >
    let R_rcomment_string = "# "
 <
+If the value of `r_indent_ess_comments` is 1, `R_rcomment_string` will be
+overridden and the string used to comment the line will change according to
+the value of `R_indent_commented` ("## " if 0 and "### " if 1; see
+|ft-r-indent|).
+
 
 ------------------------------------------------------------------------------
 								*R_notmuxconf*
@@ -2173,61 +2170,8 @@ Example on how to test whether your setup is ok:
 
 
 ------------------------------------------------------------------------------
-							    *Nvim-R-indenting*
-9.9. Indenting setup~
-
-Note: In Normal mode, type |==| to indent the current line and gg=G to format
-the entire buffer (see |gg|, |=| and |G| for details). These are Vim
-commands; they are not specific to R code.
-
-The Nvim-R includes a script to automatically indent R files. By
-default, the script aligns function arguments if they span for multiple lines.
-If you prefer do not have the arguments of functions aligned, put in your
-|vimrc|:
->
-   let r_indent_align_args = 0
-<
-By default, all lines beginning with a comment character, `#`, get the same
-indentation level of the normal R code. Users of Emacs/ESS may be used to have
-lines beginning with a single `#` indented in the 40th column, `##` indented
-as R code, and `###` not indented. If you prefer that lines beginning with
-comment characters are aligned as they are by Emacs/ESS, put in your |vimrc|:
->
-   let r_indent_ess_comments = 1
-<
-If you prefer that lines beginning with a single # are aligned at a column
-different from the 40th one, you should set a new value to the variable
-r_indent_comment_column, as in the example below:
->
-   let r_indent_comment_column = 30
-<
-By default any code after a line that ends with "<-" is indented. Emacs/ESS
-does not indent the code if it is a top level function. If you prefer that the
-Nvim-R behaves like Emacs/ESS in this regard, put in your |vimrc|:
->
-   let r_indent_ess_compatible = 1
-<
-Below is an example of indentation with and without this option enabled:
->
-   ### r_indent_ess_compatible = 1           ### r_indent_ess_compatible = 0
-   foo <-                                    foo <-
-       function(x)                               function(x)
-   {                                             {
-       paste(x)                                      paste(x)
-   }                                             }
-<
-Notes: (1) Not all code indented by Emacs/ESS will be indented by the
-           Nvim-R in the same way, and, in some circumstances it may be
-           necessary to make changes in the code to get it properly indented
-           by Vim (you may have to either put or remove braces and line
-           breaks).
-       (2) Indenting is not a file type plugin option. It is a feature defined
-           in indent/r.vim. That is why it is documented in this section.
-
-
-------------------------------------------------------------------------------
 							      *Nvim-R-folding*
-9.10. Folding setup~
+9.9. Folding setup~
 
 Vim has several methods of folding text (see |fold-methods| and
 |fold-commands|). To enable the syntax method of folding for R files, put in
@@ -2253,7 +2197,7 @@ develop a better algorithm in the future.
 
 
 ------------------------------------------------------------------------------
-9.11. Highlight chunk header as R code~
+9.10. Highlight chunk header as R code~
 
 By default, Vim will highlight chunk headers of RMarkdown and
 RreStructuredText with a single color. When the code is processed by knitr,
@@ -2265,7 +2209,7 @@ them as such. You can do this by putting in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.12. Automatically close parenthesis~
+9.11. Automatically close parenthesis~
 
 Some people want Vim automatically inserting a closing parenthesis, bracket
 or brace when an open one has being typed. The page below explains how to
@@ -2275,7 +2219,7 @@ achieve this goal:
 
 
 ------------------------------------------------------------------------------
-9.13. Automatic line breaks~
+9.12. Automatic line breaks~
 
 By default, while editing R code, Vim does not break lines when you are
 typing if you reach the column defined by the 'textwidth' option. If you
@@ -2285,7 +2229,7 @@ prefer that Vim breaks the R code automatically put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.14. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
+9.13. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
 
 If you want 256 colors support in Vim, install the package ncurses-term.
 Then put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
@@ -2297,7 +2241,7 @@ preference in your |vimrc|.
 
 
 ------------------------------------------------------------------------------
-9.15. Run your Makefile from within R~
+9.14. Run your Makefile from within R~
 
 Do you have many Rnoweb files included in a master tex or Rnoweb file and use
 a Makefile to build the pdf? You may consider it useful to put the following
@@ -2308,7 +2252,7 @@ line in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-Rprofile*
-9.16. Edit your ~/.Rprofile~
+9.15. Edit your ~/.Rprofile~
 
 You may want to edit your `~/.Rprofile` in addition to considering the
 suggestions of |Nvim-R-R-setup| you may also want to put the following
@@ -2333,7 +2277,7 @@ terminal emulator or the GVim window.
 
 
 ------------------------------------------------------------------------------
-9.17. Debugging R functions~
+9.16. Debugging R functions~
 
 The Nvim-R-Plugin does not have debugging facilities, but you may want to use
 the R package "debug":
@@ -2354,7 +2298,7 @@ your desktop manager.
 
 ------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.18. Integration with LaTeX-Box~
+9.17. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
@@ -2377,7 +2321,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.19. Suggested setup for Nvim-R~
+9.18. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2477,7 +2421,7 @@ Finally, if you want to use vi key bindings in Bash or other shell:
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.20. Syntax highlight of .Rout files~
+9.19. Syntax highlight of .Rout files~
 
 You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
@@ -2531,7 +2475,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.21 Integration with Tmux~
+9.20 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as
@@ -2710,7 +2654,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-07-10)
+0.9.6 (2016-08-07)
 
  * New option: R_open_example.
  * Change default value of R_source_args to "print.eval=TRUE".
