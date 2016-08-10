@@ -5,7 +5,7 @@
 ###########################################################
 
 PLUGINHOME=`pwd`
-PLUGINVERSION=0.9.5
+PLUGINVERSION=0.9.6
 PLUGINRELEASEDATE=`date +"%Y-%m-%d"`
 
 ifeq (, $(shell which nvim))
@@ -14,12 +14,22 @@ else
     VIMEXEC=nvim
 endif
 
+all: vimball zip
+
 vimball:
 	# Update the version date in doc/Nvim-R.txt header and in the news
 	sed -i -e "s/^Version: [0-9].[0-9].[0-9] (development)/Version: $(PLUGINVERSION)/" doc/Nvim-R.txt
 	sed -i -e "s/^$(PLUGINVERSION) (201[0-9]-[0-9][0-9]-[0-9][0-9])$$/$(PLUGINVERSION) ($(PLUGINRELEASEDATE))/" doc/Nvim-R.txt
-	$(VIMEXEC) -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
+	$(VIMEXEC) -c "packadd vimball" -c "%MkVimball Nvim-R ." -c "q" list_for_vimball
 	mv Nvim-R.vmb /tmp
+
+zip:
+	rm -rf /tmp/NvimRvimpack
+	mkdir -p /tmp/NvimRvimpack/start/Nvim-R
+	tar -c -T list_for_vimball -f /tmp/nvimrpack.tar
+	tar -x -f /tmp/nvimrpack.tar -C /tmp/NvimRvimpack/start/Nvim-R
+	( cd /tmp/NvimRvimpack ; zip -r ../Nvim-R_$(PLUGINVERSION).zip start )
+	rm /tmp/nvimrpack.tar
 
 clean:
 	rm -f R/nvimcom/src/nvimcom.o

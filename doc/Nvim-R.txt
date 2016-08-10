@@ -87,18 +87,19 @@ Nvim-R (see |R_source|).
 							 *Nvim-R-installation*
 3. Installation~
 
-The installation process is described in three sections:
+The installation process is described in four sections:
 
-   1. Installation instructions
-   2. Troubleshooting
-   3. Optional steps
+   3.1. Installation of dependencies
+   3.2. Installation of the plugin
+   3.3. Troubleshooting
+   3.4. Optional steps
 
 ------------------------------------------------------------------------------
-3.1. Installation instructions~
+3.1. Installation of dependencies~
 
 Before installing the plugin, you should install its dependencies:
 
-   Main dependencies:~
+Main dependencies:~
 
    Neovim >= 0.1.4:
       https://github.com/neovim/neovim/releases
@@ -134,7 +135,7 @@ Before installing the plugin, you should install its dependencies:
        not being well maintained.
 
 
-   Additional dependencies for editing Rnoweb documents:~
+Additional dependencies for editing Rnoweb documents:~
 
    latexmk:       Automate the compilation of LaTeX documents.
                   See examples in |R_latexcmd|.
@@ -150,7 +151,7 @@ Before installing the plugin, you should install its dependencies:
 		 (Not required on either Windows or OS X)
 
 
-   Additional suggestions for Unix (Linux, OS X, etc.):~
+Additional suggestions for Unix (Linux, OS X, etc.):~
 
    ncurses-term: http://invisible-island.net/ncurses
 		 Might be necessary if you want support for 256 colors at the
@@ -186,13 +187,62 @@ set it):
 <
 Please, see |Nvim-R-vimrc-setup| for more suggestions of configuration.
 
-Now, install Nvim-R:
+
+------------------------------------------------------------------------------
+3.2. Installation of the plugin~
+
+Now, install Nvim-R. You have two options: Vimball and Vim Package.
+
+
+Vimball~
+
+If you want to install from the vimball, download the file Nvim-R.vmb from:
+
+   http://www.vim.org/scripts/script.php?script_id=2628
+
+Then, open the file with either Vim or Neovim and do:
+>
+   :packadd vimball
+   :so %
+<
+Finally, press the space bar a few time to ensure the installation of all
+files.
+
+
+Vim Package~
+
+If you have a previous Vimball installation, you should uninstall it first:
+>
+   :packadd vimball
+   :RmVimball Nvim-R
+<
+The Vim package is a zip file released at:
 
     https://github.com/jalvesaq/Nvim-R/releases
 
+If, for instance, it was saved in the `/tmp` directory, to install it on an
+Unix system, you should do for Neovim:
+>
+   mkdir -p ~/.local/share/nvim/site/pack/R
+   cd ~/.local/share/nvim/site/pack/R
+   unzip /tmp/Nvim-R_0.9.6.zip
+<
+The directory for Vim on Unix is `~/.vim/pack/R`.
+For Neovim on Windows, it is `~/AppData/Local/nvim/pack/R`.
+And, for Vim on Windows, it is `~/vimfiles/pack/R`.
+The name of the last subdirectory does not need to be `R`; it might be
+anything.
+
+Finally, in Vim (or Neovim) run `:helptags` (adjust the path according to your
+system):
+>
+   :helptags ~/.local/share/nvim/site/pack/R/start/Nvim-R/doc
+<
+See |packages| for details.
+
 
 ------------------------------------------------------------------------------
-3.2. Troubleshooting (if the plugin doesn't work)~
+3.3. Troubleshooting (if the plugin doesn't work)~
 
 Note: The <LocalLeader> is '\' by default.
 
@@ -231,16 +281,15 @@ loaded), or R was not started by Vim/Neovim.
 
 
 ------------------------------------------------------------------------------
-3.3. Optional steps~
+3.4. Optional steps~
 
-3.3.1 Customize the plugin~
+Customize the plugin~
 
 Please, read the section |Nvim-R-options|. Emacs/ESS users should also read
 |ft-r-indent|.
 
 
-------------------------------------------------------------------------------
-3.3.2 Install additional plugins~
+Install additional plugins~
 
 You may be interested in installing additional general plugins to get
 functionality not provided by this file type plugin. Particularly interesting
@@ -2654,7 +2703,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-08-07)
+0.9.6 (2016-08-10)
 
  * New option: R_open_example.
  * Change default value of R_source_args to "print.eval=TRUE".
