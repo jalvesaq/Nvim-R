@@ -24,43 +24,6 @@ Please, read the section *Installation* from the
 [plugin's documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
 for details.
 
-Below is a sample `init.vim`:
-
-```vim
-syntax on
-filetype plugin indent on
-
-"------------------------------------
-" Behavior
-"------------------------------------
-let maplocalleader = ","
-let mapleader = ";"
-
-"------------------------------------
-" Appearance
-"------------------------------------
-" www.vim.org/scripts/script.php?script_id=3292
-colorscheme southernlights
-
-"------------------------------------
-" Search
-"------------------------------------
-set infercase
-set hlsearch
-set incsearch
-
-"------------------------------------
-" Nvim-R
-"------------------------------------
-if has("gui_running")
-    inoremap <C-Space> <C-x><C-o>
-else
-    inoremap <Nul> <C-x><C-o>
-endif
-vmap <Space> <Plug>RDSendSelection
-nmap <Space> <Plug>RDSendLine
-```
-
 Please, read the plugin's documentation for instructions on usage.
 
 

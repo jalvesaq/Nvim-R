@@ -176,16 +176,8 @@ Additional suggestions for Unix (Linux, OS X, etc.):~
 		 Vim.
 
 You may want to improve the configuration of your |vimrc| for a better use of
-the plugin. You need to activate plugins and indentation according to
-'filetype'. You should have at least the following options at the top or at
-near the very top of your |vimrc| (but below `set` `runtimepath`, if you have
-set it):
->
-   syntax enable
-   filetype plugin on
-   filetype indent on
-<
-Please, see |Nvim-R-vimrc-setup| for more suggestions of configuration.
+the plugin. Please, see |Nvim-R-vimrc-setup| for some suggestions of
+configuration.
 
 
 ------------------------------------------------------------------------------
@@ -2382,12 +2374,6 @@ please read this document from the beginning.
 							 *Nvim-R-vimrc-setup*
    ~/.vimrc or ~/.config/nvim/init.vim or ~\AppData\Roaming\nvim\init.vim~
 >
-   " Minimum required configuration:
-   set nocompatible
-   syntax on
-   filetype plugin on
-   filetype indent on
-
    " Change Leader and LocalLeader keys:
    let maplocalleader = ","
    let mapleader = ";"
