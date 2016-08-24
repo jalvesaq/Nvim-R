@@ -31,7 +31,6 @@ R/nvimrcom.vim
 R/nvimcom/DESCRIPTION
 R/nvimcom/NAMESPACE
 R/nvimcom/NEWS
-R/nvimcom/README.md
 R/nvimcom/man/etags2ctags.Rd
 R/nvimcom/man/nvimcom-package.Rd
 R/nvimcom/man/nvim.interlace.rmd.Rd
