@@ -57,11 +57,7 @@ function StartR_TmuxSplit(rcmd)
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)
     endif
-    if WaitNvimcomStart()
-        if g:R_after_start != ''
-            call system(g:R_after_start)
-        endif
-    endif
+    call WaitNvimcomStart()
 endfunction
 
 function SendCmdToR_TmuxSplit(...)

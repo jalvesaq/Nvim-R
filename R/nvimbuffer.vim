@@ -132,9 +132,7 @@ function StartR_Neovim()
     autocmd TermClose <buffer> call OnTermClose()
     exe "sbuffer " . edbuf
     stopinsert
-    if WaitNvimcomStart()
-        let g:SendCmdToR = function('SendCmdToR_Neovim')
-    endif
+    call WaitNvimcomStart()
 endfunction
 
 " To be called by edit() in R running in Neovim buffer.

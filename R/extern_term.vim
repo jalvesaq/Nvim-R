@@ -70,13 +70,7 @@ function StartR_ExternalTerm(rcmd)
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')
-    if WaitNvimcomStart()
-        if g:R_after_start != ''
-            call system(g:R_after_start)
-        endif
-    endif
-    call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-    call delete(g:rplugin_tmpdir . "/openR")
+    call WaitNvimcomStart()
 endfunction
 
 function SendCmdToR_Term(...)

@@ -886,23 +886,47 @@ function WaitNvimcomStart()
     if args_str =~ "vanilla"
         return 0
     endif
-    if g:R_nvimcom_wait < 0
-        return 0
+    if g:R_wait < 2
+        g:R_wait = 2
     endif
-    if g:R_nvimcom_wait < 300
-        g:R_nvimcom_wait = 300
+
+    if has("win32")
+        let wfile = ['@echo off',
+                    \ 'set /a ii=0',
+                    \ ':loop',
+                    \ 'if %ii% leq ' . g:R_wait . ' (',
+                    \ '    ping 127.0.0.1 -n1 -w 1000 >NUL',
+                    \ '    set /a ii+=1',
+                    \ '    if exist "' . g:rplugin_tmpdir . '/nvimcom_running_' . $NVIMR_ID . '" (',
+                    \ '        echo call GetNvimcomInfo^(^)',
+                    \ '        goto theend',
+                    \ '    )',
+                    \ '    goto loop',
+                    \ ')',
+                    \ 'echo call RWarningMsg^("R did not load nvimcom yet"^)',
+                    \ ':theend']
+        call writefile(wfile, g:rplugin_tmpdir . "/waitnvimcom.bat")
+        let g:rplugin_jobs["WaitNvimcom"] = StartJob([g:rplugin_tmpdir . "/waitnvimcom.bat"], g:rplugin_job_handlers)
+    else
+        let wfile = ["#!/bin/sh",
+                    \ "ii=0",
+                    \ "while [ $ii -le " . g:R_wait . " ]",
+                    \ "do",
+                    \ "    sleep 1",
+                    \ "    ii=$( expr $ii + 1 )",
+                    \ "    if [ -r '" . g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID . "' ]",
+                    \ "    then",
+                    \ "        echo 'call GetNvimcomInfo()'",
+                    \ "        exit 0",
+                    \ "    fi",
+                    \ "done",
+                    \ "echo \"call RWarningMsg('R did not load nvimcom yet.')\""]
+        call writefile(wfile, g:rplugin_tmpdir . "/waitnvimcom.sh")
+        let g:rplugin_jobs["WaitNvimcom"] = StartJob(["sh", g:rplugin_tmpdir . "/waitnvimcom.sh"], g:rplugin_job_handlers)
     endif
-    redraw
-    echo "Waiting nvimcom loading..."
-    sleep 300m
-    let ii = 300
-    let waitmsg = 0
-    while !filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID) && ii < g:R_nvimcom_wait
-        let ii = ii + 200
-        sleep 200m
-    endwhile
-    echon "\r                              "
-    redraw
+endfunction
+
+function GetNvimcomInfo()
     sleep 300m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
@@ -974,13 +998,31 @@ function WaitNvimcomStart()
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
 
-        if g:R_tmux_split
+        if g:R_in_buffer
+            let g:SendCmdToR = function('SendCmdToR_Neovim')
+        elseif has("win32")
+            if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
+                " ArrangeWindows
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
+            endif
+            let g:SendCmdToR = function('SendCmdToR_Windows')
+        elseif g:R_applescript
+            call foreground()
+            sleep 200m
+        elseif g:R_tmux_split
             " Environment variables persist across Tmux windows.
             " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
             " when R was not started by Neovim:
             call system("tmux set-environment -u NVIMR_TMPDIR")
+        else
+            call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+            call delete(g:rplugin_tmpdir . "/openR")
         endif
-        return 1
+
+        if g:R_after_start != ''
+            call system(g:R_after_start)
+        endif
+        return
     else
         if filereadable(g:rplugin_compldir . "/nvimcom_info")
             " The information on nvimcom home might be invalid if R was upgraded
@@ -2771,7 +2813,12 @@ function RVimLeave()
     call delete(g:rplugin_tmpdir . "/unformatted_code")
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/run_cmd.bat")
+    if has("nvim")
+        call delete(g:rplugin_tmpdir . "/waitnvimcom.sh")
+    else
+        call delete(g:rplugin_tmpdir . "/waitnvimcom.bat")
+        call delete(g:rplugin_tmpdir . "/run_cmd.bat")
+    endif
     if executable("rmdir")
         call system("rmdir '" . g:rplugin_tmpdir . "'")
     endif
@@ -3040,7 +3087,7 @@ call RSetDefaultValue("g:R_applescript",       0)
 call RSetDefaultValue("g:R_tmux_split",        0)
 call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_close_term",        1)
-call RSetDefaultValue("g:R_nvimcom_wait",   5000)
+call RSetDefaultValue("g:R_wait",             60)
 call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
@@ -3346,3 +3393,7 @@ if len(s:ff) > 1 || len(s:ft) > 5
 endif
 unlet s:ff
 unlet s:ft
+
+if exists("g:R_nvimcom_wait")
+    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
+endif

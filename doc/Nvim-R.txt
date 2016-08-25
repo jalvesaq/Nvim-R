@@ -875,7 +875,7 @@ Vim and R at the end of
 |R_source|            Source additional scripts
 |R_show_args|         Show extra information during omnicompletion
 |R_args_in_stline|    Set 'statusline' to function arguments
-|R_nvimcom_wait|      Time to wait for nvimcom loading
+|R_wait|              Time to wait for nvimcom loading
 |R_nvim_wd|           Start R in Vim's working directory
 |R_after_start|       System command to execute after R startup
 |R_user_maps_only|    Only set user specified key bindings
@@ -1618,15 +1618,15 @@ arguments displayed.
 
 
 ------------------------------------------------------------------------------
-							      *R_nvimcom_wait*
+								      *R_wait*
 6.29. Time to wait for nvimcom loading~
 
-The Nvim-R waits 5000 milliseconds for nvimcom package to be loaded during R
-startup. It then checks whether you are using the correct version of nvimcom.
-If 5000 milliseconds is not enough to your R startup, then set a higher value
-for the variable in your |vimrc|. Example:
+The Nvim-R asynchronously waits 60 seconds for nvimcom package to be loaded
+during R startup. It then checks whether you are using the correct version of
+nvimcom. If 60 seconds are not enough to your R startup, then set a higher
+value for the variable in your |vimrc|. Example:
 >
-   let R_nvimcom_wait = 10000
+   let R_wait = 100
 <
 
 ------------------------------------------------------------------------------
@@ -2689,9 +2689,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-08-10)
+0.9.6 (2016-08-25)
 
  * New option: R_open_example.
+ * Replaced R_nvimcom_wait (time in miliseconds) with R_wait (time in seconds).
  * Change default value of R_source_args to "print.eval=TRUE".
  * Change in \aa and \ae: do not save the buffer before sending the whole file
    to R.

@@ -118,16 +118,7 @@ function StartR_Windows()
     endif
     call UnsetRHome()
 
-    let g:SendCmdToR = function('SendCmdToR_Windows')
-    if WaitNvimcomStart()
-        if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
-            " ArrangeWindows
-            call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
-        endif
-        if g:R_after_start != ''
-            call system(g:R_after_start)
-        endif
-    endif
+    call WaitNvimcomStart()
 endfunction
 
 function SendCmdToR_Windows(...)

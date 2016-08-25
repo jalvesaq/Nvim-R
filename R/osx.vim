@@ -27,13 +27,7 @@ function StartR_OSX()
         call RWarningMsg(rlog)
     endif
     let g:SendCmdToR = function('SendCmdToR_OSX')
-    if WaitNvimcomStart()
-        call foreground()
-        sleep 200m
-        if g:R_after_start != ''
-            call system(g:R_after_start)
-        endif
-    endif
+    call WaitNvimcomStart()
 endfunction
 
 function SendCmdToR_OSX(...)
