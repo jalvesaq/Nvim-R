@@ -115,7 +115,7 @@ endif
 if exists("g:R_term")
     if !executable(g:R_term)
         call RWarningMsgInp("'" . g:R_term . "' not found. Please change the value of 'R_term' in your vimrc.")
-        let g:R_term = "xterm"
+        finish
     endif
 endif
 
