@@ -80,10 +80,6 @@ function OnTermClose()
     endif
 endfunction
 
-function SendCmdToR_NotYet(...)
-    call RWarningMsg("Not ready yet")
-endfunction
-
 function StartR_Neovim()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return

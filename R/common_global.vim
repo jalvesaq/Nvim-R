@@ -1188,6 +1188,11 @@ function SendCmdToR_fake(...)
     return 0
 endfunction
 
+function SendCmdToR_NotYet(...)
+    call RWarningMsg("Not ready yet")
+    return 0
+endfunction
+
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
 function RGetKeyword(colon)

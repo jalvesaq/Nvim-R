@@ -110,6 +110,8 @@ function StartR_Windows()
         return
     endif
 
+    let g:SendCmdToR = function('SendCmdToR_NotYet')
+
     call SetRHome()
     if has("nvim")
         call system("start " . g:rplugin_R . ' ' . join(g:R_args))
