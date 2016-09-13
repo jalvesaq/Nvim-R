@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.6
-For Neovim >= 0.1.4 and Vim >= 7.4.1829
+For Neovim >= 0.1.5 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -105,7 +105,7 @@ Main dependencies:~
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 7.4.1829:
+   or Vim >= 8.0.0:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
@@ -2689,7 +2689,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-08-25)
+0.9.6 (2016-09-13)
 
  * New option: R_open_example.
  * Replaced R_nvimcom_wait (time in miliseconds) with R_wait (time in seconds).
@@ -2697,6 +2697,7 @@ step-by-step procedure to run Nvim-R remotely:
  * Change in \aa and \ae: do not save the buffer before sending the whole file
    to R.
  * Minor bug fixes.
+ * Require Vim >= 8.0.0 or Neovim >= 0.1.5.
 
 0.9.5 (2016-05-18)
 
