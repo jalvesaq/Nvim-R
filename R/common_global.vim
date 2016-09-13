@@ -59,12 +59,10 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
-if !has("nvim")
-    if !exists("*job_getchannel") || !has("patch-7.4.1829")
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.4 or Vim >= 7.4.1829.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
-        let g:rplugin_failed = 1
-        finish
-    endif
+if !has("nvim") && v:version < "800"
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.4 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    let g:rplugin_failed = 1
+    finish
 endif
 
 " Set default value of some variables:
@@ -1312,7 +1310,17 @@ endfunction
 " Send file to R
 function SendFileToR(e)
     let flines = getline(1, "$")
-    call RSourceLines(flines, a:e)
+    let fpath = expand("%:p") . ".tmp.R"
+    if filereadable(fpath)
+        call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.")
+        return
+    endif
+    if has("win32")
+        let fpath = substitute(fpath, "\\", "/", "g")
+    endif
+    call writefile(flines, fpath)
+    let sargs = GetSourceArgs(a:e)
+    call g:SendCmdToR('base::source("' . fpath .  '"' . sargs . ') ; unlink("' . fpath . '")')
 endfunction
 
 " Send block to R
