@@ -751,6 +751,19 @@ function StartR(whatr)
     call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
 
+    call AddForDeletion(g:rplugin_tmpdir . "/eval_reply")
+    call AddForDeletion(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
+    call AddForDeletion(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
+    if has("win32")
+        call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.bat")
+        call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
+    else
+        call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.sh")
+    endif
+
     if !CheckNvimcomVersion()
         return
     endif
@@ -1125,6 +1138,9 @@ function RFormatCode() range
 
     let lns = getline(a:firstline, a:lastline)
     call writefile(lns, g:rplugin_tmpdir . "/unformatted_code")
+    call AddForDeletion(g:rplugin_tmpdir . "/unformatted_code")
+    call AddForDeletion(g:rplugin_tmpdir . "/formatted_code")
+
     let wco = &textwidth
     if wco == 0
         let wco = 78
@@ -1153,6 +1169,8 @@ function RInsert(...)
 
     call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/Rinsert")
+    call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
+
     call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:1 . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
     let g:rplugin_lastev = ReadEvalReply()
     if g:rplugin_lastev =~ "^R error: "
@@ -1297,6 +1315,7 @@ function RSourceLines(...)
     call writefile(lines, g:rplugin_rsource)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
+        call AddForDeletion(g:rplugin_tmpdir . '/Rinsert')
         call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . g:rplugin_rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
         return 1
     endif
@@ -1311,16 +1330,18 @@ endfunction
 function SendFileToR(e)
     let flines = getline(1, "$")
     let fpath = expand("%:p") . ".tmp.R"
+
     if filereadable(fpath)
         call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.")
         return
     endif
+
     if has("win32")
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
     call writefile(flines, fpath)
     let sargs = GetSourceArgs(a:e)
-    call g:SendCmdToR('base::source("' . fpath .  '"' . sargs . ') ; unlink("' . fpath . '")')
+    call g:SendCmdToR('nvimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
 endfunction
 
 " Send block to R
@@ -2002,6 +2023,7 @@ function AskRDoc(rkeyword, package, getclass)
     if filewritable(g:rplugin_docfile)
         call delete(g:rplugin_docfile)
     endif
+    call AddForDeletion(g:rplugin_docfile)
 
     let objclass = ""
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
@@ -2042,6 +2064,8 @@ endfunction
 
 " This function is called by nvimcom
 function ShowRDoc(rkeyword)
+    call AddForDeletion(g:rplugin_docfile)
+
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
         let msgs = split(a:rkeyword)
@@ -2482,6 +2506,7 @@ function RAction(rcmd)
             else
                 echo "Wait..."
                 call delete(g:rplugin_tmpdir . "/Rinsert")
+                call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
                 call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
             endif
             return
@@ -2807,31 +2832,22 @@ function RBufEnter()
     endif
 endfunction
 
+function AddForDeletion(fname)
+    for fn in g:rplugin_del_list
+        if fn == a:fname
+            return
+        endif
+    endfor
+    call add(g:rplugin_del_list, a:fname)
+endfunction
+
 function RVimLeave()
     if IsJobRunning("ClientServer")
         call JobStdin(g:rplugin_jobs["ClientServer"], "\x08Quit\n")
     endif
-    call delete(g:rplugin_rsource)
-    call delete(g:rplugin_tmpdir . "/start_options.R")
-    call delete(g:rplugin_tmpdir . "/eval_reply")
-    call delete(g:rplugin_tmpdir . "/formatted_code")
-    call delete(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/objbrowserInit")
-    call delete(g:rplugin_tmpdir . "/Rdoc")
-    call delete(g:rplugin_tmpdir . "/Rinsert")
-    call delete(g:rplugin_tmpdir . "/tmux.conf")
-    call delete(g:rplugin_tmpdir . "/unformatted_code")
-    call delete(g:rplugin_tmpdir . "/nvimbol_finished")
-    call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-    if has("nvim")
-        call delete(g:rplugin_tmpdir . "/waitnvimcom.sh")
-    else
-        call delete(g:rplugin_tmpdir . "/waitnvimcom.bat")
-        call delete(g:rplugin_tmpdir . "/run_cmd.bat")
-    endif
+    for fn in g:rplugin_del_list
+        call delete(fn)
+    endfor
     if executable("rmdir")
         call system("rmdir '" . g:rplugin_tmpdir . "'")
     endif
@@ -2845,13 +2861,16 @@ function BuildROmniList(pattern)
     endif
 
     let omnilistcmd = 'nvimcom:::nvim.bol("' . g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID . '"'
+
     if g:R_allnames == 1
         let omnilistcmd = omnilistcmd . ', allnames = TRUE'
     endif
     let omnilistcmd = omnilistcmd . ', pattern = "' . a:pattern . '")'
 
-    call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call delete(g:rplugin_tmpdir . "/eval_reply")
+    call delete(g:rplugin_tmpdir . "/nvimbol_finished")
+    call AddForDeletion(g:rplugin_tmpdir . "/nvimbol_finished")
+
     call SendToNvimcom("\x08" . $NVIMR_ID . omnilistcmd)
     if g:rplugin_nvimcom_port == 0
         sleep 500m
@@ -3064,6 +3083,10 @@ endif
 
 " Make the file name of files to be sourced
 let g:rplugin_rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
+
+" List of file to be deleted on VimLeave
+let g:rplugin_del_list = [g:rplugin_rsource,
+            \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
 
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 

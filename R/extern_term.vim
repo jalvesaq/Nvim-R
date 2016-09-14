@@ -18,6 +18,7 @@ function StartR_ExternalTerm(rcmd)
         endif
 
         call writefile(cnflines, g:rplugin_tmpdir . "/tmux.conf")
+        call AddForDeletion(g:rplugin_tmpdir . "/tmux.conf")
         let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
     endif
 
