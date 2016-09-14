@@ -114,18 +114,29 @@ function! RBrowserDoubleClick()
 
     " Toggle state of list or data.frame: open X closed
     let key = RBrowserGetName(0, 1)
+    let curline = getline(".")
     if g:rplugin_curview == "GlobalEnv"
-        if getline(".") =~ "&#.*\t"
+        if curline =~ "&#.*\t"
             call SendToNvimcom("\006&" . key)
-        else
+        elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
             call SendToNvimcom("\006" . key)
+        else
+            call g:SendCmdToR("str(" . key . ")")
         endif
     else
-        let key = substitute(key, '`', '', "g")
-        if key !~ "^package:"
-            let key = "package:" . RBGetPkgName() . '-' . key
+        if curline =~ "(#.*\t"
+            call AskRDoc(key, RBGetPkgName(), 0)
+        else
+            let key = substitute(key, '`', '', "g")
+            if key =~ "^package:"
+                call SendToNvimcom("\006" . key)
+            elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
+                let key = "package:" . RBGetPkgName() . '-' . key
+                call SendToNvimcom("\006" . key)
+            else
+                call g:SendCmdToR("str(" . key . ")")
+            endif
         endif
-        call SendToNvimcom("\006" . key)
     endif
 endfunction
 
@@ -293,10 +304,6 @@ function! RBrowserGetName(cleantail, cleantick)
             return ""
         endif
     endif
-endfunction
-
-function! SourceObjBrLines()
-    exe "source " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/objbrowserInit"
 endfunction
 
 function! OnOBBufUnload()
