@@ -55,9 +55,7 @@ function! UpdateOB(what)
     let g:rplugin_upobcnt = 1
 
     let rplugin_switchedbuf = 0
-    redir => s:bufl
-    silent buffers
-    redir END
+    let s:bufl = execute("buffers")
     if s:bufl !~ "Object_Browser"
         let g:rplugin_upobcnt = 0
         return "Object_Browser not listed"

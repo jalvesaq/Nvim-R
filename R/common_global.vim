@@ -625,9 +625,7 @@ endfunction
 
 function IsSendCmdToRFake()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        redir => nkblist
-        silent nmap
-        redir END
+        let nkblist = execute("nmap")
         let nkbls = split(nkblist, "\n")
         let qcmd = "\\rq"
         for nkb in nkbls
@@ -2539,15 +2537,9 @@ function! RMakeRmd(t)
     call g:SendCmdToR(rcmd)
 endfunction
 
-redir => s:ikblist
-silent imap
-redir END
-redir => s:nkblist
-silent nmap
-redir END
-redir => s:vkblist
-silent vmap
-redir END
+let s:ikblist = execute("imap")
+let s:nkblist = execute("nmap")
+let s:vkblist = execute("vmap")
 let s:iskblist = split(s:ikblist, "\n")
 let s:nskblist = split(s:nkblist, "\n")
 let s:vskblist = split(s:vkblist, "\n")
