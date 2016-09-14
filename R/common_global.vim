@@ -892,6 +892,17 @@ function StopR()
     endif
 endfunction
 
+function CheckIfNvimcomIsRunning(...)
+    let s:nseconds = s:nseconds - 1
+    if filereadable(g:rplugin_tmpdir . '/nvimcom_running_' . $NVIMR_ID)
+        call GetNvimcomInfo()
+    elseif s:nseconds > 0
+        call timer_start(1000, "CheckIfNvimcomIsRunning")
+    else
+       call RWarningMsg("R did not load nvimcom yet")
+    endif
+endfunction
+
 function WaitNvimcomStart()
     let args_str = join(g:rplugin_r_args)
     if args_str =~ "vanilla"
@@ -901,40 +912,8 @@ function WaitNvimcomStart()
         g:R_wait = 2
     endif
 
-    if has("win32")
-        let wfile = ['@echo off',
-                    \ 'set /a ii=0',
-                    \ ':loop',
-                    \ 'if %ii% leq ' . g:R_wait . ' (',
-                    \ '    ping 127.0.0.1 -n1 -w 1000 >NUL',
-                    \ '    set /a ii+=1',
-                    \ '    if exist "' . g:rplugin_tmpdir . '/nvimcom_running_' . $NVIMR_ID . '" (',
-                    \ '        echo call GetNvimcomInfo^(^)',
-                    \ '        goto theend',
-                    \ '    )',
-                    \ '    goto loop',
-                    \ ')',
-                    \ 'echo call RWarningMsg^("R did not load nvimcom yet"^)',
-                    \ ':theend']
-        call writefile(wfile, g:rplugin_tmpdir . "/waitnvimcom.bat")
-        let g:rplugin_jobs["WaitNvimcom"] = StartJob([g:rplugin_tmpdir . "/waitnvimcom.bat"], g:rplugin_job_handlers)
-    else
-        let wfile = ["#!/bin/sh",
-                    \ "ii=0",
-                    \ "while [ $ii -le " . g:R_wait . " ]",
-                    \ "do",
-                    \ "    sleep 1",
-                    \ "    ii=$( expr $ii + 1 )",
-                    \ "    if [ -r '" . g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID . "' ]",
-                    \ "    then",
-                    \ "        echo 'call GetNvimcomInfo()'",
-                    \ "        exit 0",
-                    \ "    fi",
-                    \ "done",
-                    \ "echo \"call RWarningMsg('R did not load nvimcom yet.')\""]
-        call writefile(wfile, g:rplugin_tmpdir . "/waitnvimcom.sh")
-        let g:rplugin_jobs["WaitNvimcom"] = StartJob(["sh", g:rplugin_tmpdir . "/waitnvimcom.sh"], g:rplugin_job_handlers)
-    endif
+    let s:nseconds = g:R_wait
+    call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
 function GetNvimcomInfo()
