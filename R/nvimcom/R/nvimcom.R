@@ -129,3 +129,9 @@ nvim_viewdf <- function(oname)
     }
     return(invisible(NULL))
 }
+
+source.and.clean <- function(f, ...)
+{
+    on.exit(unlink(f))
+    source(f, ...)
+}
