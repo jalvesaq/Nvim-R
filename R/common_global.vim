@@ -3084,10 +3084,6 @@ endif
 " Make the file name of files to be sourced
 let g:rplugin_rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
 
-" List of file to be deleted on VimLeave
-let g:rplugin_del_list = [g:rplugin_rsource,
-            \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
-
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
 " Variables whose default value is fixed
@@ -3340,6 +3336,11 @@ else
 endif
 
 let g:rplugin_docfile = g:rplugin_tmpdir . "/Rdoc"
+
+" List of file to be deleted on VimLeave
+let g:rplugin_del_list = [g:rplugin_rsource,
+            \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
+
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
 " starting R:
