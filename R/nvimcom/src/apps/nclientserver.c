@@ -687,6 +687,15 @@ int main(int argc, char **argv){
                 if(NvimHwnd)
                     SetForegroundWindow(NvimHwnd);
                 break;
+            case 11: // Check if R is running
+                if(PostMessage(RConsole, WM_NULL, 0, 0)){
+                    printf("call RWarningMsg('R was already started')\n");
+                    fflush(stdout);
+                } else {
+                    printf("call CleanNvimAndStartR()\n");
+                    fflush(stdout);
+                }
+                break;
 #endif
             case 8: // Quit now
                 keep_running = 0;

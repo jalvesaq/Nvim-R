@@ -106,18 +106,7 @@ endfunction
 
 function StartR_Windows()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        if hasmapto("<Plug>RClose", "n")
-            let qcmd = RNMapCmd("<Plug>RClose")
-        else
-            if exists('g:maplocalleader')
-                let qcmd = g:maplocalleader . "rq"
-            else
-                let qcmd = "\\rq"
-            endif
-        endif
-        call RWarningMsg('R was already started.')
-        sleep 1
-        call RWarningMsg('If you know R is closed, in Normal mode, type ' . qcmd . ' to clean Nvim-R status.')
+        call JobStdin(g:rplugin_jobs["ClientServer"], "\x0bCheck if R is running\n")
         return
     endif
 
@@ -132,6 +121,11 @@ function StartR_Windows()
     call UnsetRHome()
 
     call WaitNvimcomStart()
+endfunction
+
+function CleanNvimAndStartR()
+    call ClearRInfo()
+    call StartR_Windows()
 endfunction
 
 function SendCmdToR_Windows(...)
