@@ -58,6 +58,19 @@ endif
 
 let g:R_R_window_title = "R Console"
 
+function CheckRtools()
+    let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
+    if Rtpath =~ "Rtools"
+        let Rtpath = substitute(Rtpath, "\\", "/", "g") . "/VERSION.txt"
+        if filereadable(Rtpath)
+            let Rtvrsn = readfile(Rtpath)
+            if Rtvrsn[0] =~ "version 3.4"
+                call RWarningMsg("Nvim-R is incompatible with Rtools 3.4 (August 2016). Please, try Rtools 3.3.")
+            endif
+        endif
+    endif
+endfunction
+
 function SumatraInPath()
     if s:sumatra_in_path
         return 1

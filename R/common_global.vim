@@ -654,19 +654,6 @@ function ShowRSysLog(slog, fname, msg)
     sleep 1
 endfunction
 
-function CheckRtools()
-    let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
-    if Rtpath =~ "Rtools"
-        let Rtpath = substitute(Rtpath, "\\", "/", "g") . "/VERSION.txt"
-        if filereadable(Rtpath)
-            let Rtvrsn = readfile(Rtpath)
-            if Rtvrsn[0] =~ "version 3.4"
-                call RWarningMsg("Nvim-R is incompatible with Rtools 3.4 (August 2016). Please, try Rtools 3.3.")
-            endif
-        endif
-    endif
-endfunction
-
 function CheckNvimcomVersion()
     let neednew = 0
     if s:nvimcom_home == ""
