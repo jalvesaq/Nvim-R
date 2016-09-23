@@ -35,9 +35,9 @@ function SendCmdToR_Neovim(...)
             endif
         endif
 
-        if !exists("g:rplugin_hl_term")
-            let g:rplugin_hl_term = g:R_hl_term
-            if g:rplugin_hl_term
+        if !exists("s:hl_term")
+            let s:hl_term = g:R_hl_term
+            if s:hl_term
                 call ExeOnRTerm('set filetype=rout')
             endif
         endif
@@ -45,9 +45,9 @@ function SendCmdToR_Neovim(...)
         " Update the width, if necessary
         if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
             call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
-            if s:rwnwdth != g:rplugin_R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
-                let g:rplugin_R_width = s:rwnwdth
-                call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . g:rplugin_R_width. ")")
+            if s:rwnwdth != s:R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
+                let s:R_width = s:rwnwdth
+                call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
                 sleep 10m
             endif
         endif
@@ -115,12 +115,12 @@ function StartR_Neovim()
         call UnsetRHome()
     endif
     let g:rplugin_R_bufname = bufname("%")
-    let g:rplugin_R_width = 0
+    let s:R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
         set filetype=rout
-        let g:rplugin_hl_term = g:R_hl_term
+        let s:hl_term = g:R_hl_term
     endif
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>

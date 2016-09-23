@@ -112,8 +112,8 @@ if has("gui_running")
     call MakeRMenu()
 endif
 
-let g:rplugin_has_pandoc = 0
-let g:rplugin_has_soffice = 0
+let s:has_pandoc = 0
+let s:has_soffice = 0
 
 call RSourceOtherScripts()
 

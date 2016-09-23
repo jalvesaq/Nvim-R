@@ -28,10 +28,10 @@
 
 
 " Do this only once
-if exists("g:rplugin_did_global_stuff")
+if exists("s:did_global_stuff")
     finish
 endif
-let g:rplugin_did_global_stuff = 1
+let s:did_global_stuff = 1
 
 "==========================================================================
 " Functions that are common to r, rnoweb, rhelp and rdoc
@@ -327,7 +327,7 @@ function RCompleteArgs()
             endif
 
             " If R isn't running, use the prebuilt list of objects
-            let flines = g:rplugin_omni_lines + g:rplugin_globalenvlines
+            let flines = g:rplugin_omni_lines + s:globalenv_lines
             for omniL in flines
                 if omniL =~ rkeyword && omniL =~ "\x06function\x06function\x06"
                     let tmp1 = split(omniL, "\x06")
@@ -669,13 +669,13 @@ endfunction
 
 function CheckNvimcomVersion()
     let neednew = 0
-    if g:rplugin_nvimcom_home == ""
+    if s:nvimcom_home == ""
         let neednew = 1
     else
-        if !filereadable(g:rplugin_nvimcom_home . "/DESCRIPTION")
+        if !filereadable(s:nvimcom_home . "/DESCRIPTION")
             let neednew = 1
         else
-            let ndesc = readfile(g:rplugin_nvimcom_home . "/DESCRIPTION")
+            let ndesc = readfile(s:nvimcom_home . "/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
             if nvers != s:required_nvimcom
                 let neednew = 1
@@ -885,8 +885,8 @@ endfunction
 
 " Send SIGINT to R
 function StopR()
-    if g:rplugin_r_pid
-        call system("kill -s SIGINT " . g:rplugin_r_pid)
+    if s:R_pid
+        call system("kill -s SIGINT " . s:R_pid)
     endif
 endfunction
 
@@ -918,14 +918,14 @@ function GetNvimcomInfo()
     sleep 300m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        let g:rplugin_nvimcom_version = vr[0]
-        let g:rplugin_nvimcom_home = vr[1]
+        let s:nvimcom_version = vr[0]
+        let s:nvimcom_home = vr[1]
         let g:rplugin_nvimcom_port = vr[2]
-        let g:rplugin_r_pid = vr[3]
+        let s:R_pid = vr[3]
         let $RCONSOLE = vr[4]
         let search_list = vr[5]
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        if g:rplugin_nvimcom_version != s:required_nvimcom_dot
+        if s:nvimcom_version != s:required_nvimcom_dot
             call RWarningMsg('This version of Nvim-R requires nvimcom ' .
                         \ s:required_nvimcom . '.')
             sleep 1
@@ -938,15 +938,15 @@ function GetNvimcomInfo()
             let g:R_setwidth = 0
         endif
 
-        if isdirectory(g:rplugin_nvimcom_home . "/bin/x64")
-            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin/x64"
-        elseif isdirectory(g:rplugin_nvimcom_home . "/bin/i386")
-            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin/i386"
+        if isdirectory(s:nvimcom_home . "/bin/x64")
+            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/x64"
+        elseif isdirectory(s:nvimcom_home . "/bin/i386")
+            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/i386"
         else
-            let g:rplugin_nvimcom_bin_dir = g:rplugin_nvimcom_home . "/bin"
+            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin"
         endif
 
-        call writefile([g:rplugin_nvimcom_version, g:rplugin_nvimcom_home, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
+        call writefile([s:nvimcom_version, s:nvimcom_home, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
 
         if has("win32")
             let nvc = "nclientserver.exe"
@@ -1015,8 +1015,8 @@ function GetNvimcomInfo()
         if filereadable(g:rplugin_compldir . "/nvimcom_info")
             " The information on nvimcom home might be invalid if R was upgraded
             call delete(g:rplugin_compldir . "/nvimcom_info")
-            let g:rplugin_nvimcom_version = "0"
-            let g:rplugin_nvimcom_home = ""
+            let s:nvimcom_version = "0"
+            let s:nvimcom_home = ""
             let g:rplugin_nvimcom_bin_dir = ""
             let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
         else
@@ -1074,15 +1074,15 @@ function RObjBrowser()
         return
     endif
 
-    if g:rplugin_running_objbr == 1
+    if s:running_objbr == 1
         " Called twice due to BufEnter event
         return
     endif
 
-    let g:rplugin_running_objbr = 1
+    let s:running_objbr = 1
 
     call StartObjBrowser()
-    let g:rplugin_running_objbr = 0
+    let s:running_objbr = 0
     return
 endfunction
 
@@ -1289,16 +1289,16 @@ function RSourceLines(...)
         endfor
         let lines = newlines
     endif
-    call writefile(lines, g:rplugin_rsource)
+    call writefile(lines, s:Rsource)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call AddForDeletion(g:rplugin_tmpdir . '/Rinsert')
-        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . g:rplugin_rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
+        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . s:Rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
         return 1
     endif
 
     let sargs = GetSourceArgs(a:2)
-    let rcmd = 'base::source("' . g:rplugin_rsource . '"' . sargs . ')'
+    let rcmd = 'base::source("' . s:Rsource . '"' . sargs . ')'
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
@@ -1610,7 +1610,7 @@ function KnitChild(line, godown)
     let cfile = substitute(nline, nline[0], "", "")
     let cfile = substitute(cfile, nline[0] . '.*', "", "")
     if filereadable(cfile)
-        let ok = g:SendCmdToR("require(knitr); knit('" . cfile . "', output=" . g:rplugin_null . ")")
+        let ok = g:SendCmdToR("require(knitr); knit('" . cfile . "', output=" . s:null . ")")
         if a:godown =~ "down"
             call cursor(line(".")+1, 1)
             call GoDown()
@@ -1769,7 +1769,7 @@ function ClearRInfo()
     call delete(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     let g:SendCmdToR = function('SendCmdToR_fake')
-    let g:rplugin_r_pid = 0
+    let s:R_pid = 0
     let g:rplugin_nvimcom_port = 0
 
     if g:R_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
@@ -1884,8 +1884,8 @@ function SetRTextWidth(rkeyword)
             let htwf = (s:hwidth - 1) / 0.9
         endif
         let htw = printf("%f", htwf)
-        let g:rplugin_htw = substitute(htw, "\\..*", "", "")
-        let g:rplugin_htw = g:rplugin_htw - (&number || &relativenumber) * &numberwidth
+        let s:htw = substitute(htw, "\\..*", "", "")
+        let s:htw = s:htw - (&number || &relativenumber) * &numberwidth
     endif
 endfunction
 
@@ -1997,10 +1997,10 @@ endfunction
 " Show R's help doc in Nvim's buffer
 " (based  on pydoc plugin)
 function AskRDoc(rkeyword, package, getclass)
-    if filewritable(g:rplugin_docfile)
-        call delete(g:rplugin_docfile)
+    if filewritable(s:docfile)
+        call delete(s:docfile)
     endif
-    call AddForDeletion(g:rplugin_docfile)
+    call AddForDeletion(s:docfile)
 
     let objclass = ""
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
@@ -2017,11 +2017,11 @@ function AskRDoc(rkeyword, package, getclass)
     call SetRTextWidth(a:rkeyword)
 
     if objclass == "" && a:package == ""
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L)'
+        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L)'
     elseif a:package != ""
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, package="' . a:package  . '")'
+        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L, package="' . a:package  . '")'
     else
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . g:rplugin_htw . 'L, ' . objclass . ')'
+        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L, ' . objclass . ')'
     endif
 
     call SendToNvimcom("\x08" . $NVIMR_ID . rcmd)
@@ -2041,7 +2041,7 @@ endfunction
 
 " This function is called by nvimcom
 function ShowRDoc(rkeyword)
-    call AddForDeletion(g:rplugin_docfile)
+    call AddForDeletion(s:docfile)
 
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
@@ -2054,7 +2054,7 @@ function ShowRDoc(rkeyword)
         let chn = input(msg . "Please, select one of them: ")
         if chn > 0 && chn < (len(msgs) - 1)
             call delete(g:rplugin_tmpdir . "/eval_reply")
-            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.help("' . msgs[-1] . '", ' . g:rplugin_htw . 'L, package="' . msgs[chn] . '")')
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.help("' . msgs[-1] . '", ' . s:htw . 'L, package="' . msgs[chn] . '")')
         endif
         return
     endif
@@ -2065,13 +2065,13 @@ function ShowRDoc(rkeyword)
     endif
 
     " If the help command was triggered in the R Console, jump to Vim pane
-    if g:R_tmux_split && !g:rplugin_running_rhelp
+    if g:R_tmux_split && !s:running_rhelp
         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
         if v:shell_error
             call RWarningMsg(slog)
         endif
     endif
-    let g:rplugin_running_rhelp = 0
+    let s:running_rhelp = 0
 
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
@@ -2140,7 +2140,7 @@ function ShowRDoc(rkeyword)
     let save_unnamed_reg = @@
     set modifiable
     sil normal! ggdG
-    let fcntt = readfile(g:rplugin_docfile)
+    let fcntt = readfile(s:docfile)
     call setline(1, fcntt)
     if a:rkeyword =~ "R History"
         set filetype=r
@@ -2255,7 +2255,7 @@ endfunction
 function RStart_Zathura(basenm)
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
-    if g:rplugin_has_wmctrl && g:rplugin_has_dbussend && filereadable("/proc/sys/kernel/pid_max")
+    if g:rplugin_has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
         let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . a:basenm . '"')
         if len(info) > 0
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
@@ -2295,9 +2295,9 @@ function RSetPDFViewer()
                 call RWarningMsgInp('Please, either install "zathura" or set the value of R_pdfviewer.')
             endif
             if executable("dbus-send")
-                let g:rplugin_has_dbussend = 1
+                let s:has_dbus_send = 1
             else
-                let g:rplugin_has_dbussend = 0
+                let s:has_dbus_send = 0
             endif
         endif
 
@@ -2345,7 +2345,7 @@ function DisplayArgs()
     let s:displaying_args = 1
     if &filetype == "r" || b:IsInRCode(0)
         let rkeyword = RGetKeyword(0)
-        let s:sttl_str = g:rplugin_status_line
+        let s:sttl_str = s:status_line
         let fargs = "Not a function"
         for omniL in g:rplugin_omni_lines
             if omniL =~ '^' . rkeyword . "\x06"
@@ -2376,7 +2376,7 @@ function RestoreStatusLine(p)
     if s:displaying_args
         return
     endif
-    exe 'set statusline=' . substitute(g:rplugin_status_line, ' ', '\\ ', 'g')
+    exe 'set statusline=' . substitute(s:status_line, ' ', '\\ ', 'g')
     if a:p
         normal! a)
     endif
@@ -2437,7 +2437,7 @@ function RAction(rcmd)
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
-            let g:rplugin_running_rhelp = 1
+            let s:running_rhelp = 1
             if g:R_nvimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
             else
@@ -2508,12 +2508,12 @@ function! RMakeRmd(t)
 
     if a:t == "odt"
         if has("win32")
-            let g:rplugin_soffbin = "soffice.exe"
+            let soffice_bin = "soffice.exe"
         else
-            let g:rplugin_soffbin = "soffice"
+            let soffice_bin = "soffice"
         endif
-        if !executable(g:rplugin_soffbin)
-            call RWarningMsg("Is Libre Office installed? Cannot convert into ODT: '" . g:rplugin_soffbin . "' not found.")
+        if !executable(soffice_bin)
+            call RWarningMsg("Is Libre Office installed? Cannot convert into ODT: '" . soffice_bin . "' not found.")
             return
         endif
     endif
@@ -2804,19 +2804,19 @@ function RBufEnter()
 endfunction
 
 function AddForDeletion(fname)
-    for fn in g:rplugin_del_list
+    for fn in s:del_list
         if fn == a:fname
             return
         endif
     endfor
-    call add(g:rplugin_del_list, a:fname)
+    call add(s:del_list, a:fname)
 endfunction
 
 function RVimLeave()
     if IsJobRunning("ClientServer")
         call JobStdin(g:rplugin_jobs["ClientServer"], "\x08Quit\n")
     endif
-    for fn in g:rplugin_del_list
+    for fn in s:del_list
         call delete(fn)
     endfor
     if executable("rmdir")
@@ -2865,7 +2865,7 @@ function BuildROmniList(pattern)
         return
     endif
 
-    let g:rplugin_globalenvlines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    let s:globalenv_lines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
 endfunction
 
 function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
@@ -2956,7 +2956,7 @@ function CompleteR(findstart, base)
 
         if pkg == ""
             call BuildROmniList(a:base)
-            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_globalenvlines, [])
+            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, s:globalenv_lines, [])
             if filereadable(g:rplugin_tmpdir . "/nvimbol_finished")
                 let toplev = readfile(g:rplugin_tmpdir . "/nvimbol_finished")
             else
@@ -3053,7 +3053,7 @@ if !isdirectory(g:rplugin_tmpdir)
 endif
 
 " Make the file name of files to be sourced
-let g:rplugin_rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
+let s:Rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
 
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
@@ -3206,7 +3206,7 @@ endif
 " ========================================================================
 
 " Start with an empty list of objects in the workspace
-let g:rplugin_globalenvlines = []
+let s:globalenv_lines = []
 
 " Minimum width for the Object Browser
 if g:R_objbr_w < 10
@@ -3222,11 +3222,11 @@ endif
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"
 
 if filewritable('/dev/null')
-    let g:rplugin_null = "'/dev/null'"
+    let s:null = "'/dev/null'"
 elseif has("win32") && filewritable('NUL')
-    let g:rplugin_null = "'NUL'"
+    let s:null = "'NUL'"
 else
-    let g:rplugin_null = 'tempfile()'
+    let s:null = 'tempfile()'
 endif
 
 autocmd BufEnter * call RBufEnter()
@@ -3234,14 +3234,13 @@ if &filetype != "rbrowser"
     autocmd VimLeave * call RVimLeave()
 endif
 
-let g:rplugin_firstbuffer = expand("%:p")
-let g:rplugin_status_line = &statusline
+let s:firstbuffer = expand("%:p")
+let s:status_line = &statusline
 let s:displaying_args = 0
-let g:rplugin_running_objbr = 0
-let g:rplugin_running_rhelp = 0
-let g:rplugin_r_pid = 0
+let s:running_objbr = 0
+let s:running_rhelp = 0
+let s:R_pid = 0
 let g:rplugin_myport = 0
-let g:rplugin_ob_port = 0
 let g:rplugin_nvimcom_port = 0
 let g:rplugin_lastev = ""
 
@@ -3250,14 +3249,14 @@ let s:required_nvimcom = substitute(s:filelines[1], "Version: ", "", "")
 let s:required_nvimcom_dot = substitute(s:required_nvimcom, "-", ".", "")
 unlet s:filelines
 
-let g:rplugin_nvimcom_version = "0"
-let g:rplugin_nvimcom_home = ""
+let s:nvimcom_version = "0"
+let s:nvimcom_home = ""
 let g:rplugin_nvimcom_bin_dir = ""
 if filereadable(g:rplugin_compldir . "/nvimcom_info")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_info")
     if len(s:filelines) == 3
-        let g:rplugin_nvimcom_version = s:filelines[0]
-        let g:rplugin_nvimcom_home = s:filelines[1]
+        let s:nvimcom_version = s:filelines[0]
+        let s:nvimcom_home = s:filelines[1]
         let g:rplugin_nvimcom_bin_dir = s:filelines[2]
     endif
     unlet s:filelines
@@ -3273,19 +3272,19 @@ endif
 let g:rplugin_has_wmctrl = 0
 let g:rplugin_zathura_pid = {}
 
-let g:rplugin_py_exec = "none"
+let s:py_exec = "none"
 if executable("python3")
-    let g:rplugin_py_exec = "python3"
+    let s:py_exec = "python3"
 elseif executable("python")
-    let g:rplugin_py_exec = "python"
+    let s:py_exec = "python"
 endif
 
 function GetRandomNumber(width)
-    if g:rplugin_py_exec != "none"
+    if s:py_exec != "none"
         let pycode = ["import os, sys, base64",
                     \ "sys.stdout.write(base64.b64encode(os.urandom(" . a:width . ")).decode())" ]
         call writefile(pycode, g:rplugin_tmpdir . "/getRandomNumber.py")
-        let randnum = system(g:rplugin_py_exec . ' "' . g:rplugin_tmpdir . '/getRandomNumber.py"')
+        let randnum = system(s:py_exec . ' "' . g:rplugin_tmpdir . '/getRandomNumber.py"')
         call delete(g:rplugin_tmpdir . "/getRandomNumber.py")
     elseif !has("win32")
         let randnum = system("echo $RANDOM")
@@ -3306,10 +3305,10 @@ else
     let $NVIMR_ID = GetRandomNumber(16)
 endif
 
-let g:rplugin_docfile = g:rplugin_tmpdir . "/Rdoc"
+let s:docfile = g:rplugin_tmpdir . "/Rdoc"
 
 " List of file to be deleted on VimLeave
-let g:rplugin_del_list = [g:rplugin_rsource,
+let s:del_list = [s:Rsource,
             \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
 
 

@@ -39,7 +39,7 @@ function StartR_ExternalTerm(rcmd)
             let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         else
             let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\"",
-                        \ g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+                        \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
         endif
     else
         if g:rplugin_is_darwin
@@ -47,7 +47,7 @@ function StartR_ExternalTerm(rcmd)
             return
         endif
         let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s",
-                    \ g:rplugin_termcmd, tmuxcnf, g:rplugin_tmuxsname)
+                    \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname)
     endif
 
     if g:R_silent_term
@@ -139,31 +139,31 @@ if !exists("g:R_term") && !exists("g:R_term_cmd")
     finish
 endif
 
-let g:rplugin_termcmd = g:R_term
+let s:term_cmd = g:R_term
 
 if g:R_term =~ '^\(gnome-terminal\|xfce4-terminal\|roxterm\|terminator\|Eterm\|aterm\|lxterminal\|rxvt\|urxvt\)$'
-    let g:rplugin_termcmd = g:rplugin_termcmd . " --title R"
+    let s:term_cmd = s:term_cmd . " --title R"
 elseif g:R_term == '^\(xterm\|uxterm\|lxterm\)$'
-    let g:rplugin_termcmd = g:rplugin_termcmd . " -title R"
+    let s:term_cmd = s:term_cmd . " -title R"
 endif
 
 if !g:R_nvim_wd
     if g:R_term =~ '^\(gnome-terminal\|xfce4-terminal\|terminator\|lxterminal\)$'
-        let g:rplugin_termcmd = g:R_term . " --working-directory='" . expand("%:p:h") . "'"
+        let s:term_cmd = g:R_term . " --working-directory='" . expand("%:p:h") . "'"
     elseif g:R_term == "konsole"
-        let g:rplugin_termcmd = "konsole --workdir '" . expand("%:p:h") . "'"
+        let s:term_cmd = "konsole --workdir '" . expand("%:p:h") . "'"
     elseif g:R_term == "roxterm"
-        let g:rplugin_termcmd = "roxterm --directory='" . expand("%:p:h") . "'"
+        let s:term_cmd = "roxterm --directory='" . expand("%:p:h") . "'"
     endif
 endif
 
 if g:R_term == "gnome-terminal" || g:R_term == "xfce4-terminal"
-    let g:rplugin_termcmd = g:rplugin_termcmd . " -x"
+    let s:term_cmd = s:term_cmd . " -x"
 else
-    let g:rplugin_termcmd = g:rplugin_termcmd . " -e"
+    let s:term_cmd = s:term_cmd . " -e"
 endif
 
 " Override default settings:
 if exists("g:R_term_cmd")
-    let g:rplugin_termcmd = g:R_term_cmd
+    let s:term_cmd = g:R_term_cmd
 endif

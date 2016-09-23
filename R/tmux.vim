@@ -10,7 +10,7 @@ endif
 
 if system("uname") =~ "OpenBSD"
     " Tmux does not have -V option on OpenBSD: https://github.com/jcfaria/Vim-R-plugin/issues/200
-    let g:rplugin_tmux_version = "2.1"
+    let s:tmuxversion = "0.0"
 else
     let s:tmuxversion = system("tmux -V")
     let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1', '')
@@ -22,8 +22,8 @@ else
         let g:rplugin_failed = 1
         finish
     endif
-    unlet s:tmuxversion
 endif
+unlet s:tmuxversion
 
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 

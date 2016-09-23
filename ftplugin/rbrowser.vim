@@ -9,7 +9,7 @@ if exists("b:did_ftplugin")
 endif
 let b:did_ftplugin = 1
 
-let g:rplugin_upobcnt = 0
+let s:upobcnt = 0
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -32,8 +32,8 @@ if !exists("g:rplugin_hasmenu")
 endif
 
 " Popup menu
-if !exists("g:rplugin_hasbrowsermenu")
-    let g:rplugin_hasbrowsermenu = 0
+if !exists("s:hasbrowsermenu")
+    let s:hasbrowsermenu = 0
 endif
 
 " Current view of the object browser: .GlobalEnv X loaded libraries
@@ -48,16 +48,16 @@ function! UpdateOB(what)
     if g:rplugin_curview != wht
         return "curview != what"
     endif
-    if g:rplugin_upobcnt
+    if s:upobcnt
         echoerr "OB called twice"
         return "OB called twice"
     endif
-    let g:rplugin_upobcnt = 1
+    let s:upobcnt = 1
 
     let rplugin_switchedbuf = 0
     let s:bufl = execute("buffers")
     if s:bufl !~ "Object_Browser"
-        let g:rplugin_upobcnt = 0
+        let s:upobcnt = 0
         return "Object_Browser not listed"
     endif
     if exists("g:rplugin_curbuf") && g:rplugin_curbuf != "Object_Browser"
@@ -93,7 +93,7 @@ function! UpdateOB(what)
         exe "sil noautocmd sb " . g:rplugin_curbuf
         exe "set switchbuf=" . savesb
     endif
-    let g:rplugin_upobcnt = 0
+    let s:upobcnt = 0
     return "End of UpdateOB()"
 endfunction
 
@@ -157,7 +157,7 @@ function! RBrowserRightClick()
         let isfunction = 1
     endif
 
-    if g:rplugin_hasbrowsermenu == 1
+    if s:hasbrowsermenu == 1
         aunmenu ]RBrowser
     endif
     let key = substitute(key, '\.', '\\.', "g")
@@ -175,7 +175,7 @@ function! RBrowserRightClick()
         exe 'amenu ]RBrowser.args('. key . ') :call RAction("args")<CR>'
     endif
     popup ]RBrowser
-    let g:rplugin_hasbrowsermenu = 1
+    let s:hasbrowsermenu = 1
 endfunction
 
 function! RBGetPkgName()

@@ -1,16 +1,16 @@
 " This file contains code used only on OS X
 
 if isdirectory("/Applications/R64.app")
-    let g:rplugin_r64app = 1
+    let s:R64app = 1
 else
-    let g:rplugin_r64app = 0
+    let s:R64app = 0
 endif
 
 function StartR_OSX()
     if IsSendCmdToRFake()
         return
     endif
-    if g:rplugin_r64app
+    if s:R64app
         let rcmd = "/Applications/R64.app"
     else
         let rcmd = "/Applications/R.app"
@@ -37,7 +37,7 @@ function SendCmdToR_OSX(...)
         let cmd = a:1
     endif
 
-    if g:rplugin_r64app
+    if s:R64app
         let rcmd = "R64"
     else
         let rcmd = "R"

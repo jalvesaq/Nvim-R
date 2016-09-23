@@ -129,6 +129,8 @@ Main dependencies:~
 
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
+       Note: Some users reported that Rtools 3.4 does not work with Nvim-R.
+       They could use only Rtools 3.3.
 
        Note: I used to release the Windows binary `nvimcom.zip` along with
        Nvim-R, but I am no longer releasing it because my Windows system is
@@ -1717,7 +1719,7 @@ R_compldir, as in the example below:
    let R_compldir = "~/.cache/Nvim-R"
 <
 The default paths of these directories depend on the operating system. If you
-want to know they are, while editing an R file, do in Normal mode:
+want to know what they are, while editing an R file, do in Normal mode:
 >
    :echo g:rplugin_tmpdir
    :echo g:rplugin_compldir
@@ -2689,7 +2691,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-09-13)
+0.9.6 (2016-09-23)
 
  * New option: R_open_example.
  * Replaced R_nvimcom_wait (time in miliseconds) with R_wait (time in seconds).

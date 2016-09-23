@@ -1,8 +1,8 @@
 
 " Only source this once
 if exists("*RmFromRLibList")
-    if len(g:rplugin_lists_to_load) > 0
-        for s:lib in g:rplugin_lists_to_load
+    if len(s:lists_to_load) > 0
+        for s:lib in s:lists_to_load
             call SourceRFunList(s:lib)
         endfor
         unlet s:lib
@@ -19,12 +19,12 @@ if !exists("g:R_start_libs")
     let g:R_start_libs = "base,stats,graphics,grDevices,utils,methods"
 endif
 
-let g:rplugin_lists_to_load = split(g:R_start_libs, ",")
+let s:lists_to_load = split(g:R_start_libs, ",")
+let s:new_libs = 0
 let g:rplugin_debug_lists = []
-let g:rplugin_loaded_lists = []
-let g:rplugin_Rhelp_list = []
+let s:loaded_lists = []
+let s:Rhelp_list = []
 let g:rplugin_omni_lines = []
-let g:rplugin_new_libs = 0
 
 " syntax/r.vim may have being called before ftplugin/r.vim
 if !exists("g:rplugin_compldir")
@@ -61,7 +61,7 @@ endfunction
 function RLisObjs(arglead, cmdline, curpos)
     let lob = []
     let rkeyword = '^' . a:arglead
-    for xx in g:rplugin_Rhelp_list
+    for xx in s:Rhelp_list
         if xx =~ rkeyword
             call add(lob, xx)
         endif
@@ -70,15 +70,15 @@ function RLisObjs(arglead, cmdline, curpos)
 endfunction
 
 function RmFromRLibList(lib)
-    for idx in range(len(g:rplugin_loaded_lists))
-        if g:rplugin_loaded_lists[idx] == a:lib
-            call remove(g:rplugin_loaded_lists, idx)
+    for idx in range(len(s:loaded_lists))
+        if s:loaded_lists[idx] == a:lib
+            call remove(s:loaded_lists, idx)
             break
         endif
     endfor
-    for idx in range(len(g:rplugin_lists_to_load))
-        if g:rplugin_lists_to_load[idx] == a:lib
-            call remove(g:rplugin_lists_to_load, idx)
+    for idx in range(len(s:lists_to_load))
+        if s:lists_to_load[idx] == a:lib
+            call remove(s:lists_to_load, idx)
             break
         endif
     endfor
@@ -88,7 +88,7 @@ function AddToRLibList(lib)
     if isdirectory(g:rplugin_compldir)
         let omf = split(globpath(g:rplugin_compldir, 'omnils_' . a:lib . '_*'), "\n")
         if len(omf) == 1
-            let g:rplugin_loaded_lists += [a:lib]
+            let s:loaded_lists += [a:lib]
 
             " List of objects for omni completion
             let olist = readfile(omf[0])
@@ -104,7 +104,7 @@ function AddToRLibList(lib)
             for xx in olist
                 let xxx = split(xx, "\x06")
                 if len(xxx) > 0 && xxx[0] !~ '\$'
-                    call add(g:rplugin_Rhelp_list, xxx[0])
+                    call add(s:Rhelp_list, xxx[0])
                 endif
             endfor
         elseif len(omf) == 0
@@ -130,10 +130,10 @@ endfunction
 function FillRLibList()
     " Update the list of objects for omnicompletion
     if filereadable(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-        let g:rplugin_lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-        for lib in g:rplugin_lists_to_load
+        let s:lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+        for lib in s:lists_to_load
             let isloaded = 0
-            for olib in g:rplugin_loaded_lists
+            for olib in s:loaded_lists
                 if lib == olib
                     let isloaded = 1
                     break
@@ -149,10 +149,10 @@ function FillRLibList()
     " better solution than setting a flag to let other buffers know that they
     " also need to update the syntax on CursorMoved event:
     " https://github.com/neovim/neovim/issues/901
-    let g:rplugin_new_libs = len(g:rplugin_loaded_lists)
+    let s:new_libs = len(s:loaded_lists)
     silent exe 'set syntax=' . &syntax
     redraw
-    let b:rplugin_new_libs = g:rplugin_new_libs
+    let b:rplugin_new_libs = s:new_libs
 endfunction
 
 
@@ -161,19 +161,19 @@ endfunction
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 function RCheckLibList()
-    if b:rplugin_new_libs == g:rplugin_new_libs
+    if b:rplugin_new_libs == s:new_libs
         return
     endif
     silent exe 'set filetype=' . &filetype
     redraw
-    let b:rplugin_new_libs = g:rplugin_new_libs
+    let b:rplugin_new_libs = s:new_libs
 endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Source the Syntax scripts for the first time and Load omnilists
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-for s:lib in g:rplugin_lists_to_load
+for s:lib in s:lists_to_load
     call SourceRFunList(s:lib)
     call AddToRLibList(s:lib)
 endfor

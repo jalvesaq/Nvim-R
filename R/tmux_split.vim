@@ -15,7 +15,7 @@ function TmuxActivePane()
 endfunction
 
 function StartR_TmuxSplit(rcmd)
-    let g:rplugin_editor_pane = $TMUX_PANE
+    let s:editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
@@ -47,7 +47,7 @@ function StartR_TmuxSplit(rcmd)
         return
     endif
     let g:rplugin_rconsole_pane = TmuxActivePane()
-    let rlog = system("tmux select-pane -t " . g:rplugin_editor_pane)
+    let rlog = system("tmux select-pane -t " . s:editor_pane)
     if v:shell_error
         call RWarningMsg(rlog)
         return

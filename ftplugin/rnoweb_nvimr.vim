@@ -14,11 +14,11 @@ endif
 runtime R/common_buffer.vim
 
 call RSetDefaultValue("g:R_latexmk", 1)
-if !exists("g:rplugin_has_latexmk")
+if !exists("s:has_latexmk")
     if g:R_latexmk && executable("latexmk") && executable("perl")
-        let g:rplugin_has_latexmk = 1
+        let s:has_latexmk = 1
     else
-        let g:rplugin_has_latexmk = 0
+        let s:has_latexmk = 0
     endif
 endif
 
@@ -146,7 +146,7 @@ function! RWeave(bibtex, knit, pdf)
         let pdfcmd = pdfcmd . ', buildpdf = FALSE'
     endif
 
-    if g:rplugin_has_latexmk == 0
+    if s:has_latexmk == 0
         let pdfcmd = pdfcmd . ', latexmk = FALSE'
     endif
 
@@ -599,10 +599,10 @@ function! Run_EvinceBackward()
         exe "cd " . substitute(basedir, ' ', '\\ ', 'g')
     endif
     let did_evince = 0
-    if !exists("g:rplugin_evince_list")
-        let g:rplugin_evince_list = []
+    if !exists("s:evince_list")
+        let s:evince_list = []
     else
-        for bb in g:rplugin_evince_list
+        for bb in s:evince_list
             if bb == basenm
                 let did_evince = 1
                 break
@@ -610,7 +610,7 @@ function! Run_EvinceBackward()
         endfor
     endif
     if !did_evince
-        call add(g:rplugin_evince_list, basenm)
+        call add(s:evince_list, basenm)
         let g:rplugin_jobs["Python (Evince backward)"] = StartJob(["python", g:rplugin_home . "/R/synctex_evince_backward.py", basenm . ".pdf"], g:rplugin_job_handlers)
     endif
     exe "cd " . substitute(olddir, ' ', '\\ ', 'g')

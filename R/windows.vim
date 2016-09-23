@@ -1,6 +1,6 @@
 " This file contains code used only on Windows
 
-let g:rplugin_sumatra_in_path = 0
+let s:sumatra_in_path = 0
 
 call RSetDefaultValue("g:R_set_home_env", 1)
 call RSetDefaultValue("g:R_i386", 0)
@@ -59,23 +59,23 @@ endif
 let g:R_R_window_title = "R Console"
 
 function SumatraInPath()
-    if g:rplugin_sumatra_in_path
+    if s:sumatra_in_path
         return 1
     endif
     if $PATH =~ "SumatraPDF"
-        let g:rplugin_sumatra_in_path = 1
+        let s:sumatra_in_path = 1
         return 1
     endif
 
     " $ProgramFiles has different values for win32 and win64
     if executable($ProgramFiles . "\\SumatraPDF\\SumatraPDF.exe")
         let $PATH = $ProgramFiles . "\\SumatraPDF;" . $PATH
-        let g:rplugin_sumatra_in_path = 1
+        let s:sumatra_in_path = 1
         return 1
     endif
     if executable($ProgramFiles . " (x86)\\SumatraPDF\\SumatraPDF.exe")
         let $PATH = $ProgramFiles . " (x86)\\SumatraPDF;" . $PATH
-        let g:rplugin_sumatra_in_path = 1
+        let s:sumatra_in_path = 1
         return 1
     endif
     return 0

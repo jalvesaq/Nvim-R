@@ -67,9 +67,9 @@ endfunction
 function! RMakeHTMLrrst(t)
     call RSetWD()
     update
-    if g:rplugin_has_rst2pdf == 0
+    if s:has_rst2pdf == 0
         if executable("rst2pdf")
-            let g:rplugin_has_rst2pdf = 1
+            let s:has_rst2pdf = 1
         else
             call RWarningMsg("Is 'rst2pdf' application installed? Cannot convert into HTML/ODT: 'rst2pdf' executable not found.")
             return
@@ -104,11 +104,11 @@ function! RMakePDFrrst()
     endif
     update
     call RSetWD()
-    if g:rplugin_has_rst2pdf == 0
+    if s:has_rst2pdf == 0
         if exists("g:R_rst2pdfpath") && executable(g:R_rst2pdfpath)
-            let g:rplugin_has_rst2pdf = 1
+            let s:has_rst2pdf = 1
         elseif executable("rst2pdf")
-            let g:rplugin_has_rst2pdf = 1
+            let s:has_rst2pdf = 1
         else
             call RWarningMsg("Is 'rst2pdf' application installed? Cannot convert into PDF: 'rst2pdf' executable not found.")
             return
@@ -190,7 +190,7 @@ if has("gui_running")
     call MakeRMenu()
 endif
 
-let g:rplugin_has_rst2pdf = 0
+let s:has_rst2pdf = 0
 
 call RSourceOtherScripts()
 
