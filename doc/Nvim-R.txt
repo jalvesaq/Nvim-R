@@ -129,12 +129,20 @@ Main dependencies:~
 
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
-       Note: Some users reported that Rtools 3.4 does not work with Nvim-R.
-       They could use only Rtools 3.3.
 
-       Note: I used to release the Windows binary `nvimcom.zip` along with
-       Nvim-R, but I am no longer releasing it because my Windows system is
-       not being well maintained.
+       - Applications such as `gcc`, `make` and others required to compile
+	 nvimcom, if installed through other means (Cygwin, MSYS, cmake, etc),
+	 might take priority over Rtools' applications. For example, you may
+	 get the error message "sorry, unimplemented: 64-bit mode not compiled
+	 in" which means that you are using a `gcc` that can only build 32-bit
+	 applications.
+
+       - Some users reported that Rtools 3.4 does not work with Nvim-R.
+         They could use only Rtools 3.3.
+
+       - I used to release the Windows binary `nvimcom.zip` along with Nvim-R,
+	 but I am no longer releasing it because my Windows system is not
+	 being well maintained.
 
 
 Additional dependencies for editing Rnoweb documents:~
