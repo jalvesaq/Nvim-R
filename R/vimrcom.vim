@@ -27,8 +27,7 @@ function ROnJobStdout(job_id, msg)
 endfunction
 
 function ROnJobStderr(job_id, msg)
-    let msg = substitute(a:msg, '\n', '', 'g')
-    call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . msg)
+    call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . substitute(a:msg, '\n', '', 'g'))
 endfunction
 
 function ROnJobExit(job_id, stts)
