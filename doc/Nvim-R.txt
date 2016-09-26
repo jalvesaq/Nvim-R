@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.6
+Version: 0.9.7
 For Neovim >= 0.1.5 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
@@ -101,7 +101,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.1.4:
+   Neovim >= 0.1.5:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -161,7 +161,7 @@ Additional dependencies for editing Rnoweb documents:~
 		 (Not required on either Windows or OS X)
 
 
-Additional suggestions for Unix (Linux, OS X, etc.):~
+Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 
    ncurses-term: http://invisible-island.net/ncurses
 		 Might be necessary if you want support for 256 colors at the
@@ -2699,15 +2699,20 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.6 (2016-09-23)
+0.9.7 (2016-09-26)
+
+ * Require Vim >= 8.0.0 or Neovim >= 0.1.5.
+ * Replaced R_nvimcom_wait (time in miliseconds) with R_wait (time in
+   seconds).
+ * Minor bug fixes.
+
+0.9.6 (2016-08-10)
 
  * New option: R_open_example.
- * Replaced R_nvimcom_wait (time in miliseconds) with R_wait (time in seconds).
  * Change default value of R_source_args to "print.eval=TRUE".
  * Change in \aa and \ae: do not save the buffer before sending the whole file
    to R.
  * Minor bug fixes.
- * Require Vim >= 8.0.0 or Neovim >= 0.1.5.
 
 0.9.5 (2016-05-18)
 
