@@ -58,16 +58,24 @@ endif
 
 let g:R_R_window_title = "R Console"
 
+" Fix Rtools position in $PATH
+let s:wgcc = split(system("where gcc"), "\n")
+if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
+    let s:path = split($PATH, ";")
+    for s:p in s:path
+        if s:p =~ "Rtools"
+            let $PATH = s:p . ";" . $PATH
+        endif
+    endfor
+endif
+unlet s:wgcc
+unlet s:path
+unlet s:p
+
 function CheckRtools()
     if $PATH !~ "Rtools"
         call RWarningMsgInp("Rtools is not in the system PATH")
         return
-    endif
-
-    let wgcc = split(system("where gcc"), "\n")
-    if len(wgcc) > 0 && wgcc[0] !~ "Rtools"
-        call RWarningMsgInp("The first gcc in the system PATH should be from Rtools. It is not: " . wgcc[0])
-        sleep 2
     endif
 
     let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
