@@ -59,6 +59,17 @@ endif
 let g:R_R_window_title = "R Console"
 
 function CheckRtools()
+    if $PATH !~ "Rtools"
+        call RWarningMsgInp("Rtools is not in the system PATH")
+        return
+    endif
+
+    let wgcc = split(system("where gcc"), "\n")
+    if len(wgcc) > 0 && wgcc[0] !~ "Rtools"
+        call RWarningMsgInp("The first gcc in the system PATH should be from Rtools. It is not: " . wgcc[0])
+        sleep 2
+    endif
+
     let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
     if Rtpath =~ "Rtools"
         let Rtpath = substitute(Rtpath, "\\", "/", "g") . "/VERSION.txt"
