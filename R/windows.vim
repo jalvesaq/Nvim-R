@@ -67,10 +67,10 @@ if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
             let $PATH = s:p . ";" . $PATH
         endif
     endfor
+    unlet s:path
+    unlet s:p
 endif
 unlet s:wgcc
-unlet s:path
-unlet s:p
 
 function CheckRtools()
     if $PATH !~ "Rtools"
