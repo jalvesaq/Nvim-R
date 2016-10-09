@@ -1296,7 +1296,7 @@ function SendFileToR(e)
     let fpath = expand("%:p") . ".tmp.R"
 
     if filereadable(fpath)
-        call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.")
+        call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.')
         return
     endif
 
