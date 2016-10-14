@@ -59,11 +59,18 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
-if !has("nvim") && v:version < "800"
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.5 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
-    let g:rplugin_failed = 1
-    finish
+if !has("nvim")
+    if v:version < "800"
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.5 or Vim >= 8.0.")
+        let g:rplugin_failed = 1
+        finish
+    elseif !has("channel") || !has("job")
+        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.5 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+        let g:rplugin_failed = 1
+        finish
+    endif
 endif
+
 
 " Set default value of some variables:
 function RSetDefaultValue(var, val)
