@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/select.h>
 #endif
 
 static char nvimcom_version[32];
