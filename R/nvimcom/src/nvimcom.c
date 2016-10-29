@@ -3,6 +3,7 @@
 #include <R_ext/Parse.h>
 #include <R_ext/Callbacks.h>
 #ifndef WIN32
+#define HAVE_SYS_SELECT_H
 #include <R_ext/eventloop.h>
 #endif
 
@@ -26,7 +27,6 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
-#include <sys/select.h>
 #endif
 
 static char nvimcom_version[32];
