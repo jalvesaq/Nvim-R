@@ -1311,8 +1311,12 @@ function SendFileToR(e)
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
     call writefile(flines, fpath)
+    call AddForDeletion(fpath)
     let sargs = GetSourceArgs(a:e)
-    call g:SendCmdToR('nvimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
+    let ok = g:SendCmdToR('nvimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
+    if !ok
+        call delete(fpath)
+    endif
 endfunction
 
 " Send block to R
