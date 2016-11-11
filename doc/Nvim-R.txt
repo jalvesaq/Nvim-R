@@ -5,8 +5,8 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.7
-For Neovim >= 0.1.5 and Vim >= 8.0.0
+Version: 0.9.8
+For Neovim >= 0.1.6 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -101,7 +101,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.1.5:
+   Neovim >= 0.1.6:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -298,6 +298,8 @@ functionality not provided by this file type plugin. Particularly interesting
 are vim-signature, csv.vim and snipMate. Please read |Nvim-R-tips| for
 details. If you edit Rnoweb files, you may want to try LaTeX-Box for
 omnicompletion of LaTeX code (see |Nvim-R-latex-box| for details).
+
+Note: Some of vim-latex keybindings might clash with Nvim-R ones.
 
 
 ==============================================================================
@@ -1853,7 +1855,8 @@ To customize a key binding you should put in your |vimrc| something like:
    vmap <LocalLeader>sr <Plug>RStart
 <
 The above example shows how to change key binding used to start R from
-<LocalLeader>rf to <LocalLeader>sr.
+<LocalLeader>rf to <LocalLeader>sr. After changing the maps in your |vimrc|,
+you have to restart Vim.
 
 Only the custom key bindings for Normal mode are shown in Vim's menu, but
 you can type |:map| to see the complete list of current mappings, and below is
@@ -2698,6 +2701,11 @@ step-by-step procedure to run Nvim-R remotely:
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.8 (2016-11-02)
+
+ * Minor bug fixes.
+ * Require Neovim >= 0.1.6.
 
 0.9.7 (2016-09-26)
 

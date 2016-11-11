@@ -59,16 +59,20 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
-if !has("nvim")
-    if v:version < "800"
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.5 or Vim >= 8.0.")
-        let g:rplugin_failed = 1
-        finish
-    elseif !has("channel") || !has("job")
-        call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.5 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+if has("nvim")
+    if !has("nvim-0.1.6")
+        call RWarningMsgInp("Nvim-R requires Neovim >= 0.1.6.")
         let g:rplugin_failed = 1
         finish
     endif
+elseif v:version < "800"
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.6 or Vim >= 8.0.")
+    let g:rplugin_failed = 1
+    finish
+elseif !has("channel") || !has("job")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.6 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    let g:rplugin_failed = 1
+    finish
 endif
 
 
