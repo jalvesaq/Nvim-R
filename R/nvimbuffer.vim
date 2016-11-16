@@ -16,7 +16,7 @@ function SendCmdToR_Neovim(...)
             let cmd = a:1
         endif
 
-        if !exists("g:R_hl_term") || !exists("g:R_setwidth")
+        if !exists("g:R_hl_term")
             call SendToNvimcom("\x08" . $NVIMR_ID . 'paste(search(), collapse=" ")')
             let g:rplugin_lastev = ReadEvalReply()
             if !exists("g:R_hl_term")
@@ -24,13 +24,6 @@ function SendCmdToR_Neovim(...)
                     let g:R_hl_term = 0
                 else
                     let g:R_hl_term = 1
-                endif
-            endif
-            if !exists("g:R_setwidth")
-                if g:rplugin_lastev =~ "setwidth"
-                    let g:R_setwidth = 0
-                else
-                    let g:R_setwidth = 1
                 endif
             endif
         endif
@@ -141,6 +134,7 @@ function ShowRObject(fname)
     autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
 endfunction
 
+call RSetDefaultValue("g:R_setwidth", 1)
 if has("win32")
     " The R package colorout only works on Unix systems
     call RSetDefaultValue("g:R_hl_term", 1)

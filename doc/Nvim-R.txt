@@ -168,13 +168,6 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 		 terminal emulator.
 		 (Not required if using R.app on OS X)
 
-   setwidth:     An R package that can be installed with the command
-                 `install.packages("setwidth")`.
-                 The library setwidth adjusts the value of `options("width")`
-                 whenever the terminal is resized.
-		 (Optional if |R_in_buffer| and not required if using R.app)
-		 You should put in your Rprofile: `library(setwidth)`
-
    colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
 		 (Optional if |R_in_buffer| and not required if using R.app)
@@ -942,12 +935,10 @@ the value of R_hl_term in your |vimrc|. Example:
 >
    let R_hl_term = 0
 <
-Unless the R package setwidth is loaded, before sending a command to R
-Console, if the terminal width has changed, Neovim will send to nvimcom the
-command `options(width=X)`, where X is the new terminal width. You can either
-set the value of R_setwidth to 1 to force the width to be set even if setwidth
-is loaded or set it to 0 to avoid the width being set even if setwidth is not
-loaded. Example:
+Before sending a command to R Console, if the terminal width has changed,
+Neovim will send to nvimcom the command `options(width=X)`, where X is the new
+terminal width. You can set the value of R_setwidth to 0 to avoid the width
+being set. Example:
 >
    let R_setwidth = 0
 <
@@ -2427,7 +2418,6 @@ please read this document from the beginning.
    if(interactive()){
        # Suggested libraries:
        library(colorout)
-       library(setwidth)
 
        # Use text based web browser to navigate through R docs after help.start()
        # if you cannot run a graphical web browser (e.g. when you are in the

@@ -932,9 +932,6 @@ function GetNvimcomInfo()
         if search_list =~ "package:colorout" && !exists("g:R_hl_term")
             let g:R_hl_term = 0
         endif
-        if search_list =~ "package:setwidth" && !exists("g:R_setwidth")
-            let g:R_setwidth = 0
-        endif
 
         if isdirectory(s:nvimcom_home . "/bin/x64")
             let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/x64"
