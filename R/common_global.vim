@@ -2196,7 +2196,7 @@ function ROpenPDF(path)
         exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
         return
     elseif g:rplugin_pdfviewer == "okular"
-        let pcmd = "NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
+        let pcmd = "env NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
         call system(pcmd)
     elseif g:rplugin_pdfviewer == "evince"
         let pcmd = "evince '" . pdfpath . "' 2>/dev/null >/dev/null &"
@@ -2212,7 +2212,7 @@ function ROpenPDF(path)
             exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
         endif
     elseif g:rplugin_pdfviewer == "skim"
-        call system("NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
+        call system("env NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
     endif
     if g:rplugin_has_wmctrl
         call system("wmctrl -a '" . basenm . ".pdf'")
