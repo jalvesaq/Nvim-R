@@ -37,6 +37,9 @@ function StartR_ExternalTerm(rcmd)
             call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
             call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
             let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
+        elseif g:R_term == "konsole"
+            let opencmd = printf("%s 'tmux -L NvimR -2 %s new-session -s %s \"%s\"'",
+                        \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
         else
             let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\"",
                         \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
