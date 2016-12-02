@@ -667,6 +667,10 @@ endfunction
 
 function CheckNvimcomVersion()
     let neednew = 0
+    if isdirectory(substitute(s:nvimcom_home, "nvimcom", "", "") . "00LOCK-nvimcom")
+        call RWarningMsg('Perhaps you should delete the directory "' .
+                    \ substitute(s:nvimcom_home, "nvimcom", "", "") . '00LOCK-nvimcom"')
+    endif
     if s:nvimcom_home == ""
         let neednew = 1
     else
@@ -3257,6 +3261,11 @@ if filereadable(g:rplugin_compldir . "/nvimcom_info")
         let s:nvimcom_version = s:filelines[0]
         let s:nvimcom_home = s:filelines[1]
         let g:rplugin_nvimcom_bin_dir = s:filelines[2]
+        if !isdirectory(s:nvimcom_home) || !isdirectory(g:rplugin_nvimcom_bin_dir)
+            let s:nvimcom_version = ""
+            let s:nvimcom_home = ""
+            let g:rplugin_nvimcom_bin_dir = ""
+        endif
     endif
     unlet s:filelines
 endif
