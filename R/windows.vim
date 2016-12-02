@@ -104,11 +104,6 @@ endif
 let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
 
 function CheckRtools()
-    if $PATH !~ "Rtools"
-        call RWarningMsg("Is Rtools installed? It is not in the system PATH")
-        return
-    endif
-
     if s:rtpath == ""
         call RWarningMsg('Is Rtools installed?')
         return
