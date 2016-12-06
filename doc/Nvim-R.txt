@@ -379,6 +379,7 @@ Command
   . Structure (cur)                                    \rt
   . View data.frame (cur)                              \rv
   . Run dput(cur) and show output in new tab           \dt
+  . Run print(cur) and show output in new tab          \pt
   --------------------------------------------------------
   . Arguments (cur)                                    \ra
   . Example (cur)                                      \re
@@ -506,7 +507,8 @@ is the same available for omnicompletion (see |R_start_libs|). You may close
 the R documentation buffer by simply pressing `q`.
 
 The command <LocalLeader>dt will run `dput()` with the object under cursor as
-argument and insert the output in a new tab.
+argument and insert the output in a new tab. The command <LocalLeader>pt will
+run `print()` in the same way.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
 will show it in a new tab. If the csv.vim plugin is not installed, Nvim-R
@@ -1917,6 +1919,7 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RObjectStr
    RViewDF
    RDputObj
+   RPrintObj
    RSetwd
    RSummary
    RListSpace
@@ -2697,7 +2700,7 @@ step-by-step procedure to run Nvim-R remotely:
 0.9.8 (2016-12-06)
 
  * Minor bug fixes.
- * New command: \dt
+ * New commands: \dt and \pt
  * Require Neovim >= 0.1.6.
 
 0.9.7 (2016-09-26)

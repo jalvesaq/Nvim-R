@@ -2491,13 +2491,13 @@ function RAction(rcmd)
             endif
             return
         endif
-        if a:rcmd == "dputtab"
+        if a:rcmd == "dputtab" || a:rcmd == "printtab"
             if bufexists(rkeyword . ".R")
                 tabnew
             else
                 exe "tabnew " . rkeyword . ".R"
             endif
-            exe "Rinsert dput(" . rkeyword . ")"
+            exe "Rinsert " . substitute(a:rcmd, "tab", "", "") . "(" . rkeyword . ")"
             set nomodified
             return
         endif
@@ -2624,6 +2624,7 @@ function RControlMaps()
     call RCreateMaps("nvi", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
     call RCreateMaps("nvi", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
     call RCreateMaps("nvi", '<Plug>RDputObj',      'dt', ':call RAction("dputtab")')
+    call RCreateMaps("nvi", '<Plug>RPrintObj',     'pt', ':call RAction("printtab")')
 
     " Arguments, example, help
     "-------------------------------------
