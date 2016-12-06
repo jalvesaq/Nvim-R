@@ -2491,6 +2491,16 @@ function RAction(rcmd)
             endif
             return
         endif
+        if a:rcmd == "dputtab"
+            if bufexists(rkeyword . ".R")
+                tabnew
+            else
+                exe "tabnew " . rkeyword . ".R"
+            endif
+            exe "Rinsert dput(" . rkeyword . ")"
+            set nomodified
+            return
+        endif
         if g:R_open_example && a:rcmd == "example"
             call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.example("' . rkeyword . '")')
             return
@@ -2613,6 +2623,7 @@ function RControlMaps()
     call RCreateMaps("nvi", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
     call RCreateMaps("nvi", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
     call RCreateMaps("nvi", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
+    call RCreateMaps("nvi", '<Plug>RDputObj',      'dt', ':call RAction("dputtab")')
 
     " Arguments, example, help
     "-------------------------------------

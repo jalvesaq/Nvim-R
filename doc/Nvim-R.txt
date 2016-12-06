@@ -130,12 +130,9 @@ Main dependencies:~
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
 
-       - Applications such as `gcc`, `make` and others required to compile
-	 nvimcom, if installed through other means (Cygwin, MSYS, cmake, etc),
-	 might take priority over Rtools' applications. For example, you may
-	 get the error message "sorry, unimplemented: 64-bit mode not compiled
-	 in" which means that you are using a `gcc` that can only build 32-bit
-	 applications.
+       - When installing Rtools there will be less chances of errors if you
+	 accept the default option of installing support for both 32 bit and
+	 64 bit platforms.
 
        - Some users reported that Rtools 3.4 does not work with Nvim-R.
          They could use only Rtools 3.3.
@@ -381,6 +378,7 @@ Command
   . Names (cur)                                        \rn
   . Structure (cur)                                    \rt
   . View data.frame (cur)                              \rv
+  . Run dput(cur) and show output in new tab           \dt
   --------------------------------------------------------
   . Arguments (cur)                                    \ra
   . Example (cur)                                      \re
@@ -506,6 +504,9 @@ possible completions (see |cmdline-completion| for details on the various ways
 of getting command-line completion). The list of objects used for completion
 is the same available for omnicompletion (see |R_start_libs|). You may close
 the R documentation buffer by simply pressing `q`.
+
+The command <LocalLeader>dt will run `dput()` with the object under cursor as
+argument and insert the output in a new tab.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
 will show it in a new tab. If the csv.vim plugin is not installed, Nvim-R
@@ -1915,6 +1916,7 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RObjectPr
    RObjectStr
    RViewDF
+   RDputObj
    RSetwd
    RSummary
    RListSpace
@@ -2692,9 +2694,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.8 (2016-11-02)
+0.9.8 (2016-12-06)
 
  * Minor bug fixes.
+ * New command: \dt
  * Require Neovim >= 0.1.6.
 
 0.9.7 (2016-09-26)

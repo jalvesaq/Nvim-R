@@ -66,6 +66,7 @@ function RControlMenu()
     call RCreateMenuItem("nvi", 'Command.Names\ (cur)', '<Plug>RObjectNames', 'rn', ':call RAction("nvim.names")')
     call RCreateMenuItem("nvi", 'Command.Structure\ (cur)', '<Plug>RObjectStr', 'rt', ':call RAction("str")')
     call RCreateMenuItem("nvi", 'Command.View\ data\.frame\ (cur)', '<Plug>RViewDF', 'rv', ':call RAction("viewdf")')
+    call RCreateMenuItem("nvi", 'Command.Run\ dput(cur)\ and\ show\ output\ in\ new\ tab', '<Plug>RDputObj', 'dt', ':call RAction("dputtab")')
     "-------------------------------
     menu R.Command.-Sep2- <nul>
     call RCreateMenuItem("nvi", 'Command.Arguments\ (cur)', '<Plug>RShowArgs', 'ra', ':call RAction("args")')
