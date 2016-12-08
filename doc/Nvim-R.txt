@@ -241,8 +241,9 @@ Note: The <LocalLeader> is '\' by default.
 The plugin is a |file-type| plugin. It will be active only if you are editing
 a .R, .Rnw, .Rd, Rmd, or Rrst file. The menu items will not be visible and the
 key bindings will not be active while editing either unnamed files or files
-with name extensions other than the mentioned above. If the plugin is active,
-pressing <LocalLeader>rf should start R.
+with name extensions other than the mentioned above (however, see
+|Nvim-R-global|). If the plugin is active, pressing <LocalLeader>rf should
+start R.
 
 Did you see warning messages but they disappeared before you have had time to
 read them? Type the command |:messages| in Normal mode to see them again.
@@ -2517,8 +2518,30 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
+							       *Nvim-R-global*
+9.20 Enable the plugin with any file type~
+
+Nvim-R is a file-type plugin. This means that its functionalities will be
+available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
+etc). However, if you need to run R with other file types, you can put in your
+|vimrc|:
+>
+   command RStart let oldft=&ft | set ft=r | exe 'set ft='.oldft | normal <LocalLeader>rf
+<
+The above Vim line will create the Normal mode command `:RStart` which when
+run will:
+
+  1. Set the file-type of the buffer being edited as "r" and, consequently,
+     enable Nvim-R.
+
+  2. Set the file-type back to its original value.
+
+  3. Start R.
+
+
+------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.20 Integration with Tmux~
+9.21 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as
@@ -2697,7 +2720,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.8 (2016-12-06)
+0.9.8 (2016-12-08)
 
  * Minor bug fixes.
  * New commands: \dt and \pt
