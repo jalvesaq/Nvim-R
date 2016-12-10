@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.8
-For Neovim >= 0.1.6 and Vim >= 8.0.0
+For Neovim >= 0.1.7 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -101,7 +101,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.1.6:
+   Neovim >= 0.1.7:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -2720,11 +2720,11 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.8 (2016-12-08)
+0.9.8 (2016-12-10)
 
  * Minor bug fixes.
  * New commands: \dt and \pt
- * Require Neovim >= 0.1.6.
+ * Require Neovim >= 0.1.7.
 
 0.9.7 (2016-09-26)
 
