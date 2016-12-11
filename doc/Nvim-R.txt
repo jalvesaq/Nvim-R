@@ -2526,7 +2526,7 @@ available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
 etc). However, if you need to run R with other file types, you can put in your
 |vimrc|:
 >
-   command RStart let oldft=&ft | set ft=r | exe 'set ft='.oldft | normal <LocalLeader>rf
+   command RStart let oldft=&ft | set ft=r | exe 'set ft='.oldft | let b:IsInRCode = function("DefaultIsInRCode") | normal <LocalLeader>rf
 <
 The above Vim line will create the Normal mode command `:RStart` which when
 run will:
@@ -2536,7 +2536,9 @@ run will:
 
   2. Set the file-type back to its original value.
 
-  3. Start R.
+  3. Avoid an internal error when you type "_".
+
+  4. Start R.
 
 
 ------------------------------------------------------------------------------
