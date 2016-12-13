@@ -4,6 +4,11 @@ endfunction
 
 function StartJob(cmd, opt)
     let jobid = jobstart(a:cmd, a:opt)
+    if jobid == 0
+        call RWarningMsg("Invalid arguments in: " . string(a:cmd))
+    elseif jobid == -1
+        call RWarningMsg("Command not executable in: " . string(a:cmd))
+    endif
     return jobid
 endfunction
 
@@ -16,7 +21,7 @@ function GetJobTitle(job_id)
     return "Job"
 endfunction
 
-function ROnJobStdout(job_id, data)
+function ROnJobStdout(job_id, data, etype)
     for cmd in a:data
         let cmd = substitute(cmd, '\r', '', 'g')
         if cmd == ""
@@ -30,11 +35,11 @@ function ROnJobStdout(job_id, data)
     endfor
 endfunction
 
-function ROnJobStderr(job_id, data)
+function ROnJobStderr(job_id, data, etype)
     call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . substitute(join(a:data), '\r', '', 'g'))
 endfunction
 
-function ROnJobExit(job_id, data)
+function ROnJobExit(job_id, data, etype)
     let key = GetJobTitle(a:job_id)
     if key != "Job"
         let g:rplugin_jobs[key] = 0
