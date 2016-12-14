@@ -271,7 +271,7 @@ function RCompleteArgs()
         endif
         if np == 0
             call cursor(lnum, idx)
-            let rkeyword0 = RGetKeyword(1)
+            let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
             if rkeyword0 =~ "::"
                 let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                 let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
@@ -1187,7 +1187,7 @@ endfunction
 
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
-function RGetKeyword(colon)
+function RGetKeyword(iskw)
     " Go back some columns if character under cursor is not valid
     let save_cursor = getpos(".")
     let curline = line(".")
@@ -1202,11 +1202,7 @@ function RGetKeyword(colon)
         let i -= 1
     endwhile
     let save_keyword = &iskeyword
-    if a:colon
-        setlocal iskeyword=@,48-57,_,.,:,$,@-@
-    else
-        setlocal iskeyword=@,48-57,_,.,$,@-@
-    endif
+    exe "setlocal iskeyword=" . a:iskw
     let rkeyword = expand("<cword>")
     exe "setlocal iskeyword=" . save_keyword
     call setpos(".", save_cursor)
@@ -2347,7 +2343,7 @@ endfunction
 function DisplayArgs()
     let s:displaying_args = 1
     if &filetype == "r" || b:IsInRCode(0)
-        let rkeyword = RGetKeyword(0)
+        let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
         let s:sttl_str = s:status_line
         let fargs = "Not a function"
         for omniL in g:rplugin_omni_lines
@@ -2428,14 +2424,16 @@ function OpenRExample()
 endfunction
 
 " Call R functions for the word under cursor
-function RAction(rcmd)
+function RAction(rcmd, ...)
     if &filetype == "rbrowser"
         let rkeyword = RBrowserGetName(1, 0)
+    elseif a:0 > 0
+        let rkeyword = RGetKeyword(a:1)
     else
         if a:rcmd == "help" || (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
-            let rkeyword = RGetKeyword(0)
+            let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
         else
-            let rkeyword = RGetKeyword(1)
+            let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
         endif
     endif
     if strlen(rkeyword) > 0
