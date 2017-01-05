@@ -1663,7 +1663,7 @@ way, put in |vimrc|:
 If you want that Vim executes a external command right after R startup, set
 the value of R_after_start in your |vimrc|.
 
-Nvim-R stores the he environment variable $WINDOWID of the terminal where R is
+Nvim-R stores the environment variable $WINDOWID of the terminal where R is
 running as $RCONSOLE. Thus, if you are running R in a external terminal
 emulator on Linux, `~/bin` is in your path, and you want to resize and change
 the positions of the terminals containing Vim and R, you may create a
