@@ -1382,7 +1382,7 @@ function SendFunctionToR(e, m)
         return
     endif
     let functionline = i
-    while i > 0 && line !~ "<-"
+    while i > 0 && line !~ '\(<-\|=\)[[:space:]]*\($\|function\)'
         let i -= 1
         let line = SanitizeRLine(getline(i))
     endwhile
