@@ -841,6 +841,7 @@ Vim and R at the end of
 |R_rnowebchunk|       Convert '<' into '<<>>=\n@' in Rnoweb files
 |R_objbr_place|       Placement of Object Browser
 |R_objbr_w|           Initial width of Object Browser window
+|R_objbr_h|           Initial height of Object Browser window
 |R_objbr_opendf|      Display data.frames open in the Object Browser
 |R_objbr_openlist|    Display lists open in the Object Browser
 |R_objbr_allnames|    Display hidden objects in the Object Browser
@@ -1099,6 +1100,7 @@ is preceded by a space and followed by a non-word character.
 
 ------------------------------------------------------------------------------
 							    *R_objbr_w*
+							    *R_objbr_h*
 							    *R_objbr_place*
 							    *R_objbr_opendf*
 							    *R_objbr_openlist*
@@ -1106,18 +1108,23 @@ is preceded by a space and followed by a non-word character.
 							    *R_objbr_labelerr*
 6.5. Object Browser options~
 
-By default, the Object Browser will be created with 40 columns. The minimum
-width of the Object Browser window is 9 columns. You can change the object
-browser's default width by setting the value of |R_objbr_w| in your
-|vimrc|, as below:
->
-   let R_objbr_w = 30
-<
 Valid values for the Object Browser placement are "script" or "console" and
-"right" or "left" separated by a comma. Examples:
+"right", "left", "top" or "bottom", separated by a comma. Examples:
 >
    let R_objbr_place = "script,right"
    let R_objbr_place = "console,left"
+<
+By default, the Object Browser will be created at the right of the script
+window, and with 40 columns. The minimum width of the Object Browser window is
+9 columns. You can change the object browser's default width by setting the
+value of |R_objbr_w| in your |vimrc|, as below:
+>
+   let R_objbr_w = 30
+<
+If the Object Browser is being created bellow or at the top of the existing
+window, it will be 10 lines high, unless you set its height in your |vimrc|:
+>
+   let R_objbr_h = 20
 <
 Below is an example of setup of some other options in the |vimrc| that
 control the behavior of the Object Browser:
@@ -1973,8 +1980,13 @@ could write custom key bindings in your |vimrc|, as in the examples below:
 >
    map <silent> <LocalLeader>rk :call RAction("levels")<CR>
    map <silent> <LocalLeader>t :call RAction("tail")<CR>
-   map <silent> <LocalLeader>h :call RAction("head")<CR>
+   map <silent> <LocalLeader>H :call RAction("head")<CR>
+   map <silent> <LocalLeader>h :call RAction("head", "@,48-57,_,.")<CR>
 <
+The second, and optional, argument that can be passed to RAction is the value
+of 'iskeyword' that will be used to get the word under cursor (see the last
+example above).
+
 If the command that you want to send does not require an R object as argument,
 you can create a shortcut to it by following the example:
 >
@@ -2519,7 +2531,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-global*
-9.20 Enable the plugin with any file type~
+9.20 Enable the plugin when editing any file type~
 
 Nvim-R is a file-type plugin. This means that its functionalities will be
 available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
@@ -2601,8 +2613,11 @@ configuration file:
    bind p paste-buffer
    bind -t vi-copy v begin-selection
    bind -t vi-copy y copy-selection
-<
 
+   # If environment variables that you need are not becoming available for R,
+   # export them in your ~/.bashrc and uncomment and edit this line:
+   # set -g update-environment "R_LIBS_USER R_LIBS R_PAPERSIZE"
+<
 Tmux automatically renames window titles to the command currently running.
 Nvim-R sets the title of the window where Vim and R are running to "NvimR".
 This title will be visible only if Tmux status bar is "on", and it is useful
@@ -2722,7 +2737,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.8 (2016-12-10)
+0.9.8 (2017-01-14)
 
  * Minor bug fixes.
  * New commands: \dt and \pt

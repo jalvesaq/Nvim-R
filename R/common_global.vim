@@ -1042,18 +1042,34 @@ function StartObjBrowser()
         let g:tmp_objbrtitle = b:objbrtitle
         let g:tmp_curbufname = bufname("%")
 
-        let l:sr = &splitright
-        if g:R_objbr_place =~ "left"
-            set nosplitright
+        let splr = &splitright
+        let splb = &splitbelow
+        if g:R_objbr_place =~ "left" || g:R_objbr_place =~ "right"
+            if g:R_objbr_place =~ "left"
+                set nosplitright
+            else
+                set splitright
+            endif
         else
-            set splitright
+            if g:R_objbr_place =~ "bottom"
+                set splitbelow
+            else
+                set nosplitbelow
+            endif
         endif
+
         if g:R_objbr_place =~ "console"
             exe 'sb ' . g:rplugin_R_bufname
         endif
-        sil exe "vsplit " . b:objbrtitle
-        let &splitright = l:sr
-        sil exe "vertical resize " . g:R_objbr_w
+        if g:R_objbr_place =~ "left" || g:R_objbr_place =~ "right"
+            sil exe "vsplit " . b:objbrtitle
+            sil exe "vertical resize " . g:R_objbr_w
+        else
+            sil exe "split " . b:objbrtitle
+            sil exe "resize " . g:R_objbr_h
+        endif
+        let &splitright = splr
+        let $splitbelow = splb
         sil set filetype=rbrowser
 
         " Inheritance of some local variables
@@ -2101,10 +2117,10 @@ function ShowRDoc(rkeyword)
         if g:R_nvimpager == "tab" || g:R_nvimpager == "tabnew"
             exe 'tabnew ' . s:rdoctitle
         elseif s:vimpager == "vertical"
-            let l:sr = &splitright
+            let splr = &splitright
             set splitright
             exe s:hwidth . 'vsplit ' . s:rdoctitle
-            let &splitright = l:sr
+            let &splitright = splr
         elseif s:vimpager == "horizontal"
             exe 'split ' . s:rdoctitle
             if winheight(0) < 20
@@ -2697,7 +2713,7 @@ endfunction
 function SpaceForRGrDevice()
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
-    let l:sr = &splitright
+    let splr = &splitright
     set splitright
     37vsplit Space_for_Graphics
     setlocal nomodifiable
@@ -2706,7 +2722,7 @@ function SpaceForRGrDevice()
     set nowrap
     set winfixwidth
     exe "sb " . g:rplugin_curbuf
-    let &splitright = l:sr
+    let &splitright = splr
     exe "set switchbuf=" . savesb
 endfunction
 
@@ -3095,6 +3111,7 @@ call RSetDefaultValue("g:R_routnotab",         0)
 call RSetDefaultValue("g:R_editor_w",         66)
 call RSetDefaultValue("g:R_help_w",           46)
 call RSetDefaultValue("g:R_objbr_w",          40)
+call RSetDefaultValue("g:R_objbr_h",          10)
 call RSetDefaultValue("g:R_objbr_opendf",      1)
 call RSetDefaultValue("g:R_objbr_openlist",    0)
 call RSetDefaultValue("g:R_objbr_allnames",    0)
@@ -3179,7 +3196,7 @@ if obpllen > 1
     finish
 endif
 for idx in range(0, obpllen)
-    if objbrplace[idx] != "console" && objbrplace[idx] != "script" && objbrplace[idx] != "left" && objbrplace[idx] != "right"
+    if objbrplace[idx] != "console" && objbrplace[idx] != "script" && objbrplace[idx] != "left" && objbrplace[idx] != "right" && objbrplace[idx] != "top" && objbrplace[idx] != "bottom"
         call RWarningMsgInp('Invalid option for R_objbr_place: "' . objbrplace[idx] . '". Valid options are: console or script and right or left."')
         let g:rplugin_failed = 1
         finish
@@ -3224,6 +3241,11 @@ let s:globalenv_lines = []
 " Minimum width for the Object Browser
 if g:R_objbr_w < 10
     let g:R_objbr_w = 10
+endif
+
+" Minimum height for the Object Browser
+if g:R_objbr_h < 4
+    let g:R_objbr_h = 4
 endif
 
 " Control the menu 'R' and the tool bar buttons
