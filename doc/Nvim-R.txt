@@ -864,6 +864,7 @@ Vim and R at the end of
 |R_vsplit|            Split the window vertically when starting R
 |R_rconsole_width|    The number of columns of R Console
 |R_applescript|       Use osascript in Mac OS X to run R.app
+|RStudio_cmd|         Run RStudio instead of R.
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
 |R_source_args|       Arguments to R `source()` function
@@ -1371,7 +1372,8 @@ window.
 
 ------------------------------------------------------------------------------
 							       *R_applescript*
-6.15. Integration with AppleScript (OS X only)~
+								 *RStudio_cmd*
+6.15. Integration with R.app (OS X only) and RStudio~
 
 If you are on Mac OS X and want to use the R.app graphical application, put in
 your |vimrc|:
@@ -1379,6 +1381,16 @@ your |vimrc|:
    let R_in_buffer = 0
    let R_applescript = 1
 <
+If you want to run RStudio instead of R set in your |vimrc| the value of
+`RStudio_cmd` to the complete path of the RStudio_cmd binary. Example:
+>
+   let R_in_buffer = 0
+   let RStudio_cmd = 'C:\Program Files\RStudio\bin\rstudio'
+<
+Note: You must manually run a successful comand in RStudio Console before
+sending code from Vim to RStudio. The command might be something as simple as
+the number `1`.
+
 
 ------------------------------------------------------------------------------
 							       *R_listmethods*
