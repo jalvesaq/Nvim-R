@@ -7,13 +7,17 @@ function StartRStudio()
 
     let g:SendCmdToR = function('SendCmdToR_NotYet')
 
-    call SetRHome()
+    if has("win32")
+        call SetRHome()
+    endif
     if has("nvim")
         call system("start " . g:RStudio_cmd)
     else
         silent exe "!start " . g:RStudio_cmd
     endif
-    call UnsetRHome()
+    if has("win32")
+        call UnsetRHome()
+    endif
 
     call WaitNvimcomStart()
 endfunction
