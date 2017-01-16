@@ -9,14 +9,18 @@ function StartRStudio()
 
     if has("win32")
         call SetRHome()
-    endif
-    if has("nvim")
-        call system("start " . g:RStudio_cmd)
-    else
-        silent exe "!start " . g:RStudio_cmd
-    endif
-    if has("win32")
+        if has("nvim")
+            call system("start " . g:RStudio_cmd)
+        else
+            silent exe "!start " . g:RStudio_cmd
+        endif
         call UnsetRHome()
+    else
+        if has("nvim")
+            call jobstart(g:RStudio_cmd)
+        else
+            silent exe "!" . g:RStudio_cmd
+        endif
     endif
 
     call WaitNvimcomStart()
