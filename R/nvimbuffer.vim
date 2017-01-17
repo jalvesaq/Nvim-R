@@ -124,16 +124,6 @@ function StartR_Neovim()
     call WaitNvimcomStart()
 endfunction
 
-" To be called by edit() in R running in Neovim buffer.
-function ShowRObject(fname)
-    let fcont = readfile(a:fname)
-    exe "tabnew " . substitute($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID, ' ', '\\ ', 'g')
-    call setline(".", fcont)
-    set filetype=r
-    stopinsert
-    autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
-endfunction
-
 call RSetDefaultValue("g:R_setwidth", 1)
 if has("win32")
     " The R package colorout only works on Unix systems

@@ -2193,6 +2193,16 @@ function ShowRDoc(rkeyword)
     redraw
 endfunction
 
+" This function is called by nvimcom
+function ShowRObject(fname)
+    let fcont = readfile(a:fname)
+    exe "tabnew " . substitute($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID, ' ', '\\ ', 'g')
+    call setline(".", fcont)
+    set filetype=r
+    stopinsert
+    autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
+endfunction
+
 function ROpenPDF(path)
     if a:path == "Get Master"
         let tmpvar = SyncTeX_GetMaster()
