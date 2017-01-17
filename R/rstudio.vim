@@ -9,24 +9,29 @@ function StartRStudio()
 
     if has("win32")
         call SetRHome()
-        if has("nvim")
-            call system("start " . g:RStudio_cmd)
-        else
-            silent exe "!start " . g:RStudio_cmd
-        endif
-        call UnsetRHome()
+    endif
+    if has("nvim")
+        let g:rplugin_jobs["RStudio"] = StartJob(g:RStudio_cmd, {
+                    \ 'on_stderr': function('ROnJobStderr'),
+                    \ 'on_exit':   function('ROnJobExit'),
+                    \ 'detach': 1 })
     else
-        if has("nvim")
-            call jobstart(g:RStudio_cmd)
-        else
-            silent exe "!" . g:RStudio_cmd
-        endif
+        let g:rplugin_jobs["RStudio"] = StartJob(g:RStudio_cmd, {
+                    \ 'err_cb':  'ROnJobStderr',
+                    \ 'exit_cb': 'ROnJobExit',
+                    \ 'stoponexit': '' })
+    endif
+    if has("win32")
+        call UnsetRHome()
     endif
 
     call WaitNvimcomStart()
 endfunction
 
 function SendCmdToRStudio(...)
+    if !IsJobRunning("RStudio")
+        call RWarningMsg("Is RStudio running?")
+    endif
     let cmd = substitute(a:1, '"', '\\"', "g")
     call SendToNvimcom("\x08" . $NVIMR_ID . 'sendToConsole("' . cmd . '", execute=TRUE)')
     return 1
