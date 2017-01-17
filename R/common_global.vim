@@ -773,6 +773,9 @@ function StartR(whatr)
     elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
         let $R_DEFAULT_PACKAGES .= ",nvimcom"
     endif
+    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
+        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
+    endif
 
     if a:whatr =~ "custom"
         call inputsave()
@@ -851,6 +854,11 @@ function StartR(whatr)
                 \ s:required_nvimcom .
                 \ '.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
+
+    if exists("g:RStudio_cmd")
+        call StartRStudio()
+        return
+    endif
 
     if g:R_in_buffer
         call StartR_Neovim()
@@ -985,7 +993,13 @@ function GetNvimcomInfo()
             call RWarningMsg('Application "' . nvc . '" not found.')
         endif
 
-        if g:R_in_buffer
+        if exists("g:RStudio_cmd")
+            if has("win32") && g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
+                " ArrangeWindows
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
+            endif
+            let g:SendCmdToR = function('SendCmdToRStudio')
+        elseif g:R_in_buffer
             let g:SendCmdToR = function('SendCmdToR_Neovim')
         elseif has("win32")
             if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
@@ -3403,6 +3417,10 @@ if exists("g:R_path")
         let g:rplugin_failed = 1
         finish
     endif
+endif
+
+if exists("g:RStudio_cmd")
+    runtime R/rstudio.vim
 endif
 
 if has("win32")
