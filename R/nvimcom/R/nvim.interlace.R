@@ -268,19 +268,19 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...
         } else {
             res <- rmarkdown::render(Rmdfile, outform, ...)
         }
-
-        if(view){
-            if(outform == "html_document")
-                browseURL(res)
-            else
-                if(outform == "pdf_document" || outform == "beamer_presentation")
-                    OpenPDF(sub(".*/", "", res))
-                else
-                    if(outform == "odt")
-                        system(paste0("lowriter '", sub("\\.html$", ".odt'", res)))
-        }
     } else {
         res <- rmarkdown::render(Rmdfile, ...)
+    }
+
+    if(view){
+        if(!is.null(outform) && outform == "odt")
+            system(paste0("lowriter '", sub("\\.html$", ".odt'", res)))
+        else
+            if(regexpr("\\.html$", res) > 0)
+                browseURL(res)
+            else
+                if(regexpr("\\.pdf", res) > 0)
+                    OpenPDF(sub(".*/", "", res))
     }
 }
 
