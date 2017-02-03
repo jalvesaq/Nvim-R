@@ -85,6 +85,13 @@ function StartR_Neovim()
     let objbrttl = b:objbrtitle
     let curbufnm = bufname("%")
     set switchbuf=useopen
+    if g:R_autovsplit
+        if (winwidth(0) * 0.5) > g:R_rconsole_width
+            let g:R_vsplit = 1
+        else
+            let g:R_vsplit = 0
+        endif
+    endif
     if g:R_vsplit
         if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
             silent exe "belowright " . g:R_rconsole_width . "vnew"
