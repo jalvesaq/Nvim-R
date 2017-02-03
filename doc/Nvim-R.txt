@@ -862,7 +862,7 @@ Vim and R at the end of
 |R_notmuxconf|        Don't use a specially built Tmux config file
 |R_rconsole_height|   The number of lines of R Console
 |R_vsplit|            Split the window vertically when starting R
-R_autovsplit	    Split vertically if window is wide enough, otherwise split horizontally
+|R_autovsplit|	    Split vertically if window is wide enough, otherwise split horizontally
 |R_rconsole_width|    The number of columns of R Console
 |R_applescript|       Use osascript in Mac OS X to run R.app
 |RStudio_cmd|         Run RStudio instead of R.
