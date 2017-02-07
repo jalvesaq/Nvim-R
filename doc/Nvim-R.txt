@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.8
+Version: 0.9.9
 For Neovim >= 0.1.7 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
@@ -860,9 +860,9 @@ Vim and R at the end of
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_rcomment_string|   String to comment code with \xx and \o
 |R_notmuxconf|        Don't use a specially built Tmux config file
-|R_rconsole_height|   The number of lines of R Console
-|R_vsplit|            Split the window vertically when starting R
-|R_rconsole_width|    The number of columns of R Console
+|R_rconsole_height|   Number of lines of R Console
+|R_rconsole_width|    Number of columns of R Console
+|R_min_editor_width|  Minimum number of columns of editor after R start
 |R_applescript|       Use osascript in Mac OS X to run R.app
 |RStudio_cmd|         Run RStudio instead of R.
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
@@ -1345,21 +1345,33 @@ file (~/.tmux.conf).
 
 
 ------------------------------------------------------------------------------
-							   *R_vsplit*
-							   *R_rconsole_height*
-							   *R_rconsole_width*
+							  *R_rconsole_height*
+							  *R_rconsole_width*
+							  *R_min_editor_width*
 6.14. Control of R window~
 
-By default, Neovim's window is split horizontally. If you prefer to split it
-vertically, put in your |vimrc|:
+When starting R, Neovim's buffer is split vertically if its width is larger
+than:
 >
-   let R_vsplit = 1
+   R_min_editor_width + R_rconsole_width + 1 + (&number * &numberwidth)
 <
-
-You can also set the initial number of lines and columns of the R window:
+That is, if it is large enough to guarantee that both the script and the R
+windows will have at least the desired number of columns even if 'number' is
+set. The default value of both `R_min_editor_width` and `R_rconsole_height` is
+80. If you prefer the window is always split vertically, set these two options
+with lower values in your |vimrc|. Example:
+>
+   let R_rconsole_width = 57
+   let R_min_editor_width = 18
+<
+If you always prefer a horizontal split, set the value of `R_rconsole_width`
+to 0:
+>
+   let R_rconsole_width = 0
+<
+For a horizontal split, you can set the number of lines of the R window:
 >
    let R_rconsole_height = 15
-   let R_rconsole_width = 40
 <
 Note: If running R in a Neovim buffer, the number of lines and columns will
 automatically change if you switch between horizontal and vertical splits (see
@@ -2749,7 +2761,13 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.8 (2017-01-14)
+0.9.9 (2017-02-07)
+
+ * Delete option R_vsplit.
+ * New option: R_min_editor_width.
+ * Minor bug fixes.
+
+0.9.8 (2016-12-10)
 
  * Minor bug fixes.
  * New commands: \dt and \pt

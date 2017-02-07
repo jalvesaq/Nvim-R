@@ -3123,9 +3123,9 @@ call RSetDefaultValue("g:R_openhtml",          0)
 call RSetDefaultValue("g:R_nvim_wd",           0)
 call RSetDefaultValue("g:R_commented_lines",   0)
 call RSetDefaultValue("g:R_after_start",    "''")
-call RSetDefaultValue("g:R_vsplit",            0)
 call RSetDefaultValue("g:R_csv_warn",          1)
-call RSetDefaultValue("g:R_rconsole_width",   -1)
+call RSetDefaultValue("g:R_min_editor_width", 80)
+call RSetDefaultValue("g:R_rconsole_width",   80)
 call RSetDefaultValue("g:R_rconsole_height",  15)
 call RSetDefaultValue("g:R_tmux_title","'NvimR'")
 call RSetDefaultValue("g:R_listmethods",       0)
@@ -3471,4 +3471,7 @@ unlet s:ft
 
 if exists("g:R_nvimcom_wait")
     call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
+endif
+if exists("g:R_vsplit")
+    call RWarningMsg("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
 endif
