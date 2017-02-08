@@ -33,9 +33,9 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
 
    1. The editor has some code to load Afrobarometer data on Mozambique, R is
       running below the editor and the Object Browser is on the right side. On
-      the R Console, we can see messages inform the packages [setwidth] and
-      nvimcom were loaded. The messages are in blue because they were
-      colorized by the package [colorout].
+      the R Console, we can see messages inform some packages were loaded. The
+      messages are in blue because they were colorized by the package
+      [colorout].
 
    2. When the command `library("foreign")` is sent to R, the string *read.spss*
       turns blue because it is immediately recognized as a loaded function
@@ -97,6 +97,5 @@ three paths of communication between Vim/Neovim and R:
 [Vundle]: https://github.com/gmarik/Vundle.vim
 [Pathogen]: https://github.com/tpope/vim-pathogen
 [Neovim]: https://github.com/neovim/neovim
-[setwidth]: https://cran.r-project.org/web/packages/setwidth/index.html
 [southernlights]: https://github.com/jalvesaq/southernlights
 [colorout]: https://github.com/jalvesaq/colorout
