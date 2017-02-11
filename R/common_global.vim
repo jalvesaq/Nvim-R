@@ -3457,6 +3457,13 @@ if !executable(g:rplugin_R)
     call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
 endif
 
+" Check if r-plugin/functions.vim exist
+let s:ff = split(substitute(globpath(&rtp, "r-plugin/functions.vim"), "functions.vim", "", "g"), "\n")
+if len(s:ff) > 0
+    call RWarningMsgInp("It seems that Vim-R-plugin is installed.\n" .
+                \ " Please, unistall it before using Nvim-R.\n")
+endif
+
 " Check if there is more than one copy of Nvim-R
 " (e.g. from the Vimballl and from a plugin manager)
 let s:ff = split(substitute(globpath(&rtp, "R/functions.vim"), "functions.vim", "", "g"), "\n")
