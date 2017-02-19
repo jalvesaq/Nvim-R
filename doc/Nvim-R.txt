@@ -286,12 +286,15 @@ Install additional plugins~
 
 You may be interested in installing additional general plugins to get
 functionality not provided by this file type plugin. Particularly interesting
-are vim-signature, csv.vim and snipMate. Please read |Nvim-R-tips| for
-details. If you edit Rnoweb files, you may want to try LaTeX-Box for
-omnicompletion of LaTeX code (see |Nvim-R-latex-box| for details).
+are vim-signature, csv.vim and snipMate. Please read |Nvim-R-tips| for details.
+
+If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
+LaTeX code (see |Nvim-R-latex-box| for details).
 
 Note: Some of vim-latex keybindings might clash with Nvim-R ones.
 
+If you edit RMarkdown files, you may prefer the syntax highlighting provided
+by https://github.com/vim-pandoc/vim-pandoc-syntax
 
 ==============================================================================
 								  *Nvim-R-use*
@@ -2761,7 +2764,7 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.9 (2017-02-07)
+0.9.9 (2017-02-19)
 
  * Delete option R_vsplit.
  * New option: R_min_editor_width.
