@@ -1950,6 +1950,17 @@ function RGetFirstObjClass(rkeyword)
             let len = strlen(line)
             let lnum = line(".")
             while nparen != 0
+                if idx == len
+                    let lnum += 1
+                    while lnum <= line("$") && strlen(substitute(getline(lnum), '#.*', '', "")) == 0
+                        let lnum += 1
+                    endwhile
+                    if lnum > line("$")
+                        return ""
+                    endif
+                    let line = line . substitute(getline(lnum), '#.*', '', "")
+                    let len = strlen(line)
+                endif
                 if line[idx] == '('
                     let nparen += 1
                 else
@@ -1958,14 +1969,6 @@ function RGetFirstObjClass(rkeyword)
                     endif
                 endif
                 let idx += 1
-                if idx == len
-                    let lnum += 1
-                    if lnum > line("$")
-                        return ""
-                    endif
-                    let line = line . substitute(getline(lnum), '#.*', '', "")
-                    let len = strlen(line)
-                endif
             endwhile
             let firstobj = strpart(line, 0, idx)
         elseif line =~ '^\(\k\|\$\)*\s*[' || line =~ '^\(k\|\$\)*\s*=\s*\(\k\|\$\)*\s*[.*('
@@ -1978,6 +1981,17 @@ function RGetFirstObjClass(rkeyword)
             let len = strlen(line)
             let lnum = line(".")
             while nparen != 0
+                if idx == len
+                    let lnum += 1
+                    while lnum <= line("$") && strlen(substitute(getline(lnum), '#.*', '', "")) == 0
+                        let lnum += 1
+                    endwhile
+                    if lnum > line("$")
+                        return ""
+                    endif
+                    let line = line . substitute(getline(lnum), '#.*', '', "")
+                    let len = strlen(line)
+                endif
                 if line[idx] == '['
                     let nparen += 1
                 else
@@ -1986,14 +2000,6 @@ function RGetFirstObjClass(rkeyword)
                     endif
                 endif
                 let idx += 1
-                if idx == len
-                    let lnum += 1
-                    if lnum > line("$")
-                        return ""
-                    endif
-                    let line = line . substitute(getline(lnum), '#.*', '', "")
-                    let len = strlen(line)
-                endif
             endwhile
             let firstobj = strpart(line, 0, idx)
         else
