@@ -1960,6 +1960,9 @@ function RGetFirstObjClass(rkeyword)
                 let idx += 1
                 if idx == len
                     let lnum += 1
+                    if lnum > line("$")
+                        return ""
+                    endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
                     let len = strlen(line)
                 endif
@@ -1985,6 +1988,9 @@ function RGetFirstObjClass(rkeyword)
                 let idx += 1
                 if idx == len
                     let lnum += 1
+                    if lnum > line("$")
+                        return ""
+                    endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
                     let len = strlen(line)
                 endif
