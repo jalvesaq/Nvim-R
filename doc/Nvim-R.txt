@@ -793,8 +793,6 @@ do the tasks to avoid any risk of corrupting R's memory. It will tell Vim
 that "R is busy" and Vim will display this message. Everything should work
 as expected again after any valid code is executed in the R Console.
 
-The nvimcom library is started with the state `busy`.
-
 
 ------------------------------------------------------------------------------
 5.5. R must be started by Vim, and both must be in the same machine~
@@ -2005,14 +2003,22 @@ pass the command `levels(gender)` to R, which will show you the levels of the
 object gender. To make it even easier to use this and other functions, you
 could write custom key bindings in your |vimrc|, as in the examples below:
 >
-   map <silent> <LocalLeader>rk :call RAction("levels")<CR>
-   map <silent> <LocalLeader>t :call RAction("tail")<CR>
-   map <silent> <LocalLeader>H :call RAction("head")<CR>
-   map <silent> <LocalLeader>h :call RAction("head", "@,48-57,_,.")<CR>
+   nmap <silent> <LocalLeader>rk :call RAction("levels")<CR>
+   nmap <silent> <LocalLeader>t :call RAction("tail")<CR>
+   nmap <silent> <LocalLeader>H :call RAction("head")<CR>
+   nmap <silent> <LocalLeader>h :call RAction("head", "@,48-57,_,.")<CR>
 <
 The second, and optional, argument that can be passed to RAction is the value
 of 'iskeyword' that will be used to get the word under cursor (see the last
 example above).
+
+If you want an action over an selection, then the second argument must be the
+string `"v"`:
+>
+   vmap <silent> <LocalLeader>h :call RAction("head", "v")<CR>
+<
+In this case, the beginning and the end of the selection must be in the same
+line.
 
 If the command that you want to send does not require an R object as argument,
 you can create a shortcut to it by following the example:

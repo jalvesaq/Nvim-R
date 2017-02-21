@@ -2473,7 +2473,9 @@ endfunction
 function RAction(rcmd, ...)
     if &filetype == "rbrowser"
         let rkeyword = RBrowserGetName(1, 0)
-    elseif a:0 > 0
+    elseif a:0 == 1 && a:1 == "v" && line("'<") == line("'>")
+        let rkeyword = strpart(getline("'>"), col("'<") - 1, col("'>") - col("'<") + 1)
+    elseif a:0 == 1 && a:1 != "v"
         let rkeyword = RGetKeyword(a:1)
     else
         if a:rcmd == "help" || (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
@@ -2663,12 +2665,19 @@ function RControlMaps()
 
     " Print, names, structure
     "-------------------------------------
-    call RCreateMaps("nvi", '<Plug>RObjectPr',     'rp', ':call RAction("print")')
-    call RCreateMaps("nvi", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
-    call RCreateMaps("nvi", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
-    call RCreateMaps("nvi", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
-    call RCreateMaps("nvi", '<Plug>RDputObj',      'dt', ':call RAction("dputtab")')
-    call RCreateMaps("nvi", '<Plug>RPrintObj',     'pt', ':call RAction("printtab")')
+    call RCreateMaps("ni", '<Plug>RObjectPr',     'rp', ':call RAction("print")')
+    call RCreateMaps("ni", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
+    call RCreateMaps("ni", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
+    call RCreateMaps("ni", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
+    call RCreateMaps("ni", '<Plug>RDputObj',      'dt', ':call RAction("dputtab")')
+    call RCreateMaps("ni", '<Plug>RPrintObj',     'pt', ':call RAction("printtab")')
+
+    call RCreateMaps("v", '<Plug>RObjectPr',     'rp', ':call RAction("print", "v")')
+    call RCreateMaps("v", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names", "v")')
+    call RCreateMaps("v", '<Plug>RObjectStr',    'rt', ':call RAction("str", "v")')
+    call RCreateMaps("v", '<Plug>RViewDF',       'rv', ':call RAction("viewdf", "v")')
+    call RCreateMaps("v", '<Plug>RDputObj',      'dt', ':call RAction("dputtab", "v")')
+    call RCreateMaps("v", '<Plug>RPrintObj',     'pt', ':call RAction("printtab", "v")')
 
     " Arguments, example, help
     "-------------------------------------
@@ -2678,9 +2687,13 @@ function RControlMaps()
 
     " Summary, plot, both
     "-------------------------------------
-    call RCreateMaps("nvi", '<Plug>RSummary',      'rs', ':call RAction("summary")')
-    call RCreateMaps("nvi", '<Plug>RPlot',         'rg', ':call RAction("plot")')
-    call RCreateMaps("nvi", '<Plug>RSPlot',        'rb', ':call RAction("plotsumm")')
+    call RCreateMaps("ni", '<Plug>RSummary',      'rs', ':call RAction("summary")')
+    call RCreateMaps("ni", '<Plug>RPlot',         'rg', ':call RAction("plot")')
+    call RCreateMaps("ni", '<Plug>RSPlot',        'rb', ':call RAction("plotsumm")')
+
+    call RCreateMaps("v", '<Plug>RSummary',      'rs', ':call RAction("summary", "v")')
+    call RCreateMaps("v", '<Plug>RPlot',         'rg', ':call RAction("plot", "v")')
+    call RCreateMaps("v", '<Plug>RSPlot',        'rb', ':call RAction("plotsumm", "v")')
 
     " Build list of objects for omni completion
     "-------------------------------------
