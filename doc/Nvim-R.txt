@@ -888,6 +888,7 @@ Vim and R at the end of
 |R_show_args|         Show extra information during omnicompletion
 |R_args_in_stline|    Set 'statusline' to function arguments
 |R_wait|              Time to wait for nvimcom loading
+|R_wait_reply|        Time to wait for R reply
 |R_nvim_wd|           Start R in Vim's working directory
 |R_after_start|       System command to execute after R startup
 |R_user_maps_only|    Only set user specified key bindings
@@ -1666,6 +1667,20 @@ nvimcom. If 60 seconds are not enough to your R startup, then set a higher
 value for the variable in your |vimrc|. Example:
 >
    let R_wait = 100
+<
+
+------------------------------------------------------------------------------
+								*R_wait_reply*
+6.29. Time to wait for R reply~
+
+By default Nvim-R asynchronously waits 2 seconds for R to reply after a
+command is issued.  In some cases it might be desirable to extend this period
+to accommodate for commands with long execution times, e.g. when using
+|Rinsert|.  You can set the amount of time NVim-R waits for R to reply (in
+seconds) by setting a different value for `R_wait_reply` (in seconds) in your
+|vimrc|.  Example:
+>
+   let R_wait_reply = 5
 <
 
 ------------------------------------------------------------------------------
