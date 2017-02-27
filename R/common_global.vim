@@ -138,7 +138,14 @@ function ReplaceUnderS()
 endfunction
 
 function ReadEvalReply()
-    let reply = "No reply"
+    if g:R_wait_reply < 1
+        let g:R_wait_reply = 1
+    endif
+    if g:R_wait_reply == 1
+        let reply = "No reply within 1 second."
+    else
+        let reply = "No reply within " . g:R_wait_reply . " seconds."
+    endif
     let haswaitwarn = 0
     let ii = 0
     while ii < g:R_wait_reply * 10
@@ -160,7 +167,7 @@ function ReadEvalReply()
         echon "\r                 "
         redraw
     endif
-    if reply == "No reply" || reply =~ "^Error" || reply == "INVALID" || reply == "ERROR" || reply == "EMPTY" || reply == "NO_ARGS" || reply == "NOT_EXISTS"
+    if reply =~ "^No reply within" || reply =~ "^Error" || reply == "INVALID" || reply == "ERROR" || reply == "EMPTY" || reply == "NO_ARGS" || reply == "NOT_EXISTS"
         return "R error: " . reply
     else
         return reply
