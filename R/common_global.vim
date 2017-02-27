@@ -141,7 +141,7 @@ function ReadEvalReply()
     let reply = "No reply"
     let haswaitwarn = 0
     let ii = 0
-    while ii < 20
+    while ii < g:R_wait_reply * 10
         sleep 100m
         if filereadable($NVIMR_TMPDIR . "/eval_reply")
             let tmp = readfile($NVIMR_TMPDIR . "/eval_reply")
@@ -3170,6 +3170,7 @@ call RSetDefaultValue("g:R_tmux_split",        0)
 call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_close_term",        1)
 call RSetDefaultValue("g:R_wait",             60)
+call RSetDefaultValue("g:R_wait_reply",        2)
 call RSetDefaultValue("g:R_show_args",         0)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
