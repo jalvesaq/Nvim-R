@@ -1671,20 +1671,20 @@ value for the variable in your |vimrc|. Example:
 
 ------------------------------------------------------------------------------
 								*R_wait_reply*
-6.29. Time to wait for R reply~
+6.30. Time to wait for R reply~
 
 By default Nvim-R waits 2 seconds for R to reply after a command is issued.
 In some cases it might be desirable to extend this period to accommodate for
 commands with long execution times, e.g. when using |Rinsert|.  You can set
 the amount of time NVim-R waits for R to reply (in seconds) by setting a
-different value for `R_wait_reply` (in seconds) in your |vimrc|.  Example:
+different value for `R_wait_reply` in your |vimrc|.  Example:
 >
    let R_wait_reply = 5
 <
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
-6.30 Start R in working directory of Vim~
+6.31 Start R in working directory of Vim~
 
 When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
 package nvimcom runs the command `setwd()` with the directory of the file
@@ -1704,7 +1704,7 @@ way, put in |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *R_after_start*
-6.31 System command to be executed after R startup~
+6.32 System command to be executed after R startup~
 
 If you want that Vim executes a external command right after R startup, set
 the value of R_after_start in your |vimrc|.
@@ -1748,7 +1748,7 @@ focus to Neovim terminal window:
 
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
-6.32 Only set key bindings that are user specified~
+6.33 Only set key bindings that are user specified~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
@@ -1760,7 +1760,7 @@ set those key-bindings specified by the user, put in your |vimrc|:
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.33 Temporary files directories~
+6.34 Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of R_tmpdir and
@@ -1778,7 +1778,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*
-6.34 View a data.frame or matrix~
+6.35 View a data.frame or matrix~
 
 The csv.vim plugin helps to visualize and edit csv files, and if it is not
 installed, Nvim-R will warn you about that when you do <LocalLeader>rv.
@@ -1803,7 +1803,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.35 SyncTeX support~
+6.36 SyncTeX support~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -1851,7 +1851,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.35.1 Okular configuration~
+6.36.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -1868,7 +1868,7 @@ of Okular will be started.
 
 
 ------------------------------------------------------------------------------
-6.35.1 Skim configuration~
+6.36.1 Skim configuration~
 
 In Skim, click in the drop down menu and fill the fields:
 >
@@ -2606,9 +2606,10 @@ run will:
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as
-explained in this section.
+explained in this section, and it seems to be the only way of using Nvim-R on
+Cygwin.
 
-Tmux >= 1.8 is required, and you have to put in your |vimrc|:
+Tmux is required, and you have to put in your |vimrc|:
 >
    let R_in_buffer = 0
    let R_applescript = 0
@@ -2784,10 +2785,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.9 (2017-02-19)
+0.9.9 (2017-02-27)
 
  * Delete option R_vsplit.
- * New option: R_min_editor_width.
+ * New options: R_min_editor_width and R_wait_reply.
  * Minor bug fixes.
 
 0.9.8 (2016-12-10)
