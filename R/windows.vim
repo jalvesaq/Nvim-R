@@ -60,37 +60,41 @@ let g:R_R_window_title = "R Console"
 
 " Ensure that the first gcc in the PATH will be capable of building both 32
 " and 64 bit binaries
-let s:rtpath = ""
-let s:wgcc = split(system("where gcc"), "\n")
-if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
-    let s:path = split($PATH, ";")
-    for s:p in s:path
-        if s:p =~ "Rtools"
-            let s:rtpath = substitute(s:p, "Rtools.*", "Rtools", "")
-            break
-        endif
-    endfor
-    unlet s:path
-    unlet s:p
-endif
-unlet s:wgcc
-if s:rtpath != "" && !isdirectory(s:rtpath)
+if exists("g:Rtools_path")
+    let s:rtpath = g:Rtools_path
+else
     let s:rtpath = ""
-endif
-if s:rtpath == "" && executable("wmic")
-    let s:dstr = system("wmic logicaldisk get name")
-    let s:dstr = substitute(s:dstr, "\001", "", "g")
-    let s:dstr = substitute(s:dstr, " ", "", "g")
-    let s:dlst = split(s:dstr, "\r\n")
-    for s:lttr in s:dlst
-        if s:lttr =~ ":" && isdirectory(s:lttr . "\\Rtools")
-            let s:rtpath = s:lttr . "\\Rtools"
-            break
-        endif
-    endfor
-    unlet s:dstr
-    unlet s:dlst
-    unlet s:lttr
+    let s:wgcc = split(system("where gcc"), "\n")
+    if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
+        let s:path = split($PATH, ";")
+        for s:p in s:path
+            if s:p =~ "Rtools"
+                let s:rtpath = substitute(s:p, "Rtools.*", "Rtools", "")
+                break
+            endif
+        endfor
+        unlet s:path
+        unlet s:p
+    endif
+    unlet s:wgcc
+    if s:rtpath != "" && !isdirectory(s:rtpath)
+        let s:rtpath = ""
+    endif
+    if s:rtpath == "" && executable("wmic")
+        let s:dstr = system("wmic logicaldisk get name")
+        let s:dstr = substitute(s:dstr, "\001", "", "g")
+        let s:dstr = substitute(s:dstr, " ", "", "g")
+        let s:dlst = split(s:dstr, "\r\n")
+        for s:lttr in s:dlst
+            if s:lttr =~ ":" && isdirectory(s:lttr . "\\Rtools")
+                let s:rtpath = s:lttr . "\\Rtools"
+                break
+            endif
+        endfor
+        unlet s:dstr
+        unlet s:dlst
+        unlet s:lttr
+    endif
 endif
 if s:rtpath != ""
     let s:gccpath = globpath(s:rtpath, "gcc*")

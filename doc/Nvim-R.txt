@@ -835,6 +835,7 @@ Vim and R at the end of
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
 |R_set_home_env|      Set the value of $HOME for R (Windows only)
+|Rtools_path|         Path to Rtools
 |R_save_win_pos|      Save positions of R and GVim windows (Windows only)
 |R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
 |R_assign|            Convert '_' into ' <- '
@@ -1031,11 +1032,17 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
+							         *Rtools_path*
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 							      *R_set_home_env*
 6.3. Windows specific options~
 
+Nvim-R will try to find the path to Rtools installation. If it cannot find the
+path, or if it too long to find it, you can put in your |vimrc|:
+>
+   let Rtools_path = "C:\\Rtools"
+<
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
 positions of the windows when you start R. If you do not like this behavior,
@@ -2785,10 +2792,10 @@ step-by-step procedure to run Nvim-R remotely:
 								 *Nvim-R-news*
 10. News~
 
-0.9.9 (2017-02-27)
+0.9.9 (2017-03-02)
 
  * Delete option R_vsplit.
- * New options: R_min_editor_width and R_wait_reply.
+ * New options: R_min_editor_width and R_wait_reply, Rtools_path.
  * Minor bug fixes.
 
 0.9.8 (2016-12-10)
