@@ -85,7 +85,8 @@ function StartR_Neovim()
     let objbrttl = b:objbrtitle
     let curbufnm = bufname("%")
     set switchbuf=useopen
-    if g:R_vsplit
+
+    if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
         if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
             silent exe "belowright " . g:R_rconsole_width . "vnew"
         else
@@ -98,6 +99,7 @@ function StartR_Neovim()
             silent belowright new
         endif
     endif
+
     if has("win32")
         call SetRHome()
     endif
@@ -122,16 +124,6 @@ function StartR_Neovim()
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()
-endfunction
-
-" To be called by edit() in R running in Neovim buffer.
-function ShowRObject(fname)
-    let fcont = readfile(a:fname)
-    exe "tabnew " . substitute($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID, ' ', '\\ ', 'g')
-    call setline(".", fcont)
-    set filetype=r
-    stopinsert
-    autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
 endfunction
 
 call RSetDefaultValue("g:R_setwidth", 1)

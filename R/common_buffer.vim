@@ -69,7 +69,7 @@ if exists("*RCheckLibList")
     autocmd BufEnter <buffer> call RCheckLibList()
 endif
 
-if &filetype != "rnoweb"
+if &filetype != "rnoweb" && expand("%:t:r") != ""
     let g:rplugin_zathura_pid[expand("%:t:r")] = 0
 endif
 

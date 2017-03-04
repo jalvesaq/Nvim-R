@@ -1319,6 +1319,9 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
         if(verbose > 1)
             REprintf("    NVIMR_TMPDIR = %s\n    NVIMR_ID = %s\n",
                     tmpdir, getenv("NVIMR_ID"));
+#ifdef WIN32
+        r_is_busy = 0;
+#endif
     }
 }
 

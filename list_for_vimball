@@ -20,6 +20,7 @@ R/nvimbuffer.vim
 R/osx.vim
 R/r.snippets
 R/rmd.snippets
+R/rstudio.vim
 R/setcompldir.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
@@ -41,6 +42,7 @@ R/nvimcom/man/nvim.names.Rd
 R/nvimcom/man/nvim.plot.Rd
 R/nvimcom/man/nvim.print.Rd
 R/nvimcom/man/nvim.srcdir.Rd
+R/nvimcom/man/vi.Rd
 R/nvimcom/R/etags2ctags.R
 R/nvimcom/R/nvim.bol.R
 R/nvimcom/R/nvimcom.R

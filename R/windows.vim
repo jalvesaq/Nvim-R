@@ -58,31 +58,81 @@ endif
 
 let g:R_R_window_title = "R Console"
 
-" Fix Rtools position in $PATH
-let s:wgcc = split(system("where gcc"), "\n")
-if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
-    let s:path = split($PATH, ";")
-    for s:p in s:path
-        if s:p =~ "Rtools"
-            let $PATH = s:p . ";" . $PATH
-        endif
-    endfor
-    unlet s:path
-    unlet s:p
+" Ensure that the first gcc in the PATH will be capable of building both 32
+" and 64 bit binaries
+if exists("g:Rtools_path")
+    let s:rtpath = g:Rtools_path
+else
+    let s:rtpath = ""
+    let s:wgcc = split(system("where gcc"), "\n")
+    if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
+        let s:path = split($PATH, ";")
+        for s:p in s:path
+            if s:p =~ "Rtools"
+                let s:rtpath = substitute(s:p, "Rtools.*", "Rtools", "")
+                break
+            endif
+        endfor
+        unlet s:path
+        unlet s:p
+    endif
+    unlet s:wgcc
+    if s:rtpath != "" && !isdirectory(s:rtpath)
+        let s:rtpath = ""
+    endif
+    if s:rtpath == "" && executable("wmic")
+        let s:dstr = system("wmic logicaldisk get name")
+        let s:dstr = substitute(s:dstr, "\001", "", "g")
+        let s:dstr = substitute(s:dstr, " ", "", "g")
+        let s:dlst = split(s:dstr, "\r\n")
+        for s:lttr in s:dlst
+            if s:lttr =~ ":" && isdirectory(s:lttr . "\\Rtools")
+                let s:rtpath = s:lttr . "\\Rtools"
+                break
+            endif
+        endfor
+        unlet s:dstr
+        unlet s:dlst
+        unlet s:lttr
+    endif
 endif
-unlet s:wgcc
+if s:rtpath != ""
+    let s:gccpath = globpath(s:rtpath, "gcc*")
+    if s:gccpath == ""
+        let $PATH = s:rtpath . "\\bin;" . $PATH
+    else
+        let $PATH = s:rtpath . "\\bin;" . s:gccpath . "\\bin;" . $PATH
+    endif
+    unlet s:gccpath
+endif
+let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
 
 function CheckRtools()
-    if $PATH !~ "Rtools"
-        call RWarningMsgInp("Rtools is not in the system PATH")
+    if s:rtpath == ""
+        call RWarningMsg('Is Rtools installed?')
         return
+    else
+        if !isdirectory(s:rtpath)
+            call RWarningMsg('Is Rtools installed? "' . s:rtpath . '" is not a directory.')
+            return
+        endif
     endif
 
-    let Rtpath = substitute($PATH, '.*;\(.*Rtools\)\\.*', '\1', '')
-    if Rtpath =~ "Rtools"
-        let Rtpath = substitute(Rtpath, "\\", "/", "g") . "/VERSION.txt"
-        if filereadable(Rtpath)
-            let Rtvrsn = readfile(Rtpath)
+    if s:rtpath != ""
+        let Rtvf = s:rtpath . "/VERSION.txt"
+        let g:RtoolsVersion = Rtvf
+        if !filereadable(s:rtpath . "/mingw_32/bin/gcc.exe")
+            call RWarningMsg('Did you install Rtools with 32 bit support? "' .
+                        \ s:rtpath . "/mingw_32/bin/gcc.exe" . '" not found.')
+            return
+        endif
+        if !filereadable(s:rtpath . "/mingw_64/bin/gcc.exe")
+            call RWarningMsg('Did you install Rtools with 64 bit support? "' .
+                        \ s:rtpath . "/mingw_64/bin/gcc.exe" . '" not found.')
+            return
+        endif
+        if filereadable(Rtvf)
+            let Rtvrsn = readfile(Rtvf)
             if Rtvrsn[0] =~ "version 3.4"
                 call RWarningMsg("Nvim-R is incompatible with Rtools 3.4 (August 2016). Please, try Rtools 3.3.")
             endif
