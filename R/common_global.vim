@@ -3268,7 +3268,7 @@ unlet obpllen
 " solution is to use ^A (\001) to move the cursor to the beginning of the line
 " before sending ^K. But the control characters may cause problems in some
 " circumstances.
-call RSetDefaultValue("g:R_ca_ck", 0)
+call RSetDefaultValue("g:R_clear_line", 0)
 
 " ========================================================================
 " Check if default mean of communication with R is OK
@@ -3509,9 +3509,18 @@ endif
 unlet s:ff
 unlet s:ft
 
+" 2016-08-25
 if exists("g:R_nvimcom_wait")
-    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
+    call RWarningMsgInp("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
 endif
+
+" 2017-02-07
 if exists("g:R_vsplit")
-    call RWarningMsg("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
+    call RWarningMsgInp("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
 endif
+
+" 2017-03-14
+if exists("g:R_ca_ck")
+    call RWarningMsgInp("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
+endif
+

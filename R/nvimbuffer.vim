@@ -10,7 +10,7 @@ endfunction
 
 function SendCmdToR_Neovim(...)
     if g:rplugin_jobs["R"]
-        if g:R_ca_ck
+        if g:R_clear_line
             let cmd = "\001" . "\013" . a:1
         else
             let cmd = a:1

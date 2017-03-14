@@ -61,7 +61,7 @@ function StartR_TmuxSplit(rcmd)
 endfunction
 
 function SendCmdToR_TmuxSplit(...)
-    if g:R_ca_ck
+    if g:R_clear_line
         let cmd = "\001" . "\013" . a:1
     else
         let cmd = a:1
