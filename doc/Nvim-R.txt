@@ -1366,12 +1366,18 @@ than:
 <
 That is, if it is large enough to guarantee that both the script and the R
 windows will have at least the desired number of columns even if 'number' is
-set. The default value of both `R_min_editor_width` and `R_rconsole_height` is
+set. The default value of both `R_min_editor_width` and `R_rconsole_width` is
 80. If you prefer the window is always split vertically, set these two options
 with lower values in your |vimrc|. Example:
 >
    let R_rconsole_width = 57
    let R_min_editor_width = 18
+<
+You can also set a `R_rconsole_width` relative to current Vim window width.
+For example, if you want to split the available horizontal space evenly
+between Vim and R, put in your |vimrc|:
+>
+   autocmd VimResized * let R_rconsole_width = winwidth(0) / 2
 <
 If you always prefer a horizontal split, set the value of `R_rconsole_width`
 to 0:
@@ -2422,16 +2428,23 @@ You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
 `Sweave()` is the main LaTeX file. You can do this in two ways. Suppose that
 your Rnoweb file is called report.Rnw... You can:
 
-    (1) Create an empty file called "report.tex.latexmain".
+   (1) Create an empty file called "report.tex.latexmain".
 
-    or
+   or
 
-    (2) Put in the first 5 lines of report.Rnw:
+   (2) Put in the first 5 lines of report.Rnw:
+>
+   % For LaTeX-Box: root = report.tex
+<
+   or
 
-        % For LaTeX-Box: root = report.tex
-
+   (3) If you do not use child rnoweb documents, put in your |vimrc|:
+>
+   autocmd FileType rnoweb let b:main_tex_file = substitute(expand("%"), "\....$", ".tex", "")
+<
 Of course you must run either `knitr()` or `Sweave()` before trying LaTeX-Box
 omnicompletion. Please, read LaTeX-Box documentation for more information.
+
 
 See also: |R_latexcmd|.
 
