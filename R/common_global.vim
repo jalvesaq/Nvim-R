@@ -1024,7 +1024,7 @@ function GetNvimcomInfo()
             call system("tmux set-environment -u NVIMR_TMPDIR")
         else
             call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-            call delete(g:rplugin_tmpdir . "/openR.sh")
+            call delete(g:rplugin_tmpdir . "/openR")
         endif
 
         if g:R_after_start != ''

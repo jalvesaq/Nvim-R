@@ -34,9 +34,9 @@ function StartR_ExternalTerm(rcmd)
             let rcmd = 'TERM=screen-256color ' . rcmd
             let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'",
                         \ tmuxcnf, g:rplugin_tmuxsname, rcmd)
-            call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR.sh")
-            call system("chmod +x '" . $NVIMR_TMPDIR . "/openR.sh'")
-            let opencmd = "open '" . $NVIMR_TMPDIR . "/openR.sh'"
+            call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
+            call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
+            let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         elseif g:R_term == "konsole"
             let opencmd = printf("%s 'tmux -L NvimR -2 %s new-session -s %s \"%s\"'",
                         \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
