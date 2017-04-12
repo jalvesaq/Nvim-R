@@ -895,6 +895,8 @@ Vim and R at the end of
 |R_user_maps_only|    Only set user specified key bindings
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omnicompletion are stored
+|R_remote_tmpdir|     Mount point of remote temporary directory
+|R_nvimcom_home|      Mount point of remote R library
 |Nvim-R-df-view|      Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|      Options for SyncTeX
 
@@ -1790,8 +1792,15 @@ want to know what they are, while editing an R file, do in Normal mode:
 <
 
 ------------------------------------------------------------------------------
+							      *R_remote_tmpdir*
+							      *R_nvimcom_home*
+6.35 Options for accessing Remote R from local Vim~
+
+See |Nvim-R-remote|.
+
+------------------------------------------------------------------------------
 							      *Nvim-R-df-view*
-6.35 View a data.frame or matrix~
+6.36 View a data.frame or matrix~
 
 The csv.vim plugin helps to visualize and edit csv files, and if it is not
 installed, Nvim-R will warn you about that when you do <LocalLeader>rv.
@@ -2621,8 +2630,98 @@ run will:
 
 
 ------------------------------------------------------------------------------
+							       *Nvim-R-remote*
+9.21 Remote access~
+
+The easiest way of running R in a remote machine is logging into the remote
+machine through ssh, starting Neovim and running R in a Neovim's terminal (the
+default). You will only need both Vim (or Neovim) and R configured as usual in
+the remote machine.
+
+However, if you need to start either Neovim or Vim in the local machine and
+run R in the remote machine, then, a lot of additional configuration is
+required to enable full communication between Vim and R because by default
+both Nvim-R and nvimcom only accept TCP connections from the local host, and,
+R saves temporary files in the `/tmp` directory of the machine where it is
+running. To make the communication between local Vim and remote R possible,
+each application have to know the IP addres of the other, and some remote
+directories must be mounted locally. Here is an example of how to achieve this
+goal.
+
+   1. Setup the remote machine to accept ssh login from the local machine
+      without password (search the Internet to discover how to do it).
+
+   2. At the remote machine:
+
+      - You have to edit your `~/.Rprofile` to create the environment variable
+	`R_IP_ADDRESS`. R will save this value in a file that Vim has to read
+	to be able to send messages to R. If the remote machine is a Linux
+	system, the following code might work:
+>
+	# Only create the environment variable R_IP_ADDRESS if NVIM_IP_ADDRESS
+	# exists, that is, if R is being controlled remotely:
+        if(interactive() && Sys.getenv("NVIM_IP_ADDRESS") != ""){
+            local({
+                myip <- system("hostname -I", intern = TRUE)
+                Sys.setenv("R_IP_ADDRESS" = sub(" .*", "", myip))
+            })
+        }
+<
+	If the code above does not work, you have to find a way of discovering
+	the IP address of the remote machine (perhaps parsing the output of
+	`ifconfig`).
+
+   3. At the local machine:
+
+      - Make the directories `~/.remoteR/NvimR_cache` and `~/.remoteR/R_library`.
+
+      - Create the shell script `~/bin/mountR` with the following contents,
+	and make it executable (of course, replace `remotelogin`, `remotehost`
+	and the path to R library with valid values for your case):
+>
+       #!/bin/sh
+       sshfs remotelogin@remotehost:/home/remotelogin/.cache/Nvim-R ~/.remoteR/NvimR_cache
+       sshfs remotelogin@remotehost:/home/remotelogin/R/x86_64-pc-linux-gnu-library/3.3 ~/.remoteR/R_library
+<
+      - Create the shell script `~/bin/sshR` with the following contents, and
+	make it executable (replace `remotelogin` and `remotehost` with the
+	real values):
+>
+        #!/bin/sh
+        ssh -t remotelogin@remotehost "PATH=/home/remotelogin/bin:\$PATH \
+	    NVIMR_COMPLDIR=~/.cache/Nvim-R \
+	    NVIMR_TMPDIR=~/.cache/Nvim-R/tmp \
+	    NVIMR_ID=$NVIMR_ID \
+	    NVIMR_SECRET=$NVIMR_SECRET \
+	    R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
+	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $*"
+<
+
+      - Add the following lines to your |vimrc| (replace `hostname -I` with a
+	command that works in your system):
+>
+	" Setup Vim to use the remote R only if the output of df includes
+	" the string 'remoteR', that is, the remote file system is mounted:
+        if system("df") =~ "remoteR"
+            let $NVIM_IP_ADDRESS = substitute(system("hostname -I"), " .*", "", "")
+            let R_app = "/home/locallogin/bin/sshR"
+            let R_cmd = "/home/locallogin/bin/sshR"
+            let R_compldir = "/home/locallogin/.remoteR/NvimR_cache"
+            let R_tmpdir = "/home/locallogin/.remoteR/NvimR_cache/tmp"
+            let R_remote_tmpdir = "/home/remotelogin/.cache/NvimR_cache/tmp"
+            let R_nvimcom_home = "/home/locallogin/.remoteR/R_library/nvimcom"
+        endif
+<
+      - Mount the remote directories:
+>
+	~/bin/mountR
+<
+      - Start Neovim (or Vim), and start R.
+
+
+------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.21 Integration with Tmux~
+9.22 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. It is still possible to do this, as
@@ -2769,38 +2868,6 @@ into other windows using the middle mouse button. It can of course also be
 inserted into a tmux window using <Shift> and the middle mouse button.
 
 
-Remote access~
-
-The Nvim-R can not send commands from a local Vim to a remote R, but
-you can access the remote machine through ssh and run Tmux, Vim and R in the
-remote machine. Tmux should not be running in the local machine because some
-environment variables could pass from the local to the remote Tmux and make
-the plugin confuse.
-
-With Tmux, you can detach the Nvim-R session and reattach it later (but the
-connection with the XServer could be lost in the process). This is useful if
-you plan to begin the use of Nvim-R in a machine and later move to another
-computer and access remotely your previous Nvim-R session. Below is the
-step-by-step procedure to run Nvim-R remotely:
-
-  - Start Tmux:
-      tmux
-
-  - Start Vim:
-      vim script.R
-
-  - Use Vim to start an R session:
-      <LocalLeader>rf
-
-  - Send code from Vim to R, and, then, detach Vim and R with <C-a>d
-    The command will be <C-b>d if you have not set <C-a> as the escape
-    character in your ~/.tmux.conf.
-
-  - Some time later (even if accessing the machine remotely) reattach the
-    Tmux session:
-      tmux attach
-
-
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
@@ -2808,7 +2875,8 @@ step-by-step procedure to run Nvim-R remotely:
 0.9.9 (2017-03-14)
 
  * Delete option R_vsplit.
- * New options: R_min_editor_width and R_wait_reply, Rtools_path.
+ * New options: R_min_editor_width and R_wait_reply, Rtools_path,
+   R_remote_tmpdir, R_nvimcom_home.
  * Rename option R_ca_ck as R_clear_line
  * Minor bug fixes.
 

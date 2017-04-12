@@ -149,7 +149,10 @@ static void nvimcom_nvimclient(const char *msg, char *port)
     hints.ai_protocol = 0;
 
     sprintf(portstr, "%d", srvport);
-    a = getaddrinfo("127.0.0.1", portstr, &hints, &result);
+    if(getenv("NVIM_IP_ADDRESS"))
+        a = getaddrinfo(getenv("NVIM_IP_ADDRESS"), portstr, &hints, &result);
+    else
+        a = getaddrinfo("127.0.0.1", portstr, &hints, &result);
     if (a != 0) {
         REprintf("Error: getaddrinfo: %s\n", gai_strerror(a));
         objbr_auto = 0;
@@ -873,6 +876,8 @@ static void nvimcom_save_running_info(int bindportn)
             fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n",
                     nvimcom_version, nvimcom_home, bindportn, R_PID, search_list);
 #endif
+        if(getenv("R_IP_ADDRESS"))
+            fprintf(f, "%s\n", getenv("R_IP_ADDRESS"));
         fclose(f);
     }
 }
@@ -1086,7 +1091,10 @@ static void *nvimcom_server_thread(void *arg)
     while(rp == NULL && bindportn < 10049){
         bindportn++;
         sprintf(bindport, "%d", bindportn);
-        result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
+        if(getenv("NVIM_IP_ADDRESS"))
+            result = getaddrinfo(NULL, bindport, &hints, &res);
+        else
+            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
         if(result != 0){
             REprintf("Error at getaddrinfo: %s [nvimcom]\n", gai_strerror(result));
             nvimcom_failure = 1;
@@ -1316,9 +1324,12 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
         if(verbose > 0)
             // TODO: use packageStartupMessage()
             REprintf("nvimcom %s loaded\n", nvimcom_version);
-        if(verbose > 1)
+        if(verbose > 1){
             REprintf("    NVIMR_TMPDIR = %s\n    NVIMR_ID = %s\n",
                     tmpdir, getenv("NVIMR_ID"));
+            if(getenv("R_IP_ADDRESS"))
+                REprintf("R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
+        }
 #ifdef WIN32
         r_is_busy = 0;
 #endif

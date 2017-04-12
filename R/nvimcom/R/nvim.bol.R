@@ -132,8 +132,8 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
 
-    if(nvim.grepl("GlobalEnvList_", omnilist)){
-        sink(omnilist, append = FALSE)
+    if(omnilist == ".GlobalEnv"){
+        sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
         obj.list <- objects(".GlobalEnv", all.names = allnames)
         l <- length(obj.list)
         maxlevel <- nchar(pattern) - nchar(gsub("@", "", gsub("\\$", "", pattern)))

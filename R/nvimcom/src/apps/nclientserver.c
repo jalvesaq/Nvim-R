@@ -105,7 +105,10 @@ static void *NeovimServer(void *arg)
     while(rp == NULL && bindportn < 10149){
         bindportn++;
         sprintf(bindport, "%d", bindportn);
-        result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
+        if(getenv("R_IP_ADDRESS"))
+            result = getaddrinfo(NULL, bindport, &hints, &res);
+        else
+            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
         if(result != 0){
             fprintf(stderr, "Error at getaddrinfo (%s)\n", gai_strerror(result));
             fflush(stderr);
@@ -262,7 +265,10 @@ static void SendToServer(const char *port, const char *msg)
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
-    a = getaddrinfo("127.0.0.1", port, &hints, &result);
+    if(getenv("R_IP_ADDRESS"))
+        a = getaddrinfo(getenv("R_IP_ADDRESS"), port, &hints, &result);
+    else
+        a = getaddrinfo("127.0.0.1", port, &hints, &result);
     if (a != 0) {
         fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n", port, msg, gai_strerror(a));
         fflush(stderr);

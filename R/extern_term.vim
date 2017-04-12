@@ -26,7 +26,14 @@ function StartR_ExternalTerm(rcmd)
                 \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') .
                 \ ' NVIMR_ID=' . $NVIMR_ID .
                 \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
-                \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES . ' ' . a:rcmd
+                \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES
+
+    if $NVIM_IP_ADDRESS != ""
+        let rcmd .= ' NVIM_IP_ADDRESS='. $NVIM_IP_ADDRESS
+    endif
+
+    let rcmd .= ' ' . a:rcmd
+
 
     call system("tmux -L NvimR has-session -t " . g:rplugin_tmuxsname)
     if v:shell_error
