@@ -795,7 +795,7 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Vim, and both must be in the same machine~
+5.5. R must be started by Vim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -814,11 +814,8 @@ appropriate value when R is successfully started. It is possible to set the
 values of all those variables and start the TCP client-server manually, but it
 is not practical to do so.
 
-Moreover, both R and Vim must be in the same machine because the TCP
-communication between them is limited to localhost and the communication
-through cached and temporary files requires that both R and Vim have access to
-the same directories. Please, see the explanation on the communication between
-Vim and R at the end of
+Please see the explanation on the communication between Vim and R at the end
+of
 
    https://github.com/jalvesaq/Nvim-R/blob/master/README.md
 
