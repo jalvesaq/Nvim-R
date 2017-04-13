@@ -2661,10 +2661,7 @@ goal.
 	# Only create the environment variable R_IP_ADDRESS if NVIM_IP_ADDRESS
 	# exists, that is, if R is being controlled remotely:
         if(interactive() && Sys.getenv("NVIM_IP_ADDRESS") != ""){
-            local({
-                myip <- system("hostname -I", intern = TRUE)
-                Sys.setenv("R_IP_ADDRESS" = sub(" .*", "", myip))
-            })
+            Sys.setenv("R_IP_ADDRESS" = trimws(system("hostname -I", intern = TRUE)))
         }
 <
 	If the code above does not work, you have to find a way of discovering
