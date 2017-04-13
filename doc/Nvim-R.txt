@@ -795,7 +795,7 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Vim, and both must be in the same machine~
+5.5. R must be started by Vim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -814,11 +814,8 @@ appropriate value when R is successfully started. It is possible to set the
 values of all those variables and start the TCP client-server manually, but it
 is not practical to do so.
 
-Moreover, both R and Vim must be in the same machine because the TCP
-communication between them is limited to localhost and the communication
-through cached and temporary files requires that both R and Vim have access to
-the same directories. Please, see the explanation on the communication between
-Vim and R at the end of
+Please see the explanation on the communication between Vim and R at the end
+of
 
    https://github.com/jalvesaq/Nvim-R/blob/master/README.md
 
@@ -2661,10 +2658,7 @@ goal.
 	# Only create the environment variable R_IP_ADDRESS if NVIM_IP_ADDRESS
 	# exists, that is, if R is being controlled remotely:
         if(interactive() && Sys.getenv("NVIM_IP_ADDRESS") != ""){
-            local({
-                myip <- system("hostname -I", intern = TRUE)
-                Sys.setenv("R_IP_ADDRESS" = sub(" .*", "", myip))
-            })
+            Sys.setenv("R_IP_ADDRESS" = trimws(system("hostname -I", intern = TRUE)))
         }
 <
 	If the code above does not work, you have to find a way of discovering
@@ -2694,7 +2688,7 @@ goal.
 	    NVIMR_ID=$NVIMR_ID \
 	    NVIMR_SECRET=$NVIMR_SECRET \
 	    R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
-	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $*"
+	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $@"
 <
 
       - Add the following lines to your |vimrc| (replace `hostname -I` with a
