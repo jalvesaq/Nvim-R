@@ -2691,7 +2691,7 @@ goal.
 	    NVIMR_ID=$NVIMR_ID \
 	    NVIMR_SECRET=$NVIMR_SECRET \
 	    R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
-	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $*"
+	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $@"
 <
 
       - Add the following lines to your |vimrc| (replace `hostname -I` with a
