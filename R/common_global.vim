@@ -1574,24 +1574,29 @@ function SendParagraphToR(e, m)
         return
     endif
 
-    let i = line(".")
+    let o = line(".")
     let c = col(".")
+    let i = o
+    if g:R_paragraph_begin && getline(i) !~ '^\s*$'
+        let line = getline(i-1)
+        while i > 1 && !(line =~ '^\s*$' ||
+                    \ (&filetype == "rnoweb" && line =~ "^<<") ||
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{r"))
+            let i -= 1
+            let line = getline(i-1)
+        endwhile
+    endif
     let max = line("$")
     let j = i
     let gotempty = 0
     while j < max
+        let line = getline(j+1)
+        if line =~ '^\s*$' ||
+                    \ (&filetype == "rnoweb" && line =~ "^@$") ||
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```$")
+            break
+        endif
         let j += 1
-        let line = getline(j)
-        if &filetype == "rnoweb" && line =~ "^@$"
-            let j -= 1
-            break
-        elseif &filetype == "rmd" && line =~ "^[ \t]*```$"
-            let j -= 1
-            break
-        endif
-        if line =~ '^\s*$'
-            break
-        endif
     endwhile
     let lines = getline(i, j)
     let ok = RSourceLines(lines, a:e)
@@ -1606,7 +1611,7 @@ function SendParagraphToR(e, m)
     if a:m == "down"
         call GoDown()
     else
-        call cursor(i, c)
+        call cursor(o, c)
     endif
 endfunction
 
@@ -3166,6 +3171,7 @@ call RSetDefaultValue("g:R_rmhidden",          0)
 call RSetDefaultValue("g:R_assign",            1)
 call RSetDefaultValue("g:R_assign_map",    "'_'")
 call RSetDefaultValue("g:R_args_in_stline",    0)
+call RSetDefaultValue("g:R_paragraph_begin",   1)
 call RSetDefaultValue("g:R_rnowebchunk",       1)
 call RSetDefaultValue("g:R_strict_rst",        1)
 call RSetDefaultValue("g:R_synctex",           1)
