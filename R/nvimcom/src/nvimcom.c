@@ -56,6 +56,7 @@ static char strT[16];
 static char tmpdir[512];
 static char nvimcom_home[1024];
 static char search_list[1024];
+static char R_version[16];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
 
 #ifdef WIN32
@@ -859,22 +860,22 @@ static void nvimcom_save_running_info(int bindportn)
     } else {
 #ifdef WIN32
 #ifdef _WIN64
-        fprintf(f, "%s\n%s\n%d\n%" PRId64 "\n%" PRId64 "\n%s\n",
+        fprintf(f, "%s\n%s\n%d\n%" PRId64 "\n%" PRId64 "\n%s\n%s\n",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long long)GetForegroundWindow(), search_list);
+                (long long)GetForegroundWindow(), search_list, R_version);
 #else
-        fprintf(f, "%s\n%s\n%d\n%d\n%ld\n%s\n",
+        fprintf(f, "%s\n%s\n%d\n%d\n%ld\n%s\n%s\n",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long)GetForegroundWindow(), search_list);
+                (long)GetForegroundWindow(), search_list, R_version);
 #endif
 #else
         if(getenv("WINDOWID"))
-            fprintf(f, "%s\n%s\n%d\n%d\n%s\n%s\n",
+            fprintf(f, "%s\n%s\n%d\n%d\n%s\n%s\n%s\n",
                     nvimcom_version, nvimcom_home, bindportn, R_PID,
-                    getenv("WINDOWID"), search_list);
+                    getenv("WINDOWID"), search_list, R_version);
         else
-            fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n",
-                    nvimcom_version, nvimcom_home, bindportn, R_PID, search_list);
+            fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n%s\n",
+                    nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
 #endif
         if(getenv("R_IP_ADDRESS"))
             fprintf(f, "%s\n", getenv("R_IP_ADDRESS"));
@@ -1229,7 +1230,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth, char **vcv, char **srchls)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth, char **vcv, char **srchls, char **rvs)
 {
     verbose = *vrb;
     opendf = *odf;
@@ -1243,6 +1244,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
     if(getenv("NVIMR_TMPDIR")){
         strncpy(nvimcom_home, *pth, 1023);
         strncpy(search_list, *srchls, 1023);
+        strncpy(R_version, *rvs, 15);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
             strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);

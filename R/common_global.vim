@@ -688,6 +688,11 @@ function CheckNvimcomVersion()
             let nvers = substitute(ndesc[1], "Version: ", "", "")
             if nvers != s:required_nvimcom
                 let neednew = 1
+            else
+                let rversion = split(system("R --version"))[2]
+                if g:rplugin_R_version != rversion
+                    let neednew = 1
+                endif
             endif
         endif
     endif
@@ -952,8 +957,9 @@ function GetNvimcomInfo()
         let s:R_pid = vr[3]
         let $RCONSOLE = vr[4]
         let search_list = vr[5]
-        if len(vr) == 7
-            let $R_IP_ADDRESS = vr[6]
+        let g:rplugin_R_version = vr[6]
+        if len(vr) == 8
+            let $R_IP_ADDRESS = vr[7]
         endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         if s:nvimcom_version != s:required_nvimcom_dot
@@ -978,7 +984,9 @@ function GetNvimcomInfo()
             let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin"
         endif
 
-        call writefile([s:nvimcom_version, s:nvimcom_home, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
+        call writefile([s:nvimcom_version, s:nvimcom_home,
+                    \ g:rplugin_nvimcom_bin_dir, g:rplugin_R_version],
+                    \ g:rplugin_compldir . "/nvimcom_info")
 
         if has("win32")
             let nvc = "nclientserver.exe"
@@ -3368,16 +3376,15 @@ unlet s:filelines
 let s:nvimcom_version = "0"
 let s:nvimcom_home = ""
 let g:rplugin_nvimcom_bin_dir = ""
+let g:rplugin_R_version = "0"
 if filereadable(g:rplugin_compldir . "/nvimcom_info")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_info")
-    if len(s:filelines) == 3
-        let s:nvimcom_version = s:filelines[0]
-        let s:nvimcom_home = s:filelines[1]
-        let g:rplugin_nvimcom_bin_dir = s:filelines[2]
-        if !isdirectory(s:nvimcom_home) || !isdirectory(g:rplugin_nvimcom_bin_dir)
-            let s:nvimcom_version = ""
-            let s:nvimcom_home = ""
-            let g:rplugin_nvimcom_bin_dir = ""
+    if len(s:filelines) == 4
+        if isdirectory(s:filelines[1]) && isdirectory(s:filelines[2])
+            let s:nvimcom_version = s:filelines[0]
+            let s:nvimcom_home = s:filelines[1]
+            let g:rplugin_nvimcom_bin_dir = s:filelines[2]
+            let g:rplugin_R_version = s:filelines[3]
         endif
     endif
     unlet s:filelines

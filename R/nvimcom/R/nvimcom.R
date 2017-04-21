@@ -50,6 +50,7 @@
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
            paste(search(), collapse = " "),
+           paste0(version$major, ".", version$minor),
            PACKAGE="nvimcom")
     }
 }
