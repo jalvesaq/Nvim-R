@@ -716,7 +716,13 @@ function CheckNvimcomVersion()
                     \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
                     \ '    sep = "\n")',
                     \ 'sink()']
-        let slog = system(g:rplugin_R . ' --no-save', rcode)
+        if has("win32")
+            " g:rplugin_R is Rgui.exe which will ignore the script
+            let slog = system('R --no-save', rcode)
+        else
+            " Works even with local Vim and remote R (but not on Windows)
+            let slog = system(g:rplugin_R . ' --no-save', rcode)
+        endif
         if v:shell_error
             call RWarningMsg(slog)
             return 0
