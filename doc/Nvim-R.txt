@@ -2646,7 +2646,9 @@ run will:
 The easiest way of running R in a remote machine is logging into the remote
 machine through ssh, starting Neovim and running R in a Neovim's terminal (the
 default). You will only need both Vim (or Neovim) and R configured as usual in
-the remote machine.
+the remote machine. If you cannot install Neovim in the remote machine then
+you will have to run both Vim and R in a Tmux session. Please, see
+|Nvim-R-Tmux|.
 
 However, if you need to start either Neovim or Vim in the local machine and
 run R in the remote machine, then, a lot of additional configuration is
@@ -2879,7 +2881,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.9 (2017-03-14)
+0.9.9 (2017-04-22)
 
  * Delete option R_vsplit.
  * New options: R_min_editor_width and R_wait_reply, Rtools_path,
