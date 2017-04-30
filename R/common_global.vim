@@ -1054,6 +1054,14 @@ function GetNvimcomInfo()
             " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
             " when R was not started by Neovim:
             call system("tmux set-environment -u NVIMR_TMPDIR")
+        elseif g:R_screen_split
+            let slog = system("screen -p RConsole -X stuff '" .
+                \ "VIMRPLUGIN_TMPDIR=" . g:rplugin_tmpdir .
+                \ " VIMRPLUGIN_COMPLDIR=" . substitute(g:rplugin_compldir, ' ', '\\ ', "g") .
+                \ " VIMINSTANCEID=" . $VIMINSTANCEID . 
+                \ " VIMRPLUGIN_SECRET=" . $VIMRPLUGIN_SECRET . 
+                \ " VIMEDITOR_SVRNM=" . $VIMEDITOR_SVRNM . " R'\<c-m>")
+            let g:SendCmdToR = function('SendCmdToR_GNUScreen')
         else
             call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
             call delete(g:rplugin_tmpdir . "/openR")
@@ -1082,6 +1090,29 @@ function GetNvimcomInfo()
         endif
         return 0
     endif
+endfunction
+
+function! SendCmdToR_GNUScreen(cmd)
+    if g:R_ca_ck
+        let cmd = "\001" . "\013" . a:cmd
+    else
+        let cmd = a:cmd
+    endif
+
+    let str = substitute(cmd, "\\", "\\\\\\\\", "g")
+    let str = substitute(str, "\\^", "\\\\^", "g")
+    let str = substitute(str, "\\$", "\\\\$", "g")
+    let str = substitute(str, "'", "'\\\\''", "g")
+    let scmd = "screen -p RConsole -X stuff '" . str . "\<C-M>'"
+    let rlog = system(scmd)
+    if v:shell_error
+        let rlog = substitute(rlog, "\n", " ", "g")
+        let rlog = substitute(rlog, "\r", " ", "g")
+        call RWarningMsg(rlog)
+        let g:SendCmdToR = function('SendCmdToR_fake')
+        return 0
+    endif
+    return 1
 endfunction
 
 function StartObjBrowser()
@@ -3212,6 +3243,8 @@ call RSetDefaultValue("g:R_objbr_allnames",    0)
 call RSetDefaultValue("g:R_objbr_labelerr",    1)
 call RSetDefaultValue("g:R_applescript",       0)
 call RSetDefaultValue("g:R_tmux_split",        0)
+call RSetDefaultValue("g:R_screen_split",        0)
+call RSetDefaultValue("g:screenR_height",      15)
 call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_close_term",        1)
 call RSetDefaultValue("g:R_wait",             60)
