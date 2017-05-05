@@ -161,7 +161,7 @@ if !g:R_nvim_wd
     if g:R_term =~ '^\(gnome-terminal\|xfce4-terminal\|terminator\|lxterminal\)$'
         let s:term_cmd = g:R_term . " --working-directory='" . expand("%:p:h") . "'"
     elseif g:R_term == "konsole"
-        let s:term_cmd = "konsole --workdir '" . expand("%:p:h") . "'"
+        let s:term_cmd = "konsole -p tabtitle=R --workdir '" . expand("%:p:h") . "'"
     elseif g:R_term == "roxterm"
         let s:term_cmd = "roxterm --directory='" . expand("%:p:h") . "'"
     endif
