@@ -21,6 +21,9 @@ function StartR_TmuxSplit(rcmd)
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
                 \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
+    if $NVIM_IP_ADDRESS != ""
+        call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
+    endif
     if &t_Co == 256
         call extend(tmuxconf, ['set default-terminal "' . $TERM . '"'])
     endif
@@ -61,7 +64,7 @@ function StartR_TmuxSplit(rcmd)
 endfunction
 
 function SendCmdToR_TmuxSplit(...)
-    if g:R_ca_ck
+    if g:R_clear_line
         let cmd = "\001" . "\013" . a:1
     else
         let cmd = a:1

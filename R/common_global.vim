@@ -688,6 +688,11 @@ function CheckNvimcomVersion()
             let nvers = substitute(ndesc[1], "Version: ", "", "")
             if nvers != s:required_nvimcom
                 let neednew = 1
+            else
+                let rversion = split(system("R --version"))[2]
+                if g:rplugin_R_version != rversion
+                    let neednew = 1
+                endif
             endif
         endif
     endif
@@ -701,18 +706,29 @@ function CheckNvimcomVersion()
         endif
 
         " The user libs directory may not exist yet if R was just upgraded
-        let rcode = [ 'sink("' . g:rplugin_tmpdir . '/libpaths")',
+        if exists("g:R_remote_tmpdir")
+            let tmpdir = g:R_remote_tmpdir
+        else
+            let tmpdir = g:rplugin_tmpdir
+        endif
+        let rcode = [ 'sink("' . tmpdir . '/libpaths")',
                     \ 'cat(.libPaths()[1L],',
                     \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
                     \ '    sep = "\n")',
                     \ 'sink()']
-        let slog = system('R --no-save', rcode)
+        if has("win32")
+            " g:rplugin_R is Rgui.exe which will ignore the script
+            let slog = system('R --no-save', rcode)
+        else
+            " Works even with local Vim and remote R (but not on Windows)
+            let slog = system(g:rplugin_R . ' --no-save', rcode)
+        endif
         if v:shell_error
             call RWarningMsg(slog)
             return 0
         endif
         let libpaths = readfile(g:rplugin_tmpdir . "/libpaths")
-        if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2)
+        if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2) && !exists("g:R_remote_tmpdir")
             if !isdirectory(expand(libpaths[1]))
                 let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
                 if resp[0] == "y" || resp[0] == "Y"
@@ -724,7 +740,13 @@ function CheckNvimcomVersion()
         call delete(g:rplugin_tmpdir . "/libpaths")
 
         echo "Updating nvimcom... "
-        let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
+        if !exists("g:R_remote_tmpdir")
+            let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
+        else
+            call system('cp -R "' . g:rplugin_home . '/R/nvimcom" .')
+            let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"')
+            call system('rm -rf "' . g:R_tmpdir . '/nvimcom"')
+        endif
         if v:shell_error
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
@@ -941,6 +963,10 @@ function GetNvimcomInfo()
         let s:R_pid = vr[3]
         let $RCONSOLE = vr[4]
         let search_list = vr[5]
+        let g:rplugin_R_version = vr[6]
+        if len(vr) == 8
+            let $R_IP_ADDRESS = vr[7]
+        endif
         call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         if s:nvimcom_version != s:required_nvimcom_dot
             call RWarningMsg('This version of Nvim-R requires nvimcom ' .
@@ -952,6 +978,10 @@ function GetNvimcomInfo()
             let g:R_hl_term = 0
         endif
 
+        if exists("g:R_nvimcom_home")
+            let s:nvimcom_home = g:R_nvimcom_home
+        endif
+
         if isdirectory(s:nvimcom_home . "/bin/x64")
             let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/x64"
         elseif isdirectory(s:nvimcom_home . "/bin/i386")
@@ -960,7 +990,9 @@ function GetNvimcomInfo()
             let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin"
         endif
 
-        call writefile([s:nvimcom_version, s:nvimcom_home, g:rplugin_nvimcom_bin_dir], g:rplugin_compldir . "/nvimcom_info")
+        call writefile([s:nvimcom_version, s:nvimcom_home,
+                    \ g:rplugin_nvimcom_bin_dir, g:rplugin_R_version],
+                    \ g:rplugin_compldir . "/nvimcom_info")
 
         if has("win32")
             let nvc = "nclientserver.exe"
@@ -1556,24 +1588,29 @@ function SendParagraphToR(e, m)
         return
     endif
 
-    let i = line(".")
+    let o = line(".")
     let c = col(".")
+    let i = o
+    if g:R_paragraph_begin && getline(i) !~ '^\s*$'
+        let line = getline(i-1)
+        while i > 1 && !(line =~ '^\s*$' ||
+                    \ (&filetype == "rnoweb" && line =~ "^<<") ||
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{r"))
+            let i -= 1
+            let line = getline(i-1)
+        endwhile
+    endif
     let max = line("$")
     let j = i
     let gotempty = 0
     while j < max
+        let line = getline(j+1)
+        if line =~ '^\s*$' ||
+                    \ (&filetype == "rnoweb" && line =~ "^@$") ||
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```$")
+            break
+        endif
         let j += 1
-        let line = getline(j)
-        if &filetype == "rnoweb" && line =~ "^@$"
-            let j -= 1
-            break
-        elseif &filetype == "rmd" && line =~ "^[ \t]*```$"
-            let j -= 1
-            break
-        endif
-        if line =~ '^\s*$'
-            break
-        endif
     endwhile
     let lines = getline(i, j)
     let ok = RSourceLines(lines, a:e)
@@ -1588,7 +1625,7 @@ function SendParagraphToR(e, m)
     if a:m == "down"
         call GoDown()
     else
-        call cursor(i, c)
+        call cursor(o, c)
     endif
 endfunction
 
@@ -2916,7 +2953,7 @@ function BuildROmniList(pattern)
         return
     endif
 
-    let omnilistcmd = 'nvimcom:::nvim.bol("' . g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID . '"'
+    let omnilistcmd = 'nvimcom:::nvim.bol(".GlobalEnv"'
 
     if g:R_allnames == 1
         let omnilistcmd = omnilistcmd . ', allnames = TRUE'
@@ -3148,6 +3185,7 @@ call RSetDefaultValue("g:R_rmhidden",          0)
 call RSetDefaultValue("g:R_assign",            1)
 call RSetDefaultValue("g:R_assign_map",    "'_'")
 call RSetDefaultValue("g:R_args_in_stline",    0)
+call RSetDefaultValue("g:R_paragraph_begin",   1)
 call RSetDefaultValue("g:R_rnowebchunk",       1)
 call RSetDefaultValue("g:R_strict_rst",        1)
 call RSetDefaultValue("g:R_synctex",           1)
@@ -3268,7 +3306,7 @@ unlet obpllen
 " solution is to use ^A (\001) to move the cursor to the beginning of the line
 " before sending ^K. But the control characters may cause problems in some
 " circumstances.
-call RSetDefaultValue("g:R_ca_ck", 0)
+call RSetDefaultValue("g:R_clear_line", 0)
 
 " ========================================================================
 " Check if default mean of communication with R is OK
@@ -3344,19 +3382,21 @@ unlet s:filelines
 let s:nvimcom_version = "0"
 let s:nvimcom_home = ""
 let g:rplugin_nvimcom_bin_dir = ""
+let g:rplugin_R_version = "0"
 if filereadable(g:rplugin_compldir . "/nvimcom_info")
     let s:filelines = readfile(g:rplugin_compldir . "/nvimcom_info")
-    if len(s:filelines) == 3
-        let s:nvimcom_version = s:filelines[0]
-        let s:nvimcom_home = s:filelines[1]
-        let g:rplugin_nvimcom_bin_dir = s:filelines[2]
-        if !isdirectory(s:nvimcom_home) || !isdirectory(g:rplugin_nvimcom_bin_dir)
-            let s:nvimcom_version = ""
-            let s:nvimcom_home = ""
-            let g:rplugin_nvimcom_bin_dir = ""
+    if len(s:filelines) == 4
+        if isdirectory(s:filelines[1]) && isdirectory(s:filelines[2])
+            let s:nvimcom_version = s:filelines[0]
+            let s:nvimcom_home = s:filelines[1]
+            let g:rplugin_nvimcom_bin_dir = s:filelines[2]
+            let g:rplugin_R_version = s:filelines[3]
         endif
     endif
     unlet s:filelines
+endif
+if exists("g:R_nvimcom_home")
+    let s:nvimcom_home = g:R_nvimcom_home
 endif
 
 if has("nvim")
@@ -3509,9 +3549,18 @@ endif
 unlet s:ff
 unlet s:ft
 
+" 2016-08-25
 if exists("g:R_nvimcom_wait")
-    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
+    call RWarningMsgInp("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
 endif
+
+" 2017-02-07
 if exists("g:R_vsplit")
-    call RWarningMsg("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
+    call RWarningMsgInp("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
 endif
+
+" 2017-03-14
+if exists("g:R_ca_ck")
+    call RWarningMsgInp("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
+endif
+

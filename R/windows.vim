@@ -211,7 +211,7 @@ function CleanNvimAndStartR()
 endfunction
 
 function SendCmdToR_Windows(...)
-    if g:R_ca_ck
+    if g:R_clear_line
         let cmd = "\001" . "\013" . a:1 . "\n"
     else
         let cmd = a:1 . "\n"

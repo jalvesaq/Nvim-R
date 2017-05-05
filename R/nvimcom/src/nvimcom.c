@@ -56,6 +56,7 @@ static char strT[16];
 static char tmpdir[512];
 static char nvimcom_home[1024];
 static char search_list[1024];
+static char R_version[16];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
 
 #ifdef WIN32
@@ -149,7 +150,10 @@ static void nvimcom_nvimclient(const char *msg, char *port)
     hints.ai_protocol = 0;
 
     sprintf(portstr, "%d", srvport);
-    a = getaddrinfo("127.0.0.1", portstr, &hints, &result);
+    if(getenv("NVIM_IP_ADDRESS"))
+        a = getaddrinfo(getenv("NVIM_IP_ADDRESS"), portstr, &hints, &result);
+    else
+        a = getaddrinfo("127.0.0.1", portstr, &hints, &result);
     if (a != 0) {
         REprintf("Error: getaddrinfo: %s\n", gai_strerror(a));
         objbr_auto = 0;
@@ -856,23 +860,25 @@ static void nvimcom_save_running_info(int bindportn)
     } else {
 #ifdef WIN32
 #ifdef _WIN64
-        fprintf(f, "%s\n%s\n%d\n%" PRId64 "\n%" PRId64 "\n%s\n",
+        fprintf(f, "%s\n%s\n%d\n%" PRId64 "\n%" PRId64 "\n%s\n%s\n",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long long)GetForegroundWindow(), search_list);
+                (long long)GetForegroundWindow(), search_list, R_version);
 #else
-        fprintf(f, "%s\n%s\n%d\n%d\n%ld\n%s\n",
+        fprintf(f, "%s\n%s\n%d\n%d\n%ld\n%s\n%s\n",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long)GetForegroundWindow(), search_list);
+                (long)GetForegroundWindow(), search_list, R_version);
 #endif
 #else
         if(getenv("WINDOWID"))
-            fprintf(f, "%s\n%s\n%d\n%d\n%s\n%s\n",
+            fprintf(f, "%s\n%s\n%d\n%d\n%s\n%s\n%s\n",
                     nvimcom_version, nvimcom_home, bindportn, R_PID,
-                    getenv("WINDOWID"), search_list);
+                    getenv("WINDOWID"), search_list, R_version);
         else
-            fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n",
-                    nvimcom_version, nvimcom_home, bindportn, R_PID, search_list);
+            fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n%s\n",
+                    nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
 #endif
+        if(getenv("R_IP_ADDRESS"))
+            fprintf(f, "%s\n", getenv("R_IP_ADDRESS"));
         fclose(f);
     }
 }
@@ -1086,7 +1092,10 @@ static void *nvimcom_server_thread(void *arg)
     while(rp == NULL && bindportn < 10049){
         bindportn++;
         sprintf(bindport, "%d", bindportn);
-        result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
+        if(getenv("NVIM_IP_ADDRESS"))
+            result = getaddrinfo(NULL, bindport, &hints, &res);
+        else
+            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
         if(result != 0){
             REprintf("Error at getaddrinfo: %s [nvimcom]\n", gai_strerror(result));
             nvimcom_failure = 1;
@@ -1221,7 +1230,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth, char **vcv, char **srchls)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth, char **vcv, char **srchls, char **rvs)
 {
     verbose = *vrb;
     opendf = *odf;
@@ -1235,6 +1244,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
     if(getenv("NVIMR_TMPDIR")){
         strncpy(nvimcom_home, *pth, 1023);
         strncpy(search_list, *srchls, 1023);
+        strncpy(R_version, *rvs, 15);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
             strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);
@@ -1316,9 +1326,12 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
         if(verbose > 0)
             // TODO: use packageStartupMessage()
             REprintf("nvimcom %s loaded\n", nvimcom_version);
-        if(verbose > 1)
+        if(verbose > 1){
             REprintf("    NVIMR_TMPDIR = %s\n    NVIMR_ID = %s\n",
                     tmpdir, getenv("NVIMR_ID"));
+            if(getenv("R_IP_ADDRESS"))
+                REprintf("R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
+        }
 #ifdef WIN32
         r_is_busy = 0;
 #endif
