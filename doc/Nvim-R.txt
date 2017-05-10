@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.9
+Version: 0.9.9.1
 For Neovim >= 0.1.7 and Vim >= 8.0.0
 
  1. Overview                                    |Nvim-R-overview|
@@ -382,8 +382,8 @@ Command
   . Names (cur)                                        \rn
   . Structure (cur)                                    \rt
   . View data.frame (cur)                              \rv
-  . Run dput(cur) and show output in new tab           \dt
-  . Run print(cur) and show output in new tab          \pt
+  . Run dput(cur) and show output in new tab           \td
+  . Run print(cur) and show output in new tab          \tp
   --------------------------------------------------------
   . Arguments (cur)                                    \ra
   . Example (cur)                                      \re
@@ -510,8 +510,8 @@ of getting command-line completion). The list of objects used for completion
 is the same available for omnicompletion (see |R_start_libs|). You may close
 the R documentation buffer by simply pressing `q`.
 
-The command <LocalLeader>dt will run `dput()` with the object under cursor as
-argument and insert the output in a new tab. The command <LocalLeader>pt will
+The command <LocalLeader>td will run `dput()` with the object under cursor as
+argument and insert the output in a new tab. The command <LocalLeader>tp will
 run `print()` in the same way.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
@@ -2880,6 +2880,10 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.9.1 (2017-05-10)
+
+ * Change command \dt to \td and \pt to \tp.
 
 0.9.9 (2017-04-22)
 

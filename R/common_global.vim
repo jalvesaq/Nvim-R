@@ -2719,15 +2719,15 @@ function RControlMaps()
     call RCreateMaps("ni", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
     call RCreateMaps("ni", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
     call RCreateMaps("ni", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
-    call RCreateMaps("ni", '<Plug>RDputObj',      'dt', ':call RAction("dputtab")')
-    call RCreateMaps("ni", '<Plug>RPrintObj',     'pt', ':call RAction("printtab")')
+    call RCreateMaps("ni", '<Plug>RDputObj',      'td', ':call RAction("dputtab")')
+    call RCreateMaps("ni", '<Plug>RPrintObj',     'tp', ':call RAction("printtab")')
 
     call RCreateMaps("v", '<Plug>RObjectPr',     'rp', ':call RAction("print", "v")')
     call RCreateMaps("v", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names", "v")')
     call RCreateMaps("v", '<Plug>RObjectStr',    'rt', ':call RAction("str", "v")')
     call RCreateMaps("v", '<Plug>RViewDF',       'rv', ':call RAction("viewdf", "v")')
-    call RCreateMaps("v", '<Plug>RDputObj',      'dt', ':call RAction("dputtab", "v")')
-    call RCreateMaps("v", '<Plug>RPrintObj',     'pt', ':call RAction("printtab", "v")')
+    call RCreateMaps("v", '<Plug>RDputObj',      'td', ':call RAction("dputtab", "v")')
+    call RCreateMaps("v", '<Plug>RPrintObj',     'tp', ':call RAction("printtab", "v")')
 
     " Arguments, example, help
     "-------------------------------------
