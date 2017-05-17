@@ -13,6 +13,7 @@ if system("uname") =~ "OpenBSD"
     let s:tmuxversion = "0.0"
 else
     let s:tmuxversion = system("tmux -V")
+    let s:tmuxversion = substitute(s:tmuxversion, "master", "1.8", "")
     let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1', '')
     if strlen(s:tmuxversion) != 3
         let s:tmuxversion = "1.0"
