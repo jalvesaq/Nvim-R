@@ -1054,6 +1054,9 @@ function GetNvimcomInfo()
             " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
             " when R was not started by Neovim:
             call system("tmux set-environment -u NVIMR_TMPDIR")
+            " Also unset R_DEFAULT_PACKAGES so that other R instances do not
+            " load nvimcom unnecessarily
+            call system("tmux set-environment -u R_DEFAULT_PACKAGES")
         else
             call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
             call delete(g:rplugin_tmpdir . "/openR")
