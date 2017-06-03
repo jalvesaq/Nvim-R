@@ -716,7 +716,7 @@ function CheckNvimcomVersion()
                     \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
                     \ '    sep = "\n")',
                     \ 'sink()']
-        if has("win32")
+        if has("win32") && g:R_in_buffer == 0
             " g:rplugin_R is Rgui.exe which will ignore the script
             let slog = system('R --no-save', rcode)
         else
@@ -1860,11 +1860,6 @@ endfunction
 
 " Quit R
 function RQuit(how)
-    if g:R_in_buffer && has("win32")
-        call RWarningMsg("RQuit not implemented yet for R_in_buffer on Windows.")
-        return
-    endif
-
     if exists("b:quit_command")
         let qcmd = b:quit_command
     else
