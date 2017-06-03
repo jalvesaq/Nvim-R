@@ -954,7 +954,7 @@ function WaitNvimcomStart()
 endfunction
 
 function GetNvimcomInfo()
-    sleep 300m
+    sleep 1200m
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let s:nvimcom_version = vr[0]
