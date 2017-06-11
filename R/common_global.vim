@@ -2581,7 +2581,12 @@ function RAction(rcmd, ...)
                 echo "Wait..."
                 call delete(g:rplugin_tmpdir . "/Rinsert")
                 call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
-                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                if !exists("g:R_csv_app")
+                    let viewdf_filetype = 'tsv'
+                else
+                    let viewdf_filetype = 'csv'
+                endif
+                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '","' . viewdf_filetype . '")')
             endif
             return
         endif
