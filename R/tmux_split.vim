@@ -83,7 +83,12 @@ function SendCmdToR_TmuxSplit(...)
     else
         let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
     endif
-    let shscmd = "sh -c \"" . scmd . "\""
+	if g:R_wrap_sh
+	  let shscmd = "sh -c \"" . scmd . "\""
+	else
+	  let shscmd = scmd
+	endif
+
     let rlog = system(shscmd)
     if v:shell_error
         let rlog = substitute(rlog, "\n", " ", "g")
