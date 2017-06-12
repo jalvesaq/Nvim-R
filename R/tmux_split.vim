@@ -20,7 +20,8 @@ function StartR_TmuxSplit(rcmd)
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
-                \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
+                \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ,
+				\ 'set-environment SHELL /bin/sh']
     if $NVIM_IP_ADDRESS != ""
         call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
     endif
