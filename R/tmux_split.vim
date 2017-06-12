@@ -20,8 +20,7 @@ function StartR_TmuxSplit(rcmd)
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
-                \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ,
-				\ 'set-environment SHELL /bin/sh']
+                \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
     if $NVIM_IP_ADDRESS != ""
         call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
     endif
@@ -84,7 +83,8 @@ function SendCmdToR_TmuxSplit(...)
     else
         let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
     endif
-    let rlog = system(scmd)
+    let shscmd = "sh -c \"" . scmd . "\""
+    let rlog = system(shscmd)
     if v:shell_error
         let rlog = substitute(rlog, "\n", " ", "g")
         let rlog = substitute(rlog, "\r", " ", "g")
