@@ -3221,6 +3221,7 @@ call RSetDefaultValue("g:R_source",         "''")
 call RSetDefaultValue("g:R_in_buffer",         1)
 call RSetDefaultValue("g:R_open_example",      1)
 call RSetDefaultValue("g:R_hi_fun",            1)
+call RSetDefaultValue("g:R_hi_fun_paren",      0)
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
