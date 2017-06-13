@@ -3220,6 +3220,7 @@ call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
 call RSetDefaultValue("g:R_in_buffer",         1)
 call RSetDefaultValue("g:R_open_example",      1)
+call RSetDefaultValue("g:R_hi_fun",            1)
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
@@ -3235,13 +3236,6 @@ call RSetDefaultValue("g:R_latexcmd", "'default'")
 call RSetDefaultValue("g:R_texerr",             1)
 call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
 call RSetDefaultValue("g:R_indent_commented",  1)
-
-call RSetDefaultValue("g:R_hi_fun", 1)
-if !g:R_hi_fun
-    " Declare empty function to be called by nvimcom
-    function FillRLibList()
-    endfunction
-endif
 
 if g:rplugin_is_darwin
     call RSetDefaultValue("g:R_openpdf", 1)

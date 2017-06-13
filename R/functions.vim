@@ -40,7 +40,7 @@ endif
 function SourceRFunList(lib)
     if isdirectory(g:rplugin_compldir)
         let fnf = split(globpath(g:rplugin_compldir, 'fun_' . a:lib . '_*'), "\n")
-        if len(fnf) == 1
+        if len(fnf) == 1 && (!exists("g:R_hi_fun") || g:R_hi_fun != 0)
             " Highlight R functions
             exe "source " . substitute(fnf[0], ' ', '\\ ', 'g')
         elseif len(fnf) == 0
@@ -149,9 +149,11 @@ function FillRLibList()
     " better solution than setting a flag to let other buffers know that they
     " also need to update the syntax on CursorMoved event:
     " https://github.com/neovim/neovim/issues/901
-    let s:new_libs = len(s:loaded_lists)
-    silent exe 'set syntax=' . &syntax
-    redraw
+    if !exists("g:R_hi_fun") || g:R_hi_fun != 0
+        let s:new_libs = len(s:loaded_lists)
+        silent exe 'set syntax=' . &syntax
+        redraw
+    endif
     let b:rplugin_new_libs = s:new_libs
 endfunction
 
@@ -164,8 +166,10 @@ function RCheckLibList()
     if b:rplugin_new_libs == s:new_libs
         return
     endif
-    silent exe 'set filetype=' . &filetype
-    redraw
+    if !exists("g:R_hi_fun") || g:R_hi_fun != 0
+        silent exe 'set filetype=' . &filetype
+        redraw
+    endif
     let b:rplugin_new_libs = s:new_libs
 endfunction
 
