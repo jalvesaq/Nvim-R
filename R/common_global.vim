@@ -2435,6 +2435,9 @@ function RAskHelp(...)
 endfunction
 
 function DisplayArgs()
+    if !exists("s:status_line")
+        let s:status_line = &statusline
+    endif
     let s:displaying_args = 1
     if &filetype == "r" || b:IsInRCode(0)
         let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
@@ -2454,7 +2457,11 @@ function DisplayArgs()
             let fargs = substitute(fargs, "NO_ARGS", '', 'g')
             let fargs = substitute(fargs, "\x07", '=', 'g')
             let s:sttl_str = substitute(fargs, "\x09", ', ', 'g')
-            silent set statusline=%!RArgsStatusLine()
+            if exists("g:R_set_stline_cmd")
+                exe g:R_set_sttline_cmd
+            else
+                silent set statusline=%!RArgsStatusLine()
+            endif
         endif
     endif
     exe "normal! a("
@@ -2466,10 +2473,19 @@ function RArgsStatusLine()
 endfunction
 
 function RestoreStatusLine(p)
+    if !exists("s:status_line")
+        let s:status_line = &statusline
+    endif
     if s:displaying_args
         return
     endif
-    exe 'set statusline=' . substitute(s:status_line, ' ', '\\ ', 'g')
+    if exists("g:R_restore_sttline_cmd")
+        exe g:R_restore_sttline_cmd
+    elseif exists("*airline#update_statusline")
+        call airline#update_statusline()
+    else
+        exe 'set statusline=' . substitute(s:status_line, ' ', '\\ ', 'g')
+    endif
     if a:p
         normal! a)
     endif
@@ -3361,7 +3377,6 @@ if &filetype != "rbrowser"
 endif
 
 let s:firstbuffer = expand("%:p")
-let s:status_line = &statusline
 let s:displaying_args = 0
 let s:running_objbr = 0
 let s:running_rhelp = 0
