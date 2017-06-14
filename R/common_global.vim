@@ -3021,6 +3021,9 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                     continue
                 endif
             endif
+            if sln[0] =~ "[ '%]"
+                let sln[0] = "`" . sln[0] . "`"
+            endif
             if g:R_show_args
                 let info = sln[4]
                 let info = substitute(info, "\t", ", ", "g")

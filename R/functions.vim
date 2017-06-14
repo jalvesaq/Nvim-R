@@ -48,9 +48,13 @@ function SourceRFunList(lib)
                 let lines = readfile(fnf[0])
                 for line in lines
                     let newline = substitute(line, "\\.", "\\\\.", "g")
-                    let newline = substitute(line, "'", "\\\\'", "g")
-                    let newline = substitute(newline, "keyword rFunction ", "match rFunction '\\\\<", "")
-                    exe newline . "\\s*\\ze('"
+                    if substitute(line, "syn keyword rFunction ", "", "") =~ "[ ']"
+                        let newline = substitute(newline, "keyword rFunction ", "match rSpaceFun /`\\\\zs", "")
+                        exe newline . "\\ze`\\s*(/ contained"
+                    else
+                        let newline = substitute(newline, "keyword rFunction ", "match rFunction /\\\\<", "")
+                        exe newline . "\\s*\\ze(/"
+                    endif
                 endfor
             endif
         elseif len(fnf) == 0

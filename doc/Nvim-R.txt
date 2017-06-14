@@ -533,15 +533,15 @@ to be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to
 do CTRL-A twice to pass a single CTRL-A to Vim.
 
 If R is not running or if it is running but is busy the completion will be
-based on information from the packages listed by |R_start_libs|
-(provided that the libraries were loaded at least once during a session of
-Nvim-R usage). Otherwise, the pop up menu for completion of function
-arguments will include an additional line with the name of the library where
-the function is (if the function name can be found in more than one library)
-and the function method (if what is being shown are the arguments of a method
-and not of the function itself). For library() and require(), when completing
-the first argument, the popup list shows the names of installed packages, but
-only if R is running.
+based on information from the packages listed by |R_start_libs| (provided that
+the libraries were loaded at least once during a session of Nvim-R usage).
+Otherwise, the pop up menu for completion of function arguments will include
+an additional line with the name of the library where the function is (if the
+function name can be found in more than one library) and the function method
+(if what is being shown are the arguments of a method and not of the function
+itself). For both `library()` and `require()`, when completing the first
+argument, the popup list shows the names of installed packages, but only if R
+is running.
 
 You can source all .R files in a directory with the Normal mode command
 :RSourceDir, which accepts an optional argument (the directory to be sourced).
@@ -1302,6 +1302,9 @@ the `(` is typed, put in your |vimrc|:
 >
    let R_hi_fun_paren = 1
 <
+Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
+depending on your system configuration, the slowness might be noticeable.
+
 If you prefer to completely disable the syntax highlight of R functions put in
 your |vimrc|:
 >
