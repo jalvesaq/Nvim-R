@@ -24,7 +24,6 @@ nvim.primitive.args <- function(x)
     paste(f, collapse = "\x09")
 }
 
-
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
 nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
 {
@@ -32,7 +31,9 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
     if(firstLibArg){
         p <- dir(.libPaths())
         p <- p[grep(paste0("^", txt), p)]
-        return(paste0(p, collapse = "\x09"))
+        return(paste(p,
+                     sapply(p, function(x) packageDescription(x)$Title),
+                     sep = "\x07", collapse = "\x09"))
     }
 
     frm <- NA

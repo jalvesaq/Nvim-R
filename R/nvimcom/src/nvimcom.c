@@ -575,6 +575,34 @@ static void nvimcom_list_env()
 #endif
 }
 
+static void nvimcom_char_eval_char(const char *buf, char *rep, int size)
+{
+    SEXP cmdSexp, cmdexpr, ans;
+    ParseStatus status;
+    int er = 0;
+
+    strcpy(rep, "Error");
+
+    PROTECT(cmdSexp = allocVector(STRSXP, 1));
+    SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
+    PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+
+    if (status != PARSE_OK) {
+        fprintf(rep, "INVALID");
+    } else {
+        /* Only the first command will be executed if the expression includes
+         * a semicolon. */
+        PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
+        if(er){
+            fprintf(rep, "ERROR");
+        } else {
+            snprintf(rep, size, "%s", CHAR(STRING_ELT(ans, 0)));
+        }
+        UNPROTECT(1);
+    }
+    UNPROTECT(2);
+}
+
 static void nvimcom_eval_expr(const char *buf)
 {
     char fn[512];
@@ -755,11 +783,20 @@ static void nvimcom_list_libs()
     opendf = 0;
     openls = 0;
     int i = 0;
+    char pkgtitle[128];
+    char rcmd[128];
     while(loadedlibs[i][0] != 0){
         libn = loadedlibs[i] + 8;
         p = nvimcom_strcat(p, "   ##");
         p = nvimcom_strcat(p, libn);
-        p = nvimcom_strcat(p, "\t\n");
+        p = nvimcom_strcat(p, "\t");
+        snprintf(rcmd, 127, "packageDescription('%s', fields='Title')", libn);
+        nvimcom_char_eval_char(rcmd, pkgtitle, 127);
+        for(int j = 0; j < 128; j++)
+            if(pkgtitle[j] == '\n')
+                pkgtitle[j] = ' ';
+        p = nvimcom_strcat(p, pkgtitle);
+        p = nvimcom_strcat(p, "\n");
         if(nvimcom_get_list_status(loadedlibs[i], "library") == 1){
 #ifdef WIN32
             if(tcltkerr){
