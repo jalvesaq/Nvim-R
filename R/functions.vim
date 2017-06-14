@@ -42,13 +42,16 @@ function SourceRFunList(lib)
         let fnf = split(globpath(g:rplugin_compldir, 'fun_' . a:lib . '_*'), "\n")
         if len(fnf) == 1 && (!exists("g:R_hi_fun") || g:R_hi_fun != 0)
             " Highlight R functions
-            if g:R_hi_fun_paren
+            if !exists("g:R_hi_fun_paren") || g:R_hi_fun_paren == 0
+                exe "source " . substitute(fnf[0], ' ', '\\ ', 'g')
+            else
                 let lines = readfile(fnf[0])
                 for line in lines
-                    exe substitute(line, "keyword rFunction ", "match rFunction '", "") . "\\s*\\ze('"
+                    let newline = substitute(line, "\\.", "\\\\.", "g")
+                    let newline = substitute(line, "'", "\\\\'", "g")
+                    let newline = substitute(newline, "keyword rFunction ", "match rFunction '\\\\<", "")
+                    exe newline . "\\s*\\ze('"
                 endfor
-            else
-                exe "source " . substitute(fnf[0], ' ', '\\ ', 'g')
             endif
         elseif len(fnf) == 0
             let g:rplugin_debug_lists += ['Function list for "' . a:lib . '" not found.']

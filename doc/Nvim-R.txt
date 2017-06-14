@@ -855,6 +855,7 @@ of
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
 |R_hi_fun|            Highlight R functions
+|R_hi_fun_paren|      Highlight R functions only if followd by a `(`
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_rcomment_string|   String to comment code with \xx and \o
@@ -1282,6 +1283,7 @@ value of R_start_libs:
 
 ------------------------------------------------------------------------------
 							    *Rout_more_colors*
+							    *R_hi_fun_paren*
 							    *R_hi_fun*
 6.10. Syntax highlight: functions and .Rout files~
 
@@ -1294,8 +1296,14 @@ scripts, put the following in your |vimrc|:
 >
    let Rout_more_colors = 1
 <
-If you want to disable the syntax highlight of R functions put in your
-|vimrc|:
+By default, Nvim-R highlights the names of R functions even if they are not
+followed by a parenthesis. If you prefer to highlight R functions only if
+the `(` is typed, put in your |vimrc|:
+>
+   let R_hi_fun_paren = 1
+<
+If you prefer to completely disable the syntax highlight of R functions put in
+your |vimrc|:
 >
    let R_hi_fun = 0
 <
@@ -2881,9 +2889,10 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.9.1 (2017-05-10)
+0.9.9.1 (2017-06-13)
 
  * Change command \dt to \td and \pt to \tp.
+ * New option: R_hi_fun_paren.
 
 0.9.9 (2017-04-22)
 
