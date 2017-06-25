@@ -3055,9 +3055,15 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let sln[0] = "`" . sln[0] . "`"
             endif
             if g:R_show_args
-                let info = sln[4]
-                let info = substitute(info, "\t", ", ", "g")
-                let info = substitute(info, "\x07", " = ", "g")
+                let tmp = split(sln[4], "\x08")
+                let tmp[0] = substitute(tmp[0], "\t", ", ", "g")
+                let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
+                if len(tmp) == 2
+                    let tmp[1] = substitute(tmp[1], "\\\\n", "\n", "g")
+                    let info = tmp[1] . "Usage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                else
+                    let info = tmp[0]
+                endif
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
             else
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
@@ -3247,7 +3253,7 @@ call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_close_term",        1)
 call RSetDefaultValue("g:R_wait",             60)
 call RSetDefaultValue("g:R_wait_reply",        2)
-call RSetDefaultValue("g:R_show_args",         0)
+call RSetDefaultValue("g:R_show_args",         1)
 call RSetDefaultValue("g:R_show_arg_help",     1)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)

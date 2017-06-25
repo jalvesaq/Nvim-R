@@ -88,7 +88,14 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 if(nvim.grepl("GlobalEnv", printenv)){
                     cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = ""), "\n", sep="")
                 } else {
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), "\n", sep="")
+                    info <- ""
+                    if(NvimcomEnv$use.gbRd){
+                        try(info <- gbRd::Rd_help2txt(x, keep_section = "\\description", omit_sec_header = TRUE), silent = TRUE)
+                        info <- sub("^ *", "", info)
+                        info <- paste0(info, collapse = "\\n")
+                        info <- paste0("\x08", info)
+                    }
+                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), info, "\n", sep="")
                 }
             } else {
                 # some libraries have functions as list elements
@@ -131,6 +138,9 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
     nvim.OutDec <- options("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
+
+    if(is.null(NvimcomEnv$use.gbRd))
+        NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
 
     if(omnilist == ".GlobalEnv"){
         sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
@@ -237,8 +247,15 @@ nvim.buildomnils <- function(p){
     if(length(pbuilt) > 0){
         pvb <- sub(".*_.*_", "", pbuilt)
         if(pvb == pvi){
-            if(getOption("nvimcom.verbose") > 3)
-                cat("nvimcom R: No need to build omnils:", p, pvi, "\n")
+            if(file.mtime(paste0(bdir, "/README")) > file.mtime(paste0(bdir, pbuilt))){
+                unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+                nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+                if(getOption("nvimcom.verbose") > 3)
+                    cat("nvimcom R: omnils is older than the README\n")
+            } else{
+                if(getOption("nvimcom.verbose") > 3)
+                    cat("nvimcom R: omnils version is up to date:", p, pvi, "\n")
+            }
         } else {
             if(getOption("nvimcom.verbose") > 3)
                 cat("nvimcom R: omnils is outdated: ", p, " (", pvb, " x ", pvi, ")\n", sep = "")

@@ -1677,16 +1677,20 @@ Currently, there is only one script known to extend Nvim-R features:
 							    *R_args_in_stline*
 6.28. Function arguments~
 
-If you want that Vim shows a preview window with the function arguments as
-you do omnicompletion, put in your |vimrc|:
+During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
+functions' description and arguments. If you do not want the preview window,
+put in your |vimrc|:
 >
-   let R_show_args = 1
+   let R_show_args = 0
 <
-The preview window is not shown by default during omnicompletion because it is
-more convenient to run <Ctrl-X><Ctrl-A> to complete the function arguments.
-However, the preview window with R's documentation help for the item being
-completed is shown during the completion of arguments unless either the value
-of `R_show_arg_help` is `0` or `preview` is not included in your 'completeopt'.
+During the completion of function arguments, triggered by CTRL-X CTRL-A, the
+preview window shows R's documentation help for the item being
+completed unless you put in your |vimrc|:
+>
+   let R_show_arg_help = 0
+<
+You can also completely disable the preview window by setting 'completeopt'
+without the `preview` string.
 
 If you want that function arguments are displayed in Vim's status line when
 you insert `(`, put in your |vimrc|:
@@ -2906,6 +2910,8 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 
  * Change command \dt to \td and \pt to \tp.
  * New option: R_hi_fun_paren.
+ * New option: R_show_arg_help.
+ * New default value for R_show_args = 1.
 
 0.9.9 (2017-04-22)
 

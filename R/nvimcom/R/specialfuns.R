@@ -84,14 +84,14 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
         }
     }
 
-    if(is.null(getOption("nvimcom.use.gbRd")))
-        options(nvimcom.use.gbRd = length(grep("^gbRd$", row.names(installed.packages()))) > 0)
+    if(is.null(NvimcomEnv$use.gbRd))
+        NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
 
     res <- NULL
     for (field in names(frm)) {
         type <- typeof(frm[[field]])
         info <- ""
-        if(extrainfo && getOption("nvimcom.use.gbRd")){
+        if(extrainfo && NvimcomEnv$use.gbRd){
             try(info <- gbRd::Rdo_args2txt(funcname, field), silent = TRUE)
             if(info != "")
                 info <- paste0("\x08", info)

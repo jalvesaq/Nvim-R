@@ -7,6 +7,8 @@
 #
 ###############################################################
 
+NvimcomEnv <- new.env()
+
 .onLoad <- function(libname, pkgname) {
     if(Sys.getenv("NVIMR_TMPDIR") == "")
         return(invisible(NULL))
