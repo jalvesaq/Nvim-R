@@ -25,7 +25,7 @@ nvim.primitive.args <- function(x)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
+nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, extrainfo = FALSE)
 {
     # First argument of either library() or require():
     if(firstLibArg){
@@ -84,21 +84,30 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE)
         }
     }
 
+    if(is.null(getOption("nvimcom.use.gbRd")))
+        options(nvimcom.use.gbRd = length(grep("^gbRd$", row.names(installed.packages()))) > 0)
+
     res <- NULL
     for (field in names(frm)) {
         type <- typeof(frm[[field]])
+        info <- ""
+        if(extrainfo && getOption("nvimcom.use.gbRd")){
+            try(info <- gbRd::Rdo_args2txt(funcname, field), silent = TRUE)
+            if(info != "")
+                info <- paste0("\x08", info)
+        }
         if (type == 'symbol') {
-            res <- append(res, paste('\x09', field, sep = ''))
+            res <- append(res, paste('\x09', field, info, sep = ''))
         } else if (type == 'character') {
-            res <- append(res, paste('\x09', field, '\x07"', frm[[field]], '"', sep = ''))
+            res <- append(res, paste('\x09', field, '\x07"', frm[[field]], '"', info, sep = ''))
         } else if (type == 'logical') {
-            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), sep = ''))
+            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
         } else if (type == 'double') {
-            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), sep = ''))
+            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
         } else if (type == 'NULL') {
-            res <- append(res, paste('\x09', field, '\x07', 'NULL', sep = ''))
+            res <- append(res, paste('\x09', field, '\x07', 'NULL', info, sep = ''))
         } else if (type == 'language') {
-            res <- append(res, paste('\x09', field, '\x07', deparse(frm[[field]]), sep = ''))
+            res <- append(res, paste('\x09', field, '\x07', deparse(frm[[field]]), info, sep = ''))
         }
     }
     idx <- grep(paste("^\x09", txt, sep = ""), res)

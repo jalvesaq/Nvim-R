@@ -279,12 +279,14 @@ function RCompleteArgs()
         if np == 0
             call cursor(lnum, idx)
             let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
+            let objclass = ""
             if rkeyword0 =~ "::"
                 let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                 let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-                let objclass = ""
             else
-                let objclass = RGetFirstObjClass(rkeyword0)
+                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                    let objclass = RGetFirstObjClass(rkeyword0)
+                endif
                 let pkg = ""
             endif
             let rkeyword = '^' . rkeyword0 . "\x06"
@@ -295,9 +297,9 @@ function RCompleteArgs()
                 call delete(g:rplugin_tmpdir . "/eval_reply")
                 let msg = 'nvimcom:::nvim.args("' . rkeyword0 . '", "' . argkey . '"'
                 if objclass != ""
-                    let msg = msg . ', objclass = ' . objclass
+                    let msg .= ', objclass = ' . objclass
                 elseif pkg != ""
-                    let msg = msg . ', pkg = ' . pkg
+                    let msg .= ', pkg = ' . pkg
                 endif
                 if rkeyword0 == "library" || rkeyword0 == "require"
                     let isfirst = IsFirstRArg(lnum, cpos)
@@ -305,9 +307,12 @@ function RCompleteArgs()
                     let isfirst = 0
                 endif
                 if isfirst
-                    let msg = msg . ', firstLibArg = TRUE)'
+                    let msg .= ', firstLibArg = TRUE'
+                endif
+                if g:R_show_arg_help
+                    let msg .= ', extrainfo = TRUE)'
                 else
-                    let msg = msg . ')'
+                    let msg .= ')'
                 endif
                 call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
@@ -315,23 +320,32 @@ function RCompleteArgs()
                     let g:rplugin_lastev = ReadEvalReply()
                     if g:rplugin_lastev !~ "^R error: "
                         let args = []
-                        if g:rplugin_lastev[0] == "\x04" && len(split(g:rplugin_lastev, "\x04")) == 1
+                        if g:rplugin_lastev[0] == "\x04" &&
+                                    \ len(split(g:rplugin_lastev, "\x04")) == 1 ||
+                                    \ g:rplugin_lastev == ""
                             return ''
                         endif
                         let tmp0 = split(g:rplugin_lastev, "\x04")
                         let tmp = split(tmp0[0], "\x09")
                         if(len(tmp) > 0)
                             for id in range(len(tmp))
-                                let tmp2 = split(tmp[id], "\x07")
-                                if tmp2[0] == '...' || isfirst
-                                    let tmp3 = tmp2[0]
+                                let tmp1 = split(tmp[id], "\x08")
+                                if len(tmp1) > 1
+                                    let info = tmp1[1]
                                 else
-                                    let tmp3 = tmp2[0] . " = "
+                                    let info = ""
+                                endif
+                                let info = substitute(info, "\\\\n", "\n", "g")
+                                let tmp2 = split(tmp1[0], "\x07")
+                                if tmp2[0] == '...' || isfirst
+                                    let word = tmp2[0]
+                                else
+                                    let word = tmp2[0] . " = "
                                 endif
                                 if len(tmp2) > 1
-                                    call add(args,  {'word': tmp3, 'menu': tmp2[1]})
+                                    call add(args,  {'word': word, 'menu': tmp2[1], 'info': info})
                                 else
-                                    call add(args,  {'word': tmp3, 'menu': ' '})
+                                    call add(args,  {'word': word, 'menu': ' ', 'info': info})
                                 endif
                             endfor
                             if len(args) > 0 && len(tmp0) > 1
@@ -3234,6 +3248,7 @@ call RSetDefaultValue("g:R_close_term",        1)
 call RSetDefaultValue("g:R_wait",             60)
 call RSetDefaultValue("g:R_wait_reply",        2)
 call RSetDefaultValue("g:R_show_args",         0)
+call RSetDefaultValue("g:R_show_arg_help",     1)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
