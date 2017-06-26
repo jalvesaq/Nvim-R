@@ -89,12 +89,8 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                     cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = ""), "\n", sep="")
                 } else {
                     info <- ""
-                    if(NvimcomEnv$use.gbRd){
-                        try(info <- gbRd::Rd_help2txt(x, keep_section = "\\description", omit_sec_header = TRUE), silent = TRUE)
-                        info <- sub("^ *", "", info)
-                        info <- paste0(info, collapse = "\\n")
-                        info <- paste0("\x08", info)
-                    }
+                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
                     cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), info, "\n", sep="")
                 }
             } else {
@@ -133,14 +129,60 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     }
 }
 
+GetFunDescription <- function(pkg)
+{
+    pth <- attr(packageDescription(pkg), "file")
+    rdx <- sub("Meta/package.rds", paste0("help/", pkg), pth)
+    tab <- read.table(sub("Meta/package.rds", "help/AnIndex", pth),
+                      sep = "\t", quote = "", stringsAsFactors = FALSE)
+    als <- tab$V2
+    names(als) <- tab$V1
+    pkgInfo <- tools:::fetchRdDB(rdx)
+    GetDescr <- function(x)
+    {
+        x <- paste0(x, collapse = "")
+        x <- sub(".*\\\\description\\{\\s*", "", x)
+        xc <- charToRaw(x)
+        k <- 1
+        i <- 1
+        l <- length(xc)
+        while(i < l)
+        {
+            if(xc[i] == 123){
+                k <- k + 1
+            }
+            if(xc[i] == 125){
+                k <- k - 1
+            }
+            if(k == 0){
+                x <- rawToChar(xc[1:i-1])
+                break
+            }
+            i <- i + 1
+        }
+
+        x <- sub("^\\s*", "", x)
+        x <- sub("\\s*$", "", x)
+        x <- gsub("\n\\s*", "\\\\N", x)
+        x <- paste0("\x08", x)
+        x
+    }
+    NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
+                                       "alias" = als)
+}
+
 # Build Omni List
 nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
     nvim.OutDec <- options("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
 
-    if(is.null(NvimcomEnv$use.gbRd))
-        NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
+    if(!missing(packlist) && is.null(NvimcomEnv$pkgdescr[[packlist]]))
+        GetFunDescription(packlist)
+
+
+    # if(is.null(NvimcomEnv$use.gbRd))
+    #     NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
 
     if(omnilist == ".GlobalEnv"){
         sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
