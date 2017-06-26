@@ -171,6 +171,38 @@ GetFunDescription <- function(pkg)
                                        "alias" = als)
 }
 
+CleanOmnils <- function(f)
+{
+    x <- readLines(f)
+    x <- gsub("\\\\R", "R", x)
+    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\code\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\samp\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\file\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\sQuote\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\dQuote\\{(.+?)\\}", "“\\1”", x)
+    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item ", "\\\\N  • ", x)
+    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
+    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "‘\\1’", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
+    x <- gsub("\\\\ldots", "...", x)
+    x <- gsub("\\\\dots", "...", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    writeLines(x, f)
+}
+
+
 # Build Omni List
 nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
     nvim.OutDec <- options("OutDec")
@@ -229,6 +261,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
             for(obj in obj.list)
                 nvim.omni.line(obj, curpack, curlib, 0)
             sink()
+            CleanOmnils(omnilist)
             # Build list of functions for syntax highlight
             fl <- readLines(omnilist)
             fl <- fl[grep("\x06function\x06function", fl)]
