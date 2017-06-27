@@ -3060,7 +3060,11 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
                 if len(tmp) == 2
                     let tmp[1] = substitute(tmp[1], '\\N', "\n", "g")
-                    let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                    if tmp[0] == "Not a function"
+                        let info =  tmp[1]
+                    else
+                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                    endif
                 else
                     let info = tmp[0]
                 endif

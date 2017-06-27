@@ -100,12 +100,18 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         } else {
             if(is.list(xx)){
                 if(curlevel == 0){
-                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", "\n", sep="")
+                    info <- ""
+                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
+                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
                 } else {
                     cat(x, "\x06", x.class, "\x06", " ", "\x06", printenv, "\x06Not a function", "\n", sep="")
                 }
             } else {
-                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", "\n", sep="")
+                info <- ""
+                try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
+                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
             }
         }
     }
@@ -324,7 +330,7 @@ nvim.buildomnils <- function(p){
         if(pvb == pvi){
             if(file.mtime(paste0(bdir, "/README")) > file.mtime(paste0(bdir, pbuilt))){
                 unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-                nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+                nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
                 if(getOption("nvimcom.verbose") > 3)
                     cat("nvimcom R: omnils is older than the README\n")
             } else{
@@ -335,11 +341,11 @@ nvim.buildomnils <- function(p){
             if(getOption("nvimcom.verbose") > 3)
                 cat("nvimcom R: omnils is outdated: ", p, " (", pvb, " x ", pvi, ")\n", sep = "")
             unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-            nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+            nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
         }
     } else {
         if(getOption("nvimcom.verbose") > 3)
             cat("nvimcom R: omnils does not exist:", p, "\n")
-        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
     }
 }
