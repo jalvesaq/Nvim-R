@@ -114,7 +114,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
     res <- res[idx]
     res <- paste(res, sep = '', collapse='')
     res <- sub("^\x09", "", res)
-    res <- gsub("\n", "\\\\n", res)
+    res <- gsub("\n", "\\\\N", res)
 
     if(length(res) == 0 || res == ""){
         res <- "NO_ARGS"

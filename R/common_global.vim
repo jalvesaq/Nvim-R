@@ -332,10 +332,10 @@ function RCompleteArgs()
                                 let tmp1 = split(tmp[id], "\x08")
                                 if len(tmp1) > 1
                                     let info = tmp1[1]
+                                    let info = substitute(info, "\\\\N", "\n", "g")
                                 else
-                                    let info = ""
+                                    let info = " "
                                 endif
-                                let info = substitute(info, "\\\\n", "\n", "g")
                                 let tmp2 = split(tmp1[0], "\x07")
                                 if tmp2[0] == '...' || isfirst
                                     let word = tmp2[0]
@@ -351,6 +351,7 @@ function RCompleteArgs()
                             if len(args) > 0 && len(tmp0) > 1
                                 call add(args, {'word': ' ', 'menu': tmp0[1]})
                             endif
+                            let s:is_completing = 1
                             call complete(idx2, args)
                         endif
                         return ''
@@ -367,6 +368,7 @@ function RCompleteArgs()
                         return ''
                     endif
                     let info = tmp1[4]
+                    let info = substitute(info, "\x08.*", "", "")
                     let argsL = split(info, "\x09")
                     let args = []
                     for id in range(len(argsL))
@@ -3059,7 +3061,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let tmp[0] = substitute(tmp[0], "\t", ", ", "g")
                 let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
                 if len(tmp) == 2
-                    let tmp[1] = substitute(tmp[1], '\\N', "\n", "g")
+                    let tmp[1] = "Description: " . substitute(tmp[1], '\\N', "\n", "g")
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
@@ -3068,12 +3070,14 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 else
                     let info = tmp[0]
                 endif
+                let g:TheInfo = info
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
             else
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
             endif
         endif
     endfor
+    let s:is_completing = 1
     return resp
 endfunction
 
@@ -3400,6 +3404,24 @@ autocmd BufEnter * call RBufEnter()
 if &filetype != "rbrowser"
     autocmd VimLeave * call RVimLeave()
 endif
+
+let s:is_completing = 0
+function RCompleteSyntax()
+    if exists("b:rplugin_preview_syntax_ok")
+        return
+    endif
+    if &previewwindow && s:is_completing
+        let s:is_completing = 0
+        let b:rplugin_preview_syntax_ok = 1
+        setlocal filetype=rdoc
+        syn match rdocArg '^\s*\w\{-}\ze:'
+        syn match rdocArg '^\s*\w\{-}\.\w\{-}\ze:'
+        syn match rdocTitle '^Description: '
+        syn match rdocTitle '^Usage: '
+        syn region rdocUsage matchgroup=rdocTitle start="^Usage: " matchgroup=NONE end='\t$' contains=@rdocR
+    endif
+endfunction
+autocmd! BufWinEnter * call RCompleteSyntax()
 
 let s:firstbuffer = expand("%:p")
 let s:displaying_args = 0

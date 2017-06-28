@@ -25,6 +25,9 @@ setlocal iskeyword=@,48-57,_,.
 
 " Prepare R documentation output to be displayed by Nvim
 function! FixRdoc()
+    if &previewwindow
+        return
+    endif
     let lnr = line("$")
     for ii in range(1, lnr)
         let lii = getline(ii)
