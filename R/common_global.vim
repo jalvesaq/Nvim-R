@@ -3060,12 +3060,16 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let tmp = split(sln[4], "\x08")
                 let tmp[0] = substitute(tmp[0], "\t", ", ", "g")
                 let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
+                if tmp[0] =~ '""'
+                    let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                    let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
+                endif
                 if len(tmp) == 2
                     let tmp[1] = "Description: " . substitute(tmp[1], '\\N', "\n", "g")
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
-                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
                     endif
                 else
                     let info = tmp[0]
