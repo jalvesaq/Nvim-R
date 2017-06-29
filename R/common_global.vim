@@ -3058,18 +3058,39 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             endif
             if g:R_show_args
                 let tmp = split(sln[4], "\x08")
-                let tmp[0] = substitute(tmp[0], "\t", ", ", "g")
-                let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
-                if tmp[0] =~ '""'
-                    let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
-                    let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
-                endif
                 if len(tmp) == 2
                     let tmp[1] = "Description: " . substitute(tmp[1], '\\N', "\n", "g")
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
-                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
+                        "let usage = "Usage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                        if tmp[0] =~ '""'
+                            let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                            let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
+                        endif
+                        let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
+                        let xx = split(substitute(tmp[0], "\x07", " = ", "g"), "\x09")
+                        if len(xx) > 0
+                            let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
+                            let ii = 0
+                            let jj = 1
+                            let ll = len(xx)
+                            let wl = winwidth(0) - 1
+                            while(jj < ll)
+                                if(len(usageL[ii] . ", " . xx[jj]) < wl)
+                                    let usageL[ii] .= ", " . xx[jj]
+                                elseif jj < ll
+                                    let usageL[ii] .= ","
+                                    let ii += 1
+                                    let usageL += ["           " . xx[jj]]
+                                endif
+                                let jj += 1
+                            endwhile
+                            let usage = join(usageL, "\n") . ")"
+                        else
+                            let usage = "Usage: " . a:prefix . sln[0] . "()"
+                        endif
+                        let info =  tmp[1] . "\n" . usage . "\t"
                     endif
                 else
                     let info = tmp[0]
