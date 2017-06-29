@@ -3069,7 +3069,11 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
-                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
+                        if has("nvim")
+                            let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
+                        else
+                            let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
+                        endif
                     endif
                 else
                     let info = tmp[0]
