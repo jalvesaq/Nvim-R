@@ -10,13 +10,11 @@ setlocal iskeyword=@,48-57,_,.
 setlocal conceallevel=2
 setlocal concealcursor=nvc
 
-if !exists("rdoc_minlines")
-    let rdoc_minlines = 200
+if exists("rdoc_minlines") && exists("rdoc_maxlines")
+    exec "syn sync minlines=" . rdoc_minlines . " maxlines=" . rdoc_maxlines
+else
+    syn sync fromstart
 endif
-if !exists("rdoc_maxlines")
-    let rdoc_maxlines = 2 * rdoc_minlines
-endif
-exec "syn sync minlines=" . rdoc_minlines . " maxlines=" . rdoc_maxlines
 
 
 syn match  rdocTitle	      "^[A-Z].*:$"
@@ -35,9 +33,8 @@ syn region rdocPackage start="^[A-Za-z]\S*::" end="[\s\r]" contains=rdocPackName
 syn match rdocPackName "^[A-Za-z][A-Za-z0-9\.]*" contained
 syn match rdocFuncName "::[A-Za-z0-9\.\-_]*" contained
 
-syn region rdocArgReg matchgroup=rdocArgTitle start="^Arguments:" matchgroup=NONE end="^ \t" contains=rdocArgItems,rdocArgTitle,rdocPackage,rdocFuncName,rdocStringS keepend transparent
-syn region rdocArgItems start="\n\n" end=":" contains=rdocArg contained transparent
-syn match rdocArg "\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)*" contained extend
+syn region rdocArgReg matchgroup=rdocArgTitle start="^Arguments:" matchgroup=NONE end="^ \t" contains=rdocArg,rdocArgTitle,rdocPackage,rdocFuncName,rdocStringS keepend transparent
+syn match rdocArg "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)*\ze:" contained extend
 
 syn include @rdocR syntax/r.vim
 syn region rdocExample matchgroup=rdocExTitle start="^Examples:$" matchgroup=rdocExEnd end='^###$' contains=@rdocR keepend
@@ -51,7 +48,6 @@ syn sync match rdocSyncNONE grouphere NONE "^ \t$"
 
 
 " Define the default highlighting.
-"hi def link rdocArgReg Statement
 hi def link rdocTitle	    Title
 hi def link rdocArgTitle    Title
 hi def link rdocExTitle   Title

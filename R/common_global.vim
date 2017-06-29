@@ -3069,11 +3069,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
-                        if has("nvim")
-                            let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
-                        else
-                            let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
-                        endif
+                        let info =  tmp[1] . "\nUsage: " . a:prefix . sln[0] . "(" . tmp[0] . ")\t"
                     endif
                 else
                     let info = tmp[0]
@@ -3422,11 +3418,11 @@ function RCompleteSyntax()
         let s:is_completing = 0
         let b:rplugin_preview_syntax_ok = 1
         setlocal filetype=rdoc
-        syn match rdocArg '^\s*\w\{-}\ze:'
-        syn match rdocArg '^\s*\w\{-}\.\w\{-}\ze:'
-        syn match rdocTitle '^Description: '
-        syn match rdocTitle '^Usage: '
+        syn match rdocArg2 "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"
+        syn match rdocTitle2 '^Description: '
         syn region rdocUsage matchgroup=rdocTitle start="^Usage: " matchgroup=NONE end='\t$' contains=@rdocR
+        hi def link rdocArg2 Special
+        hi def link rdocTitle2 Title
     endif
 endfunction
 autocmd! BufWinEnter * call RCompleteSyntax()
