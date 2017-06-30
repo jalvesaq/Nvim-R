@@ -3433,6 +3433,7 @@ let s:is_completing = 0
 function RCompleteSyntax()
     if &previewwindow && s:is_completing
         let s:is_completing = 0
+        set encoding=utf-8
         syntax clear
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rdoc.vim"
         syn match rdocArg2 "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"

@@ -105,7 +105,8 @@ gbRd.args2txt <- function(rdo, arglist){
         keep_tags <- c("\\title","\\name", "\\arguments")
         x[which(!(tags %in% keep_tags))] <-  NULL
 
-        temp <- tools::Rd2txt(x, out=tempfile("Rtxt"), package="")
+        temp <- tools::Rd2txt(x, out=tempfile("Rtxt"), package="",
+                              outputEncoding = "UTF-8")
 
         res <- readLines(temp) # note: temp is a (temporary) file name.
         unlink(temp)
