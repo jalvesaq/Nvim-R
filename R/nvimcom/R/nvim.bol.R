@@ -135,6 +135,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     }
 }
 
+# Code adapted from the gbRd package
 GetFunDescription <- function(pkg)
 {
     pth <- attr(packageDescription(pkg), "file")

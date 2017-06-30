@@ -13,6 +13,117 @@
 
 ### Jakson Alves de Aquino
 
+
+###############################################################################
+# The code of the next four functions were copied from the gbRd package
+# version 0.4-11 (released on 2012-01-04) and adapted to nvimcom.
+# The gbRd package was developed by Georgi N. Boshnakov.
+
+gbRd.set_sectag <- function(s,sectag,eltag){
+    attr( s, "Rd_tag") <- eltag  # using `structure' would be more elegant...
+    res <- list(s)
+    attr( res, "Rd_tag") <- sectag
+    res
+}
+
+gbRd.fun <- function(x){
+    rdo <- NULL # prepare the "Rd" object rdo
+    x <- do.call("help", list(x, help_type = "text",
+                               verbose = FALSE,
+                               try.all.packages = FALSE))
+
+
+    # If more matches are found will `paths' have length > 1?
+    f <- as.character(x) # removes attributes of x.
+
+    path <- dirname(f)
+    dirpath <- dirname(path)
+    pkgname <- basename(dirpath)
+    RdDB <- file.path(path, pkgname)
+
+    if(file.exists(paste(RdDB, "rdx", sep="."))) {
+        rdo <- tools:::fetchRdDB(RdDB, basename(f))
+    }
+    if(is.null(rdo)) # todo: should someting less radical be done?
+        stop("rdo object is NULL!")
+
+    tags <- tools:::RdTags(rdo)
+    keep_tags <- unique(c("\\title","\\name", "\\arguments"))
+    rdo[which(!(tags %in% keep_tags))] <-  NULL
+
+    rdo
+}
+
+gbRd.get_args <- function(rdo, arg,...){
+    tags <- tools:::RdTags(rdo)
+    rdargs <- rdo[[which(tags=="\\arguments")]] # use of [[]] assumes only one element here
+    f <- function(x){
+        wrk0 <- as.character(x[[1]])
+        if(wrk0 %in% arg)
+            return(TRUE)
+
+        wrk <- strsplit(wrk0,",[ ]*")
+        if(!is.character(wrk[[1]])){
+            warning("wrk[[1]] is not a character vector! ", wrk)
+            return(FALSE)
+        }
+        wrk <- any( wrk[[1]] %in% arg )
+        wrk
+    }
+    sel <- !sapply(rdargs, f)
+
+    ## deal with "..." arg
+    if("..." %in% arg || "\\dots" %in% arg){  # since formals() represents ... by "..."
+        f2 <- function(x){
+            if(is.list(x[[1]]) && length(x[[1]])>0 &&
+               attr(x[[1]][[1]],"Rd_tag") == "\\dots")
+                TRUE
+            else
+                FALSE
+        }
+        i2 <- sapply(rdargs, f2)
+        sel[i2] <- FALSE
+    }
+
+    rdargs[sel] <- NULL   # keeps attributes (even if 0 or 1 elem remain).
+    rdargs
+}
+
+gbRd.args2txt <- function(rdo, arglist){
+    rdo <- gbRd.fun(rdo)
+
+    argl <- list()
+    for(a in arglist){
+        x <- list()
+        class(x) <- "Rd"
+        x[[1]] <- gbRd.set_sectag("Dummy name", sectag="\\name", eltag="VERB")
+        x[[2]] <- gbRd.set_sectag("Dummy title", sectag="\\title", eltag="TEXT")
+
+        x[[3]] <- gbRd.get_args(rdo, a)
+
+        tags <- tools:::RdTags(x)
+        keep_tags <- c("\\title","\\name", "\\arguments")
+        x[which(!(tags %in% keep_tags))] <-  NULL
+
+        temp <- tools::Rd2txt(x, out=tempfile("Rtxt"), package="")
+
+        res <- readLines(temp) # note: temp is a (temporary) file name.
+        unlink(temp)
+
+        # Omit \\title and sec header
+        res <- res[-c(1, 2, 3, 4)]
+
+        res <- paste(res, collapse="\\N")
+        res <- sub("\\\\N$", "", res)
+        res <- paste0("\x08", res)
+        argl[[a]] <- res
+    }
+    argl
+}
+
+###############################################################################
+
+
 nvim.primitive.args <- function(x)
 {
     fun <- get(x)
@@ -84,18 +195,15 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
         }
     }
 
-    if(is.null(NvimcomEnv$use.gbRd))
-        NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
+    if(extrainfo)
+        arglist <- gbRd.args2txt(funcname, names(frm))
 
     res <- NULL
-    for (field in names(frm)) {
+    for(field in names(frm)){
         type <- typeof(frm[[field]])
         info <- ""
-        if(extrainfo && NvimcomEnv$use.gbRd){
-            try(info <- gbRd::Rdo_args2txt(funcname, field), silent = TRUE)
-            if(info != "")
-                info <- paste0("\x08", info)
-        }
+        if(extrainfo)
+            info <- arglist[[field]]
         if (type == 'symbol') {
             res <- append(res, paste('\x09', field, info, sep = ''))
         } else if (type == 'character') {
@@ -114,7 +222,6 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
     res <- res[idx]
     res <- paste(res, sep = '', collapse='')
     res <- sub("^\x09", "", res)
-    res <- gsub("\n", "\\\\N", res)
 
     if(length(res) == 0 || res == ""){
         res <- "NO_ARGS"

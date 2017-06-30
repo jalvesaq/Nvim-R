@@ -114,9 +114,6 @@ Main dependencies:~
    R >= 3.0.0:
       http://www.r-project.org/
 
-   gbRd: R package to display additional information during completion of
-   functions' arguments (only if 'completeopt' includes `preview`).
-
    Notes about the R package `nvimcom`:
 
      - The R package `nvimcom` is included in Nvim-R and is automatically
@@ -527,12 +524,11 @@ It can be installed from:
 
 When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
 CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
-backward (see |popupmenu-completion|). If R is running, the R package `gbRd`
-is installed and 'completeopt' includes the `preview` string, the preview
-window will display help for the argument selected in the pop up menu (see
-|R_show_arg_help|). For rnoweb, rmd and rrst file types, CTRL-X CTRL-A can
-also be used to complete knitr chunk options if the cursor is inside the chunk
-header.
+backward (see |popupmenu-completion|). If R is running and 'completeopt'
+includes the `preview` string, the preview window will display help for the
+argument selected in the pop up menu (see |R_show_arg_help|). For rnoweb, rmd
+and rrst file types, CTRL-X CTRL-A can also be used to complete knitr chunk
+options if the cursor is inside the chunk header.
 
 Note: If you are using Vim in a Tmux session, and if you configured CTRL-A
 to be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to
@@ -2906,7 +2902,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.9.1 (2017-06-13)
+0.9.9.1 (2017-06-29)
 
  * Change command \dt to \td and \pt to \tp.
  * New option: R_hi_fun_paren.

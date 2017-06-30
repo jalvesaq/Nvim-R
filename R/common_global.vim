@@ -3432,13 +3432,10 @@ endif
 
 let s:is_completing = 0
 function RCompleteSyntax()
-    if exists("b:rplugin_preview_syntax_ok")
-        return
-    endif
     if &previewwindow && s:is_completing
         let s:is_completing = 0
-        let b:rplugin_preview_syntax_ok = 1
-        setlocal filetype=rdoc
+        syntax clear
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rdoc.vim"
         syn match rdocArg2 "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"
         syn match rdocTitle2 '^Description: '
         syn region rdocUsage matchgroup=rdocTitle start="^Usage: " matchgroup=NONE end='\t$' contains=@rdocR
