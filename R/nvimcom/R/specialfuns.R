@@ -31,10 +31,11 @@ gbRd.fun <- function(x){
     x <- do.call("help", list(x, help_type = "text",
                                verbose = FALSE,
                                try.all.packages = FALSE))
-
+    if(length(x) == 0)
+        return(NULL)
 
     # If more matches are found will `paths' have length > 1?
-    f <- as.character(x) # removes attributes of x.
+    f <- as.character(x[1]) # removes attributes of x.
 
     path <- dirname(f)
     dirpath <- dirname(path)
@@ -44,8 +45,8 @@ gbRd.fun <- function(x){
     if(file.exists(paste(RdDB, "rdx", sep="."))) {
         rdo <- tools:::fetchRdDB(RdDB, basename(f))
     }
-    if(is.null(rdo)) # todo: should someting less radical be done?
-        stop("rdo object is NULL!")
+    if(is.null(rdo))
+        return(NULL)
 
     tags <- tools:::RdTags(rdo)
     keep_tags <- unique(c("\\title","\\name", "\\arguments"))
@@ -56,11 +57,17 @@ gbRd.fun <- function(x){
 
 gbRd.get_args <- function(rdo, arg){
     tags <- tools:::RdTags(rdo)
-    rdargs <- rdo[[which(tags=="\\arguments")]] # use of [[]] assumes only one element here
+    wtags <- which(tags=="\\arguments")
+
+    if(length(wtags) != 1)
+        return(NULL)
+
+    rdargs <- rdo[[wtags]] # use of [[]] assumes only one element here
     f <- function(x){
         wrk0 <- as.character(x[[1]])
-        if(wrk0 %in% arg)
-            return(TRUE)
+        for(w in wrk0)
+            if(w %in% arg)
+                return(TRUE)
 
         wrk <- strsplit(wrk0,",[ ]*")
         if(!is.character(wrk[[1]])){
@@ -92,13 +99,15 @@ gbRd.get_args <- function(rdo, arg){
 gbRd.args2txt <- function(rdo, arglist){
     rdo <- gbRd.fun(rdo)
 
+    if(is.null(rdo))
+        return(list())
+
     argl <- list()
     for(a in arglist){
         x <- list()
         class(x) <- "Rd"
         x[[1]] <- gbRd.set_sectag("Dummy name", sectag="\\name", eltag="VERB")
         x[[2]] <- gbRd.set_sectag("Dummy title", sectag="\\title", eltag="TEXT")
-
         x[[3]] <- gbRd.get_args(rdo, a)
 
         tags <- tools:::RdTags(x)
@@ -196,7 +205,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
         }
     }
 
-    if(extrainfo)
+    if(extrainfo && length(frm) > 0)
         arglist <- gbRd.args2txt(funcname, names(frm))
 
     res <- NULL
@@ -208,7 +217,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
         if (type == 'symbol') {
             res <- append(res, paste('\x09', field, info, sep = ''))
         } else if (type == 'character') {
-            res <- append(res, paste('\x09', field, '\x07"', frm[[field]], '"', info, sep = ''))
+            res <- append(res, paste('\x09', field, '\x07"', gsub("\n", "\\\\n", frm[[field]]), '"', info, sep = ''))
         } else if (type == 'logical') {
             res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
         } else if (type == 'double') {
