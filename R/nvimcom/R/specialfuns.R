@@ -54,7 +54,7 @@ gbRd.fun <- function(x){
     rdo
 }
 
-gbRd.get_args <- function(rdo, arg,...){
+gbRd.get_args <- function(rdo, arg){
     tags <- tools:::RdTags(rdo)
     rdargs <- rdo[[which(tags=="\\arguments")]] # use of [[]] assumes only one element here
     f <- function(x){
