@@ -3058,18 +3058,18 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             endif
             if g:R_show_args
                 let tmp = split(sln[4], "\x08")
+                if tmp[0] =~ '""'
+                    let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                    let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
+                endif
+                let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
+                let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
                 if len(tmp) == 2
                     let tmp[1] = "Description: " . substitute(tmp[1], '\\N', "\n", "g")
                     if tmp[0] == "Not a function"
                         let info =  tmp[1]
                     else
-                        "let usage = "Usage: " . a:prefix . sln[0] . "(" . tmp[0] . ")"
-                        if tmp[0] =~ '""'
-                            let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
-                            let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
-                        endif
-                        let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
-                        let xx = split(substitute(tmp[0], "\x07", " = ", "g"), "\x09")
+                        let xx = split(tmp[0], "\x09")
                         if len(xx) > 0
                             let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
                             let ii = 0
@@ -3093,9 +3093,8 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                         let info =  tmp[1] . "\n" . usage . "\t"
                     endif
                 else
-                    let info = tmp[0]
+                    let info = substitute(tmp[0], "\x09", ", ", "g")
                 endif
-                let g:TheInfo = info
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
             else
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
