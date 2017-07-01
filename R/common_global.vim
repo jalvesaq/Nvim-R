@@ -3026,11 +3026,12 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
         if line =~ a:newbase
             " Skip elements of lists unless the user is really looking for them.
             " Skip lists if the user is looking for one of its elements.
-            if (a:base !~ '\$' && line =~ '\$') || (a:base =~ '\$' && line !~ '\$')
+            let obj = substitute(line, "\x06.*", "", "")
+            if (a:base !~ '\$' && obj =~ '\$') || (a:base =~ '\$' && obj !~ '\$')
                 continue
             endif
             " Idem with S4 objects
-            if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
+            if (a:base !~ '@' && obj =~ '@') || (a:base =~ '@' && obj !~ '@')
                 continue
             endif
             let sln = split(line, "\x06", 1)
