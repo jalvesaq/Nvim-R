@@ -183,7 +183,7 @@ function! RBGetPkgName()
     while lnum > 0
         let line = getline(lnum)
         if line =~ '.*##[0-9a-zA-Z\.]*\t'
-            let line = substitute(line, '.*##\(.*\)\t', '\1', "")
+            let line = substitute(line, '.*##\(.\{-}\)\t.*', '\1', "")
             return line
         endif
         let lnum -= 1
