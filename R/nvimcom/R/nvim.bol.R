@@ -88,7 +88,10 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 if(nvim.grepl("GlobalEnv", printenv)){
                     cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = ""), "\n", sep="")
                 } else {
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), "\n", sep="")
+                    info <- ""
+                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
+                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), info, "\n", sep="")
                 }
             } else {
                 # some libraries have functions as list elements
@@ -97,12 +100,18 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         } else {
             if(is.list(xx)){
                 if(curlevel == 0){
-                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", "\n", sep="")
+                    info <- ""
+                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
+                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
                 } else {
                     cat(x, "\x06", x.class, "\x06", " ", "\x06", printenv, "\x06Not a function", "\n", sep="")
                 }
             } else {
-                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", "\n", sep="")
+                info <- ""
+                try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
+                        silent = TRUE)
+                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
             }
         }
     }
@@ -126,11 +135,93 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     }
 }
 
+# Code adapted from the gbRd package
+GetFunDescription <- function(pkg)
+{
+    pth <- attr(packageDescription(pkg), "file")
+    rdx <- sub("Meta/package.rds", paste0("help/", pkg), pth)
+    tab <- read.table(sub("Meta/package.rds", "help/AnIndex", pth),
+                      sep = "\t", quote = "", stringsAsFactors = FALSE)
+    als <- tab$V2
+    names(als) <- tab$V1
+    pkgInfo <- tools:::fetchRdDB(rdx)
+    GetDescr <- function(x)
+    {
+        x <- paste0(x, collapse = "")
+        x <- sub(".*\\\\description\\{\\s*", "", x)
+        xc <- charToRaw(x)
+        k <- 1
+        i <- 1
+        l <- length(xc)
+        while(i < l)
+        {
+            if(xc[i] == 123){
+                k <- k + 1
+            }
+            if(xc[i] == 125){
+                k <- k - 1
+            }
+            if(k == 0){
+                x <- rawToChar(xc[1:i-1])
+                break
+            }
+            i <- i + 1
+        }
+
+        x <- sub("^\\s*", "", x)
+        x <- sub("\\s*$", "", x)
+        x <- gsub("\n\\s*", "\\\\N", x)
+        x <- paste0("\x08", x)
+        x
+    }
+    NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
+                                       "alias" = als)
+}
+
+CleanOmnils <- function(f)
+{
+    x <- readLines(f)
+    x <- gsub("\\\\R", "R", x)
+    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\code\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\samp\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\file\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\sQuote\\{(.+?)\\}", "‘\\1’", x)
+    x <- gsub("\\\\dQuote\\{(.+?)\\}", "“\\1”", x)
+    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item ", "\\\\N  • ", x)
+    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
+    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "‘\\1’", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
+    x <- gsub("\\\\ldots", "...", x)
+    x <- gsub("\\\\dots", "...", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    writeLines(x, f)
+}
+
+
 # Build Omni List
 nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
     nvim.OutDec <- options("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
+
+    if(!missing(packlist) && is.null(NvimcomEnv$pkgdescr[[packlist]]))
+        GetFunDescription(packlist)
+
+
+    # if(is.null(NvimcomEnv$use.gbRd))
+    #     NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
 
     if(omnilist == ".GlobalEnv"){
         sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
@@ -177,6 +268,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
             for(obj in obj.list)
                 nvim.omni.line(obj, curpack, curlib, 0)
             sink()
+            CleanOmnils(omnilist)
             # Build list of functions for syntax highlight
             fl <- readLines(omnilist)
             fl <- fl[grep("\x06function\x06function", fl)]
@@ -237,17 +329,24 @@ nvim.buildomnils <- function(p){
     if(length(pbuilt) > 0){
         pvb <- sub(".*_.*_", "", pbuilt)
         if(pvb == pvi){
-            if(getOption("nvimcom.verbose") > 3)
-                cat("nvimcom R: No need to build omnils:", p, pvi, "\n")
+            if(file.mtime(paste0(bdir, "/README")) > file.mtime(paste0(bdir, pbuilt))){
+                unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+                nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
+                if(getOption("nvimcom.verbose") > 3)
+                    cat("nvimcom R: omnils is older than the README\n")
+            } else{
+                if(getOption("nvimcom.verbose") > 3)
+                    cat("nvimcom R: omnils version is up to date:", p, pvi, "\n")
+            }
         } else {
             if(getOption("nvimcom.verbose") > 3)
                 cat("nvimcom R: omnils is outdated: ", p, " (", pvb, " x ", pvi, ")\n", sep = "")
             unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-            nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+            nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
         }
     } else {
         if(getOption("nvimcom.verbose") > 3)
             cat("nvimcom R: omnils does not exist:", p, "\n")
-        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, getOption("nvimcom.allnames"))
+        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
     }
 }

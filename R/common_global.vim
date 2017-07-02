@@ -279,12 +279,14 @@ function RCompleteArgs()
         if np == 0
             call cursor(lnum, idx)
             let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
+            let objclass = ""
             if rkeyword0 =~ "::"
                 let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                 let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-                let objclass = ""
             else
-                let objclass = RGetFirstObjClass(rkeyword0)
+                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                    let objclass = RGetFirstObjClass(rkeyword0)
+                endif
                 let pkg = ""
             endif
             let rkeyword = '^' . rkeyword0 . "\x06"
@@ -295,9 +297,9 @@ function RCompleteArgs()
                 call delete(g:rplugin_tmpdir . "/eval_reply")
                 let msg = 'nvimcom:::nvim.args("' . rkeyword0 . '", "' . argkey . '"'
                 if objclass != ""
-                    let msg = msg . ', objclass = ' . objclass
+                    let msg .= ', objclass = ' . objclass
                 elseif pkg != ""
-                    let msg = msg . ', pkg = ' . pkg
+                    let msg .= ', pkg = ' . pkg
                 endif
                 if rkeyword0 == "library" || rkeyword0 == "require"
                     let isfirst = IsFirstRArg(lnum, cpos)
@@ -305,9 +307,12 @@ function RCompleteArgs()
                     let isfirst = 0
                 endif
                 if isfirst
-                    let msg = msg . ', firstLibArg = TRUE)'
+                    let msg .= ', firstLibArg = TRUE'
+                endif
+                if g:R_show_arg_help
+                    let msg .= ', extrainfo = TRUE)'
                 else
-                    let msg = msg . ')'
+                    let msg .= ')'
                 endif
                 call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
@@ -315,28 +320,40 @@ function RCompleteArgs()
                     let g:rplugin_lastev = ReadEvalReply()
                     if g:rplugin_lastev !~ "^R error: "
                         let args = []
-                        if g:rplugin_lastev[0] == "\x04" && len(split(g:rplugin_lastev, "\x04")) == 1
+                        if g:rplugin_lastev[0] == "\x04" &&
+                                    \ len(split(g:rplugin_lastev, "\x04")) == 1 ||
+                                    \ g:rplugin_lastev == ""
                             return ''
                         endif
                         let tmp0 = split(g:rplugin_lastev, "\x04")
                         let tmp = split(tmp0[0], "\x09")
                         if(len(tmp) > 0)
                             for id in range(len(tmp))
-                                let tmp2 = split(tmp[id], "\x07")
-                                if tmp2[0] == '...' || isfirst
-                                    let tmp3 = tmp2[0]
+                                let tmp1 = split(tmp[id], "\x08")
+                                if len(tmp1) > 1
+                                    let info = tmp1[1]
+                                    let info = substitute(info, "\\\\N", "\n", "g")
                                 else
-                                    let tmp3 = tmp2[0] . " = "
+                                    let info = " "
                                 endif
-                                if len(tmp2) > 1
-                                    call add(args,  {'word': tmp3, 'menu': tmp2[1]})
+                                let tmp2 = split(tmp1[0], "\x07")
+                                if tmp2[0] == '...' || isfirst
+                                    let word = tmp2[0]
                                 else
-                                    call add(args,  {'word': tmp3, 'menu': ' '})
+                                    let word = tmp2[0] . " = "
+                                endif
+                                if word == "NO_ARGS = "
+                                    call add(args,  {'word': " ", 'menu': "No arguments"})
+                                elseif len(tmp2) > 1
+                                    call add(args,  {'word': word, 'menu': tmp2[1], 'info': info})
+                                else
+                                    call add(args,  {'word': word, 'menu': ' ', 'info': info})
                                 endif
                             endfor
                             if len(args) > 0 && len(tmp0) > 1
                                 call add(args, {'word': ' ', 'menu': tmp0[1]})
                             endif
+                            let s:is_completing = 1
                             call complete(idx2, args)
                         endif
                         return ''
@@ -353,17 +370,20 @@ function RCompleteArgs()
                         return ''
                     endif
                     let info = tmp1[4]
+                    let info = substitute(info, "\x08.*", "", "")
                     let argsL = split(info, "\x09")
                     let args = []
                     for id in range(len(argsL))
                         let newkey = '^' . argkey
                         let tmp2 = split(argsL[id], "\x07")
-                        if (argkey == '' || tmp2[0] =~ newkey) && tmp2[0] !~ "No arguments"
+                        if argkey == '' || tmp2[0] =~ newkey
                             if tmp2[0] != '...'
                                 let tmp2[0] = tmp2[0] . " = "
                             endif
                             if len(tmp2) == 2
                                 let tmp3 = {'word': tmp2[0], 'menu': tmp2[1]}
+                            elseif tmp2[0] == "NO_ARGS = "
+                                let tmp3 = {'word': " ", 'menu': 'No arguments'}
                             else
                                 let tmp3 = {'word': tmp2[0], 'menu': ''}
                             endif
@@ -3008,13 +3028,16 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
     let resp = []
     for line in a:olines
         if line =~ a:newbase
+            " Delete information about package eventually added by nvim.args()
+            let line = substitute(line, "\x04.*", "", "")
             " Skip elements of lists unless the user is really looking for them.
             " Skip lists if the user is looking for one of its elements.
-            if (a:base !~ '\$' && line =~ '\$') || (a:base =~ '\$' && line !~ '\$')
+            let obj = substitute(line, "\x06.*", "", "")
+            if (a:base !~ '\$' && obj =~ '\$') || (a:base =~ '\$' && obj !~ '\$')
                 continue
             endif
             " Idem with S4 objects
-            if (a:base !~ '@' && line =~ '@') || (a:base =~ '@' && line !~ '@')
+            if (a:base !~ '@' && obj =~ '@') || (a:base =~ '@' && obj !~ '@')
                 continue
             endif
             let sln = split(line, "\x06", 1)
@@ -3040,16 +3063,52 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             if sln[0] =~ "[ '%]"
                 let sln[0] = "`" . sln[0] . "`"
             endif
-            if g:R_show_args
-                let info = sln[4]
-                let info = substitute(info, "\t", ", ", "g")
-                let info = substitute(info, "\x07", " = ", "g")
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
-            else
+            if g:R_show_args && len(sln) > 4
+                let tmp = split(sln[4], "\x08")
+                if tmp[0] =~ '""'
+                    let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                    let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
+                endif
+                let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
+                let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
+                if len(tmp) == 2
+                    let descr = "Description: " . substitute(tmp[1], '\\N', "\n", "g") . "\n"
+                else
+                    let descr = ""
+                endif
+                if tmp[0] == "Not a function"
+                    let usage =  ""
+                else
+                    " Format usage paragraph according to the width of the current window
+                    let xx = split(tmp[0], "\x09")
+                    if len(xx) > 0
+                        let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
+                        let ii = 0
+                        let jj = 1
+                        let ll = len(xx)
+                        let wl = winwidth(0) - 1
+                        while(jj < ll)
+                            if(len(usageL[ii] . ", " . xx[jj]) < wl)
+                                let usageL[ii] .= ", " . xx[jj]
+                            elseif jj < ll
+                                let usageL[ii] .= ","
+                                let ii += 1
+                                let usageL += ["           " . xx[jj]]
+                            endif
+                            let jj += 1
+                        endwhile
+                        let usage = join(usageL, "\n") . ")\t"
+                    else
+                        let usage = "Usage: " . a:prefix . sln[0] . "()\t"
+                    endif
+                endif
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': descr . usage})
+            elseif len(sln) > 3
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
             endif
         endif
     endfor
+    let s:is_completing = 1
     return resp
 endfunction
 
@@ -3089,9 +3148,11 @@ function CompleteR(findstart, base)
             let pkg = ""
         endif
 
-        " The char '$' at the end of 'a:base' is treated as end of line, and
-        " the pattern is never found in 'line'.
+        " The char '$' at the end of `a:base` is treated as end of line, and
+        " the pattern is never found in `line`.
         let newbase = '^' . substitute(newbase, "\\$$", "", "")
+        " A dot matches anything
+        let newbase = substitute(newbase, '\.', '\\.', 'g')
 
         if pkg == ""
             call BuildROmniList(a:base)
@@ -3233,7 +3294,8 @@ call RSetDefaultValue("g:R_esc_term",          1)
 call RSetDefaultValue("g:R_close_term",        1)
 call RSetDefaultValue("g:R_wait",             60)
 call RSetDefaultValue("g:R_wait_reply",        2)
-call RSetDefaultValue("g:R_show_args",         0)
+call RSetDefaultValue("g:R_show_args",         1)
+call RSetDefaultValue("g:R_show_arg_help",     1)
 call RSetDefaultValue("g:R_never_unmake_menu", 0)
 call RSetDefaultValue("g:R_insert_mode_cmds",  0)
 call RSetDefaultValue("g:R_source",         "''")
@@ -3375,6 +3437,22 @@ autocmd BufEnter * call RBufEnter()
 if &filetype != "rbrowser"
     autocmd VimLeave * call RVimLeave()
 endif
+
+let s:is_completing = 0
+function RCompleteSyntax()
+    if &previewwindow && s:is_completing
+        let s:is_completing = 0
+        set encoding=utf-8
+        syntax clear
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rdoc.vim"
+        syn match rdocArg2 "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"
+        syn match rdocTitle2 '^Description: '
+        syn region rdocUsage matchgroup=rdocTitle start="^Usage: " matchgroup=NONE end='\t$' contains=@rdocR
+        hi def link rdocArg2 Special
+        hi def link rdocTitle2 Title
+    endif
+endfunction
+autocmd! BufWinEnter * call RCompleteSyntax()
 
 let s:firstbuffer = expand("%:p")
 let s:displaying_args = 0

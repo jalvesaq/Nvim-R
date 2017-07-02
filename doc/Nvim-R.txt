@@ -524,9 +524,11 @@ It can be installed from:
 
 When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
 CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
-backward (see |popupmenu-completion|). For rnoweb, rmd and rrst file types,
-CTRL-X CTRL-A can also be used to complete knitr chunk options if the cursor
-is inside the chunk header.
+backward (see |popupmenu-completion|). If R is running and 'completeopt'
+includes the `preview` string, the preview window will display help for the
+argument selected in the pop up menu (see |R_show_arg_help|). For rnoweb, rmd
+and rrst file types, CTRL-X CTRL-A can also be used to complete knitr chunk
+options if the cursor is inside the chunk header.
 
 Note: If you are using Vim in a Tmux session, and if you configured CTRL-A
 to be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to
@@ -886,6 +888,7 @@ of
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
 |R_show_args|         Show extra information during omnicompletion
+|R_show_arg_help|     Show extra information during arguments completion
 |R_args_in_stline|    Set 'statusline' to function arguments
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
@@ -1666,17 +1669,24 @@ Currently, there is only one script known to extend Nvim-R features:
 
 ------------------------------------------------------------------------------
 								 *R_show_args*
+							     *R_show_arg_help*
 							    *R_args_in_stline*
 6.28. Function arguments~
 
-If you want that Vim shows a preview window with the function arguments as
-you do omnicompletion, put in your |vimrc|:
+During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
+functions' description and arguments. If you do not want the preview window,
+put in your |vimrc|:
 >
-   let R_show_args = 1
+   let R_show_args = 0
 <
-The preview window is not shown by default because it is more convenient to
-run <Ctrl-X><Ctrl-A> to complete the function arguments. The preview window
-will be shown only if "preview" is also included in your 'completeopt'.
+During the completion of function arguments, triggered by CTRL-X CTRL-A, the
+preview window shows R's documentation help for the item being
+completed unless you put in your |vimrc|:
+>
+   let R_show_arg_help = 0
+<
+You can also completely disable the preview window by setting 'completeopt'
+without the `preview` string.
 
 If you want that function arguments are displayed in Vim's status line when
 you insert `(`, put in your |vimrc|:
@@ -2892,10 +2902,12 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.9.1 (2017-06-13)
+0.9.9.1 (2017-06-29)
 
  * Change command \dt to \td and \pt to \tp.
  * New option: R_hi_fun_paren.
+ * New option: R_show_arg_help.
+ * New default value for R_show_args = 1.
 
 0.9.9 (2017-04-22)
 
