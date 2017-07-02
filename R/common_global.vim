@@ -75,14 +75,6 @@ elseif !has("channel") || !has("job")
     finish
 endif
 
-
-" Set default value of some variables:
-function RSetDefaultValue(var, val)
-    if !exists(a:var)
-        exe "let " . a:var . " = " . a:val
-    endif
-endfunction
-
 function ReplaceUnderS()
     if &filetype != "r" && b:IsInRCode(0) == 0
         let isString = 1
@@ -3258,76 +3250,76 @@ let s:Rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
 " Variables whose default value is fixed
-call RSetDefaultValue("g:R_allnames",          0)
-call RSetDefaultValue("g:R_rmhidden",          0)
-call RSetDefaultValue("g:R_assign",            1)
-call RSetDefaultValue("g:R_assign_map",    "'_'")
-call RSetDefaultValue("g:R_args_in_stline",    0)
-call RSetDefaultValue("g:R_paragraph_begin",   1)
-call RSetDefaultValue("g:R_rnowebchunk",       1)
-call RSetDefaultValue("g:R_strict_rst",        1)
-call RSetDefaultValue("g:R_synctex",           1)
-call RSetDefaultValue("g:R_openhtml",          0)
-call RSetDefaultValue("g:R_nvim_wd",           0)
-call RSetDefaultValue("g:R_commented_lines",   0)
-call RSetDefaultValue("g:R_after_start",    "''")
-call RSetDefaultValue("g:R_csv_warn",          1)
-call RSetDefaultValue("g:R_min_editor_width", 80)
-call RSetDefaultValue("g:R_rconsole_width",   80)
-call RSetDefaultValue("g:R_rconsole_height",  15)
-call RSetDefaultValue("g:R_tmux_title","'NvimR'")
-call RSetDefaultValue("g:R_listmethods",       0)
-call RSetDefaultValue("g:R_specialplot",       0)
-call RSetDefaultValue("g:R_notmuxconf",        0)
-call RSetDefaultValue("g:R_routnotab",         0)
-call RSetDefaultValue("g:R_editor_w",         66)
-call RSetDefaultValue("g:R_help_w",           46)
-call RSetDefaultValue("g:R_objbr_w",          40)
-call RSetDefaultValue("g:R_objbr_h",          10)
-call RSetDefaultValue("g:R_objbr_opendf",      1)
-call RSetDefaultValue("g:R_objbr_openlist",    0)
-call RSetDefaultValue("g:R_objbr_allnames",    0)
-call RSetDefaultValue("g:R_objbr_labelerr",    1)
-call RSetDefaultValue("g:R_applescript",       0)
-call RSetDefaultValue("g:R_tmux_split",        0)
-call RSetDefaultValue("g:R_esc_term",          1)
-call RSetDefaultValue("g:R_close_term",        1)
-call RSetDefaultValue("g:R_wait",             60)
-call RSetDefaultValue("g:R_wait_reply",        2)
-call RSetDefaultValue("g:R_show_args",         1)
-call RSetDefaultValue("g:R_show_arg_help",     1)
-call RSetDefaultValue("g:R_never_unmake_menu", 0)
-call RSetDefaultValue("g:R_insert_mode_cmds",  0)
-call RSetDefaultValue("g:R_source",         "''")
-call RSetDefaultValue("g:R_in_buffer",         1)
-call RSetDefaultValue("g:R_open_example",      1)
-call RSetDefaultValue("g:R_hi_fun",            1)
-call RSetDefaultValue("g:R_hi_fun_paren",      0)
+let g:R_allnames          = get(g:, "R_allnames",           0)
+let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
+let g:R_assign            = get(g:, "R_assign",             1)
+let g:R_assign_map        = get(g:, "R_assign_map",       "_")
+let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
+let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
+let g:R_rnowebchunk       = get(g:, "R_rnowebchunk",        1)
+let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
+let g:R_synctex           = get(g:, "R_synctex",            1)
+let g:R_openhtml          = get(g:, "R_openhtml",           0)
+let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
+let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
+let g:R_after_start       = get(g:, "R_after_start",       "")
+let g:R_csv_warn          = get(g:, "R_csv_warn",           1)
+let g:R_min_editor_width  = get(g:, "R_min_editor_width",  80)
+let g:R_rconsole_width    = get(g:, "R_rconsole_width",    80)
+let g:R_rconsole_height   = get(g:, "R_rconsole_height",   15)
+let g:R_tmux_title        = get(g:, "R_tmux_title",   "NvimR")
+let g:R_listmethods       = get(g:, "R_listmethods",        0)
+let g:R_specialplot       = get(g:, "R_specialplot",        0)
+let g:R_notmuxconf        = get(g:, "R_notmuxconf",         0)
+let g:R_routnotab         = get(g:, "R_routnotab",          0)
+let g:R_editor_w          = get(g:, "R_editor_w",          66)
+let g:R_help_w            = get(g:, "R_help_w",            46)
+let g:R_objbr_w           = get(g:, "R_objbr_w",           40)
+let g:R_objbr_h           = get(g:, "R_objbr_h",           10)
+let g:R_objbr_opendf      = get(g:, "R_objbr_opendf",       1)
+let g:R_objbr_openlist    = get(g:, "R_objbr_openlist",     0)
+let g:R_objbr_allnames    = get(g:, "R_objbr_allnames",     0)
+let g:R_objbr_labelerr    = get(g:, "R_objbr_labelerr",     1)
+let g:R_applescript       = get(g:, "R_applescript",        0)
+let g:R_tmux_split        = get(g:, "R_tmux_split",         0)
+let g:R_esc_term          = get(g:, "R_esc_term",           1)
+let g:R_close_term        = get(g:, "R_close_term",         1)
+let g:R_wait              = get(g:, "R_wait",              60)
+let g:R_wait_reply        = get(g:, "R_wait_reply",         2)
+let g:R_show_args         = get(g:, "R_show_args",          1)
+let g:R_show_arg_help     = get(g:, "R_show_arg_help",      1)
+let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)
+let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
+let g:R_source            = get(g:, "R_source",            "")
+let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
+let g:R_open_example      = get(g:, "R_open_example",       1)
+let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
+let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
 if g:R_in_buffer
-    call RSetDefaultValue("g:R_nvimpager", "'vertical'")
+    let g:R_nvimpager = get(g:, "R_nvimpager", "vertical")
 else
-    call RSetDefaultValue("g:R_nvimpager",      "'tab'")
+    let g:R_nvimpager = get(g:, "R_nvimpager", "tab")
 endif
-call RSetDefaultValue("g:R_objbr_place",     "'script,right'")
-call RSetDefaultValue("g:R_source_args",  "'print.eval=TRUE'")
-call RSetDefaultValue("g:R_user_maps_only", 0)
-call RSetDefaultValue("g:R_latexcmd", "'default'")
-call RSetDefaultValue("g:R_texerr",             1)
-call RSetDefaultValue("g:R_rmd_environment", "'.GlobalEnv'")
-call RSetDefaultValue("g:R_indent_commented",  1)
+let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
+let g:R_source_args      = get(g:, "R_source_args", "print.eval=TRUE")
+let g:R_user_maps_only   = get(g:, "R_user_maps_only",              0)
+let g:R_latexcmd         = get(g:, "R_latexcmd",            "default")
+let g:R_texerr           = get(g:, "R_texerr",                      1)
+let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
+let g:R_indent_commented = get(g:, "R_indent_commented",            1)
 
 if g:rplugin_is_darwin
-    call RSetDefaultValue("g:R_openpdf", 1)
+    let g:R_openpdf = get(g:, "R_openpdf", 1)
     let g:R_pdfviewer = "skim"
 else
-    call RSetDefaultValue("g:R_openpdf", 2)
+    let g:R_openpdf = get(g:, "R_openpdf", 2)
     if has("win32")
         let g:R_pdfviewer = "sumatra"
     else
-        call RSetDefaultValue("g:R_pdfviewer", "'zathura'")
+        let g:R_pdfviewer = get(g:, "R_pdfviewer", "zathura")
     endif
 endif
 
@@ -3336,12 +3328,12 @@ if !exists("g:r_indent_ess_comments")
 endif
 if g:r_indent_ess_comments
     if g:R_indent_commented
-        call RSetDefaultValue("g:R_rcomment_string", "'## '")
+        let g:R_rcomment_string = get(g:, "R_rcomment_string", "## ")
     else
-        call RSetDefaultValue("g:R_rcomment_string", "'### '")
+        let g:R_rcomment_string = get(g:, "R_rcomment_string", "### ")
     endif
 else
-    call RSetDefaultValue("g:R_rcomment_string", "'# '")
+    let g:R_rcomment_string = get(g:, "R_rcomment_string", "# ")
 endif
 
 if g:R_in_buffer
@@ -3349,11 +3341,11 @@ if g:R_in_buffer
     let g:R_arrange_windows  = 0
 endif
 if has("win32")
-    call RSetDefaultValue("g:R_save_win_pos",    1)
-    call RSetDefaultValue("g:R_arrange_windows", 1)
+    let g:R_save_win_pos    = get(g:, "R_save_win_pos",    1)
+    let g:R_arrange_windows = get(g:, "R_arrange_windows", 1)
 else
-    call RSetDefaultValue("g:R_save_win_pos",    0)
-    call RSetDefaultValue("g:R_arrange_windows", 0)
+    let g:R_save_win_pos    = get(g:, "R_save_win_pos",    0)
+    let g:R_arrange_windows = get(g:, "R_arrange_windows", 0)
 endif
 
 " Look for invalid options
@@ -3365,7 +3357,9 @@ if obpllen > 1
     finish
 endif
 for idx in range(0, obpllen)
-    if objbrplace[idx] != "console" && objbrplace[idx] != "script" && objbrplace[idx] != "left" && objbrplace[idx] != "right" && objbrplace[idx] != "top" && objbrplace[idx] != "bottom"
+    if objbrplace[idx] != "console" && objbrplace[idx] != "script" &&
+                \ objbrplace[idx] != "left" && objbrplace[idx] != "right" &&
+                \ objbrplace[idx] != "top" && objbrplace[idx] != "bottom"
         call RWarningMsgInp('Invalid option for R_objbr_place: "' . objbrplace[idx] . '". Valid options are: console or script and right or left."')
         let g:rplugin_failed = 1
         finish
@@ -3380,7 +3374,7 @@ unlet obpllen
 " solution is to use ^A (\001) to move the cursor to the beginning of the line
 " before sending ^K. But the control characters may cause problems in some
 " circumstances.
-call RSetDefaultValue("g:R_clear_line", 0)
+let g:R_clear_line = get(g:, "R_clear_line", 0)
 
 " ========================================================================
 " Check if default mean of communication with R is OK

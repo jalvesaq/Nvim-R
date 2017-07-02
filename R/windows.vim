@@ -2,8 +2,8 @@
 
 let s:sumatra_in_path = 0
 
-call RSetDefaultValue("g:R_set_home_env", 1)
-call RSetDefaultValue("g:R_i386", 0)
+let g:R_set_home_env = get(g:, "R_set_home_env", 1)
+let g:R_i386 = get(g:, "R_i386", 0)
 
 if !exists("g:rplugin_R_path")
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin_tmpdir . "/run_cmd.bat")

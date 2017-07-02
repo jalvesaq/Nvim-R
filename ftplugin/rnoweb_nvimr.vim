@@ -13,7 +13,7 @@ endif
 " after the global ones:
 runtime R/common_buffer.vim
 
-call RSetDefaultValue("g:R_latexmk", 1)
+let g:R_latexmk = get(g:, "R_latexmk", 1)
 if !exists("s:has_latexmk")
     if g:R_latexmk && executable("latexmk") && executable("perl")
         let s:has_latexmk = 1
