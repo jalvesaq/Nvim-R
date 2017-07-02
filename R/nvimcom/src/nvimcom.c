@@ -588,13 +588,13 @@ static void nvimcom_char_eval_char(const char *buf, char *rep, int size)
     PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 
     if (status != PARSE_OK) {
-        fprintf(rep, "INVALID");
+        strcpy(rep, "INVALID");
     } else {
         /* Only the first command will be executed if the expression includes
          * a semicolon. */
         PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
         if(er){
-            fprintf(rep, "ERROR");
+            strcpy(rep, "ERROR");
         } else {
             snprintf(rep, size, "%s", CHAR(STRING_ELT(ans, 0)));
         }
