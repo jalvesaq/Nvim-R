@@ -3061,7 +3061,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             if sln[0] =~ "[ '%]"
                 let sln[0] = "`" . sln[0] . "`"
             endif
-            if g:R_show_args
+            if g:R_show_args && len(sln) > 4
                 let tmp = split(sln[4], "\x08")
                 if tmp[0] =~ '""'
                     let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
@@ -3101,7 +3101,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                     let info = substitute(tmp[0], "\x09", ", ", "g")
                 endif
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': info})
-            else
+            elseif len(sln) > 3
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
             endif
         endif
@@ -3146,9 +3146,11 @@ function CompleteR(findstart, base)
             let pkg = ""
         endif
 
-        " The char '$' at the end of 'a:base' is treated as end of line, and
-        " the pattern is never found in 'line'.
+        " The char '$' at the end of `a:base` is treated as end of line, and
+        " the pattern is never found in `line`.
         let newbase = '^' . substitute(newbase, "\\$$", "", "")
+        " A dot matches anything
+        let newbase = substitute(newbase, '\.', '\\.', 'g')
 
         if pkg == ""
             call BuildROmniList(a:base)
