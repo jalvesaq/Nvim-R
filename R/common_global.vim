@@ -342,7 +342,9 @@ function RCompleteArgs()
                                 else
                                     let word = tmp2[0] . " = "
                                 endif
-                                if len(tmp2) > 1
+                                if word == "NO_ARGS = "
+                                    call add(args,  {'word': " ", 'menu': "No arguments"})
+                                elseif len(tmp2) > 1
                                     call add(args,  {'word': word, 'menu': tmp2[1], 'info': info})
                                 else
                                     call add(args,  {'word': word, 'menu': ' ', 'info': info})
@@ -374,12 +376,14 @@ function RCompleteArgs()
                     for id in range(len(argsL))
                         let newkey = '^' . argkey
                         let tmp2 = split(argsL[id], "\x07")
-                        if (argkey == '' || tmp2[0] =~ newkey) && tmp2[0] !~ "No arguments"
+                        if argkey == '' || tmp2[0] =~ newkey
                             if tmp2[0] != '...'
                                 let tmp2[0] = tmp2[0] . " = "
                             endif
                             if len(tmp2) == 2
                                 let tmp3 = {'word': tmp2[0], 'menu': tmp2[1]}
+                            elseif tmp2[0] == "NO_ARGS = "
+                                let tmp3 = {'word': " ", 'menu': 'No arguments'}
                             else
                                 let tmp3 = {'word': tmp2[0], 'menu': ''}
                             endif
