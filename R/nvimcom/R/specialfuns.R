@@ -173,10 +173,15 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
         }
     }
 
+    if(is.null(pkg))
+        pkgname <- find(funcname, mode = "function")
+    else
+        pkgname <- pkg
+
     if(is.na(frm[1])){
         if(is.null(pkg)){
             deffun <- paste(funcname, ".default", sep = "")
-            if (existsFunction(deffun)) {
+            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
                 funcname <- deffun
                 funcmeth <- deffun
             } else if(!existsFunction(funcname)) {
@@ -185,7 +190,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
             if(is.primitive(get(funcname)))
                 return(nvim.primitive.args(funcname))
             else
-                frm <- formals(funcname)
+                frm <- formals(get(funcname, envir = globalenv()))
         } else {
             idx <- grep(paste0(":", pkg, "$"), search())
             if(length(idx)){
@@ -204,6 +209,9 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
             }
         }
     }
+
+    if(pkgname[1] == ".GlobalEnv")
+        extrainfo <- FALSE
 
     if(extrainfo && length(frm) > 0)
         arglist <- gbRd.args2txt(funcname, names(frm))
@@ -238,7 +246,6 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
     } else {
         if(is.null(pkg)){
             info <- ""
-            pkgname <- find(funcname, mode = "function")
             if(length(pkgname) > 1)
                 info <- pkgname[1]
             if(!is.na(funcmeth)){
