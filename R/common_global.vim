@@ -2450,13 +2450,13 @@ function DisplayArgs()
     if !exists("s:status_line")
         let s:status_line = &statusline
     endif
-    let s:displaying_args = 1
     if &filetype == "r" || b:IsInRCode(0)
         let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
         let s:sttl_str = s:status_line
         let fargs = "Not a function"
         for omniL in g:rplugin_omni_lines
             if omniL =~ '^' . rkeyword . "\x06"
+                let omniL = substitute(omniL, "\x08.*", "", "")
                 let tmp = split(omniL, "\x06")
                 if len(tmp) < 5
                     break
@@ -2476,20 +2476,15 @@ function DisplayArgs()
             endif
         endif
     endif
-    exe "normal! a("
-    let s:displaying_args = 0
 endfunction
 
 function RArgsStatusLine()
     return s:sttl_str
 endfunction
 
-function RestoreStatusLine(p)
+function RestoreStatusLine()
     if !exists("s:status_line")
         let s:status_line = &statusline
-    endif
-    if s:displaying_args
-        return
     endif
     if exists("g:R_restore_sttline_cmd")
         exe g:R_restore_sttline_cmd
@@ -2498,8 +2493,15 @@ function RestoreStatusLine(p)
     else
         exe 'set statusline=' . substitute(s:status_line, ' ', '\\ ', 'g')
     endif
-    if a:p
-        normal! a)
+endfunction
+
+function RSetStatusLine()
+    if !(&filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp")
+        return
+    elseif v:char == '('
+        call DisplayArgs()
+    elseif v:char == ')'
+        call RestoreStatusLine()
     endif
 endfunction
 
@@ -2874,9 +2876,8 @@ function RCreateEditMaps()
         silent exe 'inoremap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
     endif
     if g:R_args_in_stline
-        inoremap <buffer><silent> ( <Esc>:call DisplayArgs()<CR>a
-        inoremap <buffer><silent> ) <Esc>:call RestoreStatusLine(1)<CR>a
-        autocmd InsertLeave <buffer> call RestoreStatusLine(0)
+        autocmd InsertCharPre * call RSetStatusLine()
+        autocmd InsertLeave * call RestoreStatusLine()
     endif
     if hasmapto("<Plug>RCompleteArgs", "i")
         inoremap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
@@ -3449,7 +3450,6 @@ endfunction
 autocmd! BufWinEnter * call RCompleteSyntax()
 
 let s:firstbuffer = expand("%:p")
-let s:displaying_args = 0
 let s:running_objbr = 0
 let s:running_rhelp = 0
 let s:R_pid = 0
