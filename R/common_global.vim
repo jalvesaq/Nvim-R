@@ -2448,11 +2448,18 @@ endfunction
 
 function DisplayArgs()
     if !exists("s:status_line")
-        let s:status_line = &statusline
+        let s:sttl_count = 0
+        let s:status_line = [&statusline, "", "", "", "", "", "", ""]
     endif
+
+    let s:sttl_count += 1
+    if s:sttl_count > 7
+        let s:sttl_count = 7
+        return
+    endif
+
     if &filetype == "r" || b:IsInRCode(0)
         let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
-        let s:sttl_str = s:status_line
         let fargs = "Not a function"
         for omniL in g:rplugin_omni_lines
             if omniL =~ '^' . rkeyword . "\x06"
@@ -2461,37 +2468,59 @@ function DisplayArgs()
                 if len(tmp) < 5
                     break
                 else
-                    let fargs = rkeyword . '(' . tmp[4] . ')'
+                    let fargs = tmp[4]
                 endif
             endif
         endfor
         if fargs !~ "Not a function"
-            let fargs = substitute(fargs, "NO_ARGS", '', 'g')
-            let fargs = substitute(fargs, "\x07", '=', 'g')
-            let s:sttl_str = substitute(fargs, "\x09", ', ', 'g')
+            let fargs = substitute(fargs, "NO_ARGS", "", "g")
+            let fargs = substitute(fargs, "\x07", "=", "g")
+            let fargs = substitute(fargs, "\x09", ", ", "g")
+            let fargs = substitute(fargs, "%", "%%", "g")
+            let fargs = substitute(fargs, '\\', '\\\\', "g")
+            let sline = substitute(g:R_sttline_fmt, "%fun", rkeyword, "g")
+            let sline = substitute(sline, "%args", fargs, "g")
+            let s:status_line[s:sttl_count] = sline
             if exists("g:R_set_stline_cmd")
                 exe g:R_set_sttline_cmd
             else
-                silent set statusline=%!RArgsStatusLine()
+                silent setlocal statusline=%!RArgsStatusLine()
             endif
         endif
     endif
 endfunction
 
 function RArgsStatusLine()
-    return s:sttl_str
+    return s:status_line[s:sttl_count]
 endfunction
 
-function RestoreStatusLine()
+function RestoreStatusLine(backtozero)
     if !exists("s:status_line")
-        let s:status_line = &statusline
+        let s:sttl_count = 0
+        let s:status_line = [&statusline, "", "", "", "", "", "", ""]
     endif
-    if exists("g:R_restore_sttline_cmd")
-        exe g:R_restore_sttline_cmd
-    elseif exists("*airline#update_statusline")
-        call airline#update_statusline()
+
+    let s:sttl_count -= 1
+    if s:sttl_count < 0
+        " The status line is already in its original state
+        let s:sttl_count = 0
+        return
+    endif
+
+    if a:backtozero
+        let s:sttl_count = 0
+    endif
+
+    if s:sttl_count == 0
+        if exists("g:R_restore_sttline_cmd")
+            exe g:R_restore_sttline_cmd
+        elseif exists("*airline#update_statusline")
+            call airline#update_statusline()
+        else
+            let &statusline = s:status_line[0]
+        endif
     else
-        exe 'set statusline=' . substitute(s:status_line, ' ', '\\ ', 'g')
+        silent setlocal statusline=%!RArgsStatusLine()
     endif
 endfunction
 
@@ -2501,7 +2530,7 @@ function RSetStatusLine()
     elseif v:char == '('
         call DisplayArgs()
     elseif v:char == ')'
-        call RestoreStatusLine()
+        call RestoreStatusLine(0)
     endif
 endfunction
 
@@ -2877,7 +2906,7 @@ function RCreateEditMaps()
     endif
     if g:R_args_in_stline
         autocmd InsertCharPre * call RSetStatusLine()
-        autocmd InsertLeave * call RestoreStatusLine()
+        autocmd InsertLeave * call RestoreStatusLine(1)
     endif
     if hasmapto("<Plug>RCompleteArgs", "i")
         inoremap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
@@ -3255,7 +3284,6 @@ let g:R_allnames          = get(g:, "R_allnames",           0)
 let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
-let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
 let g:R_rnowebchunk       = get(g:, "R_rnowebchunk",        1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
@@ -3296,6 +3324,8 @@ let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
+let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
+let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
 if !exists("*termopen")
     let g:R_in_buffer = 0
 endif
