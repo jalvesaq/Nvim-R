@@ -140,6 +140,8 @@ GetFunDescription <- function(pkg)
 {
     pth <- attr(packageDescription(pkg), "file")
     rdx <- sub("Meta/package.rds", paste0("help/", pkg), pth)
+    if(!file.exists(sub("Meta/package.rds", "help/AnIndex", pth)))
+        return(NULL)
     tab <- read.table(sub("Meta/package.rds", "help/AnIndex", pth),
                       sep = "\t", quote = "", stringsAsFactors = FALSE)
     als <- tab$V2
@@ -218,10 +220,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
 
     if(!missing(packlist) && is.null(NvimcomEnv$pkgdescr[[packlist]]))
         GetFunDescription(packlist)
-
-
-    # if(is.null(NvimcomEnv$use.gbRd))
-    #     NvimcomEnv$use.gbRd <- length(grep("^gbRd$", row.names(installed.packages()))) > 0
 
     if(omnilist == ".GlobalEnv"){
         sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
