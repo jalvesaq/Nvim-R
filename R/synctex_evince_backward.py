@@ -115,7 +115,7 @@ class EvinceWindowProxy:
         sys.stdout.write("call SyncTeX_backward('" + input_file + "', " + str(source_link[0]) + ")\n")
         sys.stdout.flush()
 
-path_output = os.getcwd() + '/' + sys.argv[1]
+path_output = sys.argv[1]
 path_output = path_output.replace(" ", "%20")
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)

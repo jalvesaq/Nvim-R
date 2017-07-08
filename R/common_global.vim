@@ -1025,9 +1025,6 @@ function GetNvimcomInfo()
                 if $RCONSOLE == "0"
                     call RWarningMsg("nvimcom did not save R window ID")
                 endif
-                if v:windowid != 0 && $WINDOWID == ""
-                    let $WINDOWID = v:windowid
-                endif
             endif
             if !IsJobRunning("ClientServer")
                 let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
@@ -2269,147 +2266,35 @@ function ShowRObject(fname)
     autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
 endfunction
 
-function ROpenPDF(path)
-    if a:path == "Get Master"
-        let tmpvar = SyncTeX_GetMaster()
-        let pdfpath = tmpvar[1] . '/' . tmpvar[0] . '.pdf'
-    else
-        let pdfpath = a:path
-    endif
-    let basenm = substitute(substitute(pdfpath, '.*/', '', ''), '\.pdf$', '', '')
-
-    let olddir = getcwd()
-    if olddir != expand("%:p:h")
-        try
-            " The :cd command will fail if the cursor is in the term buffer
-            silent exe "cd " . substitute(expand("%:p:h"), ' ', '\\ ', 'g')
-        catch /.*/
-        endtry
-    endif
-
-    if !filereadable(basenm . ".pdf")
-        call RWarningMsg('File not found: "' . basenm . '.pdf".')
-        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
+function ROpenPDF(fullpath)
+    if a:fullpath == "Get Master"
+        let fpath = SyncTeX_GetMaster() . ".pdf"
+        let fpath = b:rplugin_pdfdir . "/" . substitute(fpath, ".*/", "", "")
+        call ROpenPDF(fpath)
         return
     endif
-    if g:rplugin_pdfviewer == "zathura"
-        if system("wmctrl -xl") =~ 'Zathura.*' . basenm . '.pdf' && g:rplugin_zathura_pid[basenm] != 0
-            call system("wmctrl -a '" . basenm . ".pdf'")
-        else
-            let g:rplugin_zathura_pid[basenm] = 0
-            call RStart_Zathura(basenm)
-        endif
-        exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-        return
-    elseif g:rplugin_pdfviewer == "okular"
-        let pcmd = "env NVIMR_PORT=" . g:rplugin_myport . " okular --unique '" .  pdfpath . "' 2>/dev/null >/dev/null &"
-        call system(pcmd)
-    elseif g:rplugin_pdfviewer == "evince"
-        let pcmd = "evince '" . pdfpath . "' 2>/dev/null >/dev/null &"
-        call system(pcmd)
-    elseif g:rplugin_pdfviewer == "sumatra"
-        if basenm =~ ' '
-            call RWarningMsg('You must remove the empty spaces from the rnoweb file name ("' . basenm .'") to get SyncTeX support with SumatraPDF.')
-        endif
-        if SumatraInPath()
-            let $NVIMR_PORT = g:rplugin_myport
-            call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" ' . basenm . '.pdf'], g:rplugin_tmpdir . "/run_cmd.bat")
-            call system(g:rplugin_tmpdir . "/run_cmd.bat")
-            exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-        endif
-    elseif g:rplugin_pdfviewer == "skim"
-        call system("env NVIMR_PORT=" . g:rplugin_myport . " " . g:macvim_skim_app_path . '/Contents/MacOS/Skim "' . basenm . '.pdf" 2> /dev/null >/dev/null &')
-    endif
-    if g:rplugin_has_wmctrl
-        call system("wmctrl -a '" . basenm . ".pdf'")
-    endif
-    exe "cd " . substitute(olddir, ' ', '\\ ', 'g')
-endfunction
 
-function StartZathuraNeovim(basenm)
-    let g:rplugin_jobs["Zathura"] = jobstart(["zathura",
-                \ "--synctex-editor-command",
-                \ "nclientserver %{input} %{line}", a:basenm . ".pdf"],
-                \ {"detach": 1, "on_stderr": function('ROnJobStderr')})
-    if g:rplugin_jobs["Zathura"] < 1
-        call RWarningMsg("Failed to run Zathura...")
-    else
-        let g:rplugin_zathura_pid[a:basenm] = jobpid(g:rplugin_jobs["Zathura"])
-    endif
-endfunction
-
-function StartZathuraVim(basenm)
-    let pycode = ["# -*- coding: " . &encoding . " -*-",
-                \ "import subprocess",
-                \ "import os",
-                \ "import sys",
-                \ "FNULL = open(os.devnull, 'w')",
-                \ "a3 = '" . a:basenm . ".pdf'",
-                \ "zpid = subprocess.Popen(['zathura', '--synctex-editor-command', 'nclientserver %{input} %{line}', a3], stdout = FNULL, stderr = FNULL).pid",
-                \ "sys.stdout.write(str(zpid))" ]
-    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
-    let pid = system("python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
-    if pid == 0
-        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
-    else
-        let g:rplugin_zathura_pid[a:basenm] = pid
-    endif
-    call delete(g:rplugin_tmpdir . "/start_zathura.py")
-endfunction
-
-function RStart_Zathura(basenm)
-    " Use wmctrl to check if the pdf is already open and get Zathura's PID to
-    " close the document and kill Zathura.
-    if g:rplugin_has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
-        let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . a:basenm . '"')
-        if len(info) > 0
-            let pid = split(info[0])[2] + 0     " + 0 to convert into number
-            let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
-            if pid > 0 && pid <= max_pid
-                " Instead of killing, it would be better to reset the backward
-                " command, but Zathura does not have a Dbus message for this,
-                " and we would have to change nclientserver to receive NVIMR_PORT
-                " and NVIMR_SECRET as part of argv[].
-                call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
-                sleep 5m
-                call system('kill ' . pid)
-                sleep 5m
-            endif
-        endif
-    endif
-
-    let $NVIMR_PORT = g:rplugin_myport
-    if exists("*jobpid")
-        call StartZathuraNeovim(a:basenm)
-    else
-        call StartZathuraVim(a:basenm)
-    endif
+    call ROpenPDF2(a:fullpath)
 endfunction
 
 function RSetPDFViewer()
     let g:rplugin_pdfviewer = tolower(g:R_pdfviewer)
 
+    if g:rplugin_pdfviewer == "zathura"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/zathura.vim"
+    elseif g:rplugin_pdfviewer == "evince"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/evince.vim"
+    elseif g:rplugin_pdfviewer == "okular"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/okular.vim"
+    elseif has("win32") && g:rplugin_pdfviewer == "sumatra"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/sumatra.vim"
+    elseif g:rplugin_is_darwin && g:rplugin_pdfviewer == "skim"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/skim.vim"
+    else
+        call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '"')
+    endif
+
     if !has("win32") && !g:rplugin_is_darwin
-        if g:rplugin_pdfviewer == "zathura"
-            if executable("zathura")
-                let vv = split(system("zathura --version 2>/dev/null"))[1]
-                if vv < '0.3.1'
-                    call RWarningMsgInp("Zathura version must be >= 0.3.1")
-                endif
-            else
-                call RWarningMsgInp('Please, either install "zathura" or set the value of R_pdfviewer.')
-            endif
-            if executable("dbus-send")
-                let s:has_dbus_send = 1
-            else
-                let s:has_dbus_send = 0
-            endif
-        endif
-
-        if g:rplugin_pdfviewer != "zathura" && g:rplugin_pdfviewer != "okular" && g:rplugin_pdfviewer != "evince"
-            call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '"')
-        endif
-
         if executable("wmctrl")
             let g:rplugin_has_wmctrl = 1
         else
@@ -3479,6 +3364,10 @@ function RCompleteSyntax()
 endfunction
 autocmd! BufWinEnter * call RCompleteSyntax()
 
+if v:windowid != 0 && $WINDOWID == ""
+    let $WINDOWID = v:windowid
+endif
+
 let s:firstbuffer = expand("%:p")
 let s:running_objbr = 0
 let s:running_rhelp = 0
@@ -3520,7 +3409,6 @@ endif
 
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
-let g:rplugin_zathura_pid = {}
 
 let s:py_exec = "none"
 if executable("python3")

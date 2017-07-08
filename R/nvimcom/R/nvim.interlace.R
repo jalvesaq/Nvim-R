@@ -1,11 +1,11 @@
-SyncTeX_readconc <- function(basenm)
+SyncTeX_readconc <- function(texf, concf)
 {
     texidx <- 1
     rnwidx <- 1
-    ntexln <- length(readLines(paste0(basenm, ".tex")))
+    ntexln <- length(readLines(texf))
     lstexln <- 1:ntexln
     lsrnwf <- lsrnwl <- rep(NA, ntexln)
-    conc <- readLines(paste0(basenm, "-concordance.tex"))
+    conc <- readLines(concf)
     idx <- 1
     maxidx <- length(conc) + 1
     while(idx < maxidx && texidx < ntexln && length(grep("Sconcordance", conc[idx])) > 0){
@@ -45,65 +45,64 @@ SyncTeX_readconc <- function(basenm)
     return(data.frame(texlnum = lstexln, rnwfile = lsrnwf, rnwline = lsrnwl, stringsAsFactors = FALSE))
 }
 
-GetRnwLines <- function(x, l)
+GetRnwLines <- function(texf, concf, l)
 {
-    if(file.exists(sub(".log$", "-concordance.tex", x))){
-        conc <- SyncTeX_readconc(sub(".log$", "", x))
-        for(ii in 1:length(l)){
-            if(length(grep("line [0-9]", l[ii])) > 0){
-                texln <- as.numeric(sub(".*line ([0-9]*)", "\\1", l[ii]))
-                idx <- 1
-                while(idx < nrow(conc) && texln > conc$texlnum[idx]){
-                    idx <- idx + 1
-                    if(conc$texlnum[idx] >= texln){
-                        l[ii] <- sub("(.*) line ([0-9]*)",
-                                     paste0("\\1 line \\2 [",
-                                            conc$rnwfile[idx], ": ",
-                                            conc$rnwline[idx], "]"), l[ii])
-                        break
-                    }
+    conc <- SyncTeX_readconc(texf, concf)
+    for(ii in 1:length(l)){
+        if(length(grep("line [0-9]", l[ii])) > 0){
+            texln <- as.numeric(sub(".*line ([0-9]*)", "\\1", l[ii]))
+            idx <- 1
+            while(idx < nrow(conc) && texln > conc$texlnum[idx]){
+                idx <- idx + 1
+                if(conc$texlnum[idx] >= texln){
+                    l[ii] <- sub("(.*) line ([0-9]*)",
+                                 paste0("\\1 line \\2 [",
+                                        conc$rnwfile[idx], ": ",
+                                        conc$rnwline[idx], "]"), l[ii])
+                    break
                 }
-            } else if(length(grep("lines [0-9]*--[0-9]*", l[ii])) > 0){
-                texln1 <- as.numeric(sub(".*lines ([0-9]*)--.*", "\\1", l[ii]))
-                texln2 <- as.numeric(sub(".*lines [0-9]*--([0-9]*).*", "\\1", l[ii]))
-                rnwIdx1 <- NA
-                rnwIdx2 <- NA
-                idx <- 1
-                while(idx < nrow(conc) && texln1 > conc$texlnum[idx]){
-                    idx <- idx + 1
-                    if(conc$texlnum[idx] >= texln1){
-                        rnwIdx1 <- idx
-                        break
-                    }
+            }
+        } else if(length(grep("lines [0-9]*--[0-9]*", l[ii])) > 0){
+            texln1 <- as.numeric(sub(".*lines ([0-9]*)--.*", "\\1", l[ii]))
+            texln2 <- as.numeric(sub(".*lines [0-9]*--([0-9]*).*", "\\1", l[ii]))
+            rnwIdx1 <- NA
+            rnwIdx2 <- NA
+            idx <- 1
+            while(idx < nrow(conc) && texln1 > conc$texlnum[idx]){
+                idx <- idx + 1
+                if(conc$texlnum[idx] >= texln1){
+                    rnwIdx1 <- idx
+                    break
                 }
-                idx <- 1
-                while(idx < nrow(conc) && texln2 > conc$texlnum[idx]){
-                    idx <- idx + 1
-                    if(conc$texlnum[idx] >= texln2){
-                        rnwIdx2 <- idx
-                        break
-                    }
+            }
+            idx <- 1
+            while(idx < nrow(conc) && texln2 > conc$texlnum[idx]){
+                idx <- idx + 1
+                if(conc$texlnum[idx] >= texln2){
+                    rnwIdx2 <- idx
+                    break
                 }
-                if(!is.na(rnwIdx1) && !is.na(rnwIdx2)){
-                        l[ii] <- sub("(.*) lines ([0-9]*)--([0-9]*)",
-                                     paste0("\\1 lines \\2--\\3 [",
-                                            conc$rnwfile[rnwIdx1], ": ",
-                                            conc$rnwline[rnwIdx1], "--",
-                                            conc$rnwline[rnwIdx2], "]"), l[ii])
-                }
+            }
+            if(!is.na(rnwIdx1) && !is.na(rnwIdx2)){
+                l[ii] <- sub("(.*) lines ([0-9]*)--([0-9]*)",
+                             paste0("\\1 lines \\2--\\3 [",
+                                    conc$rnwfile[rnwIdx1], ": ",
+                                    conc$rnwline[rnwIdx1], "--",
+                                    conc$rnwline[rnwIdx2], "]"), l[ii])
             }
         }
     }
     l
 }
 
-ShowTexErrors <- function(x)
+ShowTexErrors <- function(texf, logf)
 {
-    l <- readLines(x, encoding = "latin1")
-    if(length(grep(sub("log$", "tex", x), l)) == 0){
-        # XeLaTeX uses UTF-8
-        l8 <- readLines(x, encoding = "utf-8")
-        if(length(grep(sub("log$", "tex", x), l8)) > 0){
+    if(!file.exists(logf))
+        stop(paste0(logf, ' not found.'))
+    l <- readLines(logf, encoding = "latin1")
+    if(length(grep(sub("log$", "tex", logf), l)) == 0){ # XeLaTeX uses UTF-8
+        l8 <- readLines(logf, encoding = "utf-8")
+        if(length(grep(sub("log$", "tex", logf), l8)) > 0){
             l <- l8
         }
     }
@@ -111,7 +110,7 @@ ShowTexErrors <- function(x)
     llen <- length(l)
     lf <- character(llen)
     lev <- 1
-    levfile <- "Unknown"
+    levfile <- "Unknown" # From what tex source are the errors coming from?
     fname <- NA
     idx <- 1
     while(idx < llen){
@@ -121,6 +120,7 @@ ShowTexErrors <- function(x)
                 idx <- idx + 1
             }
         } else {
+            # Get the result of number of '(' minus number of ')'
             pb <- length(grep(28, charToRaw(l[idx]))) - length(grep(29, charToRaw(l[idx])))
             if(pb > 0){
                 lev <- lev + pb
@@ -147,20 +147,24 @@ ShowTexErrors <- function(x)
     if(sum(idx) > 0){
         l <- l[idx]
         lf <- lf[idx]
-        ismaster <- grep(paste0("./", sub("\\.log$", ".tex", x)), lf)
-        if(length(ismaster) > 0)
-            l[ismaster] <- GetRnwLines(x, l[ismaster])
-        msg <- paste0('\nSelected lines of "', x, '":\n\n', paste(lf, l, sep = ": ", collapse = "\n"), "\n")
+        concf <- sub("\\.tex$", "-concordance.tex", texf)
+        # We are interested only the errors located at our master LaTeX file
+        ismaster <- grep(paste0("./", texf), lf)
+        if(length(ismaster) > 0 && file.exists(concf)){
+            l[ismaster] <- GetRnwLines(texf, concf, l[ismaster])
+        }
+        msg <- paste0('\nSelected lines of "', logf, '":\n\n', paste(lf, l, sep = ": ", collapse = "\n"), "\n")
         if(has.pdfTeX.errors)
-            msg <- paste0(msg, 'There are pdfTeX errors or warnings. See "', x, '" for details.\n')
+            msg <- paste0(msg, 'There are pdfTeX errors or warnings. See "', logf, '" for details.\n')
         cat(msg)
     }
 }
 
-OpenPDF <- function(x)
+OpenPDF <- function(fullpath)
 {
-    path <- sub("\\.tex$", ".pdf", x)
-    .C("nvimcom_msg_to_nvim", paste0("ROpenPDF('", getwd(), "/", path, "')"), PACKAGE="nvimcom")
+    if(!file.exists(fullpath))
+        stop(paste0('File "', fullpath, '" does not exist.'))
+    .C("nvimcom_msg_to_nvim", paste0("ROpenPDF('", fullpath, "')"), PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
@@ -200,8 +204,8 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
     # Compile the .pdf
     if(exists('Sres')){
         # From RStudio: Check for spaces in path (Sweave chokes on these)
-        if(length(grep(" ", Sres)) > 0)
-            stop(paste("Invalid filename: '", Sres, "' (TeX does not understand paths with spaces).", sep=""))
+        # if(length(grep(" ", Sres)) > 0)
+        #     stop(paste("Invalid filename: '", Sres, "' (TeX does not understand paths with spaces).", sep=""))
         if(missing(latexcmd)){
             if(latexmk){
                 if(synctex)
@@ -215,7 +219,13 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
                     latexcmd = "pdflatex -file-line-error"
             }
         }
-        haserror <- system(paste(latexcmd, Sres))
+        try(sout <- system(paste(latexcmd, gsub(" ", "\\\\ ", Sres)), intern = TRUE))
+        if(is.null(attr(sout, "status"))){
+            haserror <- FALSE
+        } else {
+            haserror <- TRUE
+        }
+
         if(!haserror && bibtex){
             haserror <- system(paste("bibtex", sub("\\.tex$", ".aux", Sres)))
             if(!haserror){
@@ -225,10 +235,30 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
             }
         }
         if(!haserror){
-            if(view)
-                OpenPDF(Sres)
-            if(getOption("nvimcom.texerrs"))
-                ShowTexErrors(sub("\\.tex$", ".log", Sres))
+            if(view){
+                idx <- grep("Latexmk: All targets .* are up-to-date", sout)
+                if(length(idx)){
+                    pdff <- sub("Latexmk: All targets \\((.*)\\) are up-to-date", "\\1", sout[idx])
+                } else {
+                    idx <- grep("Output written on .*\\.pdf .*", sout)
+                    if(length(idx)){
+                        pdff <- sub("Output written on (.*\\.pdf) .*", "\\1", sout[idx])
+                    } else {
+                        pdff <- sub("\\.tex$", ".pdf", Sres)
+                    }
+                }
+                if(!grepl("^/", pdff))
+                    pdff <- paste0(getwd(), "/", pdff)
+                OpenPDF(pdff)
+            }
+            if(getOption("nvimcom.texerrs")){
+                idx <- grep("Transcript written on ", sout)
+                if(length(idx)){
+                    logf <- sub("Transcript written on (.*)\\.", "\\1", sout[idx])
+                    logf <- gsub('"', '', logf)
+                    ShowTexErrors(Sres, logf)
+                }
+            }
         }
     }
     return(invisible(NULL))

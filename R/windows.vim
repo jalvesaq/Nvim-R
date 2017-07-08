@@ -140,29 +140,6 @@ function CheckRtools()
     endif
 endfunction
 
-function SumatraInPath()
-    if s:sumatra_in_path
-        return 1
-    endif
-    if $PATH =~ "SumatraPDF"
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-
-    " $ProgramFiles has different values for win32 and win64
-    if executable($ProgramFiles . "\\SumatraPDF\\SumatraPDF.exe")
-        let $PATH = $ProgramFiles . "\\SumatraPDF;" . $PATH
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-    if executable($ProgramFiles . " (x86)\\SumatraPDF\\SumatraPDF.exe")
-        let $PATH = $ProgramFiles . " (x86)\\SumatraPDF;" . $PATH
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-    return 0
-endfunction
-
 function SetRHome()
     " R and Vim use different values for the $HOME variable.
     if g:R_set_home_env
