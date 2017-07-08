@@ -3128,13 +3128,8 @@ command RStop :call StopR()
 "             rplugin_  for internal parameters
 "==========================================================================
 
-" g:rplugin_home should be the directory where the plugin files are.  For
-" users installing the plugin from the Vimball it will be at ~/.vim or
-" ~/vimfiles.
-let g:rplugin_home = expand("<sfile>:h:h")
-
 if !exists("g:rplugin_compldir")
-    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/setcompldir.vim"
+    exe "source " . substitute(expand("<sfile>:h:h"), " ", "\\ ", "g") . "/R/setcompldir.vim"
 endif
 
 
@@ -3548,7 +3543,7 @@ let s:ff = split(globpath(&rtp, "r-plugin/functions.vim"), " ", "\n")
 let s:ft = split(globpath(&rtp, "ftplugin/r*_rplugin.vim"), " ", "\n")
 if len(s:ff) > 0 || len(s:ft) > 0
     call RWarningMsgInp("It seems that Vim-R-plugin is installed.\n" .
-                \ "Please, completely unistall it before using Nvim-R.\n" .
+                \ "Please, completely uninstall it before using Nvim-R.\n" .
                 \ "Below is a list of what looks like Vim-R-plugin files:\n" . join(s:ff, "\n") . "\n" . join(s:ft) . "\n")
 endif
 

@@ -1,3 +1,8 @@
+" g:rplugin_home should be the directory where the plugin files are.
+" For users installing the plugin from the Vimball it will be at
+" either ~/.vim or ~/vimfiles.
+let g:rplugin_home = expand("<sfile>:h:h")
+
 " g:rplugin_uservimfiles must be a writable directory. It will be g:rplugin_home
 " unless it's not writable. Then it wil be ~/.vim or ~/vimfiles.
 if filewritable(g:rplugin_home) == 2
