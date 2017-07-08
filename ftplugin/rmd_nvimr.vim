@@ -4,14 +4,14 @@ if exists("g:disable_r_ftplugin")
 endif
 
 " Source scripts common to R, Rrst, Rnoweb, Rhelp and Rdoc:
-runtime R/common_global.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 if exists("g:rplugin_failed")
     finish
 endif
 
 " Some buffer variables common to R, Rmd, Rrst, Rnoweb, Rhelp and Rdoc need to
 " be defined after the global ones:
-runtime R/common_buffer.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 function! RmdIsInRCode(vrb)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW")
@@ -108,7 +108,7 @@ call RCreateMaps("n",  '<Plug>RPreviousRChunk', 'gN', ':call b:PreviousRChunk()'
 
 " Menu R
 if has("gui_running")
-    runtime R/gui_running.vim
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/gui_running.vim"
     call MakeRMenu()
 endif
 

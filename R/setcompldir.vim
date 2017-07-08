@@ -1,11 +1,3 @@
-
-" g:rplugin_home should be the directory where the plugin files are.  For
-" users following the installation instructions it will be at ~/.vim or
-" ~/vimfiles, that is, the same value of g:rplugin_uservimfiles. However the
-" variables will have different values if the plugin is installed somewhere
-" else in the runtimepath.
-let g:rplugin_home = expand("<sfile>:h:h")
-
 " g:rplugin_uservimfiles must be a writable directory. It will be g:rplugin_home
 " unless it's not writable. Then it wil be ~/.vim or ~/vimfiles.
 if filewritable(g:rplugin_home) == 2

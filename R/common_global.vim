@@ -26,6 +26,12 @@
 " used.
 "==========================================================================
 
+" Check if Vim-R-plugin is installed
+if exists("*WaitVimComStart")
+    echohl WarningMsg
+    call input("Please, uninstall Vim-R-plugin before using Nvim-R. [Press <Enter> to continue]")
+    echohl Normal
+endif
 
 " Do this only once
 if exists("s:did_global_stuff")
@@ -3122,8 +3128,13 @@ command RStop :call StopR()
 "             rplugin_  for internal parameters
 "==========================================================================
 
+" g:rplugin_home should be the directory where the plugin files are.  For
+" users installing the plugin from the Vimball it will be at ~/.vim or
+" ~/vimfiles.
+let g:rplugin_home = expand("<sfile>:h:h")
+
 if !exists("g:rplugin_compldir")
-    runtime R/setcompldir.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/setcompldir.vim"
 endif
 
 
@@ -3402,9 +3413,9 @@ if exists("g:R_nvimcom_home")
 endif
 
 if has("nvim")
-    runtime R/nvimrcom.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/nvimrcom.vim"
 else
-    runtime R/vimrcom.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/vimrcom.vim"
 endif
 
 " SyncTeX options
@@ -3504,27 +3515,27 @@ if exists("g:R_path")
 endif
 
 if exists("g:RStudio_cmd")
-    runtime R/rstudio.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/rstudio.vim"
 endif
 
 if has("win32")
-    runtime R/windows.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/windows.vim"
 endif
 
 if g:R_applescript
-    runtime R/osx.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/osx.vim"
 endif
 
 if !has("win32") && !g:R_applescript && !g:R_in_buffer
-    runtime R/tmux.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/tmux.vim"
 endif
 
 if g:R_in_buffer
-    runtime R/nvimbuffer.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/nvimbuffer.vim"
 endif
 
 if has("gui_running")
-    runtime R/gui_running.vim
+    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/gui_running.vim"
 endif
 
 if !executable(g:rplugin_R)
@@ -3532,10 +3543,13 @@ if !executable(g:rplugin_R)
 endif
 
 " Check if r-plugin/functions.vim exist
-let s:ff = split(substitute(globpath(&rtp, "r-plugin/functions.vim"), "functions.vim", "", "g"), "\n")
-if len(s:ff) > 0
+let s:ff = split(globpath(&rtp, "r-plugin/functions.vim"), " ", "\n")
+" Check if other Vim-R-plugin files are installed
+let s:ft = split(globpath(&rtp, "ftplugin/r*_rplugin.vim"), " ", "\n")
+if len(s:ff) > 0 || len(s:ft) > 0
     call RWarningMsgInp("It seems that Vim-R-plugin is installed.\n" .
-                \ " Please, unistall it before using Nvim-R.\n")
+                \ "Please, completely unistall it before using Nvim-R.\n" .
+                \ "Below is a list of what looks like Vim-R-plugin files:\n" . join(s:ff, "\n") . "\n" . join(s:ft) . "\n")
 endif
 
 " Check if there is more than one copy of Nvim-R
