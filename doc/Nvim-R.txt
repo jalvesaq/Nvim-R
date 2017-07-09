@@ -1701,14 +1701,22 @@ plugins that changes the status line. It is also incompatible with any plugin
 that automatically closes parentheses. Functions of .GlobalEnv do not have
 their arguments displayed. You can change the appearance of the status line by
 setting the `R_sttline_fmt` (default value = `"%fun(%args)"`, where `%fun` is
-replaced by the function name and `%args` by the list of arguments. See
-'statusline' to know how to format the status line. Below is an example:
+replaced by the function name and `%args` by the list of arguments). See
+'statusline' to know how to format the status line. The example below put some
+colors in the status line (see |highlight-groups|):
 >
-   let R_sttline_fmt = "%7*%fun%8*(%9*%args%8*)%*"
-   hi def link User7 Function
-   hi def link User8 Special
-   hi def link User9 Statement
+   let R_sttline_fmt = "%#Function#%fun%#Delimiter#(%#Normal#%args%#Delimiter#)"
 <
+If you knew Vim Language, you could look at the Nvim-R source code (file
+`R/common_global.vim`) and set the value of `R_set_sttline_cmd`. The example
+below sets the color of individual arguments' names to the highlight group
+`Special`:
+>
+   let R_sttline_fmt = "%#Function#%fun%#Normal#(%args)"
+   let R_set_sttline_cmd = "let sline = substitute(sline, " .
+           \ "'\\( \\|(\\)\\(\\w\\.*\\w*\\.*\\w*\\)\\(=*\\)\\(.\\{-}\\)\\([,)]\\)', " .
+           \ "'\\1%#Special#\\2%#Normal#\\3\\4\\5', 'g')"
+
 
 ------------------------------------------------------------------------------
 								      *R_wait*

@@ -2370,13 +2370,12 @@ function DisplayArgs()
             let fargs = substitute(fargs, "%", "%%", "g")
             let fargs = substitute(fargs, '\\', '\\\\', "g")
             let sline = substitute(g:R_sttline_fmt, "%fun", rkeyword, "g")
-            let sline = substitute(sline, "%args", fargs, "g")
-            let s:status_line[s:sttl_count] = sline
-            if exists("g:R_set_stline_cmd")
-                exe g:R_set_sttline_cmd
-            else
-                silent setlocal statusline=%!RArgsStatusLine()
+            let sline = substitute(sline, "%args", fargs, "g") . '%<'
+            if exists("g:R_set_sttline_cmd")
+                silent exe g:R_set_sttline_cmd
             endif
+            let s:status_line[s:sttl_count] = sline
+            silent setlocal statusline=%!RArgsStatusLine()
         endif
     endif
 endfunction
