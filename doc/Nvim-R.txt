@@ -1694,14 +1694,21 @@ you insert `(`, put in your |vimrc|:
    let R_args_in_stline = 1
 <
 The status line is restored when you either type `)` or leave Insert mode.
-This option is useful only if the window has a status line. See |laststatus|.
+This option is useful only if the window has a status line (see 'laststatus').
 If the string with the list of arguments is longer than the status line width,
-the list is not displayed completely. This argument is incompatible with any
-plugin that changes the status line because it is always restored to the value
-that it had at Vim's startup. It is also incompatible with any plugin that
-automatically closes parentheses. Functions of .GlobalEnv do not have their
-arguments displayed.
-
+the list is not displayed completely. This argument is incompatible with most
+plugins that changes the status line. It is also incompatible with any plugin
+that automatically closes parentheses. Functions of .GlobalEnv do not have
+their arguments displayed. You can change the appearance of the status line by
+setting the `R_sttline_fmt` (default value = `"%fun(%args)"`, where `%fun` is
+replaced by the function name and `%args` by the list of arguments. See
+'statusline' to know how to format the status line. Below is an example:
+>
+   let R_sttline_fmt = "%7*%fun%8*(%9*%args%8*)%*"
+   hi def link User7 Function
+   hi def link User8 Special
+   hi def link User9 Statement
+<
 
 ------------------------------------------------------------------------------
 								      *R_wait*
@@ -2911,8 +2918,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 0.9.9.1 (2017-07-08)
 
  * Change command \dt to \td and \pt to \tp.
- * New option: R_hi_fun_paren.
- * New option: R_show_arg_help.
+ * New options: R_hi_fun_paren, R_show_arg_help and R_sttline_fmt.
  * New default value for R_show_args = 1.
 
 0.9.9 (2017-04-22)
