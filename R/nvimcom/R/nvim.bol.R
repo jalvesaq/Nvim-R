@@ -139,14 +139,20 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
 GetFunDescription <- function(pkg)
 {
     pth <- attr(packageDescription(pkg), "file")
-    rdx <- sub("Meta/package.rds", paste0("help/", pkg), pth)
-    if(!file.exists(sub("Meta/package.rds", "help/AnIndex", pth)))
+    pth <- sub("Meta/package.rds", "", pth)
+    pth <- paste0(pth, "help/")
+    idx <- paste0(pth, "AnIndex")
+
+    if(!file.exists(idx))
         return(NULL)
-    tab <- read.table(sub("Meta/package.rds", "help/AnIndex", pth),
-                      sep = "\t", quote = "", stringsAsFactors = FALSE)
+    tab <- read.table(idx, sep = "\t", quote = "", stringsAsFactors = FALSE)
     als <- tab$V2
     names(als) <- tab$V1
-    pkgInfo <- tools:::fetchRdDB(rdx)
+
+    if(!file.exists(paste0(pth, pkg, ".rdx")))
+        return(NULL)
+    pkgInfo <- tools:::fetchRdDB(paste0(pth, pkg))
+
     GetDescr <- function(x)
     {
         x <- paste0(x, collapse = "")
