@@ -226,14 +226,14 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, 
             res <- append(res, paste('\x09', field, info, sep = ''))
         } else if (type == 'character') {
             res <- append(res, paste('\x09', field, '\x07"', gsub("\n", "\\\\n", frm[[field]]), '"', info, sep = ''))
-        } else if (type == 'logical') {
-            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
-        } else if (type == 'double') {
+        } else if (type == 'logical' || type == 'double' || type == 'integer') {
             res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
         } else if (type == 'NULL') {
             res <- append(res, paste('\x09', field, '\x07', 'NULL', info, sep = ''))
         } else if (type == 'language') {
             res <- append(res, paste('\x09', field, '\x07', deparse(frm[[field]]), info, sep = ''))
+        } else {
+            warning(paste0("nvim.args: typeof = ", type))
         }
     }
     idx <- grep(paste("^\x09", txt, sep = ""), res)
