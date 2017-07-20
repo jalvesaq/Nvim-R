@@ -3106,11 +3106,11 @@ function RSourceOtherScripts()
 endfunction
 
 function RBuildTags()
-    if filereadable("TAGS")
-        call RWarningMsg('The file "TAGS" exists. Please, delete it and try again.')
+    if filereadable("etags")
+        call RWarningMsg('The file "etags" exists. Please, delete it and try again.')
         return
     endif
-    call g:SendCmdToR('rtags(ofile = "TAGS"); etags2ctags("TAGS", "tags"); unlink("TAGS")')
+    call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
 endfunction
 
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
