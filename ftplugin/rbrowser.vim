@@ -119,6 +119,7 @@ function! RBrowserDoubleClick()
         elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
             call SendToNvimcom("\006" . key)
         else
+            let key = RBrowserGetName(0, 0)
             call g:SendCmdToR("str(" . key . ")")
         endif
     else
@@ -132,6 +133,7 @@ function! RBrowserDoubleClick()
                 let key = "package:" . RBGetPkgName() . '-' . key
                 call SendToNvimcom("\006" . key)
             else
+                let key = RBrowserGetName(0, 0)
                 call g:SendCmdToR("str(" . key . ")")
             endif
         endif
