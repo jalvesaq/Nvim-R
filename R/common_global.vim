@@ -908,7 +908,7 @@ function StartR(whatr)
     endif
 
     if g:R_in_buffer
-        call StartR_Neovim()
+        call StartR_InBuffer()
         return
     endif
 
@@ -1054,7 +1054,7 @@ function GetNvimcomInfo()
             endif
             let g:SendCmdToR = function('SendCmdToRStudio')
         elseif g:R_in_buffer
-            let g:SendCmdToR = function('SendCmdToR_Neovim')
+            let g:SendCmdToR = function('SendCmdToR_Buffer')
         elseif has("win32")
             if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
                 " ArrangeWindows
@@ -3216,7 +3216,7 @@ let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
-if !exists("*termopen")
+if !exists("*termopen") && !exists("*term_start")
     let g:R_in_buffer = 0
 endif
 if g:R_in_buffer
@@ -3525,7 +3525,11 @@ if !has("win32") && !g:R_applescript && !g:R_in_buffer
 endif
 
 if g:R_in_buffer
-    exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/nvimbuffer.vim"
+    if has("nvim")
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/nvimbuffer.vim"
+    else
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/vimbuffer.vim"
+    endif
 endif
 
 if has("gui_running")

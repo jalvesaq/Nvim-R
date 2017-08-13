@@ -31,6 +31,7 @@ R/synctex_evince_backward.py
 R/synctex_evince_forward.py
 R/tmux.vim
 R/tmux_split.vim
+R/vimbuffer.vim
 R/vimrcom.vim
 R/windows.vim
 R/zathura.vim

@@ -8,7 +8,7 @@ function ExeOnRTerm(cmd)
     exe curwin . 'wincmd w'
 endfunction
 
-function SendCmdToR_Neovim(...)
+function SendCmdToR_Buffer(...)
     if g:rplugin_jobs["R"]
         if g:R_clear_line
             let cmd = "\001" . "\013" . a:1
@@ -73,7 +73,7 @@ function OnTermClose()
     endif
 endfunction
 
-function StartR_Neovim()
+function StartR_InBuffer()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
