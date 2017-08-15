@@ -104,7 +104,12 @@ function StartR_InBuffer()
         call SetRHome()
     endif
 
-    let g:term_bufn = term_start(g:rplugin_R . " " . join(g:rplugin_r_args),
+    if len(g:rplugin_r_args)
+        let rcmd = g:rplugin_R . " " . join(g:rplugin_r_args)
+    else
+        let rcmd = g:rplugin_R
+    endif
+    let g:term_bufn = term_start(rcmd,
                 \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
     let g:rplugin_jobs["R"] = term_getjob(g:term_bufn)
 
