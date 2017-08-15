@@ -769,7 +769,13 @@ function CheckNvimcomVersion()
             call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
+            if has("win32")
+                call SetRtoolsPath()
+            endif
             let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
+            if has("win32")
+                call UnSetRtoolsPath()
+            endif
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
                 if has("win32")
