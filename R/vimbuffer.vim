@@ -86,24 +86,26 @@ function StartR_InBuffer()
     let curbufnm = bufname("%")
     set switchbuf=useopen
 
-    "if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
-    "    if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
-    "        silent exe "belowright " . g:R_rconsole_width . "vnew"
-    "    else
-    "        silent belowright vnew
-    "    endif
-    "else
-    "    if g:R_rconsole_height > 0 && g:R_rconsole_height < (winheight(0) - 1)
-    "        silent exe "belowright " . g:R_rconsole_height . "new"
-    "    else
-    "        silent belowright new
-    "    endif
-    "endif
+    if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
+        if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
+            silent exe "belowright " . g:R_rconsole_width . "vnew"
+        else
+            silent belowright vnew
+        endif
+    else
+        if g:R_rconsole_height > 0 && g:R_rconsole_height < (winheight(0) - 1)
+            silent exe "belowright " . g:R_rconsole_height . "new"
+        else
+            silent belowright new
+        endif
+    endif
 
     if has("win32")
         call SetRHome()
     endif
-    let g:term_bufn = term_start(g:rplugin_R . " " . join(g:rplugin_r_args), {'exit_cb': function('ROnJobExit')})
+
+    let g:term_bufn = term_start(g:rplugin_R . " " . join(g:rplugin_r_args),
+                \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
     let g:rplugin_jobs["R"] = term_getjob(g:term_bufn)
 
     if has("win32")
