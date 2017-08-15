@@ -36,14 +36,14 @@ function SendCmdToR_Buffer(...)
         "endif
 
         " Update the width, if necessary
-        "if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
-        "    call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
-        "    if s:rwnwdth != s:R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
-        "        let s:R_width = s:rwnwdth
-        "        call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
-        "        sleep 10m
-        "    endif
-        "endif
+        if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
+            call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
+            if s:rwnwdth != s:R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
+                let s:R_width = s:rwnwdth
+                call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
+                sleep 10m
+            endif
+        endif
 
         if a:0 == 2 && a:2 == 0
             call term_sendkeys(g:term_bufn, cmd)
