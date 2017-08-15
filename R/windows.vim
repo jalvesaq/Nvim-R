@@ -66,46 +66,42 @@ function SetRtoolsPath()
         let s:rtpath = g:Rtools_path
     else
         let s:rtpath = ""
-        let s:wgcc = split(system("where gcc"), "\n")
-        if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
-            let s:path = split($PATH, ";")
-            for s:p in s:path
-                if s:p =~ "Rtools"
-                    let s:rtpath = substitute(s:p, "Rtools.*", "Rtools", "")
+        let wgcc = split(system("where gcc"), "\n")
+        if len(wgcc) > 0 && wgcc[0] !~ "Rtools"
+            let path = split($PATH, ";")
+            for pth in path
+                if pth =~ "Rtools"
+                    let s:rtpath = substitute(pth, "Rtools.*", "Rtools", "")
                     break
                 endif
             endfor
-            unlet s:path
-            unlet s:p
         endif
-        unlet s:wgcc
+        let g:rplugin_debug_info["Rtools where gcc"] = s:rtpath
         if s:rtpath != "" && !isdirectory(s:rtpath)
             let s:rtpath = ""
         endif
         if s:rtpath == "" && executable("wmic")
-            let s:dstr = system("wmic logicaldisk get name")
-            let s:dstr = substitute(s:dstr, "\001", "", "g")
-            let s:dstr = substitute(s:dstr, " ", "", "g")
-            let s:dlst = split(s:dstr, "\r\n")
-            for s:lttr in s:dlst
-                if s:lttr =~ ":" && isdirectory(s:lttr . "\\Rtools")
-                    let s:rtpath = s:lttr . "\\Rtools"
+            let dstr = system("wmic logicaldisk get name")
+            let dstr = substitute(dstr, "\001", "", "g")
+            let dstr = substitute(dstr, " ", "", "g")
+            let dlst = split(dstr, "\r\n")
+            for lttr in dlst
+                if lttr =~ ":" && isdirectory(lttr . "\\Rtools")
+                    let s:rtpath = lttr . "\\Rtools"
                     break
                 endif
             endfor
-            unlet s:dstr
-            unlet s:dlst
-            unlet s:lttr
+            let g:rplugin_debug_info["Rtools wmic"] = s:rtpath
         endif
     endif
     if s:rtpath != ""
-        let s:gccpath = globpath(s:rtpath, "gcc*")
-        if s:gccpath == ""
-            let $PATH = s:rtpath . "\\bin;" . $PATH
+        let gccpath = globpath(s:rtpath, "gcc*")
+        if gccpath == ""
+            let $PATH = s:rtpath . "\\bin;" .s:rtpath . "\\mingw_64\\bin;" .  s:rtpath . "\\mingw_32\\bin;" . $PATH
         else
-            let $PATH = s:rtpath . "\\bin;" . s:gccpath . "\\bin;" . $PATH
+            let $PATH = s:rtpath . "\\bin;" . gccpath . "\\bin;" . $PATH
         endif
-        unlet s:gccpath
+        let g:rplugin_debug_info["Rtools new PATH"] = $PATH
     endif
     let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
 endfunction
@@ -127,7 +123,7 @@ function CheckRtools()
 
     if s:rtpath != ""
         let Rtvf = s:rtpath . "/VERSION.txt"
-        let g:RtoolsVersion = Rtvf
+        let g:rplugin_debug_info["Rtools version file"] = Rtvf
         if !filereadable(s:rtpath . "/mingw_32/bin/gcc.exe")
             call RWarningMsg('Did you install Rtools with 32 bit support? "' .
                         \ s:rtpath . "/mingw_32/bin/gcc.exe" . '" not found.')

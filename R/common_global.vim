@@ -39,6 +39,8 @@ if exists("s:did_global_stuff")
 endif
 let s:did_global_stuff = 1
 
+let g:rplugin_debug_info = {}
+
 "==========================================================================
 " Functions that are common to r, rnoweb, rhelp and rdoc
 "==========================================================================
@@ -771,10 +773,10 @@ function CheckNvimcomVersion()
         else
             if has("win32")
                 call SetRtoolsPath()
-            endif
-            let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
-            if has("win32")
+                let slog = system(g:rplugin_Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz")
                 call UnSetRtoolsPath()
+            else
+                let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
             endif
             if v:shell_error
                 call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
