@@ -134,8 +134,11 @@ function StartR_InBuffer()
     call WaitNvimcomStart()
 endfunction
 
-let g:R_setwidth = get(g:, "R_setwidth", 1)
 if has("win32")
     " The R package colorout only works on Unix systems
     let g:R_hl_term = get(g:, "R_hl_term", 1)
+    " R may crash if R_setwidth = 1 on Windows
+    let g:R_setwidth = get(g:, "R_setwidth", 0)
+else
+    let g:R_setwidth = get(g:, "R_setwidth", 1)
 endif
