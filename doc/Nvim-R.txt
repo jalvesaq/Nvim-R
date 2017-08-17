@@ -5,8 +5,8 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.9.1
-For Neovim >= 0.1.7 and Vim >= 8.0.0
+Version: 0.9.10
+For Neovim >= 0.1.7 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -25,9 +25,8 @@ For Neovim >= 0.1.7 and Vim >= 8.0.0
 1. Overview~
 
 This plugin improves the support for editing R code with both Vim and Neovim,
-integrating them with R. It is the successor of Vim-R-plugin which may be
-discontinued in the future. Stable versions of this plugin are available
-available at:
+integrating them with R. It is the successor of Vim-R-plugin which was
+discontinued. Stable versions of this plugin are available available at:
 
     https://github.com/jalvesaq/Nvim-R/releases
 
@@ -105,10 +104,11 @@ Main dependencies:~
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 8.0.0:
+   or Vim >= 8.0:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
+      You need Vim >= 8.0.0946 to run R in its built-in terminal emulator.
 
 
    R >= 3.0.0:
@@ -129,17 +129,6 @@ Main dependencies:~
 
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
-
-       - When installing Rtools there will be less chances of errors if you
-	 accept the default option of installing support for both 32 bit and
-	 64 bit platforms.
-
-       - Some users reported that Rtools 3.4 does not work with Nvim-R.
-         They could use only Rtools 3.3.
-
-       - I used to release the Windows binary `nvimcom.zip` along with Nvim-R,
-	 but I am no longer releasing it because my Windows system is not
-	 being well maintained.
 
 
 Additional dependencies for editing Rnoweb documents:~
@@ -909,10 +898,10 @@ of
 								*R_hl_term*
 								*R_setwidth*
 								*R_in_buffer*
-6.1. R in Neovim buffer~
+6.1. R in Vim/Neovim buffer~
 
-By default, R runs in a Neovim buffer created with the command |:term|, and
-the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
+By default, R runs in a Vim/Neovim buffer created with the command |:term|,
+and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
 Nvim-R sets the option "editor" to a function that makes the object to be
 edited in a new tab when `R_esc_term` = 1 (the default value).
 
@@ -948,13 +937,16 @@ the value of R_hl_term in your |vimrc|. Example:
 >
    let R_hl_term = 0
 <
-Before sending a command to R Console, if the terminal width has changed,
-Neovim will send to nvimcom the command `options(width=X)`, where X is the new
-terminal width. You can set the value of R_setwidth to 0 to avoid the width
-being set. Example:
+On Unix systems, before sending a command to R Console, if the terminal width
+has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
+where X is the new terminal width. You can set the value of R_setwidth to 0 to
+avoid the width being set. Example:
 >
    let R_setwidth = 0
 <
+On Windows, the command is sent to R Console because it would crash R if sent
+through nvimcom.
+
 Tips:
 
   - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
@@ -977,14 +969,14 @@ Tips:
     Then, you can open the current buffer in a new tab to get it occupying the
     whole screen.
 
-If you do not want to run R in Neovim's built in terminal emulator, you have
-to install Tmux >= 1.8, and then put in your |vimrc|:
+If you do not want to run R in Vim/Neovim's built in terminal emulator, you
+have to install Tmux >= 1.8, and then put in your |vimrc|:
 >
    let R_in_buffer = 0
 <
 Then, R will start in an external terminal emulator (useful if you use two
-monitors and want Neovim and R separate from each other), and Tmux will be
-used to send commands from Neovim to R.
+monitors and want Vim/Neovim and R separate from each other), and Tmux will be
+used to send commands from Vim/Neovim to R.
 
 
 ------------------------------------------------------------------------------
@@ -1042,8 +1034,9 @@ put in your |vimrc|:
 							      *R_set_home_env*
 6.3. Windows specific options~
 
-Nvim-R will try to find the path to Rtools installation. If it cannot find the
-path, or if it too long to find it, you can put in your |vimrc|:
+Nvim-R will try to find the path to Rtools installation and add it to the
+beginning of the `PATH` environment variable. If it cannot find the path, or
+if it takes too long to find it, you can put in your |vimrc|:
 >
    let Rtools_path = "C:\\Rtools"
 <
@@ -1757,8 +1750,8 @@ Vim's working directory, put in your |vimrc|:
 <
 This option is useful only for those who did not enable 'autochdir'.
 
-If you prefer that the Vim-R-plugin does not set the working directory in any
-way, put in |vimrc|:
+If you prefer that Nvim-R does not set the working directory in any way, put
+in |vimrc|:
 >
    let R_nvim_wd = -1
 <
@@ -2166,6 +2159,7 @@ R/synctex_evince_backward.py
 R/synctex_evince_forward.py
 R/tmux.vim
 R/tmux_split.vim
+R/vimbuffer.vim
 R/vimrcom.vim
 R/windows.vim
 R/zathura.vim
@@ -2923,11 +2917,13 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.9.1 (2017-07-08)
+0.9.10 (2017-08-16)
 
  * Change command \dt to \td and \pt to \tp.
- * New options: R_hi_fun_paren, R_show_arg_help and R_sttline_fmt.
  * New default value for R_show_args = 1.
+ * New options: R_hi_fun_paren, R_show_arg_help,R_sttline_fmt and
+   R_set_sttline_cmd.
+ * Minor bug fixes.
 
 0.9.9 (2017-04-22)
 
