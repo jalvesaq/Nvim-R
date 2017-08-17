@@ -40,8 +40,12 @@ function SendCmdToR_Buffer(...)
             call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
             if s:rwnwdth != s:R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
                 let s:R_width = s:rwnwdth
-                call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
-                sleep 10m
+                if has("win32")
+                    let cmd = "options(width=" . s:R_width. "); ". cmd
+                else
+                    call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
+                    sleep 10m
+                endif
             endif
         endif
 
@@ -138,7 +142,5 @@ if has("win32")
     " The R package colorout only works on Unix systems
     let g:R_hl_term = get(g:, "R_hl_term", 1)
     " R may crash if R_setwidth = 1 on Windows
-    let g:R_setwidth = get(g:, "R_setwidth", 0)
-else
-    let g:R_setwidth = get(g:, "R_setwidth", 1)
 endif
+let g:R_setwidth = get(g:, "R_setwidth", 1)
