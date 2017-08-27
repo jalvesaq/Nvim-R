@@ -3227,6 +3227,9 @@ let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
 if !exists("*termopen") && !exists("*term_start")
     let g:R_in_buffer = 0
 endif
+if !has("nvim") && !has("patch-8.0.0910")
+    let g:R_in_buffer = 0
+endif
 if g:R_in_buffer
     let g:R_nvimpager = get(g:, "R_nvimpager", "vertical")
 else
