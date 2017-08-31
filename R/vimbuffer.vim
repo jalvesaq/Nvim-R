@@ -61,22 +61,6 @@ function SendCmdToR_Buffer(...)
     endif
 endfunction
 
-function OnTermClose()
-    if exists("g:rplugin_R_bufname")
-        if g:rplugin_R_bufname == bufname("%")
-            if g:R_close_term
-                call feedkeys('<cr>')
-            endif
-        endif
-        unlet g:rplugin_R_bufname
-    endif
-
-    " Set nvimcom port to 0 in nclientserver
-    if g:rplugin_jobs["ClientServer"]
-        call job_send(g:rplugin_jobs["ClientServer"], "\001R0\n")
-    endif
-endfunction
-
 function StartR_InBuffer()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
@@ -113,8 +97,13 @@ function StartR_InBuffer()
     else
         let rcmd = g:rplugin_R
     endif
-    let g:term_bufn = term_start(rcmd,
-                \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
+    if g:R_close_term
+        let g:term_bufn = term_start(rcmd,
+                    \ {'exit_cb': function('ROnJobExit'), "curwin": 1, "term_finish": "close"})
+    else
+        let g:term_bufn = term_start(rcmd,
+                    \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
+    endif
     let g:rplugin_jobs["R"] = term_getjob(g:term_bufn)
 
     if has("win32")
@@ -132,7 +121,6 @@ function StartR_InBuffer()
     "if g:R_esc_term
     "    tnoremap <buffer> <Esc> <C-\><C-n>
     "endif
-    "autocmd TermClose <buffer> call OnTermClose()
     exe "sbuffer " . edbuf
     "stopinsert
     call WaitNvimcomStart()

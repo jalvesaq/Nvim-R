@@ -1898,8 +1898,9 @@ function RQuit(how)
         call JobStdin(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
-    " Must be in term buffer to get TermClose event triggered
-    if g:R_in_buffer && exists("g:rplugin_R_bufname")
+    " In Neovim, the cursor must be in term buffer to get TermClose event
+    " triggered
+    if g:R_in_buffer && exists("g:rplugin_R_bufname") && has("nvim")
         exe "sbuffer " . g:rplugin_R_bufname
         startinsert
     endif
