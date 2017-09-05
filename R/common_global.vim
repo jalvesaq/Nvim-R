@@ -1379,16 +1379,25 @@ function RSourceLines(...)
         endfor
         let lines = newlines
     endif
-    call writefile(lines, s:Rsource)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
+        call writefile(lines, s:Rsource)
         call AddForDeletion(g:rplugin_tmpdir . '/Rinsert')
         call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . s:Rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
         return 1
     endif
 
-    let sargs = GetSourceArgs(a:2)
-    let rcmd = 'base::source("' . s:Rsource . '"' . sargs . ')'
+    " The "brackted paste" option is not documented because it is not well
+    " tested and source() have always worked flawlessly.
+    if g:R_source_args == "bracketed paste"
+        let rcmd = "\x1b[200~" . join(lines, "\n") . "\x1b[201~"
+    else
+        call writefile(lines, s:Rsource)
+        let sargs = GetSourceArgs(a:2)
+        let rcmd = 'base::source("' . s:Rsource . '"' . sargs . ')'
+    endif
+
+
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
