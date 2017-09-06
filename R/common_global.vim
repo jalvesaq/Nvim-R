@@ -741,7 +741,7 @@ function CheckNvimcomVersion()
             let slog = system('R --no-save', rcode)
         else
             " Works even with local Vim and remote R (but not on Windows)
-            let slog = system(g:rplugin_R . ' --no-save', rcode)
+            let slog = system(g:rplugin_Rcmd . ' --no-save', rcode)
         endif
         if v:shell_error
             call RWarningMsg(slog)
@@ -3597,4 +3597,3 @@ endif
 if exists("g:R_ca_ck")
     call RWarningMsgInp("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
 endif
-
