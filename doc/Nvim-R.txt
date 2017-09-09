@@ -156,13 +156,12 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 
    colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
-		 (Optional if |R_in_buffer| and not required if using R.app)
+		 (Not necessary if using Neovim with |R_in_buffer| = 1)
 		 You should put in your Rprofile: `library(colorout)`
 
    Tmux >= 2.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
-		 terminal emulator (see |R_in_buffer|) or if you are using
-		 Vim.
+		 terminal emulator (see |R_in_buffer|).
 
 You may want to improve the configuration of your |vimrc| for a better use of
 the plugin. Please, see |Nvim-R-vimrc-setup| for some suggestions of
@@ -290,10 +289,8 @@ by https://github.com/vim-pandoc/vim-pandoc-syntax
 4. Use~
 
 On Windows, by default, Nvim-R will run Rgui. On other systems, by default, it
-will run R in a Neovim's built in terminal.
-
-It is also possible to run R either in an external terminal emulator (see
-|R_in_buffer|).
+will run R in a Neovim's built in terminal, but it is also possible to run R
+in an external terminal emulator (see |R_in_buffer|).
 
 
 4.1. Key bindings~
@@ -815,7 +812,7 @@ of
 							      *Nvim-R-options*
 6. Options~
 
-|R_in_buffer|         Run R in Neovim buffer
+|R_in_buffer|         Run R in Vim/Neovim built in terminal emulator
 |R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
 |R_close_term|        Close terminal buffer after R quited
 |R_hl_term|           Syntax highlight terminal as rout file type
@@ -970,7 +967,7 @@ Tips:
     whole screen.
 
 If you do not want to run R in Vim/Neovim's built in terminal emulator, you
-have to install Tmux >= 1.8, and then put in your |vimrc|:
+have to install Tmux >= 2.0, and then put in your |vimrc|:
 >
    let R_in_buffer = 0
 <
@@ -2682,9 +2679,7 @@ run will:
 The easiest way of running R in a remote machine is logging into the remote
 machine through ssh, starting Neovim and running R in a Neovim's terminal (the
 default). You will only need both Vim (or Neovim) and R configured as usual in
-the remote machine. If you cannot install Neovim in the remote machine then
-you will have to run both Vim and R in a Tmux session. Please, see
-|Nvim-R-Tmux|.
+the remote machine.
 
 However, if you need to start either Neovim or Vim in the local machine and
 run R in the remote machine, then, a lot of additional configuration is
@@ -2769,11 +2764,13 @@ goal.
 9.22 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
-running R was inside a Tmux session. It is still possible to do this, as
-explained in this section, and it seems to be the only way of using Nvim-R on
-Cygwin.
+running R was inside a Tmux session. Although I did not remove the code to run
+R in a Tmux pane, this possibility is not listed in |Nvim-R-options| section
+because it requires users to know how to configure and use Tmux.
 
-Tmux is required, and you have to put in your |vimrc|:
+It is still possible to run R in a Tmux split pane, as explained in this
+section, and it seems to be the only way of using Nvim-R on Cygwin. You have
+to put in your |vimrc|:
 >
    let R_in_buffer = 0
    let R_applescript = 0
@@ -2786,9 +2783,9 @@ Then, start Tmux before starting Vim:
    exit
 <
 In this case, when you start R, the terminal window is split in two regions:
-one for Vim and the other for Tmux. Then, it's useful (but not required) to
-know some Tmux commands. After you finished editing the file, you have to type
-`exit` to quit the Tmux session.
+one for Vim and the other for Tmux. Then, it's useful to know some Tmux
+commands. After you finished editing the file, you have to type `exit` to quit
+the Tmux session.
 
 
 Tmux configuration~
@@ -2840,6 +2837,9 @@ title automatically. Examples:
    let R_tmux_title = "Nvim-R"
    let R_tmux_title = "automatic"
 <
+When R quits, Tmux will automatically close its pane. If you want that the
+pane remains open, see https://github.com/jalvesaq/Nvim-R/issues/229
+
 
 Key bindings and mouse support~
 
@@ -2917,7 +2917,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10 (2017-08-16)
+0.9.10 (2017-09-08)
 
  * Change command \dt to \td and \pt to \tp.
  * New default value for R_show_args = 1.
