@@ -709,7 +709,7 @@ function CheckNvimcomVersion()
             if nvers != s:required_nvimcom
                 let neednew = 1
             else
-                let rversion = split(system("R --version"))[2]
+                let rversion = split(system(g:rplugin_Rcmd . " --version"))[2]
                 if g:rplugin_R_version != rversion
                     let neednew = 1
                 endif
