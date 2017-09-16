@@ -129,6 +129,9 @@ ShowTexErrors <- function(texf, logf)
             } else if(pb < 0){
                 lev <- lev + pb
             }
+            # Avoid function crash if there is a spurious closing parenthesis in the log
+            if(lev == 0)
+                lev <- 1
         }
         lf[idx] <- levfile[lev]
         idx <- idx + 1
@@ -234,24 +237,27 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
                     haserror <- system(paste(latexcmd, Sres))
             }
         }
-        if(!haserror){
-            if(view){
-                idx <- grep("Latexmk: All targets .* are up-to-date", sout)
+
+        pdff <- ""
+        if(view){
+            idx <- grep("Latexmk: All targets .* are up-to-date", sout)
+            if(length(idx)){
+                pdff <- sub("Latexmk: All targets \\((.*)\\) are up-to-date", "\\1", sout[idx])
+            } else {
+                idx <- grep("Output written on .*\\.pdf .*", sout)
                 if(length(idx)){
-                    pdff <- sub("Latexmk: All targets \\((.*)\\) are up-to-date", "\\1", sout[idx])
-                } else {
-                    idx <- grep("Output written on .*\\.pdf .*", sout)
-                    if(length(idx)){
-                        pdff <- sub("Output written on (.*\\.pdf) .*", "\\1", sout[idx])
-                    } else {
-                        pdff <- sub("\\.tex$", ".pdf", Sres)
-                    }
+                    pdff <- sub("Output written on (.*\\.pdf) .*", "\\1", sout[idx])
+                } else if(!haserror){
+                    pdff <- sub("\\.tex$", ".pdf", Sres)
                 }
+            }
+            if(pdff != ""){
                 if(!grepl("^/", pdff))
                     pdff <- paste0(getwd(), "/", pdff)
                 OpenPDF(pdff)
             }
         }
+
         if(getOption("nvimcom.texerrs")){
             idx <- grep("Transcript written on ", sout)
             if(length(idx)){
