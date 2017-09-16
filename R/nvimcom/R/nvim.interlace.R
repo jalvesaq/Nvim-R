@@ -251,13 +251,13 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
                     pdff <- paste0(getwd(), "/", pdff)
                 OpenPDF(pdff)
             }
-            if(getOption("nvimcom.texerrs")){
-                idx <- grep("Transcript written on ", sout)
-                if(length(idx)){
-                    logf <- sub("Transcript written on (.*)\\.", "\\1", sout[idx])
-                    logf <- gsub('"', '', logf)
-                    ShowTexErrors(Sres, logf)
-                }
+        }
+        if(getOption("nvimcom.texerrs")){
+            idx <- grep("Transcript written on ", sout)
+            if(length(idx)){
+                logf <- sub("Transcript written on (.*)\\.", "\\1", sout[idx])
+                logf <- gsub('"', '', logf)
+                ShowTexErrors(Sres, logf[1])
             }
         }
     }
