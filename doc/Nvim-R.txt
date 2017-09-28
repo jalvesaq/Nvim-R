@@ -42,8 +42,8 @@ to deal with. Cryptic error message are bugs... Please report them at:
     https://github.com/jalvesaq/Nvim-R/issues
 
 Patches and git pull requests are welcome. If you want a feature that only few
-people might be interested in, you can write a script to be sourced by the
-Nvim-R (see |R_source|).
+people might be interested in, you can write a script to be sourced by Nvim-R 
+(see |R_source|).
 
 
 ==============================================================================
@@ -138,7 +138,7 @@ Additional dependencies for editing Rnoweb documents:~
 
    PDF viewer with SyncTeX support and capable of automatically reloading
    documents. This is required only if you edit Rnoweb files.
-      On Linux and other Unixes systems: Zathura (recommended), Evince or Okular.
+      On Linux and other Unix systems: Zathura (recommended), Evince or Okular.
       On OS X: Skim.
       On Windows: SumatraPDF.
 
@@ -266,7 +266,7 @@ loaded), or R was not started by Vim/Neovim.
 
 Customize the plugin~
 
-Please, read the section |Nvim-R-options|. Emacs/ESS users should also read
+Please read the section |Nvim-R-options|. Emacs/ESS users should also read
 |ft-r-indent|.
 
 
@@ -435,13 +435,13 @@ Please see |Nvim-R-key-bindings| to learn how to customize the key bindings
 without editing the plugin directly.
 
 The plugin commands that send code to R Console are the most commonly used. If
-the code to be sent to R has a single line it is sent directly to R Console,
-but if it has more than one line (a selection of lines, a block of lines
-between two marks, a paragraph etc) the lines are written to a file and the
-plugin sends to R the command to source the file. To send to R Console the
-line currently under the cursor you should type <LocalLeader>d. If you want to
-see what lines are being sourced when sending a selection of lines, you can
-use either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
+the code to be sent to R has a single line it is sent directly to R Console. 
+If it has more than one line (a selection of lines, a block of lines between 
+two marks, a paragraph etc) the lines are written to a file and the plugin 
+sends to R the command to source the file. To send to R Console the line 
+currently under the cursor you should type <LocalLeader>d. If you want to see 
+what lines are being sourced when sending a selection of lines, you can use 
+either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
 
 The command <LocalLeader>o runs in the background the R command `print(line)`,
 where `line` is the line under cursor, and adds the output as commented lines
@@ -533,6 +533,8 @@ is running.
 
 You can source all .R files in a directory with the Normal mode command
 :RSourceDir, which accepts an optional argument (the directory to be sourced).
+
+------------------------------------------------------------------------------
 								     *Rinsert*
 The command  `:Rinsert` <cmd>  inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
@@ -552,7 +554,7 @@ control the function behavior.
 
 
 ------------------------------------------------------------------------------
-4.2. Edition of Rnoweb files~
+4.2. Editing Rnoweb files~
 
 In Rnoweb files (.Rnw), when the cursor is over the `@` character, which
 finishes an R chunk, the sending of all commands to R is suspended and the
@@ -838,7 +840,7 @@ of
 |R_editor_w|          Minimum width of R script buffer
 |R_help_w|            Desired width of R documentation buffer
 |R_path|              Directory where R is
-|R_app|, |R_cmd|        Names of R applications
+|R_app|, |R_cmd|      Names of R applications
 |R_args|              Arguments to pass to R
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
@@ -855,7 +857,7 @@ of
 |RStudio_cmd|         Run RStudio instead of R.
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
-|R_paragraph_begin|   Send paragraph from its begin
+|R_paragraph_begin|   Send paragraph from its beginning
 |R_source_args|       Arguments to R `source()` function
 |R_commented_lines|   Include commented lines in code sent to `source()`
 |R_latexcmd|          Command to run on .tex files
