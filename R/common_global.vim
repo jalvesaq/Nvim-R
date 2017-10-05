@@ -819,6 +819,11 @@ function StartR(whatr)
         call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.sh")
     endif
 
+    " https://github.com/jalvesaq/Nvim-R/issues/157
+    if !exists("*FillRLibList")
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/functions.vim"
+    endif
+
     if !CheckNvimcomVersion()
         return
     endif
