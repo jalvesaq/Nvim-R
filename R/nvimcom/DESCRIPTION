@@ -7,6 +7,7 @@ Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 Depends: R (>= 3.0.0)
 Suggests: knitr, rmarkdown
 Imports: tools
+Encoding: UTF-8
 Description: Provide a service to intermediate the communication between R and either Neovim or Vim.
 License: GPL (>= 2)
 URL: https://github.com/jalvesaq/nvimcom
