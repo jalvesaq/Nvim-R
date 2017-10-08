@@ -1005,8 +1005,26 @@ function GetNvimcomInfo()
             sleep 1
         endif
 
-        if search_list =~ "package:colorout" && !exists("g:R_hl_term")
-            let g:R_hl_term = 0
+        if !exists("g:R_hl_term")
+            if search_list =~ "package:colorout"
+                let g:R_hl_term = 0
+            else
+                let g:R_hl_term = 1
+            endif
+        endif
+
+        if !exists("g:R_OutDec")
+            if search_list =~ " Dec,"
+                let g:R_OutDec = ","
+            else
+                let lines = getline(1, "$")
+                for line in lines
+                    if line =~ "OutDec[ \t]*=[ \t]*['\"],['\"]" || line =~ "['\"]OutDec['\"][ \t]*=[ \t]*['\"],['\"]"
+                        let g:R_OutDec = ","
+                        break
+                    endif
+                endfor
+            endif
         endif
 
         if exists("g:R_nvimcom_home")

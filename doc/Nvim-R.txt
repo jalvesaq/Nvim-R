@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.10
+Version: 0.9.10.1
 For Neovim >= 0.1.7 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
@@ -154,14 +154,14 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 		 terminal emulator.
 		 (Not required if using R.app on OS X)
 
+   Tmux >= 2.0:  http://tmux.sourceforge.net
+		 Tmux is required only if you want to run R in an external
+		 terminal emulator (see |R_in_buffer|).
+
    colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
 		 (Not necessary if using Neovim with |R_in_buffer| = 1)
 		 You should put in your Rprofile: `library(colorout)`
-
-   Tmux >= 2.0:  http://tmux.sourceforge.net
-		 Tmux is required only if you want to run R in an external
-		 terminal emulator (see |R_in_buffer|).
 
 You may want to improve the configuration of your |vimrc| for a better use of
 the plugin. Please, see |Nvim-R-vimrc-setup| for some suggestions of
@@ -818,6 +818,7 @@ of
 |R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
 |R_close_term|        Close terminal buffer after R quited
 |R_hl_term|           Syntax highlight terminal as rout file type
+|R_OutDec|            Set comma as decimal separator in rout files
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
@@ -895,6 +896,7 @@ of
 								*R_esc_term*
 								*R_close_term*
 								*R_hl_term*
+								*R_OutDec*
 								*R_setwidth*
 								*R_in_buffer*
 6.1. R in Vim/Neovim buffer~
@@ -935,6 +937,14 @@ If you prefer do not rely on the auto detection of colorout, you should set
 the value of R_hl_term in your |vimrc|. Example:
 >
    let R_hl_term = 0
+<
+Right after starting R, Nvim-R will try to detect if either the value of R's
+`OutDec` option is `","` or the current R script sets the `OutDec` option. If
+you are using Neovim to syntax highlight R's output and it is not correctly
+detecting R's `OutDec` option, then, to get numbers correctly recognized, you
+should put in your |vimrc|:
+>
+   let R_OutDec = ","
 <
 On Unix systems, before sending a command to R Console, if the terminal width
 has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
@@ -2555,9 +2565,6 @@ please read this document from the beginning.
    ~/.Rprofile~
 >
    if(interactive()){
-       # Suggested libraries:
-       library(colorout)
-
        # Use text based web browser to navigate through R docs after help.start()
        # if you cannot run a graphical web browser (e.g. when you are in the
        # Linux console):
@@ -2918,6 +2925,10 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.10.1 (2017-10-08)
+
+ * New option: R_OutDec.
 
 0.9.10 (2017-09-08)
 

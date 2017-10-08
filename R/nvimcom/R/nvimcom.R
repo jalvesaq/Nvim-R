@@ -52,7 +52,7 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.labelerr")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
-           paste(search(), collapse = " "),
+           paste0(paste(search(), collapse = " "), " Dec", getOption("OutDec")),
            paste0(version$major, ".", version$minor),
            PACKAGE="nvimcom")
     }
