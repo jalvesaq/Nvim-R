@@ -883,6 +883,11 @@ function StartR(whatr)
     if g:R_in_buffer && g:R_esc_term
         let start_options += ['options(editor = nvimcom:::nvim.edit)']
     endif
+    if exists("g:R_csv_delim") && (g:R_csv_delim == "," || g:R_csv_delim == ";")
+        let start_options += ['options(nvimcom.delim = "' . g:R_csv_delim. '")']
+    else
+        let start_options += ['options(nvimcom.delim = "\t")']
+    endif
 
     let rwd = ""
     if g:R_nvim_wd == 0

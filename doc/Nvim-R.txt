@@ -1862,6 +1862,11 @@ the value of R_csv_app in your |vimrc|. Examples:
    let R_csv_app = "localc"
    let R_csv_app = "c:/Program Files (x86)/LibreOffice 4/program/scalc.exe"
 <
+If the default field delimiter causes problems in your case, you can change it
+in your |vimrc|. Valid values are `"\t"`, `";"` and `","`. Example:
+>
+   let R_csv_delim = ","
+<
 There is also the option of configuring Nvim-R to run an R command to
 display the data. Example:
 >
@@ -2926,9 +2931,9 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-10-08)
+0.9.10.1 (2017-10-09)
 
- * New option: R_OutDec.
+ * New options: R_OutDec, R_csv_delim.
 
 0.9.10 (2017-09-08)
 

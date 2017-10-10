@@ -29,6 +29,7 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.texerrs = TRUE)
         options(nvimcom.labelerr = TRUE)
         options(nvimcom.nvimpager = TRUE)
+        options(nvimcom.delim = "\t")
     }
     if(getOption("nvimcom.nvimpager"))
         options(pager = nvim.hmsg)
@@ -123,8 +124,13 @@ nvim_viewdf <- function(oname)
         return(invisible(NULL))
     }
     if(is.data.frame(o) || is.matrix(o)){
-        write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
-                    file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        if(getOption("nvimcom.delim") == "\t"){
+            write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        } else {
+            write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        }
         .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "')"), PACKAGE="nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
