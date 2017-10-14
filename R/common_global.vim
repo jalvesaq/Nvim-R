@@ -2576,7 +2576,11 @@ function RAction(rcmd, ...)
                 echo "Wait..."
                 call delete(g:rplugin_tmpdir . "/Rinsert")
                 call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
-                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                if has("win32") && &encoding == "utf-8"
+                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '", fenc="UTF-8")')
+                else
+                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                endif
             endif
             return
         endif

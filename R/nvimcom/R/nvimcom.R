@@ -114,7 +114,7 @@ nvim_capture_source_output <- function(s, o)
     .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE="nvimcom")
 }
 
-nvim_viewdf <- function(oname)
+nvim_viewdf <- function(oname, fenc = "")
 {
     ok <- try(o <- get(oname, envir = .GlobalEnv), silent = TRUE)
     if(inherits(ok, "try-error")){
@@ -126,9 +126,11 @@ nvim_viewdf <- function(oname)
     if(is.data.frame(o) || is.matrix(o)){
         if(getOption("nvimcom.delim") == "\t"){
             write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                        fileEncoding = fenc,
                         file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
         } else {
             write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                        fileEncoding = fenc,
                         file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
         }
         .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "')"), PACKAGE="nvimcom")
