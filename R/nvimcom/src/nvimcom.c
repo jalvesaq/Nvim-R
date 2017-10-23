@@ -69,6 +69,7 @@ static int flag_lsenv = 0;
 static int flag_lslibs = 0;
 static int ifd, ofd;
 static InputHandler *ih;
+static char myport[128];
 #endif
 
 typedef struct liststatus_ {
@@ -1156,6 +1157,8 @@ static void *nvimcom_server_thread(void *arg)
         return(NULL);
     }
 
+    snprintf(myport, 127, "%d", bindportn);
+
     if(verbose > 1)
         REprintf("nvimcom port: %d\n", bindportn);
 
@@ -1164,6 +1167,9 @@ static void *nvimcom_server_thread(void *arg)
 
     // Save a file to indicate that nvimcom is running
     nvimcom_save_running_info(bindportn);
+
+    char endmsg[128];
+    snprintf(endmsg, 127, "%scall STOP >>> Now <<< !!!", getenv("NVIMR_SECRET"));
 
     /* Read datagrams and reply to sender */
     for (;;) {
@@ -1176,6 +1182,8 @@ static void *nvimcom_server_thread(void *arg)
                 REprintf("nvimcom: recvfrom failed\n");
             continue;     /* Ignore failed request */
         }
+        if(strncmp(endmsg, buf, 28) == 0)
+            break;
         nvimcom_parse_received_msg(buf);
     }
     return(NULL);
@@ -1334,6 +1342,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
 #ifdef WIN32
     tid = _beginthread(nvimcom_server_thread, 0, NULL);
 #else
+    strcpy(myport, "0");
     pthread_create(&tid, NULL, nvimcom_server_thread, NULL);
 #endif
 
@@ -1392,7 +1401,7 @@ void nvimcom_Stop()
         WSACleanup();
 #else
         close(sfd);
-        pthread_cancel(tid);
+        nvimcom_nvimclient("STOP >>> Now <<< !!!", myport);
         pthread_join(tid, NULL);
 #endif
         ListStatus *tmp = firstList;

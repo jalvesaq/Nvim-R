@@ -31,6 +31,7 @@ static int Tid;
 #else
 static int Sfd = -1;
 static pthread_t Tid;
+static char myport[128];
 #endif
 
 static void HandleSigTerm(int s)
@@ -134,6 +135,10 @@ static void *NeovimServer(void *arg)
 
     RegisterPort(bindportn);
 
+    snprintf(myport, 127, "%d", bindportn);
+    char endmsg[128];
+    snprintf(endmsg, 127, "%scall STOP >>> Now <<< !!!", getenv("NVIMR_SECRET"));
+
     /* Read datagrams and reply to sender */
     for (;;) {
         memset(buf, 0, bsize);
@@ -145,7 +150,7 @@ static void *NeovimServer(void *arg)
             fflush(stderr);
             continue;     /* Ignore failed request */
         }
-        if(strstr(buf, "QUIT_NVINSERVER_NOW"))
+        if(strncmp(endmsg, buf, 28) == 0)
             break;
 
         ParseMsg(buf);
@@ -633,6 +638,7 @@ int main(int argc, char **argv){
 #ifdef WIN32
     Tid = _beginthread(NeovimServer, 0, NULL);
 #else
+    strcpy(myport, "0");
     pthread_create(&Tid, NULL, NeovimServer, NULL);
 #endif
 
@@ -714,12 +720,12 @@ int main(int argc, char **argv){
         memset(line, 0, 1024);
     }
 #ifdef WIN32
-        closesocket(Sfd);
-        WSACleanup();
+    closesocket(Sfd);
+    WSACleanup();
 #else
-        close(Sfd);
-        pthread_cancel(Tid);
-        pthread_join(Tid, NULL);
+    close(Sfd);
+    SendToServer(myport, "STOP >>> Now <<< !!!");
+    pthread_join(Tid, NULL);
 #endif
     if(df)
         fclose(df);
