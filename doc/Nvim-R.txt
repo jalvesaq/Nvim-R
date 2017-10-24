@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.10.1
-For Neovim >= 0.1.7 and Vim >= 8.0.0946
+For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -100,7 +100,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.1.7:
+   Neovim >= 0.2.0:
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -164,7 +164,7 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 		 You should put in your Rprofile: `library(colorout)`
 
 You may want to improve the configuration of your |vimrc| for a better use of
-the plugin. Please, see |Nvim-R-vimrc-setup| for some suggestions of
+the plugin. Please, see |Nvim-R-quick-setup| for some suggestions of
 configuration.
 
 
@@ -256,10 +256,6 @@ started by Nvim-R, as in the example below:
        options(defaultPackages = c("utils", "grDevices", "graphics", "stats", "methods", "nvimcom"))
    }
 <
-Did you see the message "nvimcom port not found"? This means that R is not
-running, the nvimcom package is not installed (or is installed but is not
-loaded), or R was not started by Vim/Neovim.
-
 
 ------------------------------------------------------------------------------
 3.4. Optional steps~
@@ -288,9 +284,8 @@ by https://github.com/vim-pandoc/vim-pandoc-syntax
 								  *Nvim-R-use*
 4. Use~
 
-On Windows, by default, Nvim-R will run Rgui. On other systems, by default, it
-will run R in a Neovim's built in terminal, but it is also possible to run R
-in an external terminal emulator (see |R_in_buffer|).
+By default, Nvim-R will run R in a built-in terminal emulator, but you can
+change this behavior (see |R_in_buffer|).
 
 
 4.1. Key bindings~
@@ -2424,8 +2419,20 @@ prefer that Vim breaks the R code automatically put in your |vimrc|:
 9.13. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
 
 If you want 256 colors support in Vim, install the package ncurses-term.
-Then put in your `~/.bashrc` the lines suggested at |Nvim-R-bash-setup|.
-
+Then put in your `~/.bashrc` these lines:
+>
+   # Change the TERM environment variable (to get 256 colors) even if you are
+   # accessing your system through ssh and using either Tmux or GNU Screen:
+   if [ "$TERM" = "xterm" ] || [ "$TERM" = "xterm-256color" ]
+   then
+       export TERM=xterm-256color
+       export HAS_256_COLORS=yes
+   fi
+   if [ "$TERM" = "screen" ] && [ "$HAS_256_COLORS" = "yes" ]
+   then
+       export TERM=screen-256color
+   fi
+<
 You have to search the internet for color schemes supporting 256 colors,
 download and copy them to either ~/.config/nvim/colors or ~/.vim. You may use
 the command |:colorscheme| to try them one by one before setting your
@@ -2467,6 +2474,20 @@ which can display R plots in a separate panel. Although we can not embed an R
 graphical device in Vim, we can at least make it always visible over the
 terminal emulator or the GVim window.
 
+And add this to your `~/.Rprofile` if you want to use `w3m`, a text based web
+browser, to navigate through R docs after `help.start()` when you cannot run a
+graphical web browser (e.g. when you are in the Linux console):
+>
+   if(interactive()){
+        if(Sys.getenv("DISPLAY") == ""){
+            if(Sys.getenv("TMUX") != "")
+                options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
+            else if(Sys.getenv("NVIMR_TMPDIR") != "")
+                options(browser = function(u) .C("nvimcom_msg_to_nvim",
+                                                 paste0('StartTxtBrowser("w3m", "', u, '")')))
+        }
+   }
+<
 
 ------------------------------------------------------------------------------
 9.16. Debugging R functions~
@@ -2525,12 +2546,11 @@ See also: |R_latexcmd|.
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
 
-Here are some suggestions of configuration for Vim/Neovim, Bash and R. To
-understand what you are doing, and change the configuration to your taste,
-please read this document from the beginning.
+Here are some suggestions of configuration for Vim/Neovim. To understand what
+you are doing, and change the configuration to your taste, please read this
+document from the beginning.
 
-							 *Nvim-R-vimrc-setup*
-   ~/.vimrc or ~/.config/nvim/init.vim or ~\AppData\Roaming\nvim\init.vim~
+   ~/.vimrc or ~/.config/nvim/init.vim or ~\AppData\Local\nvim\init.vim~
 >
    " Change Leader and LocalLeader keys:
    let maplocalleader = ","
@@ -2546,66 +2566,6 @@ please read this document from the beginning.
    " Press the space bar to send lines and selection to R:
    vmap <Space> <Plug>RDSendSelection
    nmap <Space> <Plug>RDSendLine
-
-   " The lines below are suggestions for Vim in general and are not
-   " specific to the improvement of Nvim-R.
-
-   " Highlight the last searched pattern:
-   set hlsearch
-
-   " Show where the next pattern is as you type it:
-   set incsearch
-
-   " By default, Vim indents code by 8 spaces. Most people prefer 4
-   " spaces:
-   set sw=4
-
-   " Search "vim colorscheme 256" in the internet and download color
-   " schemes that supports 256 colors in the terminal emulator. Then,
-   " uncomment the code below to set you color scheme:
-   "colorscheme not_defined
-<
-
-							      *Nvim-R-R-setup*
-   ~/.Rprofile~
->
-   if(interactive()){
-       # Use text based web browser to navigate through R docs after help.start()
-       # if you cannot run a graphical web browser (e.g. when you are in the
-       # Linux console):
-        if(Sys.getenv("DISPLAY") == ""){
-            if(Sys.getenv("TMUX") != "")
-                options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
-            else if(Sys.getenv("NVIMR_TMPDIR") != "")
-                options(browser = function(u) .C("nvimcom_msg_to_nvim",
-                                                 paste0('StartTxtBrowser("w3m", "', u, '")')))
-        }
-   }
-<
-
-							   *Nvim-R-bash-setup*
-   ~/.bashrc (Linux, Mac OS X, and other Unix systems):~
->
-   # Change the TERM environment variable (to get 256 colors) even if you are
-   # accessing your system through ssh and using either Tmux or GNU Screen:
-   if [ "$TERM" = "xterm" ] || [ "$TERM" = "xterm-256color" ]
-   then
-       export TERM=xterm-256color
-       export HAS_256_COLORS=yes
-   fi
-   if [ "$TERM" = "screen" ] && [ "$HAS_256_COLORS" = "yes" ]
-   then
-       export TERM=screen-256color
-   fi
-<
-
-
-Finally, if you want to use vi key bindings in Bash or other shell:
-
-   ~/.inputrc~
->
-   set editing-mode vi
-   set keymap vi
 <
 
 ------------------------------------------------------------------------------
@@ -2931,9 +2891,10 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-10-09)
+0.9.10.1 (2017-10-15)
 
  * New options: R_OutDec, R_csv_delim.
+ * Require Neovim >= 0.2.0.
 
 0.9.10 (2017-09-08)
 
