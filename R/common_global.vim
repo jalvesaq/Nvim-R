@@ -68,17 +68,17 @@ function RWarningMsgInp(wmsg)
 endfunction
 
 if has("nvim")
-    if !has("nvim-0.1.7")
-        call RWarningMsgInp("Nvim-R requires Neovim >= 0.1.7.")
+    if !has("nvim-0.2.0")
+        call RWarningMsgInp("Nvim-R requires Neovim >= 0.2.0.")
         let g:rplugin_failed = 1
         finish
     endif
 elseif v:version < "800"
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.7 or Vim >= 8.0.")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.2.0 or Vim >= 8.0.")
     let g:rplugin_failed = 1
     finish
 elseif !has("channel") || !has("job")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.1.7 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.2.0 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin_failed = 1
     finish
 endif
