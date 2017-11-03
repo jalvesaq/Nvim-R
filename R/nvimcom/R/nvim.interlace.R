@@ -297,20 +297,11 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...
     on.exit(setwd(oldwd))
     setwd(rmddir)
 
-    if(!is.null(outform)){
-        if(outform == "odt"){
-            res <- rmarkdown::render(Rmdfile, "html_document", ...)
-            system(paste('soffice --invisible --convert-to odt', res))
-        } else {
-            res <- rmarkdown::render(Rmdfile, outform, ...)
-        }
-    } else {
-        res <- rmarkdown::render(Rmdfile, ...)
-    }
+    res <- rmarkdown::render(Rmdfile, outform, ...)
 
     if(view){
-        if(!is.null(outform) && outform == "odt")
-            system(paste0("lowriter '", sub("\\.html$", ".odt'", res)))
+        if(!is.null(outform) && outform == "odt_document")
+            system(paste0("lowriter '", res, "'"))
         else
             if(regexpr("\\.html$", res) > 0)
                 browseURL(res)

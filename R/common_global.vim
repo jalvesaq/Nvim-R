@@ -2612,18 +2612,6 @@ function! RMakeRmd(t)
 
     update
 
-    if a:t == "odt"
-        if has("win32")
-            let soffice_bin = "soffice.exe"
-        else
-            let soffice_bin = "soffice"
-        endif
-        if !executable(soffice_bin)
-            call RWarningMsg("Is Libre Office installed? Cannot convert into ODT: '" . soffice_bin . "' not found.")
-            return
-        endif
-    endif
-
     let rmddir = expand("%:p:h")
     if has("win32")
         let rmddir = substitute(rmddir, '\\', '/', 'g')
@@ -2755,7 +2743,7 @@ function RControlMaps()
     call RCreateMaps("nvi", '<Plug>RMakePDFKb',     'kl', ':call RMakeRmd("beamer_presentation")')
     call RCreateMaps("nvi", '<Plug>RMakeWord',      'kw', ':call RMakeRmd("word_document")')
     call RCreateMaps("nvi", '<Plug>RMakeHTML',      'kh', ':call RMakeRmd("html_document")')
-    call RCreateMaps("nvi", '<Plug>RMakeODT',       'ko', ':call RMakeRmd("odt")')
+    call RCreateMaps("nvi", '<Plug>RMakeODT',       'ko', ':call RMakeRmd("odt_document")')
 endfunction
 
 
