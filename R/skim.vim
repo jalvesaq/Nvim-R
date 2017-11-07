@@ -6,7 +6,7 @@ endif
 function ROpenPDF2(fullpath)
     call system("env NVIMR_PORT=" . g:rplugin_myport . " " .
                 \ g:macvim_skim_app_path . '/Contents/MacOS/Skim "' .
-                \ a:fullpath . '.pdf" 2> /dev/null >/dev/null &')
+                \ a:fullpath . '" 2> /dev/null >/dev/null &')
 endfunction
 
 function SyncTeX_forward2(tpath, ppath, texln, tryagain)
