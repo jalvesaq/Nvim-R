@@ -100,7 +100,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.2.0:
+   Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows):
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -2891,10 +2891,10 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-10-15)
+0.9.10.1 (2017-11-09)
 
  * New options: R_OutDec, R_csv_delim.
- * Require Neovim >= 0.2.0.
+ * Require Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows).
 
 0.9.10 (2017-09-08)
 

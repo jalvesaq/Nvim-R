@@ -67,21 +67,29 @@ function RWarningMsgInp(wmsg)
     let &shortmess = savedsm
 endfunction
 
+if has("win32")
+    let s:nvv = "0.2.1"
+else
+    let s:nvv = "0.2.0"
+endif
+
 if has("nvim")
-    if !has("nvim-0.2.0")
-        call RWarningMsgInp("Nvim-R requires Neovim >= 0.2.0.")
+    if !has("nvim-" . s:nvv)
+        call RWarningMsgInp("Nvim-R requires Neovim >= " . s:nvv . ".")
         let g:rplugin_failed = 1
         finish
     endif
 elseif v:version < "800"
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.2.0 or Vim >= 8.0.")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.")
     let g:rplugin_failed = 1
     finish
 elseif !has("channel") || !has("job")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= 0.2.0 or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    call RWarningMsgInp("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin_failed = 1
     finish
 endif
+
+unlet s:nvv
 
 function ReplaceUnderS()
     if &filetype != "r" && b:IsInRCode(0) == 0
