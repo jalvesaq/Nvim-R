@@ -2135,11 +2135,13 @@ function RGetFirstObjClass(rkeyword)
     endif
 
     let objclass = ""
-    call SendToNvimcom("\x08" . $NVIMR_ID . "nvimcom:::nvim.getclass(" . firstobj . ")")
-    if g:rplugin_nvimcom_port > 0
-        let g:rplugin_lastev = ReadEvalReply()
-        if g:rplugin_lastev !~ "^R error: "
-            let objclass = '"' . g:rplugin_lastev . '"'
+    if firstobj != ""
+        call SendToNvimcom("\x08" . $NVIMR_ID . "nvimcom:::nvim.getclass(" . firstobj . ")")
+        if g:rplugin_nvimcom_port > 0
+            let g:rplugin_lastev = ReadEvalReply()
+            if g:rplugin_lastev !~ "^R error: "
+                let objclass = '"' . g:rplugin_lastev . '"'
+            endif
         endif
     endif
 
