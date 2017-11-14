@@ -2116,31 +2116,29 @@ function RGetFirstObjClass(rkeyword)
         else
             let firstobj = substitute(line, ').*', '', "")
             let firstobj = substitute(firstobj, ',.*', '', "")
+            if firstobj =~ "="
+                let firstobj = ""
+            endif
             let firstobj = substitute(firstobj, ' .*', '', "")
         endif
     endif
 
-    " Fix some problems
-    if firstobj =~ '^"' && firstobj !~ '"$'
-        let firstobj = firstobj . '"'
-    elseif firstobj =~ "^'" && firstobj !~ "'$"
-        let firstobj = firstobj . "'"
-    endif
-    if firstobj =~ "^'" && firstobj =~ "'$"
-        let firstobj = substitute(firstobj, "^'", '"', "")
-        let firstobj = substitute(firstobj, "'$", '"', "")
-    endif
-    if firstobj =~ '='
-        let firstobj = "eval(expression(" . firstobj . "))"
-    endif
-
     let objclass = ""
     if firstobj != ""
-        call SendToNvimcom("\x08" . $NVIMR_ID . "nvimcom:::nvim.getclass(" . firstobj . ")")
-        if g:rplugin_nvimcom_port > 0
-            let g:rplugin_lastev = ReadEvalReply()
-            if g:rplugin_lastev !~ "^R error: "
-                let objclass = '"' . g:rplugin_lastev . '"'
+        if firstobj =~ '^"' || firstobj =~ "^'"
+            let objclass = '"character"'
+        elseif firstobj =~ "^[0-9]"
+            let objclass = '"numeric"'
+        else
+            call SendToNvimcom("\x08" . $NVIMR_ID . "nvimcom:::nvim.getclass(" . firstobj . ")")
+            if g:rplugin_nvimcom_port > 0
+                let g:rplugin_lastev = ReadEvalReply()
+                if g:rplugin_lastev !~ "^R error: "
+                    let objclass = '"' . g:rplugin_lastev . '"'
+                endif
+                if g:rplugin_lastev == "#E#"
+                    let objclass = ""
+                endif
             endif
         endif
     endif

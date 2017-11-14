@@ -465,8 +465,8 @@ familiar with and is enabled by default. You have to change the value of
 |R_assign| to disable underscore replacement.
 
 When you press <LocalLeader>rh, the plugin shows the help for the function
-under the cursor. The plugin also checks the class of the object passed as
-argument to the function to try to figure out whether the function is a
+under the cursor. The plugin also checks the class of the first object passed
+as argument to the function to try to figure out whether the function is a
 generic one and whether it is more appropriate to show a specific method. The
 same procedure is followed with <LocalLeader>rp, that is, while printing an
 object. For example, if you run the code below and, then, press
@@ -479,6 +479,13 @@ in each case:
    m <- lm(y ~ x)
    summary(x)
    summary(m)
+<
+Nvim-R will not check the class of the first object if the `=` operator is
+present. For example, in the two cases below you would get the generic help
+for `summary`:
+>
+   summary(object = x)
+   summary(object = m)
 <
 To get help on an R topic, you can also type in Vim (Normal mode):
 >
