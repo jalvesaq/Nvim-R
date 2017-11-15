@@ -62,6 +62,19 @@ GetRnwLines <- function(texf, concf, l)
                     break
                 }
             }
+        } else if(length(grep("^l\\.[0-9]", l[ii])) > 0){
+            texln <- as.numeric(sub("^l\\.([0-9]*) .*", "\\1", l[ii]))
+            idx <- 1
+            while(idx < nrow(conc) && texln > conc$texlnum[idx]){
+                idx <- idx + 1
+                if(conc$texlnum[idx] >= texln){
+                    l[ii] <- sub("l\\.([0-9]*) (.*)",
+                                 paste0("l.\\1 \\2 [",
+                                        conc$rnwfile[idx], ": ",
+                                        conc$rnwline[idx], "]"), l[ii])
+                    break
+                }
+            }
         } else if(length(grep("lines [0-9]*--[0-9]*", l[ii])) > 0){
             texln1 <- as.numeric(sub(".*lines ([0-9]*)--.*", "\\1", l[ii]))
             texln2 <- as.numeric(sub(".*lines [0-9]*--([0-9]*).*", "\\1", l[ii]))
@@ -95,18 +108,8 @@ GetRnwLines <- function(texf, concf, l)
     l
 }
 
-ShowTexErrors <- function(texf, logf)
+ShowTexErrors <- function(texf, l)
 {
-    if(!file.exists(logf))
-        stop(paste0(logf, ' not found.'))
-    l <- readLines(logf, encoding = "latin1")
-    if(length(grep(sub("log$", "tex", logf), l)) == 0){ # XeLaTeX uses UTF-8
-        l8 <- readLines(logf, encoding = "utf-8")
-        if(length(grep(sub("log$", "tex", logf), l8)) > 0){
-            l <- l8
-        }
-    }
-
     llen <- length(l)
     lf <- character(llen)
     lev <- 1
@@ -142,6 +145,13 @@ ShowTexErrors <- function(texf, logf)
     idx[grepl("^(Package|Class) \\w+ (Error|Warning):", l, useBytes = TRUE)] <- TRUE
     idx[grepl("^LaTeX (Error|Warning):", l, useBytes = TRUE)] <- TRUE
     idx[grepl("^No pages of output", l, useBytes = TRUE)] <- TRUE
+    undef <- grep("Undefined control sequence", l, useBytes = TRUE)
+    if(length(undef) > 0){
+        undef <- c(undef, undef + 1)
+        undef <- sort(undef)
+        undef <- undef[!duplicated(undef)]
+        idx[undef] <- TRUE
+    }
     if(sum(grepl("pdfTeX (error|warning)", l, useBytes = TRUE)) > 0)
         has.pdfTeX.errors <- TRUE
     else
@@ -156,9 +166,11 @@ ShowTexErrors <- function(texf, logf)
         if(length(ismaster) > 0 && file.exists(concf)){
             l[ismaster] <- GetRnwLines(texf, concf, l[ismaster])
         }
-        msg <- paste0('\nSelected lines of "', logf, '":\n\n', paste(lf, l, sep = ": ", collapse = "\n"), "\n")
+        msg <- paste0('\nSelected lines of "', sub("\\.tex$", ".log", texf),
+                      '":\n\n', paste(lf, l, sep = ": ", collapse = "\n"), "\n")
         if(has.pdfTeX.errors)
-            msg <- paste0(msg, 'There are pdfTeX errors or warnings. See "', logf, '" for details.\n')
+            msg <- paste0(msg, 'There are pdfTeX errors or warnings. See "',
+                          sub("\\.tex$", ".log", texf), '" for details.\n')
         cat(msg)
     }
 }
@@ -171,8 +183,10 @@ OpenPDF <- function(fullpath)
     return(invisible(NULL))
 }
 
-nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, synctex = TRUE, bibtex = FALSE,
-                                  knit = TRUE, buildpdf = TRUE, view = TRUE, ...)
+nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
+                                  latexargs = c("-pdf", '-pdflatex="xelatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"'),
+                                  synctex = TRUE, bibtex = FALSE, knit = TRUE,
+                                  buildpdf = TRUE, view = TRUE, ...)
 {
     oldwd <- getwd()
     on.exit(setwd(oldwd))
@@ -206,28 +220,13 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
 
     # Compile the .pdf
     if(exists('Sres')){
-        # From RStudio: Check for spaces in path (Sweave chokes on these)
-        # if(length(grep(" ", Sres)) > 0)
-        #     stop(paste("Invalid filename: '", Sres, "' (TeX does not understand paths with spaces).", sep=""))
-        if(missing(latexcmd)){
-            if(latexmk){
-                if(synctex)
-                    latexcmd = 'latexmk -pdflatex="pdflatex -file-line-error -synctex=1" -pdf'
-                else
-                    latexcmd = 'latexmk -pdflatex="pdflatex -file-line-error" -pdf'
-            } else {
-                if(synctex)
-                    latexcmd = "pdflatex -file-line-error -synctex=1"
-                else
-                    latexcmd = "pdflatex -file-line-error"
-            }
-        }
-        try(sout <- system(paste(latexcmd, gsub(" ", "\\\\ ", Sres)), intern = TRUE))
-        if(is.null(attr(sout, "status"))){
+        stts <- system2(latexcmd, c(latexargs, gsub(" ", "\\\\ ", Sres)))
+        sout <- readLines(sub("\\.tex$", ".log", Sres))
+
+        if(stts == 0)
             haserror <- FALSE
-        } else {
+        else
             haserror <- TRUE
-        }
 
         if(!haserror && bibtex){
             haserror <- system(paste("bibtex", sub("\\.tex$", ".aux", Sres)))
@@ -259,12 +258,8 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd, latexmk = TRUE, 
         }
 
         if(getOption("nvimcom.texerrs")){
-            idx <- grep("Transcript written on ", sout)
-            if(length(idx)){
-                logf <- sub("Transcript written on (.*)\\.", "\\1", sout[idx])
-                logf <- gsub('"', '', logf)
-                ShowTexErrors(Sres, logf[1])
-            }
+            cat("\nExit status of '", latexcmd, "': ", stts, "\n", sep = "")
+            ShowTexErrors(Sres, sout)
         }
     }
     return(invisible(NULL))
@@ -310,4 +305,3 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...
                     OpenPDF(sub(".*/", "", res))
     }
 }
-

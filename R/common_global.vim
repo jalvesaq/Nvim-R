@@ -3276,7 +3276,7 @@ endif
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
 let g:R_source_args      = get(g:, "R_source_args", "print.eval=TRUE")
 let g:R_user_maps_only   = get(g:, "R_user_maps_only",              0)
-let g:R_latexcmd         = get(g:, "R_latexcmd",            "default")
+let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
 let g:R_indent_commented = get(g:, "R_indent_commented",            1)
@@ -3624,4 +3624,9 @@ endif
 " 2017-03-14
 if exists("g:R_ca_ck")
     call RWarningMsgInp("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
+endif
+
+" 2017-11-15
+if len(g:R_latexcmd[0]) == 1
+    call RWarningMsgInp("The option R_latexcmd should be a list. Please update your vimrc.")
 endif

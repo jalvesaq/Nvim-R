@@ -4,15 +4,6 @@ if exists("*RWriteChunk")
     finish
 endif
 
-let g:R_latexmk = get(g:, "R_latexmk", 1)
-if !exists("s:has_latexmk")
-    if g:R_latexmk && executable("latexmk") && executable("perl")
-        let s:has_latexmk = 1
-    else
-        let s:has_latexmk = 0
-    endif
-endif
-
 function RWriteChunk()
     if getline(".") =~ "^\\s*$" && RnwIsInRCode(0) == 0
         call setline(line("."), "<<>>=")
@@ -119,6 +110,28 @@ endfunction
 
 " Weave and compile the current buffer content
 function RWeave(bibtex, knit, pdf)
+    if !exists("s:check_latexcmd")
+        let s:check_latexcmd = 1
+        if g:R_latexcmd[0] == "default"
+            if !executable("xelatex")
+                if executable("pdflatex")
+                    let g:R_latexcmd = ['latexmk', '-pdf', '-pdflatex="pdflatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"']
+                else
+                    call RWarningMsg("You should install 'xelatex' to be able to compile pdf documents.")
+                endif
+            endif
+            if (g:R_latexcmd[0] == "default" || g:R_latexcmd[0] == "latexmk") && !executable("latexmk")
+                if executable("xelatex")
+                    let g:R_latexcmd = ['xelatex', '-file-line-error', '-interaction=nonstopmode', '-synctex=1']
+                elseif executable("pdflatex")
+                    let g:R_latexcmd = ['pdflatex', '-file-line-error', '-interaction=nonstopmode', '-synctex=1']
+                else
+                    call RWarningMsg("You should install both 'xelatex' and 'latexmk' to be able to compile pdf documents.")
+                endif
+            endif
+        endif
+    endif
+
     if g:rplugin_nvimcom_port == 0
         call RWarningMsg("The nvimcom package is required to make and open the PDF.")
     endif
@@ -137,12 +150,13 @@ function RWeave(bibtex, knit, pdf)
         let pdfcmd = pdfcmd . ', buildpdf = FALSE'
     endif
 
-    if s:has_latexmk == 0
-        let pdfcmd = pdfcmd . ', latexmk = FALSE'
-    endif
-
-    if g:R_latexcmd != "default"
-        let pdfcmd = pdfcmd . ", latexcmd = '" . g:R_latexcmd . "'"
+    if g:R_latexcmd[0] != "default"
+        let pdfcmd = pdfcmd . ", latexcmd = '" . g:R_latexcmd[0] . "'"
+        if len(g:R_latexcmd) == 1
+            let pdfcmd = pdfcmd . ", latexargs = character()"
+        else
+            let pdfcmd = pdfcmd . ", latexargs = c('" . join(g:R_latexcmd[1:], "', '"). "')"
+        endif
     endif
 
     if g:R_synctex == 0
@@ -464,7 +478,7 @@ function SetPDFdir()
     let mdir = substitute(master, '\(.*\)/.*', '\1', '')
     let b:rplugin_pdfdir = "."
     " Latexmk has an option to create the PDF in a directory other than '.'
-    if (g:R_latexcmd =~ "default" || g:R_latexcmd =~ "latexmk") && filereadable(expand("~/.latexmkrc"))
+    if (g:R_latexcmd[0] =~ "default" || g:R_latexcmd[0] =~ "latexmk") && filereadable(expand("~/.latexmkrc"))
         let ltxmk = readfile(expand("~/.latexmkrc"))
         for line in ltxmk
             if line =~ '\$out_dir\s*='
@@ -473,8 +487,8 @@ function SetPDFdir()
             endif
         endfor
     endif
-    if g:R_latexcmd =~ "-outdir" || g:R_latexcmd =~ "-output-directory"
-        let b:rplugin_pdfdir = substitute(g:R_latexcmd, '.*\(-outdir\|-output-directory\)\s*=*\s*', '', '')
+    if join(g:R_latexcmd) =~ "-outdir" || join(g:R_latexcmd) =~ "-output-directory"
+        let b:rplugin_pdfdir = substitute(join(g:R_latexcmd), '.*\(-outdir\|-output-directory\)\s*=*\s*', '', '')
         let b:rplugin_pdfdir = substitute(b:rplugin_pdfdir, " .*", "", "")
         let b:rplugin_pdfdir = substitute(b:rplugin_pdfdir, '["' . "']", "", "")
     endif
