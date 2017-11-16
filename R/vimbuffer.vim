@@ -16,25 +16,6 @@ function SendCmdToR_Buffer(...)
             let cmd = a:1
         endif
 
-        "if !exists("g:R_hl_term")
-        "    call SendToNvimcom("\x08" . $NVIMR_ID . 'paste(search(), collapse=" ")')
-        "    let g:rplugin_lastev = ReadEvalReply()
-        "    if !exists("g:R_hl_term")
-        "        if g:rplugin_lastev =~ "colorout"
-        "            let g:R_hl_term = 0
-        "        else
-        "            let g:R_hl_term = 1
-        "        endif
-        "    endif
-        "endif
-
-        "if !exists("s:hl_term")
-        "    let s:hl_term = g:R_hl_term
-        "    if s:hl_term
-        "        call ExeOnRTerm('set filetype=rout')
-        "    endif
-        "endif
-
         " Update the width, if necessary
         if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
             call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
@@ -118,17 +99,12 @@ function StartR_InBuffer()
         set filetype=rout
         let s:hl_term = g:R_hl_term
     endif
-    "if g:R_esc_term
-    "    tnoremap <buffer> <Esc> <C-\><C-n>
-    "endif
     exe "sbuffer " . edbuf
-    "stopinsert
     call WaitNvimcomStart()
 endfunction
 
 if has("win32")
     " The R package colorout only works on Unix systems
     let g:R_hl_term = get(g:, "R_hl_term", 1)
-    " R may crash if R_setwidth = 1 on Windows
 endif
 let g:R_setwidth = get(g:, "R_setwidth", 1)
