@@ -30,7 +30,7 @@
 if exists("*WaitVimComStart")
     echohl WarningMsg
     call input("Please, uninstall Vim-R-plugin before using Nvim-R. [Press <Enter> to continue]")
-    echohl Normal
+    echohl None
 endif
 
 " Do this only once
@@ -48,7 +48,7 @@ let g:rplugin_debug_info = {}
 function RWarningMsg(wmsg)
     echohl WarningMsg
     echomsg a:wmsg
-    echohl Normal
+    echohl None
 endfunction
 
 function RWarningMsgInp(wmsg)
@@ -60,7 +60,7 @@ function RWarningMsgInp(wmsg)
     set shortmess-=T
     echohl WarningMsg
     call input(a:wmsg . " [Press <Enter> to continue] ")
-    echohl Normal
+    echohl None
     if savedlz == 0
         set nolazyredraw
     endif
@@ -731,6 +731,9 @@ function CheckNvimcomVersion()
         exe "cd " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g')
         if has("win32")
             call SetRHome()
+            let cmpldir = substitute(g:rplugin_compldir, '\\', '/', 'g')
+        else
+            let cmpldir = g:rplugin_compldir
         endif
 
         " The user libs directory may not exist yet if R was just upgraded
@@ -743,7 +746,12 @@ function CheckNvimcomVersion()
                     \ 'cat(.libPaths()[1L],',
                     \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
                     \ '    sep = "\n")',
-                    \ 'sink()']
+                    \ 'sink()',
+                    \ 'sink("' . cmpldir . '/path_to_nvimcom")',
+                    \ 'cat(.libPaths()[1L],',
+                    \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
+                    \ '    sep = "\n")',
+                    \ 'sink()' ]
         if has("win32") && g:R_in_buffer == 0
             " g:rplugin_R is Rgui.exe which will ignore the script
             let slog = system('R --no-save', rcode)
@@ -805,8 +813,50 @@ function CheckNvimcomVersion()
     return 1
 endfunction
 
+function StartNClientServer()
+    if IsJobRunning("ClientServer")
+        call FinishStartingR()
+        return
+    endif
+    if !filereadable(g:rplugin_compldir . '/path_to_nvimcom')
+        return
+    endif
+
+    if has("win32")
+        let nvc = "nclientserver.exe"
+        let pathsep = ";"
+    else
+        let nvc = "nclientserver"
+        let pathsep = ":"
+    endif
+
+    let nvimcomdir = readfile(g:rplugin_compldir . '/path_to_nvimcom')
+
+    if g:rplugin_nvimcom_bin_dir == ""
+        if filereadable(nvimcomdir[0] . '/nvimcom/bin/' . nvc)
+            let g:rplugin_nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin'
+        elseif filereadable(nvimcomdir[1] . '/nvimcom/bin/' . nvc)
+            let g:rplugin_nvimcom_bin_dir = nvimcomdir[1] . '/nvimcom/bin'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/x64/' . nvc)
+            let g:rplugin_nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/x64'
+        else
+            call RWarningMsg('Application "' . nvc . '" not found.')
+            return
+        endif
+    endif
+
+    if g:rplugin_nvimcom_bin_dir != "" && $PATH !~ g:rplugin_nvimcom_bin_dir
+        let $PATH = g:rplugin_nvimcom_bin_dir . pathsep . $PATH
+    endif
+
+    echon "\rWait..."
+    let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
+endfunction
+
 " Start R
 function StartR(whatr)
+    let s:wait_nvimcom = 1
+
     if !isdirectory(g:rplugin_tmpdir)
         call mkdir(g:rplugin_tmpdir, "p", 0700)
     endif
@@ -836,6 +886,11 @@ function StartR(whatr)
         return
     endif
 
+    let s:what_r = a:whatr
+    call StartNClientServer()
+endfunction
+
+function FinishStartingR()
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
     elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
@@ -845,7 +900,7 @@ function StartR(whatr)
         let $R_DEFAULT_PACKAGES .= ",rstudioapi"
     endif
 
-    if a:whatr =~ "custom"
+    if s:what_r =~ "custom"
         call inputsave()
         let r_args = input('Enter parameters for R: ')
         call inputrestore()
@@ -857,6 +912,7 @@ function StartR(whatr)
             let g:rplugin_r_args = []
         endif
     endif
+    unlet s:what_r
 
     if g:R_objbr_opendf
         let start_options = ['options(nvimcom.opendf = TRUE)']
@@ -973,10 +1029,24 @@ function StopR()
     endif
 endfunction
 
+function SetSendCmdToR(...)
+    if exists("g:RStudio_cmd")
+        let g:SendCmdToR = function('SendCmdToRStudio')
+    elseif g:R_in_buffer
+        let g:SendCmdToR = function('SendCmdToR_Buffer')
+    elseif has("win32")
+        let g:SendCmdToR = function('SendCmdToR_Windows')
+    endif
+    if !s:has_warning
+        echon "\r       "
+    endif
+    let s:wait_nvimcom = 0
+endfunction
+
 function CheckIfNvimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
     if filereadable(g:rplugin_tmpdir . '/nvimcom_running_' . $NVIMR_ID)
-        call GetNvimcomInfo()
+        call timer_start(1000, "GetNvimcomInfo")
     elseif s:nseconds > 0
         call timer_start(1000, "CheckIfNvimcomIsRunning")
     else
@@ -997,9 +1067,9 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function GetNvimcomInfo()
-    sleep 1200m
+function SetNvimcomInfo(...)
     if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
+        let s:has_warning = 0
         let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
         let s:nvimcom_version = vr[0]
         let s:nvimcom_home = vr[1]
@@ -1015,15 +1085,8 @@ function GetNvimcomInfo()
         if s:nvimcom_version != s:required_nvimcom_dot
             call RWarningMsg('This version of Nvim-R requires nvimcom ' .
                         \ s:required_nvimcom . '.')
+            let s:has_warning = 1
             sleep 1
-        endif
-
-        if !exists("g:R_hl_term")
-            if search_list =~ "package:colorout"
-                let g:R_hl_term = 0
-            else
-                let g:R_hl_term = 1
-            endif
         endif
 
         if !exists("g:R_OutDec")
@@ -1037,6 +1100,15 @@ function GetNvimcomInfo()
                         break
                     endif
                 endfor
+            endif
+        endif
+
+        if has("nvim") && g:R_in_buffer && !exists("g:R_hl_term")
+            if search_list =~ "colorout"
+                let g:R_hl_term = 0
+            else
+                let g:R_hl_term = 1
+                call ExeOnRTerm("source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rout.vim")
             endif
         endif
 
@@ -1056,39 +1128,23 @@ function GetNvimcomInfo()
                     \ g:rplugin_nvimcom_bin_dir, g:rplugin_R_version],
                     \ g:rplugin_compldir . "/nvimcom_info")
 
-        if has("win32")
-            let nvc = "nclientserver.exe"
-            if $PATH !~ g:rplugin_nvimcom_bin_dir
-                let $PATH = g:rplugin_nvimcom_bin_dir . ';' . $PATH
-            endif
-        else
-            let nvc = "nclientserver"
-            if $PATH !~ g:rplugin_nvimcom_bin_dir
-                let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
-            endif
-        endif
-        if filereadable(g:rplugin_nvimcom_bin_dir . '/' . nvc)
-            " Set nvimcom port in the nclientserver
-            let $NVIMCOMPORT = g:rplugin_nvimcom_port
+        if IsJobRunning("ClientServer")
             " Set RConsole window ID in nclientserver to ArrangeWindows()
             if has("win32")
                 if $RCONSOLE == "0"
                     call RWarningMsg("nvimcom did not save R window ID")
+                    let s:has_warning = 1
                 endif
             endif
-            if !IsJobRunning("ClientServer")
-                let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
+            " Set nvimcom port in nvimclient
+            if has("win32")
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . " " . $RCONSOLE . "\n")
             else
-                " ClientServer already started
-                if has("win32")
-                    call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . " " . $RCONSOLE . "\n")
-                else
-                    call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
-                endif
-                call SendToNvimcom("\001" . g:rplugin_myport)
+                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
             endif
         else
-            call RWarningMsg('Application "' . nvc . '" not found.')
+            call RWarningMsg("nvimcom is not running")
+            let s:has_warning = 1
         endif
 
         if exists("g:RStudio_cmd")
@@ -1096,15 +1152,11 @@ function GetNvimcomInfo()
                 " ArrangeWindows
                 call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
             endif
-            let g:SendCmdToR = function('SendCmdToRStudio')
-        elseif g:R_in_buffer
-            let g:SendCmdToR = function('SendCmdToR_Buffer')
         elseif has("win32")
             if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
                 " ArrangeWindows
                 call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
             endif
-            let g:SendCmdToR = function('SendCmdToR_Windows')
         elseif g:R_applescript
             call foreground()
             sleep 200m
@@ -1124,6 +1176,7 @@ function GetNvimcomInfo()
         if g:R_after_start != ''
             call system(g:R_after_start)
         endif
+        call timer_start(1000, "SetSendCmdToR")
         return
     else
         if filereadable(g:rplugin_compldir . "/nvimcom_info")
@@ -1221,6 +1274,15 @@ function RBrOpenCloseLs(stt)
 endfunction
 
 function SendToNvimcom(cmd)
+    if s:wait_nvimcom
+        if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
+            call RWarningMsg("R is not running")
+        elseif string(g:SendCmdToR) == "function('SendCmdToR_NotYet')"
+            call RWarningMsg("R is not ready yet")
+        endif
+        return
+    endif
+
     if !IsJobRunning("ClientServer")
         call RWarningMsg("ClientServer not running.")
         return
@@ -1228,13 +1290,12 @@ function SendToNvimcom(cmd)
     call JobStdin(g:rplugin_jobs["ClientServer"], "\002" . a:cmd . "\n")
 endfunction
 
+" This function is called by nclientserver
 function RSetMyPort(p)
     let g:rplugin_myport = a:p
     let $NVIMR_PORT = a:p
-    if IsJobRunning("ClientServer")
-        if g:rplugin_nvimcom_port
-            call SendToNvimcom("\001" . g:rplugin_myport)
-        endif
+    if exists("s:what_r")
+        call FinishStartingR()
     endif
 endfunction
 
@@ -1943,7 +2004,7 @@ function RQuit(how)
         call JobStdin(g:rplugin_jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
     endif
 
-    " In Neovim, the cursor must be in term buffer to get TermClose event
+    " In Neovim, the cursor must be in the term buffer to get TermClose event
     " triggered
     if g:R_in_buffer && exists("g:rplugin_R_bufname") && has("nvim")
         exe "sbuffer " . g:rplugin_R_bufname
@@ -2116,11 +2177,12 @@ function RGetFirstObjClass(rkeyword)
         else
             let firstobj = substitute(line, ').*', '', "")
             let firstobj = substitute(firstobj, ',.*', '', "")
-            if firstobj =~ "="
-                let firstobj = ""
-            endif
             let firstobj = substitute(firstobj, ' .*', '', "")
         endif
+    endif
+
+    if firstobj =~ "="
+        let firstobj = ""
     endif
 
     let objclass = ""
@@ -2277,7 +2339,7 @@ function ShowRDoc(rkeyword)
         else
             echohl WarningMsg
             echomsg 'Invalid R_nvimpager value: "' . g:R_nvimpager . '". Valid values are: "tab", "vertical", "horizontal", "tabnew" and "no".'
-            echohl Normal
+            echohl None
             return
         endif
     endif
@@ -3445,7 +3507,15 @@ if filereadable(g:rplugin_compldir . "/nvimcom_info")
         if isdirectory(s:filelines[1]) && isdirectory(s:filelines[2])
             let s:nvimcom_version = s:filelines[0]
             let s:nvimcom_home = s:filelines[1]
-            let g:rplugin_nvimcom_bin_dir = s:filelines[2]
+            if has("win32")
+                let s:nvc = "nclientserver.exe"
+            else
+                let s:nvc = "nclientserver"
+            endif
+            if filereadable(s:filelines[2] . '/' . s:nvc)
+                let g:rplugin_nvimcom_bin_dir = s:filelines[2]
+            endif
+            unlet s:nvc
             let g:rplugin_R_version = s:filelines[3]
         endif
     endif

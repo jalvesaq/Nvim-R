@@ -934,12 +934,6 @@ static void nvimcom_parse_received_msg(char *buf)
     }
 
     switch(buf[0]){
-        case 1: // Set Editor server port number
-            bbuf = buf;
-            bbuf++;
-            strcpy(edsrvr, bbuf);
-            nvimcom_del_newline(edsrvr);
-            break;
         case 2: // Start updating the Object Browser
             objbr_auto = 1;
 #ifdef WIN32
@@ -1162,9 +1156,6 @@ static void *nvimcom_server_thread(void *arg)
     if(verbose > 1)
         REprintf("nvimcom port: %d\n", bindportn);
 
-    flag_lslibs = 1;
-    nvimcom_fire();
-
     // Save a file to indicate that nvimcom is running
     nvimcom_save_running_info(bindportn);
 
@@ -1301,6 +1292,11 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
         tmpdir[0] = 0;
         return;
     }
+
+    if(getenv("NVIMR_PORT"))
+        strncpy(edsrvr, getenv("NVIMR_PORT"), 127);
+    if(verbose > 1)
+        REprintf("nclientserver port: %s\n", edsrvr);
 
     snprintf(liblist, 510, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 510, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));

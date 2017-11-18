@@ -137,7 +137,7 @@ static void *NeovimServer(void *arg)
 
     snprintf(myport, 127, "%d", bindportn);
     char endmsg[128];
-    snprintf(endmsg, 127, "%scall STOP >>> Now <<< !!!", getenv("NVIMR_SECRET"));
+    snprintf(endmsg, 127, "%scall >>> STOP Now <<< !!!", getenv("NVIMR_SECRET"));
 
     /* Read datagrams and reply to sender */
     for (;;) {
@@ -561,8 +561,7 @@ int main(int argc, char **argv){
     if(getenv("DEBUG_NVIMR")){
         df = fopen("/tmp/nclientserver_debug", "w");
         if(df){
-            fprintf(df, "NVIMR_SECRET=%s NVIMCOMPORT=%s\n",
-                    getenv("NVIMR_SECRET"), getenv("NVIMCOMPORT"));
+            fprintf(df, "NVIMR_SECRET=%s\n", getenv("NVIMR_SECRET"));
             fflush(df);
         } else {
             fprintf(stderr, "Error opening \"nclientserver_debug\" for writing\n");
@@ -570,34 +569,7 @@ int main(int argc, char **argv){
         }
     }
 
-    // Set nvimcom port
-    if(getenv("NVIMCOMPORT"))
-        strcpy(NvimcomPort, getenv("NVIMCOMPORT"));
-
 #ifdef WIN32
-    // Set the value of RConsole
-    if(getenv("RCONSOLE")){
-#ifdef _WIN64
-        RConsole = (HWND)atoll(getenv("RCONSOLE"));
-#else
-        RConsole = (HWND)atol(getenv("RCONSOLE"));
-#endif
-    } else {
-        fprintf(stderr, "$RCONSOLE not defined\n");
-        fflush(stderr);
-
-        RConsole = FindWindow(NULL, "R Console (64-bit)");
-        if(!RConsole){
-            RConsole = FindWindow(NULL, "R Console (32-bit)");
-            if(!RConsole)
-                RConsole = FindWindow(NULL, "R Console");
-        }
-        if(!RConsole){
-            fprintf(stderr, "\"R Console\" window not found\n");
-            fflush(stderr);
-        }
-    }
-
     // Set the value of NvimHwnd
     if(getenv("WINDOWID")){
 #ifdef _WIN64
@@ -724,7 +696,7 @@ int main(int argc, char **argv){
     WSACleanup();
 #else
     close(Sfd);
-    SendToServer(myport, "STOP >>> Now <<< !!!");
+    SendToServer(myport, ">>> STOP Now <<< !!!");
     pthread_join(Tid, NULL);
 #endif
     if(df)
