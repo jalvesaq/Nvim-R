@@ -703,6 +703,7 @@ endfunction
 function CheckNvimcomVersion()
     let neednew = 0
     if isdirectory(substitute(s:nvimcom_home, "nvimcom", "", "") . "00LOCK-nvimcom")
+        let s:has_warning = 1
         call RWarningMsg('Perhaps you should delete the directory "' .
                     \ substitute(s:nvimcom_home, "nvimcom", "", "") . '00LOCK-nvimcom"')
     endif
@@ -760,6 +761,7 @@ function CheckNvimcomVersion()
             let slog = system(g:rplugin_Rcmd . ' --no-save', rcode)
         endif
         if v:shell_error
+            let s:has_warning = 1
             call RWarningMsg(slog)
             return 0
         endif
@@ -775,6 +777,7 @@ function CheckNvimcomVersion()
         endif
         call delete(g:rplugin_tmpdir . "/libpaths")
 
+        let s:has_warning = 1
         echo "Updating nvimcom... "
         if !exists("g:R_remote_tmpdir")
             let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
@@ -849,7 +852,9 @@ function StartNClientServer()
         let $PATH = g:rplugin_nvimcom_bin_dir . pathsep . $PATH
     endif
 
-    echon "\rWait..."
+    if !s:has_warning
+        echon "\rWait..."
+    endif
     let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
 endfunction
 
@@ -869,7 +874,6 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
-    call AddForDeletion(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     if has("win32")
         call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.bat")
         call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
@@ -882,6 +886,7 @@ function StartR(whatr)
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/functions.vim"
     endif
 
+    let s:has_warning = 0
     if !CheckNvimcomVersion()
         return
     endif
@@ -1045,12 +1050,12 @@ endfunction
 
 function CheckIfNvimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
-    if filereadable(g:rplugin_tmpdir . '/nvimcom_running_' . $NVIMR_ID)
-        call timer_start(1000, "GetNvimcomInfo")
-    elseif s:nseconds > 0
-        call timer_start(1000, "CheckIfNvimcomIsRunning")
-    else
-       call RWarningMsg("R did not load nvimcom yet")
+    if g:rplugin_nvimcom_port == 0
+        if s:nseconds > 0
+            call timer_start(1000, "CheckIfNvimcomIsRunning")
+        else
+            call RWarningMsg("R did not load nvimcom yet")
+        endif
     endif
 endfunction
 
@@ -1067,21 +1072,17 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(...)
-    if filereadable(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        let s:has_warning = 0
-        let vr = readfile(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
-        let s:nvimcom_version = vr[0]
-        let s:nvimcom_home = vr[1]
-        let g:rplugin_nvimcom_port = vr[2]
-        let s:R_pid = vr[3]
-        let $RCONSOLE = vr[4]
-        let search_list = vr[5]
-        let g:rplugin_R_version = vr[6]
-        if len(vr) == 8
-            let $R_IP_ADDRESS = vr[7]
+function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searchlist, rversion)
+        let s:nvimcom_version = a:nvimcomversion
+        if exists("g:R_nvimcom_home")
+            let s:nvimcom_home = g:R_nvimcom_home
+        else
+            let s:nvimcom_home = a:nvimcomhome
         endif
-        call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
+        let g:rplugin_nvimcom_port = a:bindportn
+        let s:R_pid = a:rpid
+        let $RCONSOLE = a:wid
+        let g:rplugin_R_version = a:rversion
         if s:nvimcom_version != s:required_nvimcom_dot
             call RWarningMsg('This version of Nvim-R requires nvimcom ' .
                         \ s:required_nvimcom . '.')
@@ -1090,7 +1091,7 @@ function SetNvimcomInfo(...)
         endif
 
         if !exists("g:R_OutDec")
-            if search_list =~ " Dec,"
+            if a:searchlist =~ " Dec,"
                 let g:R_OutDec = ","
             else
                 let lines = getline(1, "$")
@@ -1104,16 +1105,12 @@ function SetNvimcomInfo(...)
         endif
 
         if has("nvim") && g:R_in_buffer && !exists("g:R_hl_term")
-            if search_list =~ "colorout"
+            if a:searchlist =~ "colorout"
                 let g:R_hl_term = 0
             else
                 let g:R_hl_term = 1
                 call ExeOnRTerm("source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rout.vim")
             endif
-        endif
-
-        if exists("g:R_nvimcom_home")
-            let s:nvimcom_home = g:R_nvimcom_home
         endif
 
         if isdirectory(s:nvimcom_home . "/bin/x64")
@@ -1972,7 +1969,6 @@ function ClearRInfo()
     call delete(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/nvimcom_running_" . $NVIMR_ID)
     let g:SendCmdToR = function('SendCmdToR_fake')
     let s:R_pid = 0
     let g:rplugin_nvimcom_port = 0

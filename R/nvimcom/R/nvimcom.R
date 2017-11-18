@@ -62,10 +62,7 @@ NvimcomEnv$pkgdescr <- list()
 .onUnload <- function(libpath) {
     if(is.loaded("nvimcom_Stop", PACKAGE = "nvimcom")){
         .C("nvimcom_Stop", PACKAGE="nvimcom")
-        if(Sys.getenv("NVIMR_TMPDIR") != ""){
-            unlink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimcom_running_",
-                          Sys.getenv("NVIMR_ID")))
-            if(.Platform$OS.type == "windows")
+        if(Sys.getenv("NVIMR_TMPDIR") != "" && .Platform$OS.type == "windows"){
                 unlink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/rconsole_hwnd_",
                               Sys.getenv("NVIMR_SECRET")))
         }

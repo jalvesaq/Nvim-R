@@ -21,7 +21,7 @@ function ROnJobStdout(job_id, msg)
     let cmd = substitute(cmd, '\r', '', 'g')
     if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
         exe cmd
-    else
+    elseif cmd != ""
         call RWarningMsg("[" . GetJobTitle(a:job_id) . "] Unknown command: " . cmd)
     endif
 endfunction

@@ -183,10 +183,10 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 
     /* Prefix NVIMR_SECRET to msg to increase security.
      * The nvimclient does not need this because it is protect by the X server. */
-    char finalmsg[256];
-    strncpy(finalmsg, nvimsecr, 255);
-    strncat(finalmsg, "call ", 255);
-    strncat(finalmsg, msg, 255);
+    char finalmsg[1024];
+    strncpy(finalmsg, nvimsecr, 1023);
+    strncat(finalmsg, "call ", 1023);
+    strncat(finalmsg, msg, 1023);
     len = strlen(finalmsg);
     if (write(s, finalmsg, len) != len) {
         REprintf("Error: partial/failed write\n");
@@ -888,37 +888,29 @@ static void nvimcom_fire()
 }
 #endif
 
-static void nvimcom_save_running_info(int bindportn)
+static void nvimcom_send_running_info(int bindportn)
 {
-    char fn[512];
-    snprintf(fn, 510, "%s/nvimcom_running_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *f = fopen(fn, "w");
-    if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-    } else {
+    char msg[1024];
 #ifdef WIN32
 #ifdef _WIN64
-        fprintf(f, "%s\n%s\n%d\n%" PRId64 "\n%" PRId64 "\n%s\n%s\n",
-                nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long long)GetForegroundWindow(), search_list, R_version);
+    snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s', '%s')",
+            nvimcom_version, nvimcom_home, bindportn, R_PID,
+            (long long)GetForegroundWindow(), search_list, R_version);
 #else
-        fprintf(f, "%s\n%s\n%d\n%d\n%ld\n%s\n%s\n",
-                nvimcom_version, nvimcom_home, bindportn, R_PID,
-                (long)GetForegroundWindow(), search_list, R_version);
+    snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s', '%s')",
+            nvimcom_version, nvimcom_home, bindportn, R_PID,
+            (long)GetForegroundWindow(), search_list, R_version);
 #endif
 #else
-        if(getenv("WINDOWID"))
-            fprintf(f, "%s\n%s\n%d\n%d\n%s\n%s\n%s\n",
-                    nvimcom_version, nvimcom_home, bindportn, R_PID,
-                    getenv("WINDOWID"), search_list, R_version);
-        else
-            fprintf(f, "%s\n%s\n%d\n%d\n0\n%s\n%s\n",
-                    nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
+    if(getenv("WINDOWID"))
+        snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s', '%s')",
+                nvimcom_version, nvimcom_home, bindportn, R_PID,
+                getenv("WINDOWID"), search_list, R_version);
+    else
+        snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s', '%s')",
+                nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
 #endif
-        if(getenv("R_IP_ADDRESS"))
-            fprintf(f, "%s\n", getenv("R_IP_ADDRESS"));
-        fclose(f);
-    }
+    nvimcom_nvimclient(msg, edsrvr);
 }
 
 static void nvimcom_parse_received_msg(char *buf)
@@ -1157,7 +1149,7 @@ static void *nvimcom_server_thread(void *arg)
         REprintf("nvimcom port: %d\n", bindportn);
 
     // Save a file to indicate that nvimcom is running
-    nvimcom_save_running_info(bindportn);
+    nvimcom_send_running_info(bindportn);
 
     char endmsg[128];
     snprintf(endmsg, 127, "%scall STOP >>> Now <<< !!!", getenv("NVIMR_SECRET"));
@@ -1241,7 +1233,7 @@ static void nvimcom_server_thread(void *arg)
         REprintf("nvimcom port: %d\n", bindportn);
 
     // Save a file to indicate that nvimcom is running
-    nvimcom_save_running_info(bindportn);
+    nvimcom_send_running_info(bindportn);
 
     /* Read datagrams and reply to sender */
     for (;;) {
