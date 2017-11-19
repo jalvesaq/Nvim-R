@@ -98,7 +98,7 @@ function StartR_InBuffer()
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
-        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rout.vim"
+        silent set syntax=rout
     endif
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>

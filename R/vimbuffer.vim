@@ -96,7 +96,7 @@ function StartR_InBuffer()
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
-        set filetype=rout
+        set syntax=rout
         let s:hl_term = g:R_hl_term
     endif
     exe "sbuffer " . edbuf

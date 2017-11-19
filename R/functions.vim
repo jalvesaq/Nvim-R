@@ -181,7 +181,7 @@ function RCheckLibList()
         return
     endif
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        silent exe 'set filetype=' . &filetype
+        silent exe 'set syntax=' . &syntax
         redraw
     endif
     let b:rplugin_new_libs = s:new_libs

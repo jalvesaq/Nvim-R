@@ -875,10 +875,7 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
     if has("win32")
-        call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.bat")
         call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
-    else
-        call AddForDeletion(g:rplugin_tmpdir . "/waitnvimcom.sh")
     endif
 
     " https://github.com/jalvesaq/Nvim-R/issues/157
@@ -1109,7 +1106,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
                 let g:R_hl_term = 0
             else
                 let g:R_hl_term = 1
-                call ExeOnRTerm("source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/syntax/rout.vim")
+                call ExeOnRTerm("set syntax=rout")
             endif
         endif
 
