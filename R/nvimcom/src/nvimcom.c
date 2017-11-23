@@ -229,10 +229,10 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 
     /* Prefix NVIMR_SECRET to msg to increase security.
      * The nvimclient does not need this because it is protect by the X server. */
-    char finalmsg[256];
-    strncpy(finalmsg, nvimsecr, 255);
-    strncat(finalmsg, "call ", 255);
-    strncat(finalmsg, msg, 255);
+    char finalmsg[1024];
+    strncpy(finalmsg, nvimsecr, 1023);
+    strncat(finalmsg, "call ", 1023);
+    strncat(finalmsg, msg, 1023);
     int len = strlen(finalmsg);
     if (send(sfd, finalmsg, len+1, 0) < 0) {
         REprintf("nvimcom_nvimclient failed sending message.\n");
