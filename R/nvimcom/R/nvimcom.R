@@ -144,3 +144,35 @@ source.and.clean <- function(f, ...)
     on.exit(unlink(f))
     source(f, ...)
 }
+
+nvim_format <- function(l1, l2, wco)
+{
+    ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
+                                   file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
+                                   width.cutoff = wco))
+    if(inherits(ok, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           "RWarningMsg('Error trying to execute the function formatR::tyde_source()')",
+           PACKAGE="nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
+}
+
+nvim_insert <- function(cmd, type = "default")
+{
+    try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
+    if(inherits(ok, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
+           PACKAGE="nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0('FinishRInsert("', type , '")'),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
+}

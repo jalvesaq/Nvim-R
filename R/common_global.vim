@@ -182,6 +182,12 @@ function ReadEvalReply()
     endif
 endfunction
 
+function ReadRMsg()
+    let msg = readfile($NVIMR_TMPDIR . "/nvimcom_msg")
+    exe "call " . msg[0]
+    call delete($NVIMR_TMPDIR . "/nvimcom_msg")
+endfunction
+
 function CompleteChunkOptions()
     let cline = getline(".")
     let cpos = getpos(".")
@@ -1311,52 +1317,53 @@ function RFormatCode() range
     elseif wco > 180
         let wco = 180
     endif
-    call delete(g:rplugin_tmpdir . "/eval_reply")
-    call SendToNvimcom("\x08" . $NVIMR_ID . 'formatR::tidy_source("' . g:rplugin_tmpdir . '/unformatted_code", file = "' . g:rplugin_tmpdir . '/formatted_code", width.cutoff = ' . wco . ')')
-    let g:rplugin_lastev = ReadEvalReply()
-    if g:rplugin_lastev =~ "^R error: "
-        call RWarningMsg(g:rplugin_lastev)
-        return
-    endif
-    let lns = readfile(g:rplugin_tmpdir . "/formatted_code")
-    silent exe a:firstline . "," . a:lastline . "delete"
-    call append(a:firstline - 1, lns)
-    echo (a:lastline - a:firstline + 1) . " lines formatted."
+
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_format(' . a:firstline . ', ' . a:lastline . ', ' . wco . ')')
 endfunction
 
-function RInsert(...)
+function FinishRFormatCode(lnum1, lnum2)
+    let lns = readfile(g:rplugin_tmpdir . "/formatted_code")
+    silent exe a:lnum1 . "," . a:lnum2 . "delete"
+    call append(a:lnum1 - 1, lns)
+    call delete(g:rplugin_tmpdir . "/formatted_code")
+    call delete(g:rplugin_tmpdir . "/unformatted_code")
+    echo (a:lnum2 - a:lnum1 + 1) . " lines formatted."
+endfunction
+
+function RInsert(cmd, type)
     if g:rplugin_nvimcom_port == 0
         return
     endif
 
-    call delete(g:rplugin_tmpdir . "/eval_reply")
     call delete(g:rplugin_tmpdir . "/Rinsert")
     call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
 
-    call SendToNvimcom("\x08" . $NVIMR_ID . 'capture.output(' . a:1 . ', file = "' . g:rplugin_tmpdir . '/Rinsert")')
-    let g:rplugin_lastev = ReadEvalReply()
-    if g:rplugin_lastev =~ "^R error: "
-        call RWarningMsg(g:rplugin_lastev)
-    else
-        if a:0 == 2 && a:2 == "newtab"
-            tabnew
-            set ft=rout
-        endif
-        silent exe "read " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
-    endif
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_insert(' . a:cmd . ', "' . a:type . '")')
 endfunction
 
 function SendLineToRAndInsertOutput()
     let lin = getline(".")
-    call RInsert("print(" . lin . ")")
-    let curpos = getpos(".")
-    " comment the output
-    let ilines = readfile(g:rplugin_tmpdir . "/Rinsert")
-    for iln in ilines
-        call RSimpleCommentLine("normal", "c")
-        normal! j
-    endfor
-    call setpos(".", curpos)
+    call RInsert("print(" . lin . ")", "comment")
+endfunction
+
+function FinishRInsert(type)
+    if a:type == "newtab"
+        tabnew
+        set ft=rout
+    endif
+
+    silent exe "read " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
+
+    if a:type == "comment"
+        let curpos = getpos(".")
+        " comment the output
+        let ilines = readfile(g:rplugin_tmpdir . "/Rinsert")
+        for iln in ilines
+            call RSimpleCommentLine("normal", "c")
+            normal! j
+        endfor
+        call setpos(".", curpos)
+    endif
 endfunction
 
 " Function to send commands
@@ -3214,7 +3221,7 @@ function RBuildTags()
     call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
 endfunction
 
-command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>)
+command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>, "default")
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call RBuildTags()
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)

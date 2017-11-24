@@ -79,6 +79,7 @@ typedef struct liststatus_ {
 } ListStatus;
 
 static int nvimcom_checklibs();
+static void nvimcom_nvimclient(const char *msg, char *port);
 
 static ListStatus *firstList = NULL;
 
@@ -122,6 +123,27 @@ static void nvimcom_del_newline(char *buf)
             buf[i] = 0;
             break;
         }
+}
+
+static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
+{
+    // Prefix NVIMR_SECRET to msg to increase security
+    strncpy(finalmsg, nvimsecr, 1023);
+    strncat(finalmsg, "call ", 1023);
+    if(strlen(msg) < 980){
+        strncat(finalmsg, msg, 1023);
+    } else {
+        char fn[512];
+        snprintf(fn, 510, "%s/nvimcom_msg", tmpdir);
+        FILE *f = fopen(fn, "w");
+        if(f == NULL){
+            REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
+            return;
+        }
+        fprintf(f, "%s\n", msg);
+        fclose(f);
+        strncat(finalmsg, "ReadRMsg()", 1023);
+    }
 }
 
 #ifndef WIN32
@@ -181,12 +203,8 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 
     freeaddrinfo(result);	   /* No longer needed */
 
-    /* Prefix NVIMR_SECRET to msg to increase security.
-     * The nvimclient does not need this because it is protect by the X server. */
     char finalmsg[1024];
-    strncpy(finalmsg, nvimsecr, 1023);
-    strncat(finalmsg, "call ", 1023);
-    strncat(finalmsg, msg, 1023);
+    nvimcom_set_finalmsg(msg, finalmsg);
     len = strlen(finalmsg);
     if (write(s, finalmsg, len) != len) {
         REprintf("Error: partial/failed write\n");
@@ -227,12 +245,8 @@ static void nvimcom_nvimclient(const char *msg, char *port)
         return;
     }
 
-    /* Prefix NVIMR_SECRET to msg to increase security.
-     * The nvimclient does not need this because it is protect by the X server. */
     char finalmsg[1024];
-    strncpy(finalmsg, nvimsecr, 1023);
-    strncat(finalmsg, "call ", 1023);
-    strncat(finalmsg, msg, 1023);
+    nvimcom_set_finalmsg(msg, finalmsg);
     int len = strlen(finalmsg);
     if (send(sfd, finalmsg, len+1, 0) < 0) {
         REprintf("nvimcom_nvimclient failed sending message.\n");
