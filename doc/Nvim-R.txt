@@ -831,6 +831,7 @@ of
 |R_assign|            Convert '_' into ' <- '
 |R_assign_map|        Choose what to convert into ' <- '
 |R_rnowebchunk|       Convert '<' into '<<>>=\n@' in Rnoweb files
+|R_rmdchunk|          Convert grave accent chunk into delimiters in Rmd files
 |R_objbr_place|       Placement of Object Browser
 |R_objbr_w|           Initial width of Object Browser window
 |R_objbr_h|           Initial height of Object Browser window
@@ -1073,6 +1074,7 @@ by R, you will want to put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *R_rnowebchunk*
+							       *R_rmdchunk*
 							       *R_assign_map*
 							       *R_assign*
 6.4. Assignment operator and Rnoweb completion of code block~
@@ -1081,6 +1083,11 @@ In Rnoweb files, a `<` is replaced with `<<>>=\n@`. To disable this feature,
 put in your |vimrc|:
 >
    let R_rnowebchunk = 0
+<
+Similarly, in Rmd files the grave accent is replaced with chunk delimiters
+unless you put in your |vimrc|:
+>
+   let R_rmdchunk = 0
 <
 While editing R code, `_` is replaced with `<-`. If you want to bind other
 keys to be replaced by `<-`, set the value of |R_assign_map| in your
@@ -2902,7 +2909,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
  * The option R_latexcmd now is a list and the option R_latexmk no longer
    exists. By default, latexmk and xelatex will be called to compile pdf
    documents.
- * New options: R_OutDec, R_csv_delim.
+ * New options: R_OutDec, R_csv_delim, R_rmdchunk.
  * Require Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows).
 
 0.9.10 (2017-09-08)

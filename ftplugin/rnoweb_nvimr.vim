@@ -13,6 +13,8 @@ endif
 " after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+let g:R_rnowebchunk = get(g:, "R_rnowebchunk", 1)
+
 if g:R_rnowebchunk == 1
     " Write code chunk in rnoweb files
     inoremap <buffer><silent> < <Esc>:call RWriteChunk()<CR>a

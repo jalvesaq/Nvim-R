@@ -13,6 +13,24 @@ endif
 " be defined after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
+
+if g:R_rmdchunk == 1
+    " Write code chunk in rnoweb files
+    inoremap <buffer><silent> ` <Esc>:call RWriteRmdChunk()<CR>a
+endif
+
+function! RWriteRmdChunk()
+    if getline(".") =~ "^\\s*$" && RmdIsInRCode(0) == 0
+        let curline = line(".")
+        call setline(curline, "```{r}")
+        call append(curline, ["```", ""])
+        call cursor(curline, 5)
+    else
+        exe "normal! a`"
+    endif
+endfunction
+
 function! RmdIsInRCode(vrb)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW")
     let docline = search("^[ \t]*```$", "bncW")
