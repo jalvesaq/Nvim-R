@@ -1739,11 +1739,9 @@ value for the variable in your |vimrc|. Example:
 								*R_wait_reply*
 6.30. Time to wait for R reply~
 
-By default Nvim-R waits 2 seconds for R to reply after a command is issued.
-In some cases it might be desirable to extend this period to accommodate for
-commands with long execution times, e.g. when using |Rinsert|.  You can set
-the amount of time NVim-R waits for R to reply (in seconds) by setting a
-different value for `R_wait_reply` in your |vimrc|.  Example:
+By default Nvim-R waits 2 seconds for R to reply after a request for omni
+completion is issued. You can set the amount of time NVim-R waits (in seconds)
+in your |vimrc|.  Example:
 >
    let R_wait_reply = 5
 <
@@ -2899,7 +2897,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-11-15)
+0.9.10.1 (2017-11-24)
 
  * The option R_latexcmd now is a list and the option R_latexmk no longer
    exists. By default, latexmk and xelatex will be called to compile pdf

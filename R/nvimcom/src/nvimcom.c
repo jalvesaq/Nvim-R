@@ -620,29 +620,20 @@ static void nvimcom_char_eval_char(const char *buf, char *rep, int size)
 
 static void nvimcom_eval_expr(const char *buf)
 {
-    char fn[512];
-    snprintf(fn, 510, "%s/eval_reply", tmpdir);
-
     if(verbose > 3)
         Rprintf("nvimcom_eval_expr: '%s'\n", buf);
 
-    FILE *rep = fopen(fn, "w");
-    if(rep == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-        return;
-    }
+    char rep[128];
 
 #ifdef WIN32
     if(tcltkerr){
-        fprintf(rep, "Error: \"nvimcom\" and \"tcltk\" packages are incompatible!\n");
-        fclose(rep);
+        nvimcom_nvimclient("RWarningMsg('Error: \"nvimcom\" and \"tcltk\" packages are incompatible!')", edsrvr);
         return;
     } else {
         if(objbr_auto == 0)
             nvimcom_checklibs();
         if(tcltkerr){
-            fprintf(rep, "Error: \"nvimcom\" and \"tcltk\" packages are incompatible!\n");
-            fclose(rep);
+            nvimcom_nvimclient("RWarningMsg('Error: \"nvimcom\" and \"tcltk\" packages are incompatible!')", edsrvr);
             return;
         }
     }
@@ -656,37 +647,24 @@ static void nvimcom_eval_expr(const char *buf)
     SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
     PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 
-    if (status != PARSE_OK) {
-        fprintf(rep, "INVALID\n");
+    if (status != PARSE_OK && verbose > 1) {
+        strcpy(rep, "RWarningMsg('Invalid command: ");
+        strncat(rep, buf, 80);
+        strcat(rep, "')");
+        nvimcom_nvimclient(rep, edsrvr);
     } else {
         /* Only the first command will be executed if the expression includes
          * a semicolon. */
         PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
-        if(er){
-            fprintf(rep, "ERROR\n");
-        } else {
-            switch(TYPEOF(ans)) {
-                case REALSXP:
-                    fprintf(rep, "%f\n", REAL(ans)[0]);
-                    break;
-                case LGLSXP:
-                case INTSXP:
-                    fprintf(rep, "%d\n", INTEGER(ans)[0]);
-                    break;
-                case STRSXP:
-                    if(length(ans) > 0)
-                        fprintf(rep, "%s\n", CHAR(STRING_ELT(ans, 0)));
-                    else
-                        fprintf(rep, "EMPTY\n");
-                    break;
-                default:
-                    fprintf(rep, "RTYPE\n");
-            }
+        if(er && verbose > 1){
+            strcpy(rep, "RWarningMsg('Error running: ");
+            strncat(rep, buf, 80);
+            strcat(rep, "')");
+            nvimcom_nvimclient(rep, edsrvr);
         }
         UNPROTECT(1);
     }
     UNPROTECT(2);
-    fclose(rep);
 }
 
 static int nvimcom_checklibs()

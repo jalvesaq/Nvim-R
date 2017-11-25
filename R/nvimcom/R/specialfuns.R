@@ -303,21 +303,53 @@ nvim.names <- function(x)
 
 nvim.getclass <- function(x)
 {
-    if(!missing(x) && exists(deparse(substitute(x)), where = .GlobalEnv)){
-        if(getOption("nvimcom.verbose") < 3){
-            saved.warn <- getOption("warn")
-            options(warn = -1)
-            on.exit(options(warn = saved.warn))
-            tr <- try(obj <- eval(expression(x)), silent = TRUE)
-        } else {
-            tr <- try(obj <- eval(expression(x)))
-        }
-        if(class(tr)[1] == "try-error"){
-            return("#E#")
-        } else {
-            return(class(obj)[1])
-        }
-    } else {
+    if(missing(x) || length(charToRaw(x)) == 0)
+        return("#E#")
+
+    if(x == "#c#")
+        return("character")
+    else if (x == "#n#")
+        return("numeric")
+
+    if(!exists(x, where = .GlobalEnv)){
         return("#E#")
     }
+
+    if(getOption("nvimcom.verbose") < 3){
+        saved.warn <- getOption("warn")
+        options(warn = -1)
+        on.exit(options(warn = saved.warn))
+        tr <- try(cls <- class(get(x, envir = .GlobalEnv)), silent = TRUE)
+    } else {
+        tr <- try(cls <- class(get(x, envir = .GlobalEnv)))
+    }
+    if(class(tr)[1] == "try-error")
+        return("#E#")
+
+    return(cls)
+}
+
+nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, firstLibArg = FALSE, extrainfo = FALSE, idx2)
+{
+    if(firstobj == ""){
+        res <- nvim.args(rkeyword0, argkey, pkg, firstLibArg = firstLibArg, extrainfo = extrainfo)
+    } else {
+        objclass <- nvim.getclass(firstobj)
+        if(objclass[1] == "#E#" || objclass[1] == "")
+            res <- nvim.args(rkeyword0, argkey, pkg, firstLibArg = firstLibArg, extrainfo = extrainfo)
+        else
+            res <- nvim.args(rkeyword0, argkey, pkg, objclass, firstLibArg = firstLibArg, extrainfo = extrainfo)
+    }
+    if(res == "NOT_EXISTS"){
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('Function \"", rkeyword0, "\" not found')"),
+           PACKAGE="nvimcom")
+    } else {
+        writeLines(text = res,
+                   con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
+        .C("nvimcom_msg_to_nvim",
+           paste0('FinishArgsCompletion(', as.numeric(firstLibArg), ', ', idx2, ')'),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
 }

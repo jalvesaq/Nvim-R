@@ -184,15 +184,17 @@ OpenPDF <- function(fullpath)
 }
 
 nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
-                                  latexargs = c("-pdf", '-pdflatex="xelatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"'),
-                                  synctex = TRUE, bibtex = FALSE, knit = TRUE,
-                                  buildpdf = TRUE, view = TRUE, ...)
+                                  latexargs, synctex = TRUE, bibtex = FALSE,
+                                  knit = TRUE, buildpdf = TRUE, view = TRUE, ...)
 {
     oldwd <- getwd()
     on.exit(setwd(oldwd))
     setwd(rnwdir)
 
     Sres <- NA
+
+    if(missing(latexargs))
+        latexargs <- c("-pdf", '-pdflatex="xelatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"')
 
     # Check whether the .tex was already compiled
     twofiles <- c(rnowebfile, sub("\\....$", ".tex", rnowebfile))
