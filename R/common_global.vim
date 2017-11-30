@@ -954,6 +954,8 @@ function FinishStartingR()
                 \ '.", call. = FALSE)']
     call writefile(start_options, g:rplugin_tmpdir . "/start_options.R")
 
+    call delete(g:rplugin_compldir . "/nvimcom_info")
+
     if exists("g:RStudio_cmd")
         call StartRStudio()
         return
@@ -1019,7 +1021,16 @@ function CheckIfNvimcomIsRunning(...)
         if s:nseconds > 0
             call timer_start(1000, "CheckIfNvimcomIsRunning")
         else
-            call RWarningMsg("R did not load nvimcom yet")
+            let s:nvimcom_version = "0"
+            let s:nvimcom_home = ""
+            let g:rplugin_nvimcom_bin_dir = ""
+            let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
+            if g:R_tmux_split
+                call RWarningMsgInp(msg)
+            else
+                call RWarningMsg(msg)
+                sleep 500m
+            endif
         endif
     endif
 endfunction
@@ -1139,26 +1150,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
             call system(g:R_after_start)
         endif
         call timer_start(1000, "SetSendCmdToR")
-        return
-    else
-        if filereadable(g:rplugin_compldir . "/nvimcom_info")
-            " The information on nvimcom home might be invalid if R was upgraded
-            call delete(g:rplugin_compldir . "/nvimcom_info")
-            let s:nvimcom_version = "0"
-            let s:nvimcom_home = ""
-            let g:rplugin_nvimcom_bin_dir = ""
-            let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
-        else
-            let msg = "The package nvimcom wasn't loaded yet. Please, see  :h nvimcom-not-loaded"
-        endif
-        if g:R_tmux_split
-            call RWarningMsgInp(msg)
-        else
-            call RWarningMsg(msg)
-            sleep 500m
-        endif
-        return 0
-    endif
 endfunction
 
 function StartObjBrowser()
