@@ -1049,107 +1049,107 @@ function WaitNvimcomStart()
 endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searchlist, rversion)
-        let s:nvimcom_version = a:nvimcomversion
-        if exists("g:R_nvimcom_home")
-            let s:nvimcom_home = g:R_nvimcom_home
+    let s:nvimcom_version = a:nvimcomversion
+    if exists("g:R_nvimcom_home")
+        let s:nvimcom_home = g:R_nvimcom_home
+    else
+        let s:nvimcom_home = a:nvimcomhome
+    endif
+    let g:rplugin_nvimcom_port = a:bindportn
+    let s:R_pid = a:rpid
+    let $RCONSOLE = a:wid
+    let g:rplugin_R_version = a:rversion
+    if s:nvimcom_version != s:required_nvimcom_dot
+        call RWarningMsg('This version of Nvim-R requires nvimcom ' .
+                    \ s:required_nvimcom . '.')
+        let s:has_warning = 1
+        sleep 1
+    endif
+
+    if !exists("g:R_OutDec")
+        if a:searchlist =~ " Dec,"
+            let g:R_OutDec = ","
         else
-            let s:nvimcom_home = a:nvimcomhome
-        endif
-        let g:rplugin_nvimcom_port = a:bindportn
-        let s:R_pid = a:rpid
-        let $RCONSOLE = a:wid
-        let g:rplugin_R_version = a:rversion
-        if s:nvimcom_version != s:required_nvimcom_dot
-            call RWarningMsg('This version of Nvim-R requires nvimcom ' .
-                        \ s:required_nvimcom . '.')
-            let s:has_warning = 1
-            sleep 1
-        endif
-
-        if !exists("g:R_OutDec")
-            if a:searchlist =~ " Dec,"
-                let g:R_OutDec = ","
-            else
-                let lines = getline(1, "$")
-                for line in lines
-                    if line =~ "OutDec[ \t]*=[ \t]*['\"],['\"]" || line =~ "['\"]OutDec['\"][ \t]*=[ \t]*['\"],['\"]"
-                        let g:R_OutDec = ","
-                        break
-                    endif
-                endfor
-            endif
-        endif
-
-        if has("nvim") && g:R_in_buffer && !exists("g:R_hl_term")
-            if a:searchlist =~ "colorout"
-                let g:R_hl_term = 0
-            else
-                let g:R_hl_term = 1
-                call ExeOnRTerm("set syntax=rout")
-            endif
-        endif
-
-        if isdirectory(s:nvimcom_home . "/bin/x64")
-            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/x64"
-        elseif isdirectory(s:nvimcom_home . "/bin/i386")
-            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/i386"
-        else
-            let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin"
-        endif
-
-        call writefile([s:nvimcom_version, s:nvimcom_home,
-                    \ g:rplugin_nvimcom_bin_dir, g:rplugin_R_version],
-                    \ g:rplugin_compldir . "/nvimcom_info")
-
-        if IsJobRunning("ClientServer")
-            " Set RConsole window ID in nclientserver to ArrangeWindows()
-            if has("win32")
-                if $RCONSOLE == "0"
-                    call RWarningMsg("nvimcom did not save R window ID")
-                    let s:has_warning = 1
+            let lines = getline(1, "$")
+            for line in lines
+                if line =~ "OutDec[ \t]*=[ \t]*['\"],['\"]" || line =~ "['\"]OutDec['\"][ \t]*=[ \t]*['\"],['\"]"
+                    let g:R_OutDec = ","
+                    break
                 endif
-            endif
-            " Set nvimcom port in nvimclient
-            if has("win32")
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . " " . $RCONSOLE . "\n")
-            else
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
-            endif
-        else
-            call RWarningMsg("nvimcom is not running")
-            let s:has_warning = 1
+            endfor
         endif
+    endif
 
-        if exists("g:RStudio_cmd")
-            if has("win32") && g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
-                " ArrangeWindows
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
-            endif
-        elseif has("win32")
-            if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
-                " ArrangeWindows
-                call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
-            endif
-        elseif g:R_applescript
-            call foreground()
-            sleep 200m
-        elseif g:R_tmux_split
-            " Environment variables persist across Tmux windows.
-            " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
-            " when R was not started by Neovim:
-            call system("tmux set-environment -u NVIMR_TMPDIR")
-            " Also unset R_DEFAULT_PACKAGES so that other R instances do not
-            " load nvimcom unnecessarily
-            call system("tmux set-environment -u R_DEFAULT_PACKAGES")
+    if has("nvim") && g:R_in_buffer && !exists("g:R_hl_term")
+        if a:searchlist =~ "colorout"
+            let g:R_hl_term = 0
         else
-            call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
-            call delete(g:rplugin_tmpdir . "/openR")
+            let g:R_hl_term = 1
+            call ExeOnRTerm("set syntax=rout")
         endif
+    endif
 
-        if g:R_after_start != ''
-            call system(g:R_after_start)
+    if isdirectory(s:nvimcom_home . "/bin/x64")
+        let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/x64"
+    elseif isdirectory(s:nvimcom_home . "/bin/i386")
+        let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin/i386"
+    else
+        let g:rplugin_nvimcom_bin_dir = s:nvimcom_home . "/bin"
+    endif
+
+    call writefile([s:nvimcom_version, s:nvimcom_home,
+                \ g:rplugin_nvimcom_bin_dir, g:rplugin_R_version],
+                \ g:rplugin_compldir . "/nvimcom_info")
+
+    if IsJobRunning("ClientServer")
+        " Set RConsole window ID in nclientserver to ArrangeWindows()
+        if has("win32")
+            if $RCONSOLE == "0"
+                call RWarningMsg("nvimcom did not save R window ID")
+                let s:has_warning = 1
+            endif
         endif
-        call timer_start(1000, "SetSendCmdToR")
+        " Set nvimcom port in nvimclient
+        if has("win32")
+            call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . " " . $RCONSOLE . "\n")
+        else
+            call JobStdin(g:rplugin_jobs["ClientServer"], "\001" . g:rplugin_nvimcom_port . "\n")
+        endif
+    else
+        call RWarningMsg("nvimcom is not running")
+        let s:has_warning = 1
+    endif
+
+    if exists("g:RStudio_cmd")
+        if has("win32") && g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
+            " ArrangeWindows
+            call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
+        endif
+    elseif has("win32")
+        if g:R_arrange_windows && filereadable(g:rplugin_compldir . "/win_pos")
+            " ArrangeWindows
+            call JobStdin(g:rplugin_jobs["ClientServer"], "\005" . g:rplugin_compldir . "\n")
+        endif
+    elseif g:R_applescript
+        call foreground()
+        sleep 200m
+    elseif g:R_tmux_split
+        " Environment variables persist across Tmux windows.
+        " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
+        " when R was not started by Neovim:
+        call system("tmux set-environment -u NVIMR_TMPDIR")
+        " Also unset R_DEFAULT_PACKAGES so that other R instances do not
+        " load nvimcom unnecessarily
+        call system("tmux set-environment -u R_DEFAULT_PACKAGES")
+    else
+        call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call delete(g:rplugin_tmpdir . "/openR")
+    endif
+
+    if g:R_after_start != ''
+        call system(g:R_after_start)
+    endif
+    call timer_start(1000, "SetSendCmdToR")
 endfunction
 
 function StartObjBrowser()
