@@ -2350,8 +2350,17 @@ function RSetPDFViewer()
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/sumatra.vim"
     elseif g:rplugin_is_darwin && g:rplugin_pdfviewer == "skim"
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/skim.vim"
+    elseif g:rplugin_pdfviewer == "qpdfview"
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/qpdfview.vim"
     else
-        call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '"')
+        exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/pdfviewer.vim"
+        if !executable(g:R_pdfviewer)
+            call RWarningMsgInp("R_pdfviewer (" . g:R_pdfviewer . ") not found.")
+            return
+        endif
+        if g:R_synctex
+            call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '" (SyncTeX will not work)')
+        endif
     endif
 
     if !has("win32") && !g:rplugin_is_darwin
@@ -2359,7 +2368,7 @@ function RSetPDFViewer()
             let g:rplugin_has_wmctrl = 1
         else
             let g:rplugin_has_wmctrl = 0
-            if &filetype == "rnoweb"
+            if &filetype == "rnoweb" && g:R_synctex
                 call RWarningMsgInp("The application wmctrl must be installed to edit Rnoweb effectively.")
             endif
         endif
