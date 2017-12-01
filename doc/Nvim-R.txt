@@ -240,14 +240,23 @@ If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
 |R_path|).
 							  *nvimcom-not-loaded*
-If you see the message "The package nvimcom wasn't loaded yet" after starting
-R, then Nvim-R could not induce R to load nvimcom. Nvim-R sets the environment
-variable `R_DEFAULT_PACKAGES` before starting R. If the variable already
-exists, the string ",nvimcom" is appended to it. However, if you set the
-option `defaultPackages` in your .Rprofile or in a .Rprofile in the current
-directory, the environment variable will be overridden. Thus, if you have to
-set the option `defaultPackages`, you should include "nvimcom" among the
-packages to be loaded. You might want to include "nvimcom" only if R was
+If you see the following message in the R console:
+>
+   During startup - Warning messages:
+   1: In library(package, lib.loc = lib.loc, character.only = TRUE,
+                 logical.return = TRUE, : there is no package called ‘nvimcom’
+   2: package ‘nvimcom’ in options("defaultPackages") was not found
+<
+Try quiting both R and Vim/Neovim and starting them again.
+
+If you still see the message "The package nvimcom wasn't loaded yet" after
+starting R, then Nvim-R could not induce R to load nvimcom. Nvim-R sets the
+environment variable `R_DEFAULT_PACKAGES` before starting R. If the variable
+already exists, the string ",nvimcom" is appended to it. However, if you set
+the option `defaultPackages` in your .Rprofile or in a .Rprofile in the
+current directory, the environment variable will be overridden. Thus, if you
+have to set the option `defaultPackages`, you should include "nvimcom" among
+the packages to be loaded. You might want to include "nvimcom" only if R was
 started by Nvim-R, as in the example below:
 >
    if(Sys.getenv("NVIMR_TMPDIR") == ""){
@@ -908,12 +917,6 @@ and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
 Nvim-R sets the option "editor" to a function that makes the object to be
 edited in a new tab when `R_esc_term` = 1 (the default value).
 
-If you want to set you own external editor, set the option "editor" after
-loading nvimcom in your Rprofile. Example:
->
-   library(nvimcom)
-   options(editor = "leafpad")
-<
 If you want to use `vi`, `vim` or `nvim` in Neovim's terminal, put in your
 |vimrc|:
 >
@@ -1734,10 +1737,9 @@ below sets the color of individual arguments' names to the highlight group
 								      *R_wait*
 6.29. Time to wait for nvimcom loading~
 
-The Nvim-R asynchronously waits 60 seconds for nvimcom package to be loaded
-during R startup. It then checks whether you are using the correct version of
-nvimcom. If 60 seconds are not enough to your R startup, then set a higher
-value for the variable in your |vimrc|. Example:
+Nvim-R asynchronously waits 60 seconds for the nvimcom package to be loaded
+during R startup. If 60 seconds are not enough to your R startup, then set a
+higher value for the variable in your |vimrc|. Example:
 >
    let R_wait = 100
 <
@@ -1961,6 +1963,20 @@ In Skim, click in the drop down menu and fill the fields:
    Preset: Custom
    Command: nclientserver
    Arguments: '%file' %line
+<
+
+------------------------------------------------------------------------------
+6.37.3 Qpdfview configuration~
+
+Qpdfview is only partially supported: SyncTeX backward does not work with file
+paths containing spaces, and the qpdfview window is not automatically raised
+during SyncTeX forward search. If you want to use it despite these
+limitations, click in its drop down menu as illustrated below and fill the
+field Source editor:
+>
+   Edit
+   Settings
+   Source editor: nclientserver %1 %2
 <
 
 ==============================================================================
@@ -2491,14 +2507,12 @@ And add this to your `~/.Rprofile` if you want to use `w3m`, a text based web
 browser, to navigate through R docs after `help.start()` when you cannot run a
 graphical web browser (e.g. when you are in the Linux console):
 >
-   if(interactive()){
-        if(Sys.getenv("DISPLAY") == ""){
-            if(Sys.getenv("TMUX") != "")
-                options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
-            else if(Sys.getenv("NVIMR_TMPDIR") != "")
-                options(browser = function(u) .C("nvimcom_msg_to_nvim",
-                                                 paste0('StartTxtBrowser("w3m", "', u, '")')))
-        }
+   if(interactive() && Sys.info()[["sysname"]] == "Linux" && Sys.getenv("DISPLAY") == ""){
+       if(Sys.getenv("TMUX") != "")
+           options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
+       else if(Sys.getenv("NVIMR_TMPDIR") != "")
+           options(browser = function(u) .C("nvimcom_msg_to_nvim",
+                                            paste0('StartTxtBrowser("w3m", "', u, '")')))
    }
 <
 
