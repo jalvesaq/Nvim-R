@@ -315,7 +315,6 @@ function GoToBuf(rnwbn, rnwf, basedir, rnwln)
 endfunction
 
 function SyncTeX_backward(fname, ln)
-    let g:TheFnameLn = [a:fname, a:ln]
     let flnm = substitute(a:fname, '/\./', '/', '')   " Okular
     let basenm = substitute(flnm, "\....$", "", "")   " Delete extension
     if basenm =~ "/"

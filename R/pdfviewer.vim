@@ -1,6 +1,5 @@
 
 function ROpenPDF2(fullpath)
-    let g:TheFullPath = a:fullpath
     call system(g:R_pdfviewer . " '" . a:fullpath . "' 2>/dev/null >/dev/null &")
 endfunction
 
