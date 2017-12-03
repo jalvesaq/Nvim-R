@@ -1779,6 +1779,18 @@ function KnitChild(line, godown)
     endif
 endfunction
 
+function RParenDiff(str)
+    let clnln = substitute(a:str, '\\"',  "", "g")
+    let clnln = substitute(clnln, "\\\\'",  "", "g")
+    let clnln = substitute(clnln, '".\{-}"',  '', 'g')
+    let clnln = substitute(clnln, "'.\\{-}'",  "", "g")
+    let clnln = substitute(clnln, "#.*", "", "g")
+    let llen0 = strlen(clnln)
+    let llen1 = strlen(substitute(clnln, '[{(\[]', '', 'g'))
+    let llen2 = strlen(substitute(clnln, '[})\]]', '', 'g'))
+    return llen1 - llen2
+endfunction
+
 " Send current line to R.
 function SendLineToR(godown)
     let line = getline(".")
@@ -1790,7 +1802,7 @@ function SendLineToR(godown)
     endif
 
     if &filetype == "rnoweb"
-        if line =~ "^@$"
+        if line == "@"
             if a:godown =~ "down"
                 call GoDown()
             endif
@@ -1806,7 +1818,7 @@ function SendLineToR(godown)
     endif
 
     if &filetype == "rmd"
-        if line =~ "^```$"
+        if line == "```"
             if a:godown =~ "down"
                 call GoDown()
             endif
@@ -1823,7 +1835,7 @@ function SendLineToR(godown)
     endif
 
     if &filetype == "rrst"
-        if line =~ "^\.\. \.\.$"
+        if line == ".. .."
             if a:godown =~ "down"
                 call GoDown()
             endif
@@ -1859,7 +1871,46 @@ function SendLineToR(godown)
         let line = CleanOxygenLine(line)
     endif
 
-    let ok = g:SendCmdToR(line)
+    let block = 0
+    if g:R_parenblock
+        let chunkend = ""
+        if &filetype == "rmd"
+            let chunkend = "```"
+        elseif &filetype == "rnoweb"
+            let chunkend = "@"
+        elseif &filetype == "rrst"
+            let chunkend = ".. .."
+        endif
+        let rpd = RParenDiff(line)
+        if rpd < 0
+            let line1 = line(".")
+            let cline = line1 + 1
+            while cline < line("$")
+                let txt = getline(cline)
+                if chunkend != "" && txt == chunkend
+                    break
+                endif
+                let rpd += RParenDiff(txt)
+                let cline += 1
+                if rpd == 0
+                    for lnum in range(line1, cline - 1)
+                        let ok = g:SendCmdToR(getline(lnum))
+                        if !ok
+                            return
+                        endif
+                    endfor
+                    call cursor(cline - 1, 1)
+                    let block = 1
+                    break
+                endif
+            endwhile
+        endif
+    endif
+
+    if !block
+        let ok = g:SendCmdToR(line)
+    endif
+
     if ok
         if a:godown =~ "down"
             call GoDown()
@@ -3228,6 +3279,7 @@ let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
+let g:R_parenblock        = get(g:, "R_parenblock",         1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_openhtml          = get(g:, "R_openhtml",           0)

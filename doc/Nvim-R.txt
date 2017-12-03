@@ -853,7 +853,7 @@ of
 |R_editor_w|          Minimum width of R script buffer
 |R_help_w|            Desired width of R documentation buffer
 |R_path|              Directory where R is
-|R_app|, |R_cmd|      Names of R applications
+|R_app|, |R_cmd|        Names of R applications
 |R_args|              Arguments to pass to R
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
@@ -871,6 +871,7 @@ of
 |R_listmethods|       Do `nvim.list.args()` instead of `args()`
 |R_specialplot|       Do `nvim.plot()` instead of `plot()`
 |R_paragraph_begin|   Send paragraph from its beginning
+|R_parenblock|        Send lines until closing parenthesis
 |R_source_args|       Arguments to R `source()` function
 |R_commented_lines|   Include commented lines in code sent to `source()`
 |R_latexcmd|          Command to run on .tex files
@@ -1467,7 +1468,8 @@ the plugin after <LocalLeader>rg if you put the following line in your
 
 ------------------------------------------------------------------------------
 							   *R_paragraph_begin*
-6.17. Send a paragraph from its begin~
+							   *R_parenblock*
+6.17. Control how paragraphs and lines are sent~
 
 By default, when you press <LocalLeader>pp Nvim-R sends all contiguous lines to
 R, that is all lines above and below the current one that are not separated by
@@ -1475,6 +1477,12 @@ an empty line. If you prefer that only lines from the cursor position to the
 end of the paragraph are sent, put in your |vimrc|:
 >
    let R_paragraph_begin = 0
+<
+If a line has an opening parenthesis, all lines up to the closing parenthesis
+are sent to R when you send a line of code to R. If you prefer to send the
+lines one by one, put in your |vimrc|:
+>
+   let R_parenblock = 0
 <
 
 ------------------------------------------------------------------------------
@@ -2187,6 +2195,8 @@ R/nvimbuffer.vim
 R/nvimrcom.vim
 R/okular.vim
 R/osx.vim
+R/pdfviewer.vim
+R/qpdfview.vim
 R/r.snippets
 R/rmd.snippets
 R/rnw_fun.vim
@@ -2923,7 +2933,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
  * The option R_latexcmd now is a list and the option R_latexmk no longer
    exists. By default, latexmk and xelatex will be called to compile pdf
    documents.
- * New options: R_OutDec, R_csv_delim, R_rmdchunk.
+ * New options: R_OutDec, R_csv_delim, R_rmdchunk, R_parenblock.
  * Require Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows).
 
 0.9.10 (2017-09-08)
