@@ -289,7 +289,11 @@ Note: Some of vim-latex keybindings might clash with Nvim-R ones.
 If you edit RMarkdown files, you may prefer the syntax highlighting provided
 by https://github.com/vim-pandoc/vim-pandoc-syntax
 
-See https://github.com/vim-syntastic/syntastic if you want a syntax checker.
+See https://github.com/w0rp/ale if you want a syntax checker.
+
+Gabriel Alcaras is developing a plugin for asynchronous R completion:
+https://github.com/gaalcaras/ncm-R
+
 
 ==============================================================================
 								  *Nvim-R-use*
