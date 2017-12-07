@@ -289,6 +289,8 @@ Note: Some of vim-latex keybindings might clash with Nvim-R ones.
 If you edit RMarkdown files, you may prefer the syntax highlighting provided
 by https://github.com/vim-pandoc/vim-pandoc-syntax
 
+See https://github.com/vim-syntastic/syntastic if you want a syntax checker.
+
 ==============================================================================
 								  *Nvim-R-use*
 4. Use~
@@ -1014,9 +1016,8 @@ terminal emulator that it finds in the following list:
     5. (u)rxvt,
     6. aterm,
     7. roxterm,
-    8. terminator,
-    9. lxterminal
-   10. xterm.
+    8. lxterminal
+    9. xterm.
 
 If Vim does not select your favorite terminal emulator, you may define it in
 your |vimrc| by setting the variable R_term, as shown below:

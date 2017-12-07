@@ -1885,7 +1885,7 @@ function SendLineToR(godown)
         if rpd < 0
             let line1 = line(".")
             let cline = line1 + 1
-            while cline < line("$")
+            while cline <= line("$")
                 let txt = getline(cline)
                 if chunkend != "" && txt == chunkend
                     break
@@ -3694,4 +3694,9 @@ endif
 " 2017-11-15
 if len(g:R_latexcmd[0]) == 1
     call RWarningMsgInp("The option R_latexcmd should be a list. Please update your vimrc.")
+endif
+
+" 2017-12-06
+if exists("g:R_term") && g:R_term == "terminator"
+    call RWarningMsgInp('"terminator" is no longer supported. Please, choose another value for R_term.')
 endif
