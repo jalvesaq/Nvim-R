@@ -33,39 +33,39 @@
 # After the above commands you should be able to jump from on file
 # to another with Vim by hitting CTRL-] over function names.
 etags2ctags <- function(etagsfile, ctagsfile){
-  elines <- readLines(etagsfile)
-  filelen <- length(elines)
-  nfread <- sum(elines == "\x0c")
-  nnames <- filelen - (2 * nfread)
-  clines <- vector(mode = "character", length = nnames)
-  i <- 1
-  k <- 1
-  while (i < filelen) {
-    if(elines[i] == "\x0c"){
-      i <- i + 1
-      curfile <- sub(",.*", "", elines[i])
-      i <- i + 1
-      curflines <- readLines(curfile)
-      while(elines[i] != "\x0c" && i <= filelen){
-	curname <- sub(".\x7f(.*)\x01.*", "\\1", elines[i])
-	curlnum <- as.numeric(sub(".*\x01(.*),.*", "\\1", elines[i]))
-	curaddr <- curflines[as.numeric(curlnum)]
-	curaddr <- gsub("\\\\", "\\\\\\\\", curaddr)
-	curaddr <- gsub("\t", "\\\\t", curaddr)
-	curaddr <- gsub("/", "\\\\/", curaddr)
-	curaddr <- paste("/^", curaddr, "$/;\"", sep = "")
-	clines[k] <- paste(curname, curfile, curaddr, sep = "\t")
-	i <- i + 1
-	k <- k + 1
-      }
-    } else {
-      stop("Error while trying to interpret line ", i, " of '", etagsfile, "'.\n")
+    elines <- readLines(etagsfile)
+    filelen <- length(elines)
+    nfread <- sum(elines == "\x0c")
+    nnames <- filelen - (2 * nfread)
+    clines <- vector(mode = "character", length = nnames)
+    i <- 1
+    k <- 1
+    while (i < filelen) {
+        if(elines[i] == "\x0c"){
+            i <- i + 1
+            curfile <- sub(",.*", "", elines[i])
+            i <- i + 1
+            curflines <- readLines(curfile)
+            while(elines[i] != "\x0c" && i <= filelen){
+                curname <- sub(".\x7f(.*)\x01.*", "\\1", elines[i])
+                curlnum <- as.numeric(sub(".*\x01(.*),.*", "\\1", elines[i]))
+                curaddr <- curflines[as.numeric(curlnum)]
+                curaddr <- gsub("\\\\", "\\\\\\\\", curaddr)
+                curaddr <- gsub("\t", "\\\\t", curaddr)
+                curaddr <- gsub("/", "\\\\/", curaddr)
+                curaddr <- paste("/^", curaddr, "$/;\"", sep = "")
+                clines[k] <- paste(curname, curfile, curaddr, sep = "\t")
+                i <- i + 1
+                k <- k + 1
+            }
+        } else {
+            stop("Error while trying to interpret line ", i,
+                 " of '", etagsfile, "'.\n")
+        }
     }
-  }
-  curcollate <- Sys.getlocale(category = "LC_COLLATE")
-  invisible(Sys.setlocale(category = "LC_COLLATE", locale = "C"))
-  clines <- sort(clines)
-  invisible(Sys.setlocale(category = "LC_COLLATE", locale = curcollate))
-  writeLines(clines, ctagsfile)
+    curcollate <- Sys.getlocale(category = "LC_COLLATE")
+    invisible(Sys.setlocale(category = "LC_COLLATE", locale = "C"))
+    clines <- sort(clines)
+    invisible(Sys.setlocale(category = "LC_COLLATE", locale = curcollate))
+    writeLines(clines, ctagsfile)
 }
-
