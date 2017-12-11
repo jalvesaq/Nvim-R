@@ -1474,6 +1474,7 @@ the plugin after <LocalLeader>rg if you put the following line in your
 ------------------------------------------------------------------------------
 							   *R_paragraph_begin*
 							   *R_parenblock*
+							   *R_bracketed_paste*
 6.17. Control how paragraphs and lines are sent~
 
 By default, when you press <LocalLeader>pp Nvim-R sends all contiguous lines to
@@ -1488,6 +1489,15 @@ are sent to R when you send a line of code to R. If you prefer to send the
 lines one by one, put in your |vimrc|:
 >
    let R_parenblock = 0
+<
+Bracketed paste mode will bracket R code in special escape sequences 
+when it is being sent to R so that R can tell the differences between
+stuff that you type directly to the console and stuff that you send. It
+is particularly useful when you are using a version of R which is compiled 
+against readline 7.0+ or when rice console is used. To enable it, put in 
+your |vimrc|:
+>
+   let R_bracketed_paste = 1
 <
 
 ------------------------------------------------------------------------------
