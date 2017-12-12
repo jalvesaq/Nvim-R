@@ -1894,8 +1894,24 @@ function SendLineToR(godown)
                 let cline += 1
                 if rpd == 0
                     for lnum in range(line1, cline - 1)
-                        let ok = g:SendCmdToR(getline(lnum))
+                        if g:R_bracketed_paste
+                            if lnum == line1 && lnum == cline - 1
+                                let ok = g:SendCmdToR("\x1b[200~" . getline(lnum) . "\n\x1b[201~", 0)
+                            elseif lnum == line1
+                                let ok = g:SendCmdToR("\x1b[200~" . getline(lnum))
+                            elseif lnum == cline - 1
+                                let ok = g:SendCmdToR(getline(lnum) . "\n\x1b[201~", 0)
+                            else
+                                let ok = g:SendCmdToR(getline(lnum))
+                            endif
+                        else
+                            let ok = g:SendCmdToR(getline(lnum))
+                        end
                         if !ok
+                            " always close bracketed mode upon failure
+                            if g:R_bracketed_paste
+                                call g:SendCmdToR("\x1b[201~", 0)
+                            end
                             return
                         endif
                     endfor
@@ -1908,7 +1924,11 @@ function SendLineToR(godown)
     endif
 
     if !block
-        let ok = g:SendCmdToR(line)
+        if g:R_bracketed_paste
+            let ok = g:SendCmdToR("\x1b[200~" . line . "\n\x1b[201~", 0)
+        else
+            let ok = g:SendCmdToR(line)
+        end
     endif
 
     if ok
@@ -3319,6 +3339,7 @@ let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
+let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
 if !exists("*termopen") && !exists("*term_start")
     let g:R_in_buffer = 0
