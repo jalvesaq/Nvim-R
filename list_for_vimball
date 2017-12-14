@@ -20,6 +20,8 @@ R/gui_running.vim
 R/nvimbuffer.vim
 R/okular.vim
 R/osx.vim
+R/pdfviewer.vim
+R/qpdfview.vim
 R/r.snippets
 R/rmd.snippets
 R/rnw_fun.vim
