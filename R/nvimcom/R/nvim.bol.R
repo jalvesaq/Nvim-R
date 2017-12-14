@@ -241,6 +241,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
         sink()
         writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
+        flush(stdout())
         return(invisible(NULL))
     }
 

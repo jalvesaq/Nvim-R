@@ -203,6 +203,7 @@ function CompleteChunkOptions()
             call add(rr, tmp2)
         endif
     endfor
+    let s:is_completing = 1
     call complete(idx1 + 1, rr)
 endfunction
 
@@ -237,7 +238,7 @@ function RCompleteArgs()
         let argkey = ''
     else
         let idx1 = idx2
-        while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_'
+        while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' || line[idx1] == ':'
             let idx1 -= 1
         endwhile
         let idx1 += 1
@@ -287,10 +288,13 @@ function RCompleteArgs()
                     let msg .= ', firstLibArg = TRUE'
                 endif
                 if g:R_show_arg_help
-                    let msg .= ', extrainfo = TRUE, idx2 = ' . idx2 . ')'
-                else
-                    let msg .= ', idx2 = ' . idx2 . ')'
+                    let msg .= ', extrainfo = TRUE'
                 endif
+                if g:R_complete
+                    let msg .= ', omni = TRUE'
+                endif
+                let msg .= ', idx2 = ' . idx2 . ')'
+                let s:curargkey = argkey
                 call AddForDeletion(g:rplugin_tmpdir . "/args_for_completion")
                 call SendToNvimcom("\x08" . $NVIMR_ID . msg)
                 return ''
@@ -308,6 +312,7 @@ function RCompleteArgs()
                     let info = substitute(info, "\x08.*", "", "")
                     let argsL = split(info, "\x09")
                     let args = []
+                    let no_args_stt = 0
                     for id in range(len(argsL))
                         let newkey = '^' . argkey
                         let tmp2 = split(argsL[id], "\x07")
@@ -318,6 +323,7 @@ function RCompleteArgs()
                             if len(tmp2) == 2
                                 let tmp3 = {'word': tmp2[0], 'menu': tmp2[1]}
                             elseif tmp2[0] == "NO_ARGS = "
+                                let no_args_stt = 1
                                 let tmp3 = {'word': " ", 'menu': 'No arguments'}
                             else
                                 let tmp3 = {'word': tmp2[0], 'menu': ''}
@@ -325,6 +331,15 @@ function RCompleteArgs()
                             call add(args, tmp3)
                         endif
                     endfor
+                    if g:R_complete == 2 || (g:R_complete == 1 && (len(args) == 0 || no_args_stt))
+                        let resp = GetRCompletion(argkey)
+                        if no_args_stt
+                            let args = resp + args
+                        else
+                            let args += resp
+                        endif
+                    endif
+                    let s:is_completing = 1
                     call complete(idx2, args)
                     return ''
                 endif
@@ -343,6 +358,11 @@ function RCompleteArgs()
         endif
     endwhile
     call cursor(cpos[1], cpos[2])
+    if g:R_complete
+        let resp = GetRCompletion(argkey)
+        let s:is_completing = 1
+        call complete(idx2, resp)
+    endif
     return ''
 endfunction
 
@@ -358,6 +378,7 @@ function FinishArgsCompletion(isfirst, idx2)
     let tmp0 = split(args_line, "\x04")
     let tmp = split(tmp0[0], "\x09")
     if(len(tmp) > 0)
+        let no_args_stt = 0
         for id in range(len(tmp))
             let tmp1 = split(tmp[id], "\x08")
             if len(tmp1) > 1
@@ -373,7 +394,8 @@ function FinishArgsCompletion(isfirst, idx2)
                 let word = tmp2[0] . " = "
             endif
             if word == "NO_ARGS = "
-                call add(args,  {'word': " ", 'menu': "No arguments"})
+                let no_args_stt = 1
+                call add(args,  {'word': " ", 'menu': "No arguments starting with '" . s:curargkey . "'"})
             elseif len(tmp2) > 1
                 call add(args,  {'word': word, 'menu': tmp2[1], 'info': info})
             else
@@ -382,6 +404,14 @@ function FinishArgsCompletion(isfirst, idx2)
         endfor
         if len(args) > 0 && len(tmp0) > 1
             call add(args, {'word': ' ', 'menu': tmp0[1]})
+        endif
+        if len(s:curargkey) > 0 && (g:R_complete == 2 || (g:R_complete == 1 && no_args_stt))
+            let resp = GetRCompletion(s:curargkey)
+            if no_args_stt
+                let args = resp + args
+            else
+                let args += resp
+            endif
         endif
         let s:is_completing = 1
         call complete(a:idx2, args)
@@ -3148,6 +3178,71 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
     return resp
 endfunction
 
+function RGetNewBase(base)
+    if a:base =~ ":::"
+        return ["", "", ""]
+    elseif a:base =~ "::"
+        let newbase = substitute(a:base, ".*::", "", "")
+        let prefix = substitute(a:base, "::.*", "::", "")
+        let pkg = substitute(a:base, "::.*", "", "")
+    else
+        let newbase = a:base
+        let prefix = ""
+        let pkg = ""
+    endif
+
+    " The char '$' at the end of `a:base` is treated as end of line, and
+    " the pattern is never found in `line`.
+    let newbase = '^' . substitute(newbase, "\\$$", "", "")
+    " A dot matches anything
+    let newbase = substitute(newbase, '\.', '\\.', 'g')
+    return [newbase, prefix, pkg]
+endfunction
+
+function GetRCompletion(base)
+    let resp = []
+
+    if strlen(a:base) == 0
+        return resp
+    endif
+
+    if len(g:rplugin_omni_lines) == 0
+        call add(resp, {'word': a:base, 'menu': " [ List is empty. Was nvimcom library ever loaded? ]"})
+    endif
+
+    let baseinfo = RGetNewBase(a:base)
+    let newbase = baseinfo[0]
+    let prefix = baseinfo[1]
+    let pkg = baseinfo[2]
+
+    if newbase == ""
+        return resp
+    endif
+
+    if pkg == ""
+        call BuildROmniList(a:base)
+        let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, s:globalenv_lines, [])
+        if filereadable(g:rplugin_tmpdir . "/nvimbol_finished")
+            let toplev = readfile(g:rplugin_tmpdir . "/nvimbol_finished")
+        else
+            let toplev = []
+        endif
+        let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
+    else
+        let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
+        if len(omf) == 1
+            let olines = readfile(omf[0])
+            if len(olines) == 0 || (len(olines) == 1 && len(olines[0]) < 3)
+                return resp
+            endif
+            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, olines, [])
+        else
+            call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
+        endif
+    endif
+    return resp
+endfunction
+
 function CompleteR(findstart, base)
     if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") && b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
         let Ofun = function(b:rplugin_nonr_omnifunc)
@@ -3162,56 +3257,7 @@ function CompleteR(findstart, base)
         endwhile
         return start
     else
-        let resp = []
-
-        if strlen(a:base) == 0
-            return resp
-        endif
-
-        if len(g:rplugin_omni_lines) == 0
-            call add(resp, {'word': a:base, 'menu': " [ List is empty. Was nvimcom library ever loaded? ]"})
-        endif
-
-        if a:base =~ ":::"
-            return resp
-        elseif a:base =~ "::"
-            let newbase = substitute(a:base, ".*::", "", "")
-            let prefix = substitute(a:base, "::.*", "::", "")
-            let pkg = substitute(a:base, "::.*", "", "")
-        else
-            let newbase = a:base
-            let prefix = ""
-            let pkg = ""
-        endif
-
-        " The char '$' at the end of `a:base` is treated as end of line, and
-        " the pattern is never found in `line`.
-        let newbase = '^' . substitute(newbase, "\\$$", "", "")
-        " A dot matches anything
-        let newbase = substitute(newbase, '\.', '\\.', 'g')
-
-        if pkg == ""
-            call BuildROmniList(a:base)
-            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, s:globalenv_lines, [])
-            if filereadable(g:rplugin_tmpdir . "/nvimbol_finished")
-                let toplev = readfile(g:rplugin_tmpdir . "/nvimbol_finished")
-            else
-                let toplev = []
-            endif
-            let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
-        else
-            let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
-            if len(omf) == 1
-                let olines = readfile(omf[0])
-                if len(olines) == 0 || (len(olines) == 1 && len(olines[0]) < 3)
-                    return resp
-                endif
-                let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, olines, [])
-            else
-                call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
-            endif
-        endif
-
+        let resp = GetRCompletion(a:base)
         return resp
     endif
 endfun
@@ -3295,6 +3341,7 @@ let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
 " Variables whose default value is fixed
 let g:R_allnames          = get(g:, "R_allnames",           0)
+let g:R_complete          = get(g:, "R_complete",           1)
 let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
@@ -3481,6 +3528,7 @@ if &filetype != "rbrowser"
     autocmd VimLeave * call RVimLeave()
 endif
 
+" Syntax highlighting for preview window of omni completion
 let s:is_completing = 0
 function RCompleteSyntax()
     if &previewwindow && s:is_completing
@@ -3495,7 +3543,9 @@ function RCompleteSyntax()
         hi def link rdocTitle2 Title
     endif
 endfunction
-autocmd! BufWinEnter * call RCompleteSyntax()
+if &completeopt =~ "preview"
+    autocmd! BufWinEnter * call RCompleteSyntax()
+endif
 
 if v:windowid != 0 && $WINDOWID == ""
     let $WINDOWID = v:windowid
