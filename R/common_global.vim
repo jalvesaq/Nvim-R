@@ -152,21 +152,12 @@ function ReadRMsg()
     call delete($NVIMR_TMPDIR . "/nvimcom_msg")
 endfunction
 
-function CompleteChunkOptions()
-    let cline = getline(".")
-    let cpos = getpos(".")
-    let idx1 = cpos[2] - 2
-    let idx2 = cpos[2] - 1
-    while cline[idx1] =~ '\w' || cline[idx1] == '.' || cline[idx1] == '_'
-        let idx1 -= 1
-    endwhile
-    let idx1 += 1
-    let base = strpart(cline, idx1, idx2 - idx1)
+function CompleteChunkOptions(base)
     let rr = []
-    if strlen(base) == 0
+    if strlen(a:base) == 0
         let newbase = '.'
     else
-        let newbase = '^' . substitute(base, "\\$$", "", "")
+        let newbase = '^' . substitute(a:base, "\\$$", "", "")
     endif
 
     let ktopt = ["eval=;TRUE", "echo=;TRUE", "results=;'markup|asis|hold|hide'",
@@ -203,8 +194,8 @@ function CompleteChunkOptions()
             call add(rr, tmp2)
         endif
     endfor
-    let s:is_completing = 1
-    call complete(idx1 + 1, rr)
+    let g:TheRR = rr
+    return rr
 endfunction
 
 function IsFirstRArg(lnum, cpos)
@@ -221,201 +212,8 @@ function IsFirstRArg(lnum, cpos)
     return 1
 endfunction
 
-function RCompleteArgs()
-    let line = getline(".")
-    if (&filetype == "rnoweb" && line =~ "^<<.*>>=$") || (&filetype == "rmd" && line =~ "^``` *{r.*}$") || (&filetype == "rrst" && line =~ "^.. {r.*}$") || (&filetype == "r" && line =~ "^#\+")
-        call CompleteChunkOptions()
-        return ''
-    endif
-
-    let lnum = line(".")
-    let cpos = getpos(".")
-    let idx = cpos[2] - 2
-    let idx2 = cpos[2] - 2
-    call cursor(lnum, cpos[2] - 1)
-    if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
-        let idx2 = cpos[2]
-        let argkey = ''
-    else
-        let idx1 = idx2
-        while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' || line[idx1] == ':'
-            let idx1 -= 1
-        endwhile
-        let idx1 += 1
-        let argkey = strpart(line, idx1, idx2 - idx1 + 1)
-        let idx2 = cpos[2] - strlen(argkey)
-    endif
-
-    let np = 1
-    let nl = 0
-
-    while np != 0 && nl < 10
-        if line[idx] == '('
-            let np -= 1
-        elseif line[idx] == ')'
-            let np += 1
-        endif
-        if np == 0
-            call cursor(lnum, idx)
-            let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
-            let firstobj = ""
-            if rkeyword0 =~ "::"
-                let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
-                let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-            else
-                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                    let firstobj = RGetFirstObj(rkeyword0)
-                endif
-                let pkg = ""
-            endif
-            let rkeyword = '^' . rkeyword0 . "\x06"
-            call cursor(cpos[1], cpos[2])
-
-            " If R is running, use it
-            if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                let msg = 'nvimcom:::nvim_complete_args("' . rkeyword0 . '", "' . argkey . '"'
-                if firstobj != ""
-                    let msg .= ', firstobj = "' . firstobj . '"'
-                elseif pkg != ""
-                    let msg .= ', pkg = ' . pkg
-                endif
-                if rkeyword0 == "library" || rkeyword0 == "require"
-                    let isfirst = IsFirstRArg(lnum, cpos)
-                else
-                    let isfirst = 0
-                endif
-                if isfirst
-                    let msg .= ', firstLibArg = TRUE'
-                endif
-                if g:R_show_arg_help
-                    let msg .= ', extrainfo = TRUE'
-                endif
-                if g:R_complete
-                    let msg .= ', omni = TRUE'
-                endif
-                let msg .= ', idx2 = ' . idx2 . ')'
-                let s:curargkey = argkey
-                call AddForDeletion(g:rplugin_tmpdir . "/args_for_completion")
-                call SendToNvimcom("\x08" . $NVIMR_ID . msg)
-                return ''
-            endif
-
-            " If R isn't running, use the prebuilt list of objects
-            let flines = g:rplugin_omni_lines + s:globalenv_lines
-            for omniL in flines
-                if omniL =~ rkeyword && omniL =~ "\x06function\x06function\x06"
-                    let tmp1 = split(omniL, "\x06")
-                    if len(tmp1) < 5
-                        return ''
-                    endif
-                    let info = tmp1[4]
-                    let info = substitute(info, "\x08.*", "", "")
-                    let argsL = split(info, "\x09")
-                    let args = []
-                    let no_args_stt = 0
-                    for id in range(len(argsL))
-                        let newkey = '^' . argkey
-                        let tmp2 = split(argsL[id], "\x07")
-                        if argkey == '' || tmp2[0] =~ newkey
-                            if tmp2[0] != '...'
-                                let tmp2[0] = tmp2[0] . " = "
-                            endif
-                            if len(tmp2) == 2
-                                let tmp3 = {'word': tmp2[0], 'menu': tmp2[1]}
-                            elseif tmp2[0] == "NO_ARGS = "
-                                let no_args_stt = 1
-                                let tmp3 = {'word': " ", 'menu': 'No arguments'}
-                            else
-                                let tmp3 = {'word': tmp2[0], 'menu': ''}
-                            endif
-                            call add(args, tmp3)
-                        endif
-                    endfor
-                    if g:R_complete == 2 || (g:R_complete == 1 && (len(args) == 0 || no_args_stt))
-                        let resp = GetRCompletion(argkey)
-                        if no_args_stt
-                            let args = resp + args
-                        else
-                            let args += resp
-                        endif
-                    endif
-                    let s:is_completing = 1
-                    call complete(idx2, args)
-                    return ''
-                endif
-            endfor
-            break
-        endif
-        let idx -= 1
-        if idx <= 0
-            let lnum -= 1
-            if lnum == 0
-                break
-            endif
-            let line = getline(lnum)
-            let idx = strlen(line)
-            let nl +=1
-        endif
-    endwhile
-    call cursor(cpos[1], cpos[2])
-    if g:R_complete
-        let resp = GetRCompletion(argkey)
-        let s:is_completing = 1
-        call complete(idx2, resp)
-    endif
-    return ''
-endfunction
-
-function FinishArgsCompletion(isfirst, idx2)
-    let args_line = readfile(g:rplugin_tmpdir . "/args_for_completion")[0]
-    call delete(g:rplugin_tmpdir . "/args_for_completion")
-    let args = []
-    if args_line[0] == "\x04" &&
-                \ len(split(args_line, "\x04")) == 1 ||
-                \ args_line == ""
-        return ''
-    endif
-    let tmp0 = split(args_line, "\x04")
-    let tmp = split(tmp0[0], "\x09")
-    if(len(tmp) > 0)
-        let no_args_stt = 0
-        for id in range(len(tmp))
-            let tmp1 = split(tmp[id], "\x08")
-            if len(tmp1) > 1
-                let info = tmp1[1]
-                let info = substitute(info, "\\\\N", "\n", "g")
-            else
-                let info = " "
-            endif
-            let tmp2 = split(tmp1[0], "\x07")
-            if tmp2[0] == '...' || a:isfirst
-                let word = tmp2[0]
-            else
-                let word = tmp2[0] . " = "
-            endif
-            if word == "NO_ARGS = "
-                let no_args_stt = 1
-                call add(args,  {'word': " ", 'menu': "No arguments starting with '" . s:curargkey . "'"})
-            elseif len(tmp2) > 1
-                call add(args,  {'word': word, 'menu': tmp2[1], 'info': info})
-            else
-                call add(args,  {'word': word, 'menu': ' ', 'info': info})
-            endif
-        endfor
-        if len(args) > 0 && len(tmp0) > 1
-            call add(args, {'word': ' ', 'menu': tmp0[1]})
-        endif
-        if len(s:curargkey) > 0 && (g:R_complete == 2 || (g:R_complete == 1 && no_args_stt))
-            let resp = GetRCompletion(s:curargkey)
-            if no_args_stt
-                let args = resp + args
-            else
-                let args += resp
-            endif
-        endif
-        let s:is_completing = 1
-        call complete(a:idx2, args)
-    endif
+function FinishArgsCompletion()
+    let s:ArgCompletionFinished = 1
 endfunction
 
 function RGetFL(mode)
@@ -2954,11 +2752,6 @@ function RCreateEditMaps()
         autocmd InsertCharPre * call RSetStatusLine()
         autocmd InsertLeave * call RestoreStatusLine(1)
     endif
-    if hasmapto("<Plug>RCompleteArgs", "i")
-        inoremap <buffer><silent> <Plug>RCompleteArgs <C-R>=RCompleteArgs()<CR>
-    else
-        inoremap <buffer><silent> <C-X><C-A> <C-R>=RCompleteArgs()<CR>
-    endif
 endfunction
 
 function RCreateSendMaps()
@@ -3174,7 +2967,6 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             endif
         endif
     endfor
-    let s:is_completing = 1
     return resp
 endfunction
 
@@ -3243,24 +3035,214 @@ function GetRCompletion(base)
     return resp
 endfunction
 
-function CompleteR(findstart, base)
-    if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") && b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
-        let Ofun = function(b:rplugin_nonr_omnifunc)
-        let thebegin = Ofun(a:findstart, a:base)
-        return thebegin
+function GetRArgs0(base, rkeyword)
+    " If R isn't running, use the prebuilt list of objects
+    let flines = g:rplugin_omni_lines + s:globalenv_lines
+    let argls = []
+    for omniL in flines
+        if omniL =~ a:rkeyword && omniL =~ "\x06function\x06function\x06"
+            let tmp1 = split(omniL, "\x06")
+            if len(tmp1) < 5
+                return []
+            endif
+            let info = tmp1[4]
+            let info = substitute(info, "\x08.*", "", "")
+            let argsL = split(info, "\x09")
+            let s:no_args_stt = 0
+            for id in range(len(argsL))
+                let newkey = '^' . a:base
+                let tmp2 = split(argsL[id], "\x07")
+                if a:base == '' || tmp2[0] =~ newkey
+                    if tmp2[0] != '...'
+                        let tmp2[0] = tmp2[0] . " = "
+                    endif
+                    if len(tmp2) == 2
+                        call add(argls, {'word': tmp2[0], 'menu': tmp2[1]})
+                    elseif tmp2[0] != "NO_ARGS = "
+                        call add(argls, {'word': tmp2[0], 'menu': ''})
+                    endif
+                endif
+            endfor
+        endif
+    endfor
+    return argls
+endfunction
+
+function GetRArgs1(base, rkeyword0, firstobj, pkg)
+    let msg = 'nvimcom:::nvim_complete_args("' . a:rkeyword0 . '", "' . a:base . '"'
+    if a:firstobj != ""
+        let msg .= ', firstobj = "' . a:firstobj . '"'
+    elseif a:pkg != ""
+        let msg .= ', pkg = ' . a:pkg
     endif
-    if a:findstart
-        let line = getline('.')
-        let start = col('.') - 1
-        while start > 0 && (line[start - 1] =~ '\w' || line[start - 1] =~ '\.' || line[start - 1] =~ '\$' || line[start - 1] =~ '@' || line[start - 1] =~ ':')
-            let start -= 1
-        endwhile
-        return start
+    if a:rkeyword0 == "library" || a:rkeyword0 == "require"
+        let isfirst = IsFirstRArg(lnum, cpos)
     else
-        let resp = GetRCompletion(a:base)
-        return resp
+        let isfirst = 0
     endif
-endfun
+    if isfirst
+        let msg .= ', firstLibArg = TRUE'
+    endif
+    if g:R_show_arg_help
+        let msg .= ', extrainfo = TRUE'
+    endif
+    if g:R_complete
+        let msg .= ', omni = TRUE'
+    endif
+    let msg .= ')'
+    let s:ArgCompletionFinished = 0
+    call AddForDeletion(g:rplugin_tmpdir . "/args_for_completion")
+    call SendToNvimcom("\x08" . $NVIMR_ID . msg)
+
+    let ii = 1000
+    while ii > 0 && s:ArgCompletionFinished == 0
+        sleep 30m
+    endwhile
+
+    let args_line = readfile(g:rplugin_tmpdir . "/args_for_completion")[0]
+    call delete(g:rplugin_tmpdir . "/args_for_completion")
+    let argls = []
+    if args_line[0] == "\x04" &&
+                \ len(split(args_line, "\x04")) == 1 ||
+                \ args_line == ""
+        return []
+    endif
+    let tmp0 = split(args_line, "\x04")
+    let tmp = split(tmp0[0], "\x09")
+    if(len(tmp) > 0)
+        let s:no_args_stt = 0
+        for id in range(len(tmp))
+            let tmp1 = split(tmp[id], "\x08")
+            if len(tmp1) > 1
+                let info = tmp1[1]
+                let info = substitute(info, "\\\\N", "\n", "g")
+            else
+                let info = " "
+            endif
+            let tmp2 = split(tmp1[0], "\x07")
+            if tmp2[0] == '...' || isfirst
+                let word = tmp2[0]
+            else
+                let word = tmp2[0] . " = "
+            endif
+            if word != "NO_ARGS = "
+                if len(tmp2) > 1
+                    call add(argls,  {'word': word, 'menu': tmp2[1], 'info': info})
+                else
+                    call add(argls,  {'word': word, 'menu': ' ', 'info': info})
+                endif
+            endif
+        endfor
+        if len(argls) > 0 && len(tmp0) > 1
+            call add(argls, {'word': ' ', 'menu': tmp0[1]})
+        endif
+    endif
+    return argls
+endfunction
+
+function CompleteR(findstart, base)
+    if a:findstart
+        let line = getline(".")
+        let s:in_r_code = 1
+        if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") &&
+                    \ !((&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
+                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
+                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
+                    \ (&filetype == "r" && line =~ "^#\+")) &&
+                    \ b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
+            let s:in_r_code = 0
+            let Ofun = function(b:rplugin_nonr_omnifunc)
+            let thebegin = Ofun(a:findstart, a:base)
+            return thebegin
+        endif
+        let lnum = line(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] - 2
+        let idx2 = cpos[2] - 2
+        call cursor(lnum, cpos[2] - 1)
+        if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
+            let idx2 = cpos[2]
+            let argkey = ''
+        else
+            let idx1 = idx2
+            while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
+                        \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
+                let idx1 -= 1
+            endwhile
+            let idx1 += 1
+            let argkey = strpart(line, idx1, idx2 - idx1 + 1)
+            let idx2 = cpos[2] - strlen(argkey)
+            let s:argkey = argkey
+        endif
+        return idx2 - 1
+    else
+        if !s:in_r_code
+            let Ofun = function(b:rplugin_nonr_omnifunc)
+            return Ofun(a:findstart, a:base)
+        endif
+        let line = getline(".")
+        if (&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
+                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
+                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
+                    \ (&filetype == "r" && line =~ "^#\+")
+            let resp = CompleteChunkOptions(a:base)
+            return resp
+        endif
+
+        let lnum = line(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] - 2
+        let idx2 = cpos[2] - 2
+        let np = 1
+        let nl = 0
+        let argls = []
+        while np != 0 && nl < 10
+            if line[idx] == '('
+                let np -= 1
+            elseif line[idx] == ')'
+                let np += 1
+            endif
+            if np == 0
+                call cursor(lnum, idx)
+                let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
+                let firstobj = ""
+                if rkeyword0 =~ "::"
+                    let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
+                    let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
+                else
+                    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                        let firstobj = RGetFirstObj(rkeyword0)
+                    endif
+                    let pkg = ""
+                endif
+                let rkeyword = '^' . rkeyword0 . "\x06"
+                call cursor(cpos[1], cpos[2])
+
+                " If R is running, use it
+                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                    let argls = GetRArgs1(a:base, rkeyword0, firstobj, pkg)
+                else
+                    let argls = GetRArgs0(a:base, rkeyword)
+                endif
+            endif
+            let idx -= 1
+            if idx <= 0
+                let lnum -= 1
+                if lnum == 0
+                    break
+                endif
+                let line = getline(lnum)
+                let idx = strlen(line)
+                let nl +=1
+            endif
+        endwhile
+        if g:R_complete == 2 || len(argls) == 0
+            let argls += GetRCompletion(s:argkey)
+        endif
+        let s:is_completing = 1
+        return argls
+    endif
+endfunction
 
 function RSourceOtherScripts()
     if exists("g:R_source")
@@ -3406,6 +3388,11 @@ let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
 let g:R_indent_commented = get(g:, "R_indent_commented",            1)
+
+if g:R_complete != 1 && g:R_complete != 2
+    let R_complete = 1
+    call RWarningMsgInp("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
+endif
 
 if g:rplugin_is_darwin
     let g:R_openpdf = get(g:, "R_openpdf", 1)
@@ -3770,4 +3757,9 @@ endif
 " 2017-12-06
 if exists("g:R_term") && g:R_term == "terminator"
     call RWarningMsgInp('"terminator" is no longer supported. Please, choose another value for R_term.')
+endif
+
+" 2017-12-14
+if hasmapto("<Plug>RCompleteArgs", "i")
+    call RWarningMsgInp("<Plug>RCompleteArgs no longer exists. Please, delete it from your vimrc.")
 endif

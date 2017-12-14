@@ -209,12 +209,6 @@ function MakeRMenu()
             silent exe 'imenu <silent> R.Edit.Insert\ \"\ <-\ \"<Tab>' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
         endif
         imenu <silent> R.Edit.Complete\ object\ name<Tab>^X^O <C-X><C-O>
-        if hasmapto("<Plug>RCompleteArgs", "i")
-            let boundkey = RIMapCmd("<Plug>RCompleteArgs")
-            exe "imenu <silent> R.Edit.Complete\\ function\\ arguments<Tab>" . boundkey . " " . boundkey
-        else
-            imenu <silent> R.Edit.Complete\ function\ arguments<Tab>^X^A <C-X><C-A>
-        endif
         menu R.Edit.-Sep71- <nul>
         nmenu <silent> R.Edit.Indent\ (line)<Tab>== ==
         vmenu <silent> R.Edit.Indent\ (selected\ lines)<Tab>= =

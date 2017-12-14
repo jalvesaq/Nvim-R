@@ -525,17 +525,13 @@ It can be installed from:
 
    http://www.vim.org/scripts/script.php?script_id=2830
 
-When completing object names (CTRL-X CTRL-O) and function arguments (CTRL-X
-CTRL-A) you have to press CTRL-N to go foward in the list and CTRL-P to go
-backward (see |popupmenu-completion|). If R is running and 'completeopt'
-includes the `preview` string, the preview window will display help for the
-argument selected in the pop up menu (see |R_show_arg_help|). For rnoweb, rmd
-and rrst file types, CTRL-X CTRL-A can also be used to complete knitr chunk
-options if the cursor is inside the chunk header.
-
-Note: If you are using Vim in a Tmux session, and if you configured CTRL-A
-to be the Tmux prefix key, Tmux will capture the CTRL-A command. You have to
-do CTRL-A twice to pass a single CTRL-A to Vim.
+When completing object names (CTRL-X CTRL-O) you have to press CTRL-N to go
+foward in the list and CTRL-P to go backward (see |popupmenu-completion|). If
+R is running and 'completeopt' includes the `preview` string, the preview
+window will display help for the argument selected in the pop up menu (see
+|R_show_arg_help|). For rnoweb, rmd and rrst file types, CTRL-X CTRL-O can
+also be used to complete knitr chunk options if the cursor is inside the chunk
+header.
 
 If R is not running or if it is running but is busy the completion will be
 based on information from the packages listed by |R_start_libs| (provided that
@@ -1715,27 +1711,22 @@ Currently, there is only one script known to extend Nvim-R features:
 							    *R_args_in_stline*
 6.28. Function arguments~
 
-The completion of function arguments, triggered by CTRL-X CTRL-A, includes
-objects from both R Workspace and loaded libraries, but only if there no
-argument to complete. You can change this behavior in your |vimrc| as in the
-examples below:
->
-   let R_complete = 0 " Never include names of objects
-   let R_complete = 1 " Include names of objects if there is no argument
-   let R_complete = 2 " Always include names of objects
-<
-Because CTRL-X CTRL-A can be configured to complete the names of objects, it
-can effectvely replace CTRL-X CTRL-O (see |Nvim-R-quick-setup|).
-
 During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
 functions' description and usage. If you do not want the preview window,
 put in your |vimrc|:
 >
    let R_show_args = 0
 <
-During the completion of function arguments, triggered by CTRL-X CTRL-A, the
-preview window shows R's documentation help for the item being
-completed unless you put in your |vimrc|:
+When completing function arguments, objects from both R Workspace and loaded
+libraries are included in the list, but only if there no argument to complete.
+You can change this behavior in your |vimrc| as in the examples below:
+>
+   let R_complete = 1 " Include names of objects if there is no argument
+   let R_complete = 2 " Always include names of objects
+<
+During the completion of function arguments, the preview window shows R's
+documentation help for the item being completed unless you put in your
+|vimrc|:
 >
    let R_show_arg_help = 0
 <
@@ -2057,7 +2048,6 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RSimpleUnComment
    RToggleComment
    RRightComment
-   RCompleteArgs
    RIndent
    RNextRChunk
    RPreviousRChunk
@@ -2139,11 +2129,8 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    ROpenLists
    RCloseLists
 
-The completion of function arguments only happens in Insert mode. To customize
-its keybind you should put in your |vimrc| something as in the example:
->
-   imap <C-A> <Plug>RCompleteArgs
-<
+The completion of function arguments only happens in Insert mode.
+
 The plugin also contains a function called RAction which allows you to build
 ad-hoc commands to R. This function takes the name of an R function such as
 "levels" or "table" and the word under the cursor, and passes them to R as a
@@ -2627,14 +2614,8 @@ document from the beginning.
    " Use Ctrl+Space to do omnicompletion:
    if has("nvim") || has("gui_running")
        inoremap <C-Space> <C-x><C-o>
-       autocmd FileType r imap <buffer> <C-Space> <Plug>RCompleteArgs
-       autocmd FileType rmd imap <buffer> <C-Space> <Plug>RCompleteArgs
-       autocmd FileType rnoweb imap <buffer> <C-Space> <Plug>RCompleteArgs
    else
        inoremap <Nul> <C-x><C-o>
-       autocmd FileType r imap <buffer> <Nul> <Plug>RCompleteArgs
-       autocmd FileType rmd imap <buffer> <Nul> <Plug>RCompleteArgs
-       autocmd FileType rnoweb imap <buffer> <Nul> <Plug>RCompleteArgs
    endif
 
    " Press the space bar to send lines and selection to R:
