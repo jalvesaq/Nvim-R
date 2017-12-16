@@ -146,17 +146,8 @@ nvim.primitive.args <- function(x)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt, pkg = NULL, objclass, firstLibArg = FALSE, extrainfo = FALSE)
+nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
 {
-    # First argument of either library() or require():
-    if(firstLibArg){
-        p <- dir(.libPaths())
-        p <- p[grep(paste0("^", txt), p)]
-        return(paste(p,
-                     sapply(p, function(x) packageDescription(x)$Title),
-                     sep = "\x07", collapse = "\x09"))
-    }
-
     frm <- NA
     funcmeth <- NA
     if(!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE){
@@ -329,16 +320,16 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, firstLibArg = FALSE, extrainfo = FALSE)
+nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, extrainfo = FALSE)
 {
     if(firstobj == ""){
-        res <- nvim.args(rkeyword0, argkey, pkg, firstLibArg = firstLibArg, extrainfo = extrainfo)
+        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
     } else {
         objclass <- nvim.getclass(firstobj)
         if(objclass[1] == "#E#" || objclass[1] == "")
-            res <- nvim.args(rkeyword0, argkey, pkg, firstLibArg = firstLibArg, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
         else
-            res <- nvim.args(rkeyword0, argkey, pkg, objclass, firstLibArg = firstLibArg, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = extrainfo)
     }
     if(res == "NOT_EXISTS"){
         .C("nvimcom_msg_to_nvim",

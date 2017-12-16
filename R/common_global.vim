@@ -3078,16 +3078,6 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
     elseif a:pkg != ""
         let msg .= ', pkg = ' . a:pkg
     endif
-    if a:rkeyword0 == "library" || a:rkeyword0 == "require"
-        let lnum = line(".")
-        let cpos = getpos(".")
-        let isfirst = IsFirstRArg(lnum, cpos)
-    else
-        let isfirst = 0
-    endif
-    if isfirst
-        let msg .= ', firstLibArg = TRUE'
-    endif
     if g:R_show_arg_help
         let msg .= ', extrainfo = TRUE'
     endif
@@ -3121,7 +3111,7 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
                 let info = " "
             endif
             let tmp2 = split(tmp1[0], "\x07")
-            if tmp2[0] == '...' || isfirst
+            if tmp2[0] == '...'
                 let word = tmp2[0]
             else
                 let word = tmp2[0] . " = "
@@ -3137,6 +3127,19 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
         if len(argls) > 0 && len(tmp0) > 1
             call add(argls, {'word': ' ', 'menu': tmp0[1]})
         endif
+    endif
+    return argls
+endfunction
+
+function GetListOfRLibs(base)
+    let argls = []
+    if filereadable(g:rplugin_compldir . "/pack_descriptions")
+        let pd = readfile(g:rplugin_compldir . "/pack_descriptions")
+        call filter(pd, 'v:val =~ "^" . a:base')
+        for line in pd
+            let tmp = split(line, "\x09")
+            call add(argls, {'word': tmp[0], 'menu': tmp[1], 'info': "Description: " . tmp[2]})
+        endfor
     endif
     return argls
 endfunction
@@ -3218,6 +3221,14 @@ function CompleteR(findstart, base)
                 endif
                 let rkeyword = '^' . rkeyword0 . "\x06"
                 call cursor(cpos[1], cpos[2])
+
+                if (rkeyword0 == "library" || rkeyword0 == "require") && IsFirstRArg(lnum, cpos)
+                    let argls = GetListOfRLibs(a:base)
+                    if len(argls)
+                        let s:is_completing = 1
+                        return argls
+                    endif
+                endif
 
                 " If R is running, use it
                 if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
