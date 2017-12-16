@@ -185,14 +185,12 @@ function CompleteChunkOptions(base)
             let ktopt += ["collapse=;FALSE"]
         endif
     endif
-    call sort(ktopt)
 
+    call filter(ktopt, 'v:val =~ newbase')
+    call sort(ktopt)
     for kopt in ktopt
-        if kopt =~ newbase
-            let tmp1 = split(kopt, ";")
-            let tmp2 = {'word': tmp1[0], 'menu': tmp1[1]}
-            call add(rr, tmp2)
-        endif
+        let tmp1 = split(kopt, ";")
+        call add(rr, {'word': tmp1[0], 'menu': tmp1[1]})
     endfor
     return rr
 endfunction
@@ -467,9 +465,9 @@ endfunction
 
 function IsSendCmdToRFake()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        let qcmd = "\\rq"
         let nkblist = execute("nmap")
         let nkbls = split(nkblist, "\n")
-        let qcmd = "\\rq"
         for nkb in nkbls
             if stridx(nkb, "RQuit('nosave')") > 0
                 let qls = split(nkb, " ")
@@ -2890,88 +2888,87 @@ endfunction
 
 function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
     let resp = []
-    for line in a:olines
-        if line =~ a:newbase
-            " Delete information about package eventually added by nvim.args()
-            let line = substitute(line, "\x04.*", "", "")
-            " Skip elements of lists unless the user is really looking for them.
-            " Skip lists if the user is looking for one of its elements.
-            let obj = substitute(line, "\x06.*", "", "")
-            if (a:base !~ '\$' && obj =~ '\$') || (a:base =~ '\$' && obj !~ '\$')
-                continue
-            endif
-            " Idem with S4 objects
-            if (a:base !~ '@' && obj =~ '@') || (a:base =~ '@' && obj !~ '@')
-                continue
-            endif
-            let sln = split(line, "\x06", 1)
-            if a:pkg != "" && sln[3] != a:pkg
-                continue
-            endif
-            if len(a:toplev)
-                " Do not show an object from a package if it was masked by a
-                " toplevel object in .GlobalEnv
-                let masked = 0
-                let pkgobj = substitute(sln[0], "\\$.*", "", "")
-                let pkgobj = substitute(pkgobj, "@.*", "", "")
-                for tplv in a:toplev
-                    if tplv == pkgobj
-                        let masked = 1
-                        continue
-                    endif
-                endfor
-                if masked
+    let newlist = filter(copy(a:olines), 'v:val =~ a:newbase')
+    for line in newlist
+        " Delete information about package eventually added by nvim.args()
+        let line = substitute(line, "\x04.*", "", "")
+        " Skip elements of lists unless the user is really looking for them.
+        " Skip lists if the user is looking for one of its elements.
+        let obj = substitute(line, "\x06.*", "", "")
+        if (a:base !~ '\$' && obj =~ '\$') || (a:base =~ '\$' && obj !~ '\$')
+            continue
+        endif
+        " Idem with S4 objects
+        if (a:base !~ '@' && obj =~ '@') || (a:base =~ '@' && obj !~ '@')
+            continue
+        endif
+        let sln = split(line, "\x06", 1)
+        if a:pkg != "" && sln[3] != a:pkg
+            continue
+        endif
+        if len(a:toplev)
+            " Do not show an object from a package if it was masked by a
+            " toplevel object in .GlobalEnv
+            let masked = 0
+            let pkgobj = substitute(sln[0], "\\$.*", "", "")
+            let pkgobj = substitute(pkgobj, "@.*", "", "")
+            for tplv in a:toplev
+                if tplv == pkgobj
+                    let masked = 1
                     continue
                 endif
+            endfor
+            if masked
+                continue
             endif
-            if sln[0] =~ "[ '%]"
-                let sln[0] = "`" . sln[0] . "`"
+        endif
+        if sln[0] =~ "[ '%]"
+            let sln[0] = "`" . sln[0] . "`"
+        endif
+        if g:R_show_args && len(sln) > 4
+            let tmp = split(sln[4], "\x08")
+            if tmp[0] =~ '""'
+                let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
             endif
-            if g:R_show_args && len(sln) > 4
-                let tmp = split(sln[4], "\x08")
-                if tmp[0] =~ '""'
-                    let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
-                    let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
-                endif
-                let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
-                let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
-                if len(tmp) == 2
-                    let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
+            let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
+            let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
+            if len(tmp) == 2
+                let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
+            else
+                let descr = ""
+            endif
+            let ttl = "] " . substitute(descr, "\x05.*", "", "")
+            let descr = "Description: " . substitute(descr, ".*\x05", "", "")
+            if tmp[0] == "Not a function"
+                let usage =  ""
+            else
+                " Format usage paragraph according to the width of the current window
+                let xx = split(tmp[0], "\x09")
+                if len(xx) > 0
+                    let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
+                    let ii = 0
+                    let jj = 1
+                    let ll = len(xx)
+                    let wl = winwidth(0) - 1
+                    while(jj < ll)
+                        if(len(usageL[ii] . ", " . xx[jj]) < wl)
+                            let usageL[ii] .= ", " . xx[jj]
+                        elseif jj < ll
+                            let usageL[ii] .= ","
+                            let ii += 1
+                            let usageL += ["           " . xx[jj]]
+                        endif
+                        let jj += 1
+                    endwhile
+                    let usage = join(usageL, "\n") . ")\t"
                 else
-                    let descr = ""
+                    let usage = "Usage: " . a:prefix . sln[0] . "()\t"
                 endif
-                let ttl = "] " . substitute(descr, "\x05.*", "", "")
-                let descr = "Description: " . substitute(descr, ".*\x05", "", "")
-                if tmp[0] == "Not a function"
-                    let usage =  ""
-                else
-                    " Format usage paragraph according to the width of the current window
-                    let xx = split(tmp[0], "\x09")
-                    if len(xx) > 0
-                        let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
-                        let ii = 0
-                        let jj = 1
-                        let ll = len(xx)
-                        let wl = winwidth(0) - 1
-                        while(jj < ll)
-                            if(len(usageL[ii] . ", " . xx[jj]) < wl)
-                                let usageL[ii] .= ", " . xx[jj]
-                            elseif jj < ll
-                                let usageL[ii] .= ","
-                                let ii += 1
-                                let usageL += ["           " . xx[jj]]
-                            endif
-                            let jj += 1
-                        endwhile
-                        let usage = join(usageL, "\n") . ")\t"
-                    else
-                        let usage = "Usage: " . a:prefix . sln[0] . "()\t"
-                    endif
-                endif
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl, 'info': descr . usage})
-            elseif len(sln) > 3
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl})
             endif
+            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl, 'info': descr . usage})
+        elseif len(sln) > 3
+            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl})
         endif
     endfor
     return resp
@@ -3026,9 +3023,6 @@ function GetRCompletion(base)
         else
             let toplev = []
         endif
-
-        " FIXME: Bottleneck: While completing 'read', this command takes 0.35
-        " second to finish while everything else takes less than 0.02 second.
         let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
     else
         let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
@@ -3047,33 +3041,32 @@ endfunction
 
 function GetRArgs0(base, rkeyword)
     " If R isn't running, use the prebuilt list of objects
-    let flines = g:rplugin_omni_lines + s:globalenv_lines
     let argls = []
+    let flines = g:rplugin_omni_lines + s:globalenv_lines
+    call filter(flines, 'v:val =~ a:rkeyword && v:val =~ "\x06function\x06function\x06"')
     for omniL in flines
-        if omniL =~ a:rkeyword && omniL =~ "\x06function\x06function\x06"
-            let tmp1 = split(omniL, "\x06")
-            if len(tmp1) < 5
-                return []
-            endif
-            let info = tmp1[4]
-            let info = substitute(info, "\x08.*", "", "")
-            let argsL = split(info, "\x09")
-            let s:no_args_stt = 0
-            for id in range(len(argsL))
-                let newkey = '^' . a:base
-                let tmp2 = split(argsL[id], "\x07")
-                if a:base == '' || tmp2[0] =~ newkey
-                    if tmp2[0] != '...'
-                        let tmp2[0] = tmp2[0] . " = "
-                    endif
-                    if len(tmp2) == 2
-                        call add(argls, {'word': tmp2[0], 'menu': tmp2[1]})
-                    elseif tmp2[0] != "NO_ARGS = "
-                        call add(argls, {'word': tmp2[0], 'menu': ''})
-                    endif
-                endif
-            endfor
+        let tmp1 = split(omniL, "\x06")
+        if len(tmp1) < 5
+            return []
         endif
+        let info = tmp1[4]
+        let info = substitute(info, "\x08.*", "", "")
+        let argsL = split(info, "\x09")
+        let s:no_args_stt = 0
+        for id in range(len(argsL))
+            let newkey = '^' . a:base
+            let tmp2 = split(argsL[id], "\x07")
+            if a:base == '' || tmp2[0] =~ newkey
+                if tmp2[0] != '...'
+                    let tmp2[0] = tmp2[0] . " = "
+                endif
+                if len(tmp2) == 2
+                    call add(argls, {'word': tmp2[0], 'menu': tmp2[1]})
+                elseif tmp2[0] != "NO_ARGS = "
+                    call add(argls, {'word': tmp2[0], 'menu': ''})
+                endif
+            endif
+        endfor
     endfor
     return argls
 endfunction
@@ -3086,6 +3079,8 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
         let msg .= ', pkg = ' . a:pkg
     endif
     if a:rkeyword0 == "library" || a:rkeyword0 == "require"
+        let lnum = line(".")
+        let cpos = getpos(".")
         let isfirst = IsFirstRArg(lnum, cpos)
     else
         let isfirst = 0
