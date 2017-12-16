@@ -194,7 +194,6 @@ function CompleteChunkOptions(base)
             call add(rr, tmp2)
         endif
     endfor
-    let g:TheRR = rr
     return rr
 endfunction
 
@@ -1054,6 +1053,7 @@ function RBrOpenCloseLs(stt)
     call SendToNvimcom("\007" . a:stt)
 endfunction
 
+let s:wait_nvimcom = 0
 function SendToNvimcom(cmd)
     if s:wait_nvimcom
         if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
@@ -2841,6 +2841,10 @@ function RVimLeave()
     endif
 endfunction
 
+function FinishBuildROmniList()
+    let s:NvimbolFinished = 1
+endfunction
+
 " Tell R to create a list of objects file listing all currently available
 " objects in its environment. The file is necessary for omni completion.
 function BuildROmniList(pattern)
@@ -2855,6 +2859,7 @@ function BuildROmniList(pattern)
     endif
     let omnilistcmd = omnilistcmd . ', pattern = "' . a:pattern . '")'
 
+    let s:NvimbolFinished = 0
     call delete(g:rplugin_tmpdir . "/nvimbol_finished")
     call AddForDeletion(g:rplugin_tmpdir . "/nvimbol_finished")
 
@@ -2870,10 +2875,10 @@ function BuildROmniList(pattern)
     " as the return value of the 'omnifunc'.
     sleep 10m
     let ii = 0
-    let max_ii = 10 * g:R_wait_reply
-    while !filereadable(g:rplugin_tmpdir . "/nvimbol_finished") && ii < max_ii
+    let max_ii = 100 * g:R_wait_reply
+    while s:NvimbolFinished == 0 && ii < max_ii
         let ii += 1
-        sleep 100m
+        sleep 10m
     endwhile
     if ii == max_ii
         call RWarningMsg("No longer waiting...")
@@ -2931,10 +2936,12 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
                 let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
                 if len(tmp) == 2
-                    let descr = "Description: " . substitute(tmp[1], '\\N', "\n", "g") . "\n"
+                    let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
                 else
                     let descr = ""
                 endif
+                let ttl = "] " . substitute(descr, "\x05.*", "", "")
+                let descr = "Description: " . substitute(descr, ".*\x05", "", "")
                 if tmp[0] == "Not a function"
                     let usage =  ""
                 else
@@ -2961,9 +2968,9 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                         let usage = "Usage: " . a:prefix . sln[0] . "()\t"
                     endif
                 endif
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3], 'info': descr . usage})
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl, 'info': descr . usage})
             elseif len(sln) > 3
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' ' . sln[3]})
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl})
             endif
         endif
     endfor
@@ -3019,6 +3026,9 @@ function GetRCompletion(base)
         else
             let toplev = []
         endif
+
+        " FIXME: Bottleneck: While completing 'read', this command takes 0.35
+        " second to finish while everything else takes less than 0.02 second.
         let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
     else
         let omf = split(globpath(g:rplugin_compldir, 'omnils_' . pkg . '_*'), "\n")
@@ -3086,9 +3096,6 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
     if g:R_show_arg_help
         let msg .= ', extrainfo = TRUE'
     endif
-    if g:R_complete
-        let msg .= ', omni = TRUE'
-    endif
     let msg .= ')'
     let s:ArgCompletionFinished = 0
     call AddForDeletion(g:rplugin_tmpdir . "/args_for_completion")
@@ -3114,8 +3121,7 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
         for id in range(len(tmp))
             let tmp1 = split(tmp[id], "\x08")
             if len(tmp1) > 1
-                let info = tmp1[1]
-                let info = substitute(info, "\\\\N", "\n", "g")
+                let info = substitute(tmp1[1], "\\\\N", "\n", "g")
             else
                 let info = " "
             endif

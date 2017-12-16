@@ -329,7 +329,7 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, firstLibArg = FALSE, extrainfo = FALSE, omni = FALSE)
+nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, firstLibArg = FALSE, extrainfo = FALSE)
 {
     if(firstobj == ""){
         res <- nvim.args(rkeyword0, argkey, pkg, firstLibArg = firstLibArg, extrainfo = extrainfo)
@@ -345,8 +345,6 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, fir
            paste0("RWarningMsg('Function \"", rkeyword0, "\" not found')"),
            PACKAGE="nvimcom")
     } else {
-        if(omni)
-            nvim.bol(".GlobalEnv", allnames = TRUE, pattern = argkey)
         writeLines(text = res,
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
         .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")

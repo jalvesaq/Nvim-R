@@ -156,6 +156,9 @@ GetFunDescription <- function(pkg)
     GetDescr <- function(x)
     {
         x <- paste0(x, collapse = "")
+        ttl <- sub(".*\\\\title\\{", "", x)
+        ttl <- sub("\\}.*", "", ttl)
+        ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
         x <- sub(".*\\\\description\\{\\s*", "", x)
         xc <- charToRaw(x)
         k <- 1
@@ -176,10 +179,9 @@ GetFunDescription <- function(pkg)
             i <- i + 1
         }
 
-        x <- sub("^\\s*", "", x)
-        x <- sub("\\s*$", "", x)
+        x <- sub("^\\s*", "", sub("\\s*$", "", x))
         x <- gsub("\n\\s*", "\\\\N", x)
-        x <- paste0("\x08", x)
+        x <- paste0("\x08", ttl, "\x05", x)
         x
     }
     NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
@@ -242,6 +244,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
         writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
         flush(stdout())
+        .C("nvimcom_msg_to_nvim", 'FinishBuildROmniList()', PACKAGE="nvimcom")
         return(invisible(NULL))
     }
 
