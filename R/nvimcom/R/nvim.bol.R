@@ -157,7 +157,7 @@ GetFunDescription <- function(pkg)
     {
         x <- paste0(x, collapse = "")
         ttl <- sub(".*\\\\title\\{", "", x)
-        ttl <- sub("\\}.*", "", ttl)
+        ttl <- sub("\n *", " ", sub("\\}.*", "", ttl))
         ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
         x <- sub(".*\\\\description\\{\\s*", "", x)
         xc <- charToRaw(x)
