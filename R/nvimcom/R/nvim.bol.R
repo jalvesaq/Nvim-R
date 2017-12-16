@@ -269,6 +269,21 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
                 next
             }
         }
+
+        # Save title of package in pack_descriptions:
+        if(file.exists(paste0(Sys.getenv("NVIMR_COMPLDIR"), "/pack_descriptions")))
+            pack_descriptions <- readLines(paste0(Sys.getenv("NVIMR_COMPLDIR"),
+                                                  "/pack_descriptions"))
+        else
+            pack_descriptions <- character()
+        pack_descriptions <- c(paste(curlib,
+                           gsub("[\t\n ]+", " ", packageDescription(curlib)$Title),
+                           gsub("[\t\n ]+", " ", packageDescription(curlib)$Description),
+                           sep = "\x09"), pack_descriptions)
+        pack_descriptions <- sort(pack_descriptions[!duplicated(pack_descriptions)])
+        writeLines(pack_descriptions,
+                   paste0(Sys.getenv("NVIMR_COMPLDIR"), "/pack_descriptions"))
+
         obj.list <- objects(curpack, all.names = allnames)
         l <- length(obj.list)
         if(l > 0){
