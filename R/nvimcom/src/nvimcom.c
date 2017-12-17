@@ -58,6 +58,7 @@ static char nvimcom_home[1024];
 static char search_list[1024];
 static char R_version[16];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
+static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ for the ncm-R plugin
 
 #ifdef WIN32
 static int r_is_busy = 1;
@@ -80,6 +81,7 @@ typedef struct liststatus_ {
 
 static int nvimcom_checklibs();
 static void nvimcom_nvimclient(const char *msg, char *port);
+static void nvimcom_eval_expr(const char *buf);
 
 static ListStatus *firstList = NULL;
 
@@ -534,6 +536,9 @@ static void nvimcom_list_env()
 
     if(tmpdir[0] == 0)
         return;
+
+    if(envls_auto)
+        nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = FALSE)");
 
     if(objbr_auto != 1)
         return;
@@ -1281,6 +1286,9 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
         strncpy(edsrvr, getenv("NVIMR_PORT"), 127);
     if(verbose > 1)
         REprintf("nclientserver port: %s\n", edsrvr);
+
+    if(getenv("NCM_R"))
+        envls_auto = 1;
 
     snprintf(liblist, 510, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 510, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
