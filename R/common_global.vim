@@ -2750,6 +2750,10 @@ function RCreateEditMaps()
         autocmd InsertCharPre * call RSetStatusLine()
         autocmd InsertLeave * call RestoreStatusLine(1)
     endif
+
+    if !hasmapto("<Plug>RCompleteArgs", "i")
+        inoremap <buffer><silent> <C-X><C-A> <C-R>=RCompleteArgs()<CR>
+    endif
 endfunction
 
 function RCreateSendMaps()
@@ -3774,4 +3778,11 @@ endif
 " 2017-12-14
 if hasmapto("<Plug>RCompleteArgs", "i")
     call RWarningMsgInp("<Plug>RCompleteArgs no longer exists. Please, delete it from your vimrc.")
+else
+    " Delete <C-X><C-A> mapping in RCreateEditMaps()
+    function RCompleteArgs()
+        stopinsert
+        call RWarningMsgInp("Completion of function arguments are now done by omni completion.")
+        return []
+    endfunction
 endif
