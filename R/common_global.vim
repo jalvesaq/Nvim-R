@@ -154,43 +154,48 @@ endfunction
 
 function CompleteChunkOptions(base)
     let rr = []
-    if strlen(a:base) == 0
-        let newbase = '.'
-    else
-        let newbase = '^' . substitute(a:base, "\\$$", "", "")
+    " https://github.com/yihui/yihui.name/blob/master/content/knitr/options.md
+    " 2017-02-03
+    let ktopt = ['eval=TRUE', 'echo=TRUE', 'results="markup|asis|hold|hide"',
+                \ 'warning=TRUE', 'error=TRUE', 'message=TRUE', 'split=FALSE',
+                \ 'include=TRUE', 'strip.white=TRUE', 'tidy=FALSE',
+                \ 'tidy.opts= ', 'prompt=FALSE', 'comment="##"',
+                \ 'highlight=TRUE', 'background="#F7F7F7"', 'cache=FALSE',
+                \ 'cache.path="cache/"', 'cache.vars= ',
+                \ 'cache.lazy=TRUE', 'cache.comments= ', 'cache.rebuild=FALSE',
+                \ 'dependson=""', 'autodep=FALSE', 'fig.path= ',
+                \ 'fig.keep="high|none|all|first|last"',
+                \ 'fig.show="asis|hold|animate|hide"', 'dev= ', 'dev.args= ',
+                \ 'fig.ext= ', 'dpi=72', 'fig.width=7', 'fig.height=7',
+                \ 'fig.asp= ', 'fig.dim=c(7, 7)', 'out.width="7in"',
+                \ 'out.height="7in"', 'out.extra= ', 'resize.width= ',
+                \ 'resize.height= ', 'fig.align="left|right|center"',
+                \ 'fig.ncol=""', 'fig.sep=""', 'fig.showtext=FALSE',
+                \ 'fig.env="figure"', 'fig.cap=""', 'fig.scap=""', 'fig.lp="fig:"',
+                \ 'fig.pos=""', 'fig.subcap= ', 'fig.process= ', 'interval=1',
+                \ 'aniopts="controls,loop"', 'ffmpeg.bitrate="1M"',
+                \ 'ffmpeg.format="webm"', 'code= ', 'ref.label= ', 'child= ',
+                \ 'engine="R"', 'engine.path=""', 'opts.label=""', 'purl=TRUE',
+                \ "R.options= "]
+    if &filetype == 'rnoweb'
+        let ktopt += ['external=TRUE', 'sanitize=FALSE', 'size="normalsize"']
     endif
-
-    let ktopt = ["eval=;TRUE", "echo=;TRUE", "results=;'markup|asis|hold|hide'",
-                \ "warning=;TRUE", "error=;TRUE", "message=;TRUE", "split=;FALSE",
-                \ "include=;TRUE", "strip.white=;TRUE", "tidy=;FALSE", "tidy.opts=; ",
-                \ "prompt=;FALSE", "comment=;'##'", "highlight=;TRUE", "background=;'#F7F7F7'",
-                \ "cache=;FALSE", "cache.path=;'cache/'", "cache.vars=; ",
-                \ "cache.lazy=;TRUE", "cache.comments=; ", "dependson=;''",
-                \ "autodep=;FALSE", "fig.path=; ", "fig.keep=;'high|none|all|first|last'",
-                \ "fig.show=;'asis|hold|animate|hide'", "dev=; ", "dev.args=; ",
-                \ "fig.ext=; ", "dpi=;72", "fig.width=;7", "fig.height=;7",
-                \ "out.width=;'7in'", "out.height=;'7in'", "out.extra=; ",
-                \ "resize.width=; ", "resize.height=; ", "fig.align=;'left|right|center'",
-                \ "fig.env=;'figure'", "fig.cap=;''", "fig.scap=;''", "fig.lp=;'fig:'",
-                \ "fig.pos=;''", "fig.subcap=; ", "fig.process=; ", "interval=;1",
-                \ "aniopts=;'controls.loop'", "code=; ", "ref.label=; ",
-                \ "child=; ", "engine=;'R'", "opts.label=;''", "purl=;TRUE",
-                \ 'R.options=; ']
-    if &filetype == "rnoweb"
-        let ktopt += ["external=;TRUE", "sanitize=;FALSE", "size=;'normalsize'"]
-    endif
-    if &filetype == "rmd" || &filetype == "rrst"
-        let ktopt += ["fig.retina=;1"]
-        if &filetype == "rmd"
-            let ktopt += ["collapse=;FALSE"]
+    if &filetype == 'rmd' || &filetype == 'rrst'
+        let ktopt += ['fig.retina=1', 'class.output=""', 'class.source=""']
+        if &filetype == 'rmd'
+            let ktopt += ['collapse=FALSE']
         endif
     endif
 
-    call filter(ktopt, 'v:val =~ newbase')
+    if strlen(a:base) > 0
+        let newbase = '^' . substitute(a:base, "\\$$", "", "")
+        call filter(ktopt, 'v:val =~ newbase')
+    endif
+
     call sort(ktopt)
     for kopt in ktopt
-        let tmp1 = split(kopt, ";")
-        call add(rr, {'word': tmp1[0], 'menu': tmp1[1]})
+        let tmp = split(kopt, "=")
+        call add(rr, {'word': tmp[0] . '=', 'abbr': tmp[0], 'menu': '= ' . tmp[1]})
     endfor
     return rr
 endfunction
@@ -666,6 +671,7 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/nvimbol_finished")
     call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
     if has("win32")
         call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
@@ -3061,14 +3067,24 @@ function GetRArgs0(base, rkeyword)
             let newkey = '^' . a:base
             let tmp2 = split(argsL[id], "\x07")
             if a:base == '' || tmp2[0] =~ newkey
-                if tmp2[0] != '...'
-                    let tmp2[0] = tmp2[0] . " = "
+                if tmp2[0] == '...'
+                    let bv = "..."
+                    let wd = ""
+                    let mn = ""
+                elseif tmp2[0] == "NO_ARGS"
+                    let wd = ""
+                    let bv = "No arguments"
+                    let mn = ""
+                else
+                    let wd = tmp2[0] . " = "
+                    let bv = tmp2[0]
+                    if len(tmp2) == 2
+                        let mn = "= " . tmp2[1]
+                    else
+                        let mn = "="
+                    endif
                 endif
-                if len(tmp2) == 2
-                    call add(argls, {'word': tmp2[0], 'menu': tmp2[1]})
-                elseif tmp2[0] != "NO_ARGS = "
-                    call add(argls, {'word': tmp2[0], 'menu': ''})
-                endif
+                call add(argls, {'word': wd, 'abbr': bv, 'menu': mn})
             endif
         endfor
     endfor
@@ -3116,20 +3132,26 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
             endif
             let tmp2 = split(tmp1[0], "\x07")
             if tmp2[0] == '...'
-                let word = tmp2[0]
+                let wd = ""
+                let bv = "..."
+                let mn = ""
+            elseif tmp2[0] == "NO_ARGS"
+                let wd = ""
+                let bv = "No arguments"
+                let mn = ""
             else
-                let word = tmp2[0] . " = "
-            endif
-            if word != "NO_ARGS = "
+                let wd = tmp2[0] . " = "
+                let bv = tmp2[0]
                 if len(tmp2) > 1
-                    call add(argls,  {'word': word, 'menu': tmp2[1], 'info': info})
+                    let mn = "= " . tmp2[1]
                 else
-                    call add(argls,  {'word': word, 'menu': ' ', 'info': info})
+                    let mn = "="
                 endif
             endif
+            call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
         endfor
         if len(argls) > 0 && len(tmp0) > 1
-            call add(argls, {'word': ' ', 'menu': tmp0[1]})
+            call add(argls, {'word': '', 'abbr': ' ', 'menu': tmp0[1]})
         endif
     endif
     return argls
