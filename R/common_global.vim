@@ -617,9 +617,10 @@ function CheckNvimcomVersion()
                             \ g:rplugin_tmpdir . '/buildomnils.R"')
                 if v:shell_error
                     call ShowRSysLog(slog, "Error_building_compl_data", "Failed to build lists")
-                else
-                    echon "OK!"
+                    call delete(g:rplugin_tmpdir . "/buildomnils.R")
+                    return 0
                 endif
+                echon "OK!"
                 call delete(g:rplugin_tmpdir . "/buildomnils.R")
             endif
         endif
