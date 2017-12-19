@@ -604,7 +604,7 @@ function CheckNvimcomVersion()
                 call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
                 return 0
             else
-                echon "building lists for omni completion... "
+                echon "Building lists for omni completion... "
                 let rdp = $R_DEFAULT_PACKAGES
                 if rdp !~ "\<base\>"
                     let rdp .= ",base"
@@ -612,7 +612,7 @@ function CheckNvimcomVersion()
                 let blist = 'nvimcom:::nvim.buildomnils("' . rdp . '")'
                 let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
                 call writefile(split(blist, ";"), g:rplugin_tmpdir . "/buildomnils.R")
-                let slog = system('R_DEFAULT_PACKAGES= ' . g:rplugin_Rcmd .
+                let slog = system(g:rplugin_Rcmd .
                             \ ' --vanilla --quiet --no-save --no-restore -f "' .
                             \ g:rplugin_tmpdir . '/buildomnils.R"')
                 if v:shell_error
