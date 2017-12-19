@@ -216,7 +216,10 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
         if (type == 'symbol') {
             res <- append(res, paste('\x09', field, info, sep = ''))
         } else if (type == 'character') {
-            res <- append(res, paste('\x09', field, '\x07"', gsub("\n", "\\\\n", frm[[field]]), '"', info, sep = ''))
+            frm[[field]] <- gsub("\n", "\\\\n", frm[[field]])
+            frm[[field]] <- gsub("\t", "\\\\t", frm[[field]])
+            frm[[field]] <- gsub('"', '\\\\"', frm[[field]])
+            res <- append(res, paste('\x09', field, '\x07"', frm[[field]], '"', info, sep = ''))
         } else if (type == 'logical' || type == 'double' || type == 'integer') {
             res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
         } else if (type == 'NULL') {
