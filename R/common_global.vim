@@ -603,7 +603,22 @@ function CheckNvimcomVersion()
                 endif
                 return 0
             else
-                echon "OK!"
+                echon "building lists for omnicompletion... "
+                let olddp = $R_DEFAULT_PACKAGES
+                if olddp !~ "\<base\>"
+                    let olddp .= ",base"
+                endif
+                let $R_DEFAULT_PACKAGES = substitute(olddp, ",nvimcom", "", "")
+                let blist = 'nvimcom:::nvim.buildomnils("' . olddp . '")'
+                let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
+                call writefile(split(blist, ";"), g:rplugin_tmpdir . "/buildomnils.R")
+                let slog = system(g:rplugin_Rcmd . " CMD BATCH '" . g:rplugin_tmpdir . "/buildomnils.R'")
+                let $R_DEFAULT_PACKAGES = olddp
+                if v:shell_error
+                    call ShowRSysLog(slog, "Error_building_compl_data", "Failed to build lists")
+                else
+                    echon "OK!"
+                endif
             endif
         endif
         if has("win32")
@@ -682,6 +697,15 @@ function StartR(whatr)
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/functions.vim"
     endif
 
+    if $R_DEFAULT_PACKAGES == ""
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
+        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+    endif
+    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
+        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
+    endif
+
     let s:has_warning = 0
     if !CheckNvimcomVersion()
         return
@@ -692,15 +716,6 @@ function StartR(whatr)
 endfunction
 
 function FinishStartingR()
-    if $R_DEFAULT_PACKAGES == ""
-        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
-    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
-        let $R_DEFAULT_PACKAGES .= ",nvimcom"
-    endif
-    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
-        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
-    endif
-
     if s:what_r =~ "custom"
         call inputsave()
         let r_args = input('Enter parameters for R: ')
