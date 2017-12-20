@@ -356,6 +356,9 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
     } else if(Rf_isS4(*x)){
         p = nvimcom_strcat(p, "<#");
         strcpy(xclass, "s4");
+    } else if(Rf_isEnvironment(*x)){
+        p = nvimcom_strcat(p, ":#");
+        strcpy(xclass, "env");
     } else if(TYPEOF(*x) == PROMSXP){
         p = nvimcom_strcat(p, "&#");
         strcpy(xclass, "lazy");

@@ -77,6 +77,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
             else if(is.logical(xx)) x.group <- "logical"
             else if(is.data.frame(xx)) x.group <- "data.frame"
             else if(is.list(xx)) x.group <- "list"
+            else if(is.environment(xx)) x.group <- "env"
             else x.group <- " "
             x.class <- class(xx)[1]
         }
@@ -98,7 +99,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 cat(x, "\x06function\x06function\x06", printenv, "\x06Unknown arguments", "\n", sep="")
             }
         } else {
-            if(is.list(xx)){
+            if(is.list(xx) || is.environment(xx)){
                 if(curlevel == 0){
                     info <- ""
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
@@ -116,7 +117,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 
-    if(is.list(xx) && curlevel <= maxlevel){
+    if((is.list(xx) || is.environment(xx)) && curlevel <= maxlevel){
         obj.names <- names(xx)
         curlevel <- curlevel + 1
         if(length(xx) > 0){

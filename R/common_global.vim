@@ -3210,7 +3210,7 @@ function CompleteR(findstart, base)
         call cursor(lnum, cpos[2] - 1)
         if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
             let idx2 = cpos[2]
-            let argkey = ''
+            let s:argkey = ''
         else
             let idx1 = idx2
             while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||

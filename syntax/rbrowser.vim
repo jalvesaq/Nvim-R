@@ -20,6 +20,7 @@ if has("conceal")
     syn match rbrowserLogical	"%#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLibrary	"##.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserS4	"<#.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserEnv	":#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLazy	"&#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserUnknown	"=#.*\t" contains=rbrowserDelim,rbrowserTab
 else
@@ -31,11 +32,12 @@ else
     syn match rbrowserLogical	"%.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLibrary	"#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserS4	"<.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserEnv	":.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLazy	"&.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserUnknown	"=.*\t" contains=rbrowserDelim,rbrowserTab
 endif
-syn match rbrowserEnv		"^.GlobalEnv "
-syn match rbrowserEnv		"^Libraries "
+syn match rbrowserNmSpace	"^.GlobalEnv "
+syn match rbrowserNmSpace	"^Libraries "
 syn match rbrowserLink		" Libraries$"
 syn match rbrowserLink		" .GlobalEnv$"
 syn match rbrowserTreePart	"├─"
@@ -50,12 +52,12 @@ endif
 syn match rbrowserTab contained "\t"
 syn match rbrowserErr /Error: label isn't "character"./
 if has("conceal")
-    syn match rbrowserDelim contained /'#\|"#\|(#\|\[#\|{#\|%#\|##\|<#\|&#\|=#/ conceal
+    syn match rbrowserDelim contained /'#\|"#\|(#\|\[#\|{#\|%#\|##\|<#\|:#\|&#\|=#/ conceal
 else
-    syn match rbrowserDelim contained /'\|"\|(\|\[\|{\|%\|#\|<\|&\|=/
+    syn match rbrowserDelim contained /'\|"\|(\|\[\|{\|%\|#\|<\|:\|&\|=/
 endif
 
-hi def link rbrowserEnv		Statement
+hi def link rbrowserNmSpace	Statement
 hi def link rbrowserNumeric	Number
 hi def link rbrowserCharacter	String
 hi def link rbrowserFactor	Special
@@ -65,6 +67,7 @@ hi def link rbrowserLink	Comment
 hi def link rbrowserLogical	Boolean
 hi def link rbrowserFunction	Function
 hi def link rbrowserS4		Statement
+hi def link rbrowserEnv		Include
 hi def link rbrowserLazy	Comment
 hi def link rbrowserUnknown	Normal
 hi def link rbrowserWarn	WarningMsg
