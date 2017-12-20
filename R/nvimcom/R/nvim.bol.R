@@ -156,9 +156,12 @@ GetFunDescription <- function(pkg)
     GetDescr <- function(x)
     {
         x <- paste0(x, collapse = "")
-        ttl <- sub(".*\\\\title\\{", "", x)
-        ttl <- sub("\n *", " ", sub("\\}.*", "", ttl))
-        ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
+        ttl <- sub(".*\\\\title\\{\\s*", "", x)
+        ttl <- sub("\n", " ", ttl)
+        ttl <- gsub("  +", " ", ttl)
+        ttl <- CleanOmniLine(ttl)
+        ttl <- sub("\\s*\\}.*", "", ttl)
+        ttl <- gsub("\\{", "", ttl)
         x <- sub(".*\\\\description\\{\\s*", "", x)
         xc <- charToRaw(x)
         k <- 1
@@ -188,9 +191,8 @@ GetFunDescription <- function(pkg)
                                        "alias" = als)
 }
 
-CleanOmnils <- function(f)
+CleanOmniLine <- function(x)
 {
-    x <- readLines(f)
     x <- gsub("\\\\R", "R", x)
     x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
@@ -216,6 +218,13 @@ CleanOmnils <- function(f)
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
     x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x
+}
+
+CleanOmnils <- function(f)
+{
+    x <- readLines(f)
+    x <- CleanOmniLine(x)
     writeLines(x, f)
 }
 
