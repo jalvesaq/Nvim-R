@@ -77,6 +77,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
             else if(is.logical(xx)) x.group <- "logical"
             else if(is.data.frame(xx)) x.group <- "data.frame"
             else if(is.list(xx)) x.group <- "list"
+            else if(is.environment(xx)) x.group <- "env"
             else x.group <- " "
             x.class <- class(xx)[1]
         }
@@ -98,7 +99,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 cat(x, "\x06function\x06function\x06", printenv, "\x06Unknown arguments", "\n", sep="")
             }
         } else {
-            if(is.list(xx)){
+            if(is.list(xx) || is.environment(xx)){
                 if(curlevel == 0){
                     info <- ""
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
@@ -116,7 +117,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 
-    if(is.list(xx) && curlevel <= maxlevel){
+    if((is.list(xx) || is.environment(xx)) && curlevel <= maxlevel){
         obj.names <- names(xx)
         curlevel <- curlevel + 1
         if(length(xx) > 0){
@@ -156,9 +157,12 @@ GetFunDescription <- function(pkg)
     GetDescr <- function(x)
     {
         x <- paste0(x, collapse = "")
-        ttl <- sub(".*\\\\title\\{", "", x)
-        ttl <- sub("\n *", " ", sub("\\}.*", "", ttl))
-        ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
+        ttl <- sub(".*\\\\title\\{\\s*", "", x)
+        ttl <- sub("\n", " ", ttl)
+        ttl <- gsub("  +", " ", ttl)
+        ttl <- CleanOmniLine(ttl)
+        ttl <- sub("\\s*\\}.*", "", ttl)
+        ttl <- gsub("\\{", "", ttl)
         x <- sub(".*\\\\description\\{\\s*", "", x)
         xc <- charToRaw(x)
         k <- 1
@@ -188,9 +192,8 @@ GetFunDescription <- function(pkg)
                                        "alias" = als)
 }
 
-CleanOmnils <- function(f)
+CleanOmniLine <- function(x)
 {
-    x <- readLines(f)
     x <- gsub("\\\\R", "R", x)
     x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
@@ -216,12 +219,19 @@ CleanOmnils <- function(f)
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
     x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x
+}
+
+CleanOmnils <- function(f)
+{
+    x <- readLines(f)
+    x <- CleanOmniLine(x)
     writeLines(x, f)
 }
 
 
 # Build Omni List
-nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
+nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg = TRUE) {
     nvim.OutDec <- options("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
@@ -244,7 +254,8 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "") {
         writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
         flush(stdout())
-        .C("nvimcom_msg_to_nvim", 'FinishBuildROmniList()', PACKAGE="nvimcom")
+        if(sendmsg)
+            .C("nvimcom_msg_to_nvim", 'FinishBuildROmniList()', PACKAGE="nvimcom")
         return(invisible(NULL))
     }
 

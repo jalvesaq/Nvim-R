@@ -176,7 +176,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
                 funcname <- deffun
                 funcmeth <- deffun
             } else if(!existsFunction(funcname)) {
-                return("NOT_EXISTS")
+                return("")
             }
             if(is.primitive(get(funcname)))
                 return(nvim.primitive.args(funcname))
@@ -334,14 +334,8 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, ext
         else
             res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = extrainfo)
     }
-    if(res == "NOT_EXISTS"){
-        .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('Function \"", rkeyword0, "\" not found')"),
-           PACKAGE="nvimcom")
-    } else {
-        writeLines(text = res,
-                   con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
-        .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
-    }
+    writeLines(text = res,
+               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
+    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
     return(invisible(NULL))
 }

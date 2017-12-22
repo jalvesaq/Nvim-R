@@ -601,9 +601,27 @@ function CheckNvimcomVersion()
                 if has("win32")
                     call CheckRtools()
                 endif
+                call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
                 return 0
             else
+                echon "Building lists for omni completion... "
+                let rdp = $R_DEFAULT_PACKAGES
+                if rdp !~ "\<base\>"
+                    let rdp .= ",base"
+                endif
+                let blist = 'nvimcom:::nvim.buildomnils("' . rdp . '")'
+                let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
+                call writefile(split(blist, ";"), g:rplugin_tmpdir . "/buildomnils.R")
+                let slog = system(g:rplugin_Rcmd .
+                            \ ' --vanilla --quiet --no-save --no-restore -f "' .
+                            \ g:rplugin_tmpdir . '/buildomnils.R"')
+                if v:shell_error
+                    call ShowRSysLog(slog, "Error_building_compl_data", "Failed to build lists")
+                    call delete(g:rplugin_tmpdir . "/buildomnils.R")
+                    return 0
+                endif
                 echon "OK!"
+                call delete(g:rplugin_tmpdir . "/buildomnils.R")
             endif
         endif
         if has("win32")
@@ -682,6 +700,15 @@ function StartR(whatr)
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/functions.vim"
     endif
 
+    if $R_DEFAULT_PACKAGES == ""
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
+        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+    endif
+    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
+        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
+    endif
+
     let s:has_warning = 0
     if !CheckNvimcomVersion()
         return
@@ -692,15 +719,6 @@ function StartR(whatr)
 endfunction
 
 function FinishStartingR()
-    if $R_DEFAULT_PACKAGES == ""
-        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
-    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
-        let $R_DEFAULT_PACKAGES .= ",nvimcom"
-    endif
-    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
-        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
-    endif
-
     if s:what_r =~ "custom"
         call inputsave()
         let r_args = input('Enter parameters for R: ')
@@ -3192,7 +3210,7 @@ function CompleteR(findstart, base)
         call cursor(lnum, cpos[2] - 1)
         if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
             let idx2 = cpos[2]
-            let argkey = ''
+            let s:argkey = ''
         else
             let idx1 = idx2
             while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||

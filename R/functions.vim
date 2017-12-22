@@ -22,7 +22,7 @@ endif
 let s:lists_to_load = split(g:R_start_libs, ",")
 let s:new_libs = 0
 let g:rplugin_debug_lists = []
-let s:loaded_lists = []
+let g:rplugin_loaded_libs = []
 let s:Rhelp_list = []
 let g:rplugin_omni_lines = []
 
@@ -84,9 +84,9 @@ function RLisObjs(arglead, cmdline, curpos)
 endfunction
 
 function RmFromRLibList(lib)
-    for idx in range(len(s:loaded_lists))
-        if s:loaded_lists[idx] == a:lib
-            call remove(s:loaded_lists, idx)
+    for idx in range(len(g:rplugin_loaded_libs))
+        if g:rplugin_loaded_libs[idx] == a:lib
+            call remove(g:rplugin_loaded_libs, idx)
             break
         endif
     endfor
@@ -102,7 +102,7 @@ function AddToRLibList(lib)
     if isdirectory(g:rplugin_compldir)
         let omf = split(globpath(g:rplugin_compldir, 'omnils_' . a:lib . '_*'), "\n")
         if len(omf) == 1
-            let s:loaded_lists += [a:lib]
+            let g:rplugin_loaded_libs += [a:lib]
 
             " List of objects for omni completion
             let olist = readfile(omf[0])
@@ -147,7 +147,7 @@ function FillRLibList()
         let s:lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
         for lib in s:lists_to_load
             let isloaded = 0
-            for olib in s:loaded_lists
+            for olib in g:rplugin_loaded_libs
                 if lib == olib
                     let isloaded = 1
                     break
@@ -164,7 +164,7 @@ function FillRLibList()
     " also need to update the syntax on CursorMoved event:
     " https://github.com/neovim/neovim/issues/901
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        let s:new_libs = len(s:loaded_lists)
+        let s:new_libs = len(g:rplugin_loaded_libs)
         silent exe 'set syntax=' . &syntax
         redraw
     endif

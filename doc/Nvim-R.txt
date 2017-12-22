@@ -414,8 +414,7 @@ Command
 
 Edit
   . Insert "<-"                                          _
-  . Complete object name                              ^X^O
-  . Complete function arguments                       ^X^A
+  . Complete object name                     CTRL-X CTRL-O
   --------------------------------------------------------
   . Indent (line)                                       ==
   . Indent (selected lines)                              =
