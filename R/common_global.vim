@@ -3327,6 +3327,7 @@ command RBuildTags :call RBuildTags()
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
 command -nargs=? -complete=dir RSourceDir :call RSourceDirectory(<q-args>)
 command RStop :call StopR()
+command -nargs=? RSend :call g:SendCmdToR(<q-args>)
 
 
 "==========================================================================

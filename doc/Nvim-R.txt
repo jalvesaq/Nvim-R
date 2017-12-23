@@ -452,6 +452,15 @@ currently under the cursor you should type <LocalLeader>d. If you want to see
 what lines are being sourced when sending a selection of lines, you can use 
 either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
 
+You can also use the command `:RSend` to type and, then, send a line of code
+to R. If you use this command frequently, you may consider creating a map for
+it in your |vimrc|. For example:
+>
+   nmap <LocalLeader>: :RSend 
+<
+Observe that there is an empty space after `:RSend`, so you do not have to
+type it.
+
 The command <LocalLeader>o runs in the background the R command `print(line)`,
 where `line` is the line under cursor, and adds the output as commented lines
 to the source code.
