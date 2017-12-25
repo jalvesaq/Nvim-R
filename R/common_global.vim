@@ -3244,13 +3244,15 @@ function CompleteR(findstart, base)
         let np = 1
         let nl = 0
         let argls = []
-        while np != 0 && nl < 10
+        " Look up to 10 lines above for an opening parenthesis
+        while nl < 10
             if line[idx] == '('
                 let np -= 1
             elseif line[idx] == ')'
                 let np += 1
             endif
             if np == 0
+                " The opening parenthesis was found
                 call cursor(lnum, idx)
                 let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
                 let firstobj = ""
@@ -3280,6 +3282,7 @@ function CompleteR(findstart, base)
                 else
                     let argls = GetRArgs0(a:base, rkeyword)
                 endif
+                break
             endif
             let idx -= 1
             if idx <= 0
