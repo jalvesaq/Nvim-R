@@ -145,7 +145,6 @@ function ReplaceUnderS()
     endif
 endfunction
 
-
 function ReadRMsg()
     let msg = readfile($NVIMR_TMPDIR . "/nvimcom_msg")
     exe "call " . msg[0]
@@ -568,7 +567,7 @@ function CheckNvimcomVersion()
         if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2) && !exists("g:R_remote_tmpdir")
             if !isdirectory(expand(libpaths[1]))
                 let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
-                if resp[0] == "y" || resp[0] == "Y"
+                if resp[0] ==? "y"
                     call mkdir(expand(libpaths[1]), "p")
                 endif
                 echo " "
@@ -1298,7 +1297,6 @@ function RSourceLines(...)
         let rcmd = 'base::source("' . s:Rsource . '"' . sargs . ')'
     endif
 
-
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
@@ -1581,7 +1579,7 @@ function SendFHChunkToR()
         let chdchk = "^\.\. {r.*child *= *"
     else
         " Should never happen
-        call RWarningMsg('Strange filetype (SendFHChunkToR): "' . &filetype '"')
+        call RWarningMsg('Strange filetype (SendFHChunkToR): "' . &filetype . '"')
     endif
 
     let codelines = []
@@ -1635,7 +1633,6 @@ function RParenDiff(str)
     let clnln = substitute(clnln, '".\{-}"',  '', 'g')
     let clnln = substitute(clnln, "'.\\{-}'",  "", "g")
     let clnln = substitute(clnln, "#.*", "", "g")
-    let llen0 = strlen(clnln)
     let llen1 = strlen(substitute(clnln, '[{(\[]', '', 'g'))
     let llen2 = strlen(substitute(clnln, '[})\]]', '', 'g'))
     return llen1 - llen2
@@ -2725,7 +2722,6 @@ function RCreateMaps(type, plug, combo, target)
     endif
 endfunction
 
-
 function SpaceForRGrDevice()
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
@@ -3343,7 +3339,6 @@ if !exists("g:rplugin_compldir")
     exe "source " . substitute(expand("<sfile>:h:h"), " ", "\\ ", "g") . "/R/setcompldir.vim"
 endif
 
-
 if exists("g:R_tmpdir")
     let g:rplugin_tmpdir = expand(g:R_tmpdir)
 else
@@ -3685,7 +3680,6 @@ let s:docfile = g:rplugin_tmpdir . "/Rdoc"
 " List of file to be deleted on VimLeave
 let s:del_list = [s:Rsource,
             \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
-
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
 " starting R:
