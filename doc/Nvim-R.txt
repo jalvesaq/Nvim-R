@@ -2954,13 +2954,15 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-11-24)
+0.9.10.1 (2017-12-30)
 
  * The option R_latexcmd now is a list and the option R_latexmk no longer
    exists. By default, latexmk and xelatex will be called to compile pdf
    documents.
+ * Arguments completion is now done by CTRL-X CTRL-O.
  * New options: R_OutDec, R_csv_delim, R_rmdchunk, R_parenblock,
    R_bracketed_paste, R_complete.
+ * New command: `:RSend`.
  * Require Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows).
 
 0.9.10 (2017-09-08)
