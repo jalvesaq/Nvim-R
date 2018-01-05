@@ -612,7 +612,7 @@ function CheckNvimcomVersion()
                 let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
                 call writefile(split(blist, ";"), g:rplugin_tmpdir . "/buildomnils.R")
                 let slog = system(g:rplugin_Rcmd .
-                            \ ' --vanilla --quiet --no-save --no-restore -f "' .
+                            \ ' --quiet --no-save --no-restore -f "' .
                             \ g:rplugin_tmpdir . '/buildomnils.R"')
                 if v:shell_error
                     call ShowRSysLog(slog, "Error_building_compl_data", "Failed to build lists")
