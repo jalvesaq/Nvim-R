@@ -592,7 +592,11 @@ function CheckNvimcomVersion()
                 let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
             endif
             if v:shell_error
-                call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
+                if filereadable(expand("~/.R/Makevars"))
+                    call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
+                else
+                    call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
+                endif
                 if has("win32")
                     call CheckRtools()
                 endif
