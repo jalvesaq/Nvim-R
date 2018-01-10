@@ -168,7 +168,15 @@ if !g:R_nvim_wd
     endif
 endif
 
-if g:R_term == "gnome-terminal" || g:R_term == "xfce4-terminal"
+if g:R_term == "gnome-terminal"
+    let s:gtv = split(system("gnome-terminal --version"))
+    if len(s:gtv) > 2 && s:gtv[2] >= "3.24.2"
+        let s:term_cmd = s:term_cmd . " --"
+    else
+        let s:term_cmd = s:term_cmd . " -x"
+    endif
+    unlet s:gtv
+elseif g:R_term == "xfce4-terminal"
     let s:term_cmd = s:term_cmd . " -x"
 else
     let s:term_cmd = s:term_cmd . " -e"
