@@ -50,6 +50,8 @@ if &encoding != "utf-8"
 endif
 
 syn match rbrowserTab contained "\t"
+syn match rbrowserLen " \[[0-9]\+, [0-9]\+\]$"
+syn match rbrowserLen " \[[0-9]\+\]$"
 syn match rbrowserErr /Error: label isn't "character"./
 if has("conceal")
     syn match rbrowserDelim contained /'#\|"#\|(#\|\[#\|{#\|%#\|##\|<#\|:#\|&#\|=#/ conceal
@@ -75,5 +77,6 @@ hi def link rbrowserErr 	ErrorMsg
 hi def link rbrowserTreePart	Comment
 hi def link rbrowserDelim	Ignore
 hi def link rbrowserTab		Ignore
+hi def link rbrowserLen		Comment
 
 " vim: ts=8 sw=4

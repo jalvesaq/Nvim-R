@@ -367,11 +367,12 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
         strcpy(xclass, "other");
     }
 
+    p = nvimcom_strcat(p, xname);
+    p = nvimcom_strcat(p, "\t");
+
     PROTECT(lablab = allocVector(STRSXP, 1));
     SET_STRING_ELT(lablab, 0, mkChar("label"));
     PROTECT(label = getAttrib(*x, lablab));
-    p = nvimcom_strcat(p, xname);
-    p = nvimcom_strcat(p, "\t");
     if(length(label) > 0){
         if(Rf_isValidString(label)){
             snprintf(buf, 127, "%s", CHAR(STRING_ELT(label, 0)));
@@ -381,8 +382,18 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                 p = nvimcom_strcat(p, "Error: label isn't \"character\".");
         }
     }
-    p = nvimcom_strcat(p, "\n");
     UNPROTECT(2);
+
+    if(strcmp(xclass, "data.frame") == 0){
+        // FIXME: nrows(*x) does not work (R bug?)
+        snprintf(ebuf, 63, " [%d, %d]", length(Rf_GetRowNames(*x)), length(*x));
+        p = nvimcom_strcat(p, ebuf);
+    } else if(strcmp(xclass, "list") == 0){
+        snprintf(ebuf, 63, " [%d]", length(*x));
+        p = nvimcom_strcat(p, ebuf);
+    }
+
+    p = nvimcom_strcat(p, "\n");
 
     if(strcmp(xclass, "list") == 0 || strcmp(xclass, "data.frame") == 0 || strcmp(xclass, "s4") == 0){
         strncpy(curenvB, curenv, 500);
