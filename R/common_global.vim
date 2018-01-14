@@ -2949,20 +2949,22 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
         if sln[0] =~ "[ '%]"
             let sln[0] = "`" . sln[0] . "`"
         endif
+
+        let tmp = split(sln[4], "\x08")
+        if len(tmp) == 2
+            let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
+        else
+            let descr = ""
+        endif
+        let ttl = "] " . substitute(descr, "\x05.*", "", "")
+
         if g:R_show_args && len(sln) > 4
-            let tmp = split(sln[4], "\x08")
             if tmp[0] =~ '""'
                 let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
                 let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
             endif
             let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
             let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
-            if len(tmp) == 2
-                let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
-            else
-                let descr = ""
-            endif
-            let ttl = "] " . substitute(descr, "\x05.*", "", "")
             let descr = "Description: " . substitute(descr, ".*\x05", "", "")
             if tmp[0] == "Not a function"
                 let usage =  ""
