@@ -6,11 +6,12 @@ endif
 let g:rplugin_zathura_pid = {}
 
 if executable("zathura")
-    let vv = split(system("zathura --version 2>/dev/null"))[1]
-    if vv < '0.3.1'
+    let s:zv = split(system('zathura --version 2>/dev/null'))
+    if len(s:zv) > 1 && s:zv[1] < '0.3.1'
         let g:rplugin_pdfviewer = "none"
         call RWarningMsgInp("Zathura version must be >= 0.3.1")
     endif
+    unlet s:zv
 else
     let g:rplugin_pdfviewer = "none"
     call RWarningMsgInp('Please, either install "zathura" or set the value of R_pdfviewer.')
