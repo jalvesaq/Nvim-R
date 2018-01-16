@@ -3078,7 +3078,6 @@ function GetRArgs0(base, rkeyword)
         let info = tmp1[4]
         let info = substitute(info, "\x08.*", "", "")
         let argsL = split(info, "\x09")
-        let s:no_args_stt = 0
         for id in range(len(argsL))
             let newkey = '^' . a:base
             let tmp2 = split(argsL[id], "\x07")
@@ -3138,7 +3137,6 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
     let tmp0 = split(args_line, "\x04")
     let tmp = split(tmp0[0], "\x09")
     if(len(tmp) > 0)
-        let s:no_args_stt = 0
         for id in range(len(tmp))
             let tmp1 = split(tmp[id], "\x08")
             if len(tmp1) > 1
@@ -3164,7 +3162,11 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
                     let mn = "="
                 endif
             endif
-            call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
+            if g:R_show_arg_help
+                call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
+            else
+                call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn})
+            endif
         endfor
         if len(argls) > 0 && len(tmp0) > 1
             call add(argls, {'word': '', 'abbr': ' ', 'menu': tmp0[1]})
