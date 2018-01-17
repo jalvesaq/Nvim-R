@@ -25,8 +25,8 @@ For Neovim >= 0.2.0 and Vim >= 8.0.0946
 1. Overview~
 
 This plugin improves the support for editing R code with both Vim and Neovim,
-integrating them with R. It is the successor of Vim-R-plugin which was
-discontinued. Stable versions of this plugin are available available at:
+integrating them with R. Stable versions of this plugin are available
+available at:
 
     https://github.com/jalvesaq/Nvim-R/releases
 
@@ -148,11 +148,6 @@ Additional dependencies for editing Rnoweb documents:~
 
 
 Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
-
-   ncurses-term: http://invisible-island.net/ncurses
-		 Might be necessary if you want support for 256 colors at the
-		 terminal emulator.
-		 (Not required if using R.app on OS X)
 
    Tmux >= 2.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
@@ -786,7 +781,6 @@ Normal, Visual and Insert modes.
 The plugin is only capable of recognizing functions defined using the `<-`
 operator. Also, only current function scope is sent to R. See:
 
-   https://github.com/jcfaria/Vim-R-plugin/issues/94
    https://github.com/jalvesaq/Nvim-R/issues/34
 
 
@@ -1787,7 +1781,7 @@ higher value for the variable in your |vimrc|. Example:
 6.30. Time to wait for R reply~
 
 By default Nvim-R waits 2 seconds for R to reply after a request for omni
-completion is issued. You can set the amount of time NVim-R waits (in seconds)
+completion is issued. You can set the amount of time Nvim-R waits (in seconds)
 in your |vimrc|.  Example:
 >
    let R_wait_reply = 5
@@ -2170,7 +2164,7 @@ line.
 If the command that you want to send does not require an R object as argument,
 you can create a shortcut to it by following the example:
 >
-   map <silent> <LocalLeader>s :call g:SendCmdToR("search()")
+   map <silent> <LocalLeader>s :call g:SendCmdToR("search()")<CR>
 <
 See also: |R_source|.
 
@@ -2366,9 +2360,7 @@ You may also want to remap <C-x><C-o>:
 Note: Not all mappings work in all versions of Vim. Some mappings may not
 work on GVim on Windows, and others may not work on Vim running in a
 terminal emulator or in Linux Console. The use of <Shift>, <Alt> and <Fn> keys
-in mappings are particularly problematic. See:
-
-   https://github.com/jcfaria/Vim-R-plugin/issues/111
+in mappings are particularly problematic.
 
 
 ------------------------------------------------------------------------------
@@ -2481,31 +2473,7 @@ prefer that Vim breaks the R code automatically put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.13. Vim with 256 colors in a terminal emulator (Linux/Unix only)~
-
-If you want 256 colors support in Vim, install the package ncurses-term.
-Then put in your `~/.bashrc` these lines:
->
-   # Change the TERM environment variable (to get 256 colors) even if you are
-   # accessing your system through ssh and using either Tmux or GNU Screen:
-   if [ "$TERM" = "xterm" ] || [ "$TERM" = "xterm-256color" ]
-   then
-       export TERM=xterm-256color
-       export HAS_256_COLORS=yes
-   fi
-   if [ "$TERM" = "screen" ] && [ "$HAS_256_COLORS" = "yes" ]
-   then
-       export TERM=screen-256color
-   fi
-<
-You have to search the internet for color schemes supporting 256 colors,
-download and copy them to either ~/.config/nvim/colors or ~/.vim. You may use
-the command |:colorscheme| to try them one by one before setting your
-preference in your |vimrc|.
-
-
-------------------------------------------------------------------------------
-9.14. Run your Makefile from within R~
+9.13. Run your Makefile from within R~
 
 Do you have many Rnoweb files included in a master tex or Rnoweb file and use
 a Makefile to build the pdf? You may consider it useful to put the following
@@ -2516,7 +2484,7 @@ line in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-Rprofile*
-9.15. Edit your ~/.Rprofile~
+9.14. Edit your ~/.Rprofile~
 
 You may want to edit your `~/.Rprofile` in addition to considering the
 suggestions of |Nvim-R-R-setup| you may also want to put the following
@@ -2553,7 +2521,7 @@ graphical web browser (e.g. when you are in the Linux console):
 <
 
 ------------------------------------------------------------------------------
-9.16. Debugging R functions~
+9.15. Debugging R functions~
 
 The Nvim-R-Plugin does not have debugging facilities, but you may want to use
 the R package "debug":
@@ -2574,7 +2542,7 @@ your desktop manager.
 
 ------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.17. Integration with LaTeX-Box~
+9.16. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
@@ -2604,7 +2572,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.18. Suggested setup for Nvim-R~
+9.17. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2633,13 +2601,13 @@ document from the beginning.
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.19. Syntax highlight of .Rout files~
+9.18. Syntax highlight of .Rout files~
 
 You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
-interface of Neovim with `$NVIM_TUI_ENABLE_TRUE_COLOR=1` (see |:highlight|):
+interface of Neovim with 'termguicolors' (see |true-color|):
 >
-   if has("gui_running") || $NVIM_TUI_ENABLE_TRUE_COLOR == 1
+   if has("gui_running") || &termguicolors
      let rout_color_input    = 'guifg=#9e9e9e'
      let rout_color_normal   = 'guifg=#ff5f00'
      let rout_color_number   = 'guifg=#ffaf00'
@@ -2659,7 +2627,8 @@ interface of Neovim with `$NVIM_TUI_ENABLE_TRUE_COLOR=1` (see |:highlight|):
      let rout_color_index    = 'guifg=#d0d080'
    endif
 <
-If you are running Vim with 256 colors, you could use lines like these:
+If you are running Vim with support for 256 colors, you could use lines like
+these:
 >
    if &t_Co == 256
      let rout_color_input    = 'ctermfg=247'
@@ -2687,7 +2656,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-global*
-9.20 Enable the plugin when editing any file type~
+9.19 Enable the plugin when editing any file type~
 
 Nvim-R is a file-type plugin. This means that its functionalities will be
 available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
@@ -2711,7 +2680,7 @@ run will:
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-remote*
-9.21 Remote access~
+9.20 Remote access~
 
 The easiest way of running R in a remote machine is logging into the remote
 machine through ssh, starting Neovim and running R in a Neovim's terminal (the
@@ -2798,7 +2767,7 @@ goal.
 
 ------------------------------------------------------------------------------
 								 *Nvim-R-Tmux*
-9.22 Integration with Tmux~
+9.21 Integration with Tmux~
 
 Before Neovim's built in terminal emulator was developed, the best way of
 running R was inside a Tmux session. Although I did not remove the code to run
