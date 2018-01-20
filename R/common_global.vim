@@ -2966,6 +2966,11 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
             let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
             let descr = "Description: " . substitute(descr, ".*\x05", "", "")
+            if has("win32")
+                " curly single quote in UTF-8
+                let descr = substitute(descr, "\x91", "\xe2\x80\x98", "g")
+                let descr = substitute(descr, "\x92", "\xe2\x80\x99", "g")
+            endif
             if tmp[0] == "Not a function"
                 let usage =  ""
             else
