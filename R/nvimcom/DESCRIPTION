@@ -1,6 +1,6 @@
 Package: nvimcom
-Version: 0.9-57
-Date: 2017-12-30
+Version: 0.9-58
+Date: 2018-01-23
 Title: Intermediate the Communication Between R and Either Neovim or Vim
 Author: Jakson Aquino
 Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
@@ -8,7 +8,6 @@ Depends: R (>= 3.0.0)
 Suggests: knitr, rmarkdown
 Imports: methods, tools
 Encoding: UTF-8
-SystemRequirements: GNU make
 Description: Provide a service to intermediate the communication between R and either Neovim or Vim.
 License: GPL (>= 2)
 URL: https://github.com/jalvesaq/nvimcom
