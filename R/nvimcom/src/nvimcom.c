@@ -118,15 +118,6 @@ char *nvimcom_grow_obbrbuf()
     return(obbrbuf2 + strlen(obbrbuf2));
 }
 
-static void nvimcom_del_newline(char *buf)
-{
-    for(int i = 0; i < strlen(buf); i++)
-        if(buf[i] == '\n'){
-            buf[i] = 0;
-            break;
-        }
-}
-
 static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
 {
     // Prefix NVIMR_SECRET to msg to increase security
