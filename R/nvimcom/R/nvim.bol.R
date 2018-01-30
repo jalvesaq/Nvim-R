@@ -144,8 +144,10 @@ GetFunDescription <- function(pkg)
     pth <- paste0(pth, "help/")
     idx <- paste0(pth, "AnIndex")
 
-    if(!file.exists(idx))
+    # Development packages might not have any written documentation yet
+    if(!file.exists(idx) || !file.size(idx))
         return(NULL)
+
     tab <- read.table(idx, sep = "\t", quote = "", stringsAsFactors = FALSE)
     als <- tab$V2
     names(als) <- tab$V1
