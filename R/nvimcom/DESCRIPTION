@@ -1,5 +1,5 @@
 Package: nvimcom
-Version: 0.9-59
+Version: 0.9-60
 Date: 2018-01-30
 Title: Intermediate the Communication Between R and Either Neovim or Vim
 Author: Jakson Aquino

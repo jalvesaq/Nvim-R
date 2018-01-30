@@ -228,6 +228,12 @@ CleanOmnils <- function(f)
 {
     x <- readLines(f)
     x <- CleanOmniLine(x)
+    if(.Platform$OS.type == "windows"){
+        x <- gsub("\u2018", "'", x)
+        x <- gsub("\u2019", "'", x)
+        x <- gsub("\u201c", '"', x)
+        x <- gsub("\u201d", '"', x)
+    }
     writeLines(x, f)
 }
 
