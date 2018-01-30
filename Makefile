@@ -5,7 +5,7 @@
 ###########################################################
 
 PLUGINHOME=`pwd`
-PLUGINVERSION=0.9.10.1
+PLUGINVERSION=0.9.11
 PLUGINRELEASEDATE=`date +"%Y-%m-%d"`
 
 ifeq (, $(shell which nvim))

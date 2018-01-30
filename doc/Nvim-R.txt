@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.10.1
+Version: 0.9.11
 For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
@@ -944,10 +944,9 @@ let Neovim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
 zero in a different color and the distinction between stdout and stderr. The
 value of R_hl_term (0 or 1) determines whether Neovim should syntax highlight
-the R output, and its default value will be set to 1 if the package colorout
-is not loaded at the moment that you send the first command to R console.
-If you prefer do not rely on the auto detection of colorout, you should set
-the value of R_hl_term in your |vimrc|. Example:
+the R output, and its default value will be set to 0 if the package colorout
+is loaded. If you prefer do not rely on the auto detection of colorout, you
+should set the value of R_hl_term in your |vimrc|. Example:
 >
    let R_hl_term = 0
 <
@@ -2923,7 +2922,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.10.1 (2017-12-30)
+0.9.11 (2018-01-29)
 
  * The option R_latexcmd now is a list and the option R_latexmk no longer
    exists. By default, latexmk and xelatex will be called to compile pdf
