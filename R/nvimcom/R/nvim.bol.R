@@ -136,6 +136,72 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     }
 }
 
+CleanOmniLineASCII <- function(x)
+{
+    x <- gsub("\\\\R", "R", x)
+    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\code\\{(.+?)\\}", "'\\1'", x)
+    x <- gsub("\\\\samp\\{(.+?)\\}", "'\\1'", x)
+    x <- gsub("\\\\file\\{(.+?)\\}", "'\\1'", x)
+    x <- gsub("\\\\sQuote\\{(.+?)\\}", "'\\1'", x)
+    x <- gsub("\\\\dQuote\\{(.+?)\\}", '"\\1"', x)
+    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item ", "\\\\N  - ", x)
+    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
+    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "'\\1'", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
+    x <- gsub("\\\\ldots", "...", x)
+    x <- gsub("\\\\dots", "...", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x
+}
+
+CleanOmniLineUTF8 <- function(x)
+{
+    x <- gsub("\\\\R", "R", x)
+    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\code\\{(.+?)\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\samp\\{(.+?)\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\file\\{(.+?)\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\sQuote\\{(.+?)\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\dQuote\\{(.+?)\\}", "\u201c\\1\u201d", x)
+    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item ", "\\\\N  \u2022 ", x)
+    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
+    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
+    x <- gsub("\\\\ldots", "...", x)
+    x <- gsub("\\\\dots", "...", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x
+}
+
+if(.Platform$OS.type == "windows"){
+    CleanOmniLine <- CleanOmniLineASCII
+} else {
+    CleanOmniLine <- CleanOmniLineUTF8
+}
+
 # Code adapted from the gbRd package
 GetFunDescription <- function(pkg)
 {
@@ -194,46 +260,10 @@ GetFunDescription <- function(pkg)
                                        "alias" = als)
 }
 
-CleanOmniLine <- function(x)
-{
-    x <- gsub("\\\\R", "R", x)
-    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\code\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\samp\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\file\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\sQuote\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\dQuote\\{(.+?)\\}", "\u201c\\1\u201d", x)
-    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item ", "\\\\N  \u2022 ", x)
-    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
-    x <- gsub("\\\\ldots", "...", x)
-    x <- gsub("\\\\dots", "...", x)
-    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
-    x
-}
-
 CleanOmnils <- function(f)
 {
     x <- readLines(f)
     x <- CleanOmniLine(x)
-    if(.Platform$OS.type == "windows"){
-        x <- gsub("\u2018", "'", x)
-        x <- gsub("\u2019", "'", x)
-        x <- gsub("\u201c", '"', x)
-        x <- gsub("\u201d", '"', x)
-    }
     writeLines(x, f)
 }
 
