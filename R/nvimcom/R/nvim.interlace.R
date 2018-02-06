@@ -304,6 +304,6 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...
                 browseURL(res)
             else
                 if(regexpr("\\.pdf", res) > 0)
-                    OpenPDF(sub(".*/", "", res))
+                    OpenPDF(res)
     }
 }
