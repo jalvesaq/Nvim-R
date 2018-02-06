@@ -517,6 +517,7 @@ function CheckNvimcomVersion()
                 let neednew = 1
             else
                 let rversion = split(system(g:rplugin_Rcmd . " --version"))[2]
+                let g:rplugin_debug_info['R_version'] = rversion
                 if g:rplugin_R_version != rversion
                     let neednew = 1
                 endif
@@ -552,13 +553,14 @@ function CheckNvimcomVersion()
                     \ '    sep = "\n")',
                     \ 'sink()' ]
         call writefile(rcode, g:rplugin_tmpdir . '/nvimcom_path.R')
-        let slog = system(g:rplugin_Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin_tmpdir . '/nvimcom_path.R"')
+        let g:rplugin_debug_info['.libPaths()'] = system(g:rplugin_Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin_tmpdir . '/nvimcom_path.R"')
         if v:shell_error
             let s:has_warning = 1
-            call RWarningMsg(slog)
+            call RWarningMsg(g:rplugin_debug_info['.libPaths()'])
             return 0
         endif
         let libpaths = readfile(g:rplugin_tmpdir . "/libpaths")
+        let g:rplugin_debug_info['libPaths'] = libpaths
         if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2) && !exists("g:R_remote_tmpdir")
             if !isdirectory(expand(libpaths[1]))
                 let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
@@ -574,28 +576,28 @@ function CheckNvimcomVersion()
         let s:has_warning = 1
         echo "Updating nvimcom... "
         if !exists("g:R_remote_tmpdir")
-            let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
+            let g:rplugin_debug_info['CMD_build'] = system(g:rplugin_Rcmd . ' CMD build "' . g:rplugin_home . '/R/nvimcom"')
         else
             call system('cp -R "' . g:rplugin_home . '/R/nvimcom" .')
-            let slog = system(g:rplugin_Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"')
+            let g:rplugin_debug_info['CMD_build'] = system(g:rplugin_Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"')
             call system('rm -rf "' . g:R_tmpdir . '/nvimcom"')
         endif
         if v:shell_error
-            call ShowRSysLog(slog, "Error_building_nvimcom", "Failed to build nvimcom")
+            call ShowRSysLog(g:rplugin_debug_info['CMD_build'], "Error_building_nvimcom", "Failed to build nvimcom")
             return 0
         else
             if has("win32")
                 call SetRtoolsPath()
-                let slog = system(g:rplugin_Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz")
+                let g:rplugin_debug_info['CMD_INSTALL'] = system(g:rplugin_Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz")
                 call UnSetRtoolsPath()
             else
-                let slog = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
+                let g:rplugin_debug_info['CMD_INSTALL'] = system(g:rplugin_Rcmd . " CMD INSTALL nvimcom_" . s:required_nvimcom . ".tar.gz")
             endif
             if v:shell_error
                 if filereadable(expand("~/.R/Makevars"))
-                    call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
+                    call ShowRSysLog(g:rplugin_debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
                 else
-                    call ShowRSysLog(slog, "Error_installing_nvimcom", "Failed to install nvimcom")
+                    call ShowRSysLog(g:rplugin_debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom")
                 endif
                 if has("win32")
                     call CheckRtools()
@@ -611,11 +613,11 @@ function CheckNvimcomVersion()
                 let blist = 'nvimcom:::nvim.buildomnils("' . rdp . '")'
                 let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
                 call writefile(split(blist, ";"), g:rplugin_tmpdir . "/buildomnils.R")
-                let slog = system(g:rplugin_Rcmd .
+                let g:rplugin_debug_info['Build_Omnils'] = system(g:rplugin_Rcmd .
                             \ ' --quiet --no-save --no-restore -f "' .
                             \ g:rplugin_tmpdir . '/buildomnils.R"')
                 if v:shell_error
-                    call ShowRSysLog(slog, "Error_building_compl_data", "Failed to build lists")
+                    call ShowRSysLog(g:rplugin_debug_info['Build_Omnils'], "Error_building_compl_data", "Failed to build lists")
                     call delete(g:rplugin_tmpdir . "/buildomnils.R")
                     return 0
                 endif
@@ -3329,6 +3331,16 @@ function RBuildTags()
     call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
 endfunction
 
+function ShowRDebugInfo()
+    for key in keys(g:rplugin_debug_info)
+        echohl Title
+        echo key
+        echohl None
+        echo g:rplugin_debug_info[key]
+        echo ""
+    endfor
+endfunction
+
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>, "default")
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call RBuildTags()
@@ -3336,6 +3348,7 @@ command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
 command -nargs=? -complete=dir RSourceDir :call RSourceDirectory(<q-args>)
 command RStop :call StopR()
 command -nargs=? RSend :call g:SendCmdToR(<q-args>)
+command RDebugInfo :call ShowRDebugInfo()
 
 
 "==========================================================================
