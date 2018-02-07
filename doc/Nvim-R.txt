@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.11
+Version: 0.9.11.1
 For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
@@ -260,6 +260,9 @@ started by Nvim-R, as in the example below:
        options(defaultPackages = c("utils", "grDevices", "graphics", "stats", "methods", "nvimcom"))
    }
 <
+Finally, run the command `:RDebugInfo` after <LocalLeader>rf and check the
+path where nvimcom was installed.
+
 
 ------------------------------------------------------------------------------
 3.4. Optional steps~
@@ -2921,6 +2924,11 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.11.1 (2018-02-06)
+
+ * Minor bug fixes.
+ * New command:  :RDebugInfo
 
 0.9.11 (2018-01-29)
 
