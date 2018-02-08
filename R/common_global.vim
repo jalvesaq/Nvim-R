@@ -673,7 +673,7 @@ function StartNClientServer()
     if !s:has_warning
         echon "\rWait..."
     endif
-    let g:rplugin_jobs["ClientServer"] = StartJob(nvc, g:rplugin_job_handlers)
+    let g:rplugin_jobs["ClientServer"] = StartJob([nvc], g:rplugin_job_handlers)
 endfunction
 
 " Start R

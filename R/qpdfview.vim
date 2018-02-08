@@ -21,5 +21,5 @@ if g:R_synctex && g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer"
     if $PATH !~ g:rplugin_nvimcom_bin_dir
         let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
     endif
-    let g:rplugin_jobs["ClientServer"] = StartJob("nclientserver", g:rplugin_job_handlers)
+    let g:rplugin_jobs["ClientServer"] = StartJob(['nclientserver'], g:rplugin_job_handlers)
 endif

@@ -11,12 +11,12 @@ function StartRStudio()
         call SetRHome()
     endif
     if has("nvim")
-        let g:rplugin_jobs["RStudio"] = StartJob(g:RStudio_cmd, {
+        let g:rplugin_jobs["RStudio"] = StartJob([g:RStudio_cmd], {
                     \ 'on_stderr': function('ROnJobStderr'),
                     \ 'on_exit':   function('ROnJobExit'),
                     \ 'detach': 1 })
     else
-        let g:rplugin_jobs["RStudio"] = StartJob(g:RStudio_cmd, {
+        let g:rplugin_jobs["RStudio"] = StartJob([g:RStudio_cmd], {
                     \ 'err_cb':  'ROnJobStderr',
                     \ 'exit_cb': 'ROnJobExit',
                     \ 'stoponexit': '' })

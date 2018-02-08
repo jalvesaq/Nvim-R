@@ -2925,7 +2925,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-02-06)
+0.9.11.1 (2018-02-07)
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
