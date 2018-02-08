@@ -634,7 +634,7 @@ function CheckNvimcomVersion()
     return 1
 endfunction
 
-function StartNClientServer()
+function StartNClientServer(w)
     if IsJobRunning("ClientServer")
         call FinishStartingR()
         return
@@ -642,6 +642,8 @@ function StartNClientServer()
     if !filereadable(g:rplugin_compldir . '/path_to_nvimcom')
         return
     endif
+
+    let g:rplugin_debug_info['Start_nclientserver'] = a:w
 
     if has("win32")
         let nvc = "nclientserver.exe"
@@ -670,8 +672,13 @@ function StartNClientServer()
         let $PATH = g:rplugin_nvimcom_bin_dir . pathsep . $PATH
     endif
 
-    if !s:has_warning
+    if a:w ==# 'StartR' && !s:has_warning
         echon "\rWait..."
+    endif
+    if $NVIMR_ID == ""
+        let randstr = split(system(nvc . ' random'))
+        let $NVIMR_ID = randstr[0]
+        let $NVIMR_SECRET = randstr[1]
     endif
     let g:rplugin_jobs["ClientServer"] = StartJob([nvc], g:rplugin_job_handlers)
 endfunction
@@ -682,18 +689,6 @@ function StartR(whatr)
 
     if !isdirectory(g:rplugin_tmpdir)
         call mkdir(g:rplugin_tmpdir, "p", 0700)
-    endif
-    call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
-    call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-
-    call AddForDeletion(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin_tmpdir . "/nvimbol_finished")
-    call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
-    if has("win32")
-        call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
     endif
 
     " https://github.com/jalvesaq/Nvim-R/issues/157
@@ -716,7 +711,7 @@ function StartR(whatr)
     endif
 
     let s:what_r = a:whatr
-    call StartNClientServer()
+    call StartNClientServer('StartR')
 endfunction
 
 function FinishStartingR()
@@ -733,6 +728,21 @@ function FinishStartingR()
         endif
     endif
     unlet s:what_r
+
+    call writefile([], g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    call writefile([], g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
+    call writefile([], g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
+    call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+
+    call AddForDeletion(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin_tmpdir . "/nvimbol_finished")
+    call AddForDeletion(g:rplugin_tmpdir . "/start_options.R")
+    if has("win32")
+        call AddForDeletion(g:rplugin_tmpdir . "/run_cmd.bat")
+    endif
 
     if g:R_objbr_opendf
         let start_options = ['options(nvimcom.opendf = TRUE)']
@@ -2909,7 +2919,11 @@ function BuildROmniList(pattern)
         return
     endif
 
-    let s:globalenv_lines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        let s:globalenv_lines = []
+    else
+        let s:globalenv_lines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    endif
 endfunction
 
 function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
@@ -3664,57 +3678,14 @@ endif
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
 
-function ExecutesWithoutError(cmd)
-  let cmdreturn = system(a:cmd)
-  return v:shell_error == 0
-endfunction
-
-let s:py_exec = "none"
-if ExecutesWithoutError("python3 --version")
-  let s:py_exec = "python3"
-elseif ExecutesWithoutError("python --version")
-  let s:py_exec = "python"
-endif
-
-function GetRandomNumber(width)
-    if s:py_exec != "none"
-        let pycode = ["import os, sys, base64",
-                    \ "sys.stdout.write(base64.b64encode(os.urandom(" . a:width . ")).decode())" ]
-        call writefile(pycode, g:rplugin_tmpdir . "/getRandomNumber.py")
-        let randnum = system(s:py_exec . ' "' . g:rplugin_tmpdir . '/getRandomNumber.py"')
-        if v:shell_error != 0
-          call RWarningMsgInp("nvim-R: Unable to generate random number using python command: " . s:py_exec)
-        endif
-        call delete(g:rplugin_tmpdir . "/getRandomNumber.py")
-    elseif !has("win32")
-        let randnum = system("echo $RANDOM")
-    else
-        let randnum = localtime()
-    endif
-    return substitute(randnum, '\W', '', 'g')
-endfunction
-
-" If this is the Object Browser running in a Tmux pane, $NVIMR_ID is
-" already defined and shouldn't be changed
-if &filetype == "rbrowser"
-    if $NVIMR_ID == ""
-        call RWarningMsgInp("NVIMR_ID is undefined")
-    endif
-else
-    let $NVIMR_SECRET = GetRandomNumber(16)
-    let $NVIMR_ID = GetRandomNumber(16)
-endif
-
 let s:docfile = g:rplugin_tmpdir . "/Rdoc"
 
-" List of file to be deleted on VimLeave
-let s:del_list = [s:Rsource,
-            \ g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID]
+" List of files to be deleted on VimLeave
+let s:del_list = [s:Rsource]
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
 " starting R:
 if &filetype != "rbrowser"
-    call writefile([], g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
 endif
 
 " Set the name of R executable

@@ -100,6 +100,10 @@ function StartZathuraVim(fullpath)
 endfunction
 
 function RStart_Zathura(fullpath)
+    if g:R_synctex && g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
+        call StartNClientServer('RStart_Zathura')
+    endif
+
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
     let fname = substitute(a:fullpath, ".*/", "", "")
@@ -128,10 +132,3 @@ function RStart_Zathura(fullpath)
         call StartZathuraVim(a:fullpath)
     endif
 endfunction
-
-if g:R_synctex && g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0 && $DISPLAY != ""
-    if $PATH !~ g:rplugin_nvimcom_bin_dir
-        let $PATH = g:rplugin_nvimcom_bin_dir . ':' . $PATH
-    endif
-    let g:rplugin_jobs["ClientServer"] = StartJob(['nclientserver'], g:rplugin_job_handlers)
-endif

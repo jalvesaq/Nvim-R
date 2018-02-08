@@ -538,6 +538,14 @@ static void ArrangeWindows(char *cachedir){
 #endif
 
 int main(int argc, char **argv){
+
+    if(argc == 2 && strcmp(argv[1], "random") == 0){
+        time_t t;
+        srand((unsigned) time(&t));
+        printf("%d%d %d%d", rand(), rand(), rand(), rand());
+        return 0;
+    }
+
     char line[1024];
     char *msg;
     int keep_running = 1;
