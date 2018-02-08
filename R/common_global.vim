@@ -3664,11 +3664,16 @@ endif
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
 
+function ExecutesWithoutError(cmd)
+  let cmdreturn = system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 let s:py_exec = "none"
-if executable("python3")
-    let s:py_exec = "python3"
-elseif executable("python")
-    let s:py_exec = "python"
+if ExecutesWithoutError("python3 --version")
+  let s:py_exec = "python3"
+elseif ExecutesWithoutError("python --version")
+  let s:py_exec = "python"
 endif
 
 function GetRandomNumber(width)
