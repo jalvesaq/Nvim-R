@@ -3664,11 +3664,16 @@ endif
 " SyncTeX options
 let g:rplugin_has_wmctrl = 0
 
+function ExecutesWithoutError(cmd)
+  let cmdreturn = system(a:cmd)
+  return v:shell_error == 0
+endfunction
+
 let s:py_exec = "none"
-if executable("python3")
-    let s:py_exec = "python3"
-elseif executable("python")
-    let s:py_exec = "python"
+if ExecutesWithoutError("python3 --version")
+  let s:py_exec = "python3"
+elseif ExecutesWithoutError("python --version")
+  let s:py_exec = "python"
 endif
 
 function GetRandomNumber(width)
@@ -3677,6 +3682,9 @@ function GetRandomNumber(width)
                     \ "sys.stdout.write(base64.b64encode(os.urandom(" . a:width . ")).decode())" ]
         call writefile(pycode, g:rplugin_tmpdir . "/getRandomNumber.py")
         let randnum = system(s:py_exec . ' "' . g:rplugin_tmpdir . '/getRandomNumber.py"')
+        if v:shell_error != 0
+          call RWarningMsgInp("nvim-R: Unable to generate random number using python command: " . s:py_exec)
+        endif
         call delete(g:rplugin_tmpdir . "/getRandomNumber.py")
     elseif !has("win32")
         let randnum = system("echo $RANDOM")
