@@ -196,10 +196,10 @@ CleanOmniLineUTF8 <- function(x)
     x
 }
 
-if(.Platform$OS.type == "windows"){
-    CleanOmniLine <- CleanOmniLineASCII
-} else {
+if(localeToCharset()[1] == "UTF-8"){
     CleanOmniLine <- CleanOmniLineUTF8
+} else {
+    CleanOmniLine <- CleanOmniLineASCII
 }
 
 # Code adapted from the gbRd package
