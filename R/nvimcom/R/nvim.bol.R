@@ -196,7 +196,7 @@ CleanOmniLineUTF8 <- function(x)
     x
 }
 
-if(localeToCharset()[1] == "UTF-8"){
+if(localeToCharset()[1] == "UTF-8" && version$os != "cygwin"){
     CleanOmniLine <- CleanOmniLineUTF8
 } else {
     CleanOmniLine <- CleanOmniLineASCII
