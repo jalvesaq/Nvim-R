@@ -1424,6 +1424,9 @@ For a horizontal split, you can set the number of lines of the R window:
 >
    let R_rconsole_height = 15
 <
+You should set 'nosplitright' if you wanted the R Console on the left side,
+and 'nosplitbelow' if you wanted it above the R script.
+
 Note: If running R in a Neovim buffer, the number of lines and columns will
 automatically change if you switch between horizontal and vertical splits (see
 |CTRL-W_K| and |CTRL-W_H|). You may request Neovim to try to keep the minimum
