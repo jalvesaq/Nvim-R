@@ -1,7 +1,6 @@
 SyncTeX_readconc <- function(texf, concf)
 {
     texidx <- 1
-    rnwidx <- 1
     ntexln <- length(readLines(texf))
     lstexln <- 1:ntexln
     lsrnwf <- lsrnwl <- rep(NA, ntexln)
@@ -175,14 +174,6 @@ ShowTexErrors <- function(texf, l)
     }
 }
 
-OpenPDF <- function(fullpath)
-{
-    if(!file.exists(fullpath))
-        stop(paste0('File "', fullpath, '" does not exist.'))
-    .C("nvimcom_msg_to_nvim", paste0("ROpenPDF('", fullpath, "')"), PACKAGE="nvimcom")
-    return(invisible(NULL))
-}
-
 nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
                                   latexargs, synctex = TRUE, bibtex = FALSE,
                                   knit = TRUE, buildpdf = TRUE, view = TRUE, ...)
@@ -221,7 +212,7 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
         return(invisible(NULL))
 
     # Compile the .pdf
-    if(exists('Sres')){
+    if(exists("Sres")){
         stts <- system2(latexcmd, c(latexargs, gsub(" ", "\\\\ ", Sres)))
         sout <- readLines(sub("\\.tex$", ".log", Sres))
 
@@ -255,7 +246,9 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
             if(pdff != ""){
                 if(!grepl("^/", pdff))
                     pdff <- paste0(getwd(), "/", pdff)
-                OpenPDF(pdff)
+                .C("nvimcom_msg_to_nvim",
+                   paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
+                   PACKAGE = "nvimcom")
             }
         }
 
@@ -267,8 +260,7 @@ nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
     return(invisible(NULL))
 }
 
-nvim.interlace.rrst <- function(Rrstfile, rrstdir, view = TRUE,
-                               compiler = "rst2pdf", ...)
+nvim.interlace.rrst <- function(Rrstfile, rrstdir, compiler = "rst2pdf", ...)
 {
     if(!require(knitr))
         stop("Please, install the 'knitr' package.")
@@ -278,14 +270,15 @@ nvim.interlace.rrst <- function(Rrstfile, rrstdir, view = TRUE,
     setwd(rrstdir)
 
     knitr::knit2pdf(Rrstfile, compiler = compiler, ...)
-    if (view) {
-        Sys.sleep(0.2)
-        pdffile = sub('\\.Rrst$', ".pdf", Rrstfile, ignore.case = TRUE)
-        OpenPDF(pdffile)
-    }
+
+    Sys.sleep(0.2)
+    pdff <- sub("\\.Rrst$", ".pdf", Rrstfile, ignore.case = TRUE)
+    .C("nvimcom_msg_to_nvim",
+       paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
+       PACKAGE = "nvimcom")
 }
 
-nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...)
+nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...)
 {
     if(!require(rmarkdown))
         stop("Please, install the 'rmarkdown' package.")
@@ -296,14 +289,8 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, view = TRUE, ...
 
     res <- rmarkdown::render(Rmdfile, outform, ...)
 
-    if(view){
-        if(!is.null(outform) && outform == "odt_document")
-            system(paste0("lowriter '", res, "'"))
-        else
-            if(regexpr("\\.html$", res) > 0)
-                browseURL(res)
-            else
-                if(regexpr("\\.pdf", res) > 0)
-                    OpenPDF(res)
-    }
+    .C("nvimcom_msg_to_nvim",
+       paste0("ROpenDoc('", res, "', '", getOption("browser"), "')"),
+       PACKAGE = "nvimcom")
+    return(invisible(NULL))
 }

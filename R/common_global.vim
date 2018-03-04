@@ -2264,7 +2264,71 @@ function ROpenPDF(fullpath)
         return
     endif
 
-    call ROpenPDF2(a:fullpath)
+    if g:R_openpdf == 0
+        return
+    endif
+
+    if b:pdf_is_open == 0
+        if g:R_openpdf == 1
+            let b:pdf_is_open = 1
+        endif
+        call ROpenPDF2(a:fullpath)
+    endif
+endfunction
+
+function RLoadHTML(fullpath, browser)
+    if g:R_openhtml == 0
+        return
+    endif
+    if g:R_openhtml == 1
+        call system(a:browser . ' ' . a:fullpath . ' &')
+        return
+    endif
+
+    " Get title from YAML header, html title or buffer name:
+    let winname = ''
+    let flines = getline(1, 30)
+    let ttline = match(flines, '^title\s*:')
+    if ttline != -1
+        let winname = substitute(flines[ttline], 'title\s*:\s*[\x22\x27]*\(.*\)[\x22\x27]*\s*', '\1', '')
+    else
+        let flines = readfile(a:fullpath)
+        let ttline = match(flines, '<title>.*</title>')
+        if ttline != -1
+            let winname = substitute(flines[ttline], '.*<title>\(.*\)</title>.*', '\1', '')
+        else
+        endif
+    endif
+    if winname == ''
+        let winname = expand("%:r")
+    endif
+    let winname = substitute(winname, '^\(................\).*', '\1', '')
+
+    let winname = substitute(winname, ' ', '\\ ', 'g')
+    let winnum = system('xdotool search --name ' . winname)
+    let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, a:browser, winname, winnum]
+    if winnum == ''
+        call system(a:browser . ' ' . a:fullpath . ' &')
+    else
+        call system('xdotool search --name ' . winname . ' windowactivate --sync')
+        call system('xdotool search --name ' . winname . ' key --clearmodifiers ' . g:R_html_reload_key)
+    endif
+endfunction
+
+function ROpenDoc(fullpath, browser)
+    if !filereadable(a:fullpath)
+        call WarningMsg('The file "' . a:fullpath . '" does not exist.')
+        return
+    endif
+    if a:fullpath =~ '.odt$'
+        call system('lowriter ' . a:fullpath . ' &')
+    elseif a:fullpath =~ '.pdf$'
+        call ROpenPDF(a:fullpath)
+    elseif a:fullpath =~ '.html$'
+        call RLoadHTML(a:fullpath, a:browser)
+    else
+        call RWarningMsg("Unknown file type from nvim.interlace: " . a:fullpath)
+    endif
 endfunction
 
 function RSetPDFViewer()
@@ -2567,12 +2631,6 @@ function! RMakeRmd(t)
         let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
     else
         let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
-    endif
-    if b:pdf_is_open || (g:R_openhtml  == 0 && a:t == "html_document") ||
-                \ (g:R_openpdf == 0 && (a:t == "pdf_document" || a:t == "beamer_presentation" || a:t == "word_document"))
-        let rcmd .= ", view = FALSE"
-    elseif g:R_openpdf == 1 && (a:t == "pdf_document" || a:t == "beamer_presentation")
-        let b:pdf_is_open = 1
     endif
     let rcmd = rcmd . ', envir = ' . g:R_rmd_environment . ')'
     call g:SendCmdToR(rcmd)
@@ -3422,7 +3480,6 @@ let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
 let g:R_parenblock        = get(g:, "R_parenblock",         1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
-let g:R_openhtml          = get(g:, "R_openhtml",           0)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
 let g:R_after_start       = get(g:, "R_after_start",       "")
@@ -3485,9 +3542,19 @@ if g:R_complete != 1 && g:R_complete != 2
     call RWarningMsgInp("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
 endif
 
+if g:rplugin_is_darwin == 0 && !has('win32') && !has('win32unix') && executable('xdotool')
+    let g:R_openhtml = get(g:, "R_openhtml", 2)
+else
+    let g:R_openhtml = get(g:, "R_openhtml", 0)
+endif
+if g:R_openhtml == 2 && !executable('xdotool')
+    let g:R_openhtml = 0
+endif
+
 if g:rplugin_is_darwin
     let g:R_openpdf = get(g:, "R_openpdf", 1)
     let g:R_pdfviewer = "skim"
+    let g:R_html_reload_key = get(g:, 'R_html_reload_key', 'R')
 else
     let g:R_openpdf = get(g:, "R_openpdf", 2)
     if has("win32")
@@ -3495,6 +3562,7 @@ else
     else
         let g:R_pdfviewer = get(g:, "R_pdfviewer", "zathura")
     endif
+    let g:R_html_reload_key = get(g:, 'R_html_reload_key', 'F5')
 endif
 
 if !exists("g:r_indent_ess_comments")
