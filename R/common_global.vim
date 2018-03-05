@@ -3142,10 +3142,17 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
     call AddForDeletion(g:rplugin_tmpdir . "/args_for_completion")
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
-    let ii = 1000
+    let ii = 200
     while ii > 0 && s:ArgCompletionFinished == 0
+        echomsg "Attempting to parse completion. Countdown: " . ii
+        let ii = ii - 1
         sleep 30m
     endwhile
+
+    if s:ArgCompletionFinished == 0 && ii == 0
+        echomsg "Completion failed."
+        return []
+    endif
 
     let args_line = readfile(g:rplugin_tmpdir . "/args_for_completion")[0]
     call delete(g:rplugin_tmpdir . "/args_for_completion")
