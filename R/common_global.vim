@@ -3220,13 +3220,11 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
 
     let ii = 200
     while ii > 0 && s:ArgCompletionFinished == 0
-        echomsg "Attempting to parse completion. Countdown: " . ii
         let ii = ii - 1
         sleep 30m
     endwhile
 
     if s:ArgCompletionFinished == 0 && ii == 0
-        echomsg "Completion failed."
         return []
     endif
 
