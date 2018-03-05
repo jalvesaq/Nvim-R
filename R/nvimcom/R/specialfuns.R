@@ -28,7 +28,7 @@ gbRd.set_sectag <- function(s,sectag,eltag){
 
 gbRd.fun <- function(x){
     rdo <- NULL # prepare the "Rd" object rdo
-    x <- do.call("help", list(x, help_type = "text",
+    x <- do.call(utils::help, list(x, help_type = "text",
                                verbose = FALSE,
                                try.all.packages = FALSE))
     if(length(x) == 0)
