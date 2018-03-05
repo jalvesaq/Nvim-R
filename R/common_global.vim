@@ -2280,8 +2280,22 @@ function RLoadHTML(fullpath, browser)
     if g:R_openhtml == 0
         return
     endif
+
+    let brwsr = a:browser
+    if brwsr == ''
+        if has('win32') || g:rplugin_is_darwin
+            let brwsr = 'open'
+        else
+            let brwsr = 'xdg-open'
+        endif
+    endif
+
     if g:R_openhtml == 1
-        call system(a:browser . ' ' . a:fullpath . ' &')
+        if has('nvim')
+            call jobstart([brwsr, a:fullpath], {'detach': 1})
+        else
+            call job_start([brwsr, a:fullpath])
+        endif
         return
     endif
 
@@ -2308,7 +2322,11 @@ function RLoadHTML(fullpath, browser)
     let winnum = system('xdotool search --name ' . winname)
     let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, a:browser, winname, winnum]
     if winnum == ''
-        call system(a:browser . ' ' . a:fullpath . ' &')
+        if has('nvim')
+            call jobstart([brwsr, a:fullpath], {'detach': 1})
+        else
+            call job_start([brwsr, a:fullpath])
+        endif
     else
         call system('xdotool search --name ' . winname . ' windowactivate --sync')
         call system('xdotool search --name ' . winname . ' key --clearmodifiers ' . g:R_html_reload_key)
