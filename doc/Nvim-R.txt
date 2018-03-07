@@ -2810,8 +2810,9 @@ R in a Tmux pane, this possibility is not listed in |Nvim-R-options| section
 because it requires users to know how to configure and use Tmux.
 
 It is still possible to run R in a Tmux split pane, as explained in this
-section, and it seems to be the only way of using Nvim-R on Cygwin. You have
-to put in your |vimrc|:
+section, but this feature is no longer supported and I will completely remove
+it if it becomes buggy. Anyway, if you do want to try it, you have to put in
+your |vimrc|:
 >
    let R_in_buffer = 0
    let R_applescript = 0
