@@ -15,11 +15,11 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:
-runtime R/common_global.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 
 " Some buffer variables common to R, Rnoweb, Rhelp and rdoc file need be
 " defined after the global ones:
-runtime R/common_buffer.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 setlocal iskeyword=@,48-57,_,.
 
@@ -118,7 +118,7 @@ call RControlMaps()
 
 " Menu R
 if has("gui_running")
-    runtime R/gui_running.vim
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/gui_running.vim"
     call MakeRMenu()
 endif
 

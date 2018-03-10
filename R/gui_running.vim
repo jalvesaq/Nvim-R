@@ -66,8 +66,8 @@ function RControlMenu()
     call RCreateMenuItem("nvi", 'Command.Names\ (cur)', '<Plug>RObjectNames', 'rn', ':call RAction("nvim.names")')
     call RCreateMenuItem("nvi", 'Command.Structure\ (cur)', '<Plug>RObjectStr', 'rt', ':call RAction("str")')
     call RCreateMenuItem("nvi", 'Command.View\ data\.frame\ (cur)', '<Plug>RViewDF', 'rv', ':call RAction("viewdf")')
-    call RCreateMenuItem("nvi", 'Command.Run\ dput(cur)\ and\ show\ output\ in\ new\ tab', '<Plug>RDputObj', 'dt', ':call RAction("dputtab")')
-    call RCreateMenuItem("nvi", 'Command.Run\ print(cur)\ and\ show\ output\ in\ new\ tab', '<Plug>RPrintObj', 'pt', ':call RAction("printtab")')
+    call RCreateMenuItem("nvi", 'Command.Run\ dput(cur)\ and\ show\ output\ in\ new\ tab', '<Plug>RDputObj', 'td', ':call RAction("dputtab")')
+    call RCreateMenuItem("nvi", 'Command.Run\ print(cur)\ and\ show\ output\ in\ new\ tab', '<Plug>RPrintObj', 'tp', ':call RAction("printtab")')
     "-------------------------------
     menu R.Command.-Sep2- <nul>
     call RCreateMenuItem("nvi", 'Command.Arguments\ (cur)', '<Plug>RShowArgs', 'ra', ':call RAction("args")')
@@ -180,7 +180,7 @@ function MakeRMenu()
     call RCreateMenuItem("nvi", 'Command.Knit\ and\ PDF\ (cur\ file)', '<Plug>RMakePDFK', 'kp', ':call RMakeRmd("pdf_document")')
     call RCreateMenuItem("nvi", 'Command.Knit\ and\ Beamer\ PDF\ (cur\ file)', '<Plug>RMakePDFKb', 'kl', ':call RMakeRmd("beamer_presentation")')
     call RCreateMenuItem("nvi", 'Command.Knit\ and\ HTML\ (cur\ file)', '<Plug>RMakeHTML', 'kh', ':call RMakeRmd("html_document")')
-    call RCreateMenuItem("nvi", 'Command.Knit\ and\ ODT\ (cur\ file)', '<Plug>RMakeODT', 'ko', ':call RMakeRmd("odt")')
+    call RCreateMenuItem("nvi", 'Command.Knit\ and\ ODT\ (cur\ file)', '<Plug>RMakeODT', 'ko', ':call RMakeRmd("odt_document")')
     call RCreateMenuItem("nvi", 'Command.Knit\ and\ Word\ Document\ (cur\ file)', '<Plug>RMakeWord', 'kw', ':call RMakeRmd("word_document")')
     call RCreateMenuItem("nvi", 'Command.Markdown\ render\ (cur\ file)', '<Plug>RMakeRmd', 'kr', ':call RMakeRmd("default")')
     if &filetype == "r" || g:R_never_unmake_menu
@@ -209,12 +209,6 @@ function MakeRMenu()
             silent exe 'imenu <silent> R.Edit.Insert\ \"\ <-\ \"<Tab>' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
         endif
         imenu <silent> R.Edit.Complete\ object\ name<Tab>^X^O <C-X><C-O>
-        if hasmapto("<Plug>RCompleteArgs", "i")
-            let boundkey = RIMapCmd("<Plug>RCompleteArgs")
-            exe "imenu <silent> R.Edit.Complete\\ function\\ arguments<Tab>" . boundkey . " " . boundkey
-        else
-            imenu <silent> R.Edit.Complete\ function\ arguments<Tab>^X^A <C-X><C-A>
-        endif
         menu R.Edit.-Sep71- <nul>
         nmenu <silent> R.Edit.Indent\ (line)<Tab>== ==
         vmenu <silent> R.Edit.Indent\ (selected\ lines)<Tab>= =

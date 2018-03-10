@@ -7,6 +7,9 @@
 #
 ###############################################################
 
+NvimcomEnv <- new.env()
+NvimcomEnv$pkgdescr <- list()
+
 .onLoad <- function(libname, pkgname) {
     if(Sys.getenv("NVIMR_TMPDIR") == "")
         return(invisible(NULL))
@@ -26,6 +29,7 @@
         options(nvimcom.texerrs = TRUE)
         options(nvimcom.labelerr = TRUE)
         options(nvimcom.nvimpager = TRUE)
+        options(nvimcom.delim = "\t")
     }
     if(getOption("nvimcom.nvimpager"))
         options(pager = nvim.hmsg)
@@ -49,7 +53,8 @@
            as.integer(getOption("nvimcom.labelerr")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
-           paste(search(), collapse = " "),
+           paste0(paste(.packages(), collapse = " "), " Dec", getOption("OutDec")),
+           paste0(version$major, ".", version$minor),
            PACKAGE="nvimcom")
     }
 }
@@ -57,10 +62,7 @@
 .onUnload <- function(libpath) {
     if(is.loaded("nvimcom_Stop", PACKAGE = "nvimcom")){
         .C("nvimcom_Stop", PACKAGE="nvimcom")
-        if(Sys.getenv("NVIMR_TMPDIR") != ""){
-            unlink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimcom_running_",
-                          Sys.getenv("NVIMR_ID")))
-            if(.Platform$OS.type == "windows")
+        if(Sys.getenv("NVIMR_TMPDIR") != "" && .Platform$OS.type == "windows"){
                 unlink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/rconsole_hwnd_",
                               Sys.getenv("NVIMR_SECRET")))
         }
@@ -109,9 +111,22 @@ nvim_capture_source_output <- function(s, o)
     .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE="nvimcom")
 }
 
-nvim_viewdf <- function(oname)
+nvim_viewdf <- function(oname, fenc = "")
 {
-    ok <- try(o <- get(oname, envir = .GlobalEnv), silent = TRUE)
+    oname_split <- unlist(strsplit(oname, "$", fixed = TRUE))
+    oname_split <- unlist(strsplit(oname_split, "[[", fixed = TRUE))
+    oname_split <- unlist(strsplit(oname_split, "]]", fixed = TRUE))
+    ok <- try(o <- get(oname_split[[1]], envir = .GlobalEnv), silent = TRUE)
+    if(length(oname_split) > 1){
+        for (i in 2:length(oname_split)) {
+            oname_integer <- suppressWarnings(o <- as.integer(oname_split[[i]]))
+            if(is.na(oname_integer)){
+                ok <- try(o <- ok[[oname_split[[i]]]], silent = TRUE)
+            } else {
+                ok <- try(o <- ok[[oname_integer]], silent = TRUE)
+            }
+        }
+    }
     if(inherits(ok, "try-error")){
         .C("nvimcom_msg_to_nvim",
            paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
@@ -119,8 +134,15 @@ nvim_viewdf <- function(oname)
         return(invisible(NULL))
     }
     if(is.data.frame(o) || is.matrix(o)){
-        write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
-                    file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        if(getOption("nvimcom.delim") == "\t"){
+            write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                        fileEncoding = fenc,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        } else {
+            write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                        fileEncoding = fenc,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        }
         .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "')"), PACKAGE="nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
@@ -134,4 +156,36 @@ source.and.clean <- function(f, ...)
 {
     on.exit(unlink(f))
     source(f, ...)
+}
+
+nvim_format <- function(l1, l2, wco)
+{
+    ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
+                                   file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
+                                   width.cutoff = wco))
+    if(inherits(ok, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           "RWarningMsg('Error trying to execute the function formatR::tyde_source()')",
+           PACKAGE="nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
+}
+
+nvim_insert <- function(cmd, type = "default")
+{
+    try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
+    if(inherits(ok, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
+           PACKAGE="nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0('FinishRInsert("', type , '")'),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
 }

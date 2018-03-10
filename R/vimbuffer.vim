@@ -9,7 +9,7 @@ function ExeOnRTerm(cmd)
 endfunction
 
 function SendCmdToR_Buffer(...)
-    if g:rplugin_jobs["R"]
+    if IsJobRunning(g:rplugin_jobs["R"]) || 1
         if g:R_clear_line
             let cmd = "\001" . "\013" . a:1
         else
@@ -31,30 +31,14 @@ function SendCmdToR_Buffer(...)
         endif
 
         if a:0 == 2 && a:2 == 0
-            call jobsend(g:rplugin_jobs["R"], cmd)
+            call term_sendkeys(g:term_bufn, cmd)
         else
-            call jobsend(g:rplugin_jobs["R"], cmd . "\n")
+            call term_sendkeys(g:term_bufn, cmd . "\n")
         endif
         return 1
     else
         call RWarningMsg("Is R running?")
         return 0
-    endif
-endfunction
-
-function OnTermClose()
-    if exists("g:rplugin_R_bufname")
-        if g:rplugin_R_bufname == bufname("%")
-            if g:R_close_term
-                call feedkeys('<cr>')
-            endif
-        endif
-        unlet g:rplugin_R_bufname
-    endif
-
-    " Set nvimcom port to 0 in nclientserver
-    if g:rplugin_jobs["ClientServer"]
-        call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
     endif
 endfunction
 
@@ -88,7 +72,21 @@ function StartR_InBuffer()
     if has("win32")
         call SetRHome()
     endif
-    let g:rplugin_jobs["R"] = termopen(g:rplugin_R . " " . join(g:rplugin_r_args), {'on_exit': function('ROnJobExit')})
+
+    if len(g:rplugin_r_args)
+        let rcmd = g:rplugin_R . " " . join(g:rplugin_r_args)
+    else
+        let rcmd = g:rplugin_R
+    endif
+    if g:R_close_term
+        let g:term_bufn = term_start(rcmd,
+                    \ {'exit_cb': function('ROnJobExit'), "curwin": 1, "term_finish": "close"})
+    else
+        let g:term_bufn = term_start(rcmd,
+                    \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
+    endif
+    let g:rplugin_jobs["R"] = term_getjob(g:term_bufn)
+
     if has("win32")
         redraw
         call UnsetRHome()
@@ -98,14 +96,10 @@ function StartR_InBuffer()
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
-        silent set syntax=rout
+        set syntax=rout
+        let s:hl_term = g:R_hl_term
     endif
-    if g:R_esc_term
-        tnoremap <buffer> <Esc> <C-\><C-n>
-    endif
-    autocmd TermClose <buffer> call OnTermClose()
     exe "sbuffer " . edbuf
-    stopinsert
     call WaitNvimcomStart()
 endfunction
 

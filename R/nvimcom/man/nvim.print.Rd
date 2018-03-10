@@ -8,9 +8,9 @@
   \code{classfor} expression. The function is supposed to be called by Nvim-R.
 }
 \usage{
-nvim.print(object, objclass)
+nvim.print(object, firstobj)
 }
 \arguments{
   \item{object}{An R object.}
-  \item{objclass}{The class of the R object following the parenthesis, if any.}
+  \item{firstobj}{The name of the R object following the parenthesis, if any.}
 }

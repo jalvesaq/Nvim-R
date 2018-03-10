@@ -31,6 +31,7 @@ static int Tid;
 #else
 static int Sfd = -1;
 static pthread_t Tid;
+static char myport[128];
 #endif
 
 static void HandleSigTerm(int s)
@@ -105,7 +106,10 @@ static void *NeovimServer(void *arg)
     while(rp == NULL && bindportn < 10149){
         bindportn++;
         sprintf(bindport, "%d", bindportn);
-        result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
+        if(getenv("R_IP_ADDRESS"))
+            result = getaddrinfo(NULL, bindport, &hints, &res);
+        else
+            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
         if(result != 0){
             fprintf(stderr, "Error at getaddrinfo (%s)\n", gai_strerror(result));
             fflush(stderr);
@@ -131,6 +135,10 @@ static void *NeovimServer(void *arg)
 
     RegisterPort(bindportn);
 
+    snprintf(myport, 127, "%d", bindportn);
+    char endmsg[128];
+    snprintf(endmsg, 127, "%scall >>> STOP Now <<< !!!", getenv("NVIMR_SECRET"));
+
     /* Read datagrams and reply to sender */
     for (;;) {
         memset(buf, 0, bsize);
@@ -142,7 +150,7 @@ static void *NeovimServer(void *arg)
             fflush(stderr);
             continue;     /* Ignore failed request */
         }
-        if(strstr(buf, "QUIT_NVINSERVER_NOW"))
+        if(strncmp(endmsg, buf, 28) == 0)
             break;
 
         ParseMsg(buf);
@@ -262,7 +270,10 @@ static void SendToServer(const char *port, const char *msg)
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
-    a = getaddrinfo("127.0.0.1", port, &hints, &result);
+    if(getenv("R_IP_ADDRESS"))
+        a = getaddrinfo(getenv("R_IP_ADDRESS"), port, &hints, &result);
+    else
+        a = getaddrinfo("127.0.0.1", port, &hints, &result);
     if (a != 0) {
         fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n", port, msg, gai_strerror(a));
         fflush(stderr);
@@ -527,6 +538,14 @@ static void ArrangeWindows(char *cachedir){
 #endif
 
 int main(int argc, char **argv){
+
+    if(argc == 2 && strcmp(argv[1], "random") == 0){
+        time_t t;
+        srand((unsigned) time(&t));
+        printf("%d%d %d%d", rand(), rand(), rand(), rand());
+        return 0;
+    }
+
     char line[1024];
     char *msg;
     int keep_running = 1;
@@ -550,8 +569,7 @@ int main(int argc, char **argv){
     if(getenv("DEBUG_NVIMR")){
         df = fopen("/tmp/nclientserver_debug", "w");
         if(df){
-            fprintf(df, "NVIMR_SECRET=%s NVIMCOMPORT=%s\n",
-                    getenv("NVIMR_SECRET"), getenv("NVIMCOMPORT"));
+            fprintf(df, "NVIMR_SECRET=%s\n", getenv("NVIMR_SECRET"));
             fflush(df);
         } else {
             fprintf(stderr, "Error opening \"nclientserver_debug\" for writing\n");
@@ -559,34 +577,7 @@ int main(int argc, char **argv){
         }
     }
 
-    // Set nvimcom port
-    if(getenv("NVIMCOMPORT"))
-        strcpy(NvimcomPort, getenv("NVIMCOMPORT"));
-
 #ifdef WIN32
-    // Set the value of RConsole
-    if(getenv("RCONSOLE")){
-#ifdef _WIN64
-        RConsole = (HWND)atoll(getenv("RCONSOLE"));
-#else
-        RConsole = (HWND)atol(getenv("RCONSOLE"));
-#endif
-    } else {
-        fprintf(stderr, "$RCONSOLE not defined\n");
-        fflush(stderr);
-
-        RConsole = FindWindow(NULL, "R Console (64-bit)");
-        if(!RConsole){
-            RConsole = FindWindow(NULL, "R Console (32-bit)");
-            if(!RConsole)
-                RConsole = FindWindow(NULL, "R Console");
-        }
-        if(!RConsole){
-            fprintf(stderr, "\"R Console\" window not found\n");
-            fflush(stderr);
-        }
-    }
-
     // Set the value of NvimHwnd
     if(getenv("WINDOWID")){
 #ifdef _WIN64
@@ -627,6 +618,7 @@ int main(int argc, char **argv){
 #ifdef WIN32
     Tid = _beginthread(NeovimServer, 0, NULL);
 #else
+    strcpy(myport, "0");
     pthread_create(&Tid, NULL, NeovimServer, NULL);
 #endif
 
@@ -708,12 +700,12 @@ int main(int argc, char **argv){
         memset(line, 0, 1024);
     }
 #ifdef WIN32
-        closesocket(Sfd);
-        WSACleanup();
+    closesocket(Sfd);
+    WSACleanup();
 #else
-        close(Sfd);
-        pthread_cancel(Tid);
-        pthread_join(Tid, NULL);
+    close(Sfd);
+    SendToServer(myport, ">>> STOP Now <<< !!!");
+    pthread_join(Tid, NULL);
 #endif
     if(df)
         fclose(df);

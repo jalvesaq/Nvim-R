@@ -15,11 +15,11 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:
-runtime R/common_global.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 
 " Some buffer variables common to R, Rnoweb, Rhelp and rdoc file need be
 " defined after the global ones:
-runtime R/common_buffer.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 setlocal noswapfile
 setlocal buftype=nofile
@@ -119,6 +119,7 @@ function! RBrowserDoubleClick()
         elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
             call SendToNvimcom("\006" . key)
         else
+            let key = RBrowserGetName(0, 0)
             call g:SendCmdToR("str(" . key . ")")
         endif
     else
@@ -132,6 +133,7 @@ function! RBrowserDoubleClick()
                 let key = "package:" . RBGetPkgName() . '-' . key
                 call SendToNvimcom("\006" . key)
             else
+                let key = RBrowserGetName(0, 0)
                 call g:SendCmdToR("str(" . key . ")")
             endif
         endif
@@ -183,7 +185,7 @@ function! RBGetPkgName()
     while lnum > 0
         let line = getline(lnum)
         if line =~ '.*##[0-9a-zA-Z\.]*\t'
-            let line = substitute(line, '.*##\(.*\)\t', '\1', "")
+            let line = substitute(line, '.*##\(.\{-}\)\t.*', '\1', "")
             return line
         endif
         let lnum -= 1
@@ -318,7 +320,7 @@ setlocal winfixwidth
 setlocal bufhidden=wipe
 
 if has("gui_running")
-    runtime R/gui_running.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') .     "/R/gui_running.vim"
     call RControlMenu()
     call RBrowserMenu()
 endif

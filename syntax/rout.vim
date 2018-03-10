@@ -36,23 +36,40 @@ syn match routNegNum "-\<\d\+\>"
 " hexadecimal number
 syn match routNumber "\<0x\([0-9]\|[a-f]\|[A-F]\)\+"
 
-" floating point number with integer and fractional parts and optional exponent
-syn match routFloat "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
-syn match routNegFloat "-\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
-" floating point number with no integer part and optional exponent
-syn match routFloat "\<\.\d\+\([Ee][-+]\=\d\+\)\="
-syn match routNegFloat "-\<\.\d\+\([Ee][-+]\=\d\+\)\="
-" floating point number with no fractional part and optional exponent
-syn match routFloat "\<\d\+[Ee][-+]\=\d\+"
-syn match routNegFloat "-\<\d\+[Ee][-+]\=\d\+"
+let g:R_OutDec = get(g:, "R_OutDec", ".")
 
-" complex number
-syn match routComplex "\<\d\+i"
-syn match routComplex "\<\d\++\d\+i"
-syn match routComplex "\<0x\([0-9]\|[a-f]\|[A-F]\)\+i"
-syn match routComplex "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\=i"
-syn match routComplex "\<\.\d\+\([Ee][-+]\=\d\+\)\=i"
-syn match routComplex "\<\d\+[Ee][-+]\=\d\+i"
+if g:R_OutDec == ","
+    syn match routFloat "\<\d\+,\d*\([Ee][-+]\=\d\+\)\="
+    syn match routNegFloat "-\<\d\+,\d*\([Ee][-+]\=\d\+\)\="
+    syn match routFloat "\<,\d\+\([Ee][-+]\=\d\+\)\="
+    syn match routNegFloat "-\<,\d\+\([Ee][-+]\=\d\+\)\="
+    syn match routFloat "\<\d\+[Ee][-+]\=\d\+"
+    syn match routNegFloat "-\<\d\+[Ee][-+]\=\d\+"
+    syn match routComplex "\<\d\+i"
+    syn match routComplex "\<\d\++\d\+i"
+    syn match routComplex "\<0x\([0-9]\|[a-f]\|[A-F]\)\+i"
+    syn match routComplex "\<\d\+,\d*\([Ee][-+]\=\d\+\)\=i"
+    syn match routComplex "\<,\d\+\([Ee][-+]\=\d\+\)\=i"
+    syn match routComplex "\<\d\+[Ee][-+]\=\d\+i"
+else
+    " floating point number with integer and fractional parts and optional exponent
+    syn match routFloat "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
+    syn match routNegFloat "-\<\d\+\.\d*\([Ee][-+]\=\d\+\)\="
+    " floating point number with no integer part and optional exponent
+    syn match routFloat "\<\.\d\+\([Ee][-+]\=\d\+\)\="
+    syn match routNegFloat "-\<\.\d\+\([Ee][-+]\=\d\+\)\="
+    " floating point number with no fractional part and optional exponent
+    syn match routFloat "\<\d\+[Ee][-+]\=\d\+"
+    syn match routNegFloat "-\<\d\+[Ee][-+]\=\d\+"
+    " complex number
+    syn match routComplex "\<\d\+i"
+    syn match routComplex "\<\d\++\d\+i"
+    syn match routComplex "\<0x\([0-9]\|[a-f]\|[A-F]\)\+i"
+    syn match routComplex "\<\d\+\.\d*\([Ee][-+]\=\d\+\)\=i"
+    syn match routComplex "\<\.\d\+\([Ee][-+]\=\d\+\)\=i"
+    syn match routComplex "\<\d\+[Ee][-+]\=\d\+i"
+endif
+
 
 " dates and times
 syn match routDate "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][-0-9]"

@@ -4,14 +4,14 @@ if exists("g:disable_r_ftplugin")
 endif
 
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:
-runtime R/common_global.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 if exists("g:rplugin_failed")
     finish
 endif
 
 " Some buffer variables common to R, Rnoweb, Rhelp and rdoc file need be
 " defined after the global ones:
-runtime R/common_buffer.vim
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 function! RhelpIsInRCode(vrb)
     let lastsec = search('^\\[a-z][a-z]*{', "bncW")
@@ -78,7 +78,7 @@ call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
 
 " Menu R
 if has("gui_running")
-    runtime R/gui_running.vim
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/gui_running.vim"
     call MakeRMenu()
 endif
 

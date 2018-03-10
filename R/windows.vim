@@ -2,8 +2,8 @@
 
 let s:sumatra_in_path = 0
 
-call RSetDefaultValue("g:R_set_home_env", 1)
-call RSetDefaultValue("g:R_i386", 0)
+let g:R_set_home_env = get(g:, "R_set_home_env", 1)
+let g:R_i386 = get(g:, "R_i386", 0)
 
 if !exists("g:rplugin_R_path")
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin_tmpdir . "/run_cmd.bat")
@@ -58,50 +58,57 @@ endif
 
 let g:R_R_window_title = "R Console"
 
-" Ensure that the first gcc in the PATH will be capable of building both 32
-" and 64 bit binaries
-let s:rtpath = ""
-let s:wgcc = split(system("where gcc"), "\n")
-if len(s:wgcc) > 0 && s:wgcc[0] !~ "Rtools"
-    let s:path = split($PATH, ";")
-    for s:p in s:path
-        if s:p =~ "Rtools"
-            let s:rtpath = substitute(s:p, "Rtools.*", "Rtools", "")
-            break
-        endif
-    endfor
-    unlet s:path
-    unlet s:p
-endif
-unlet s:wgcc
-if s:rtpath != "" && !isdirectory(s:rtpath)
-    let s:rtpath = ""
-endif
-if s:rtpath == "" && executable("wmic")
-    let s:dstr = system("wmic logicaldisk get name")
-    let s:dstr = substitute(s:dstr, "\001", "", "g")
-    let s:dstr = substitute(s:dstr, " ", "", "g")
-    let s:dlst = split(s:dstr, "\r\n")
-    for s:lttr in s:dlst
-        if s:lttr =~ ":" && isdirectory(s:lttr . "\\Rtools")
-            let s:rtpath = s:lttr . "\\Rtools"
-            break
-        endif
-    endfor
-    unlet s:dstr
-    unlet s:dlst
-    unlet s:lttr
-endif
-if s:rtpath != ""
-    let s:gccpath = globpath(s:rtpath, "gcc*")
-    if s:gccpath == ""
-        let $PATH = s:rtpath . "\\bin;" . $PATH
+function SetRtoolsPath()
+    let s:oldpath = $PATH
+    " Ensure that the first gcc in the PATH will be capable of building both 32
+    " and 64 bit binaries
+    if exists("g:Rtools_path")
+        let s:rtpath = g:Rtools_path
     else
-        let $PATH = s:rtpath . "\\bin;" . s:gccpath . "\\bin;" . $PATH
+        let s:rtpath = ""
+        let wgcc = split(system("where gcc"), "\n")
+        if len(wgcc) > 0 && wgcc[0] !~ "Rtools"
+            let path = split($PATH, ";")
+            for pth in path
+                if pth =~ "Rtools"
+                    let s:rtpath = substitute(pth, "Rtools.*", "Rtools", "")
+                    break
+                endif
+            endfor
+        endif
+        let g:rplugin_debug_info["Rtools where gcc"] = s:rtpath
+        if s:rtpath != "" && !isdirectory(s:rtpath)
+            let s:rtpath = ""
+        endif
+        if s:rtpath == "" && executable("wmic")
+            let dstr = system("wmic logicaldisk get name")
+            let dstr = substitute(dstr, "\001", "", "g")
+            let dstr = substitute(dstr, " ", "", "g")
+            let dlst = split(dstr, "\r\n")
+            for lttr in dlst
+                if lttr =~ ":" && isdirectory(lttr . "\\Rtools")
+                    let s:rtpath = lttr . "\\Rtools"
+                    break
+                endif
+            endfor
+            let g:rplugin_debug_info["Rtools wmic"] = s:rtpath
+        endif
     endif
-    unlet s:gccpath
-endif
-let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
+    if s:rtpath != ""
+        let gccpath = globpath(s:rtpath, "gcc*")
+        if gccpath == ""
+            let $PATH = s:rtpath . "\\bin;" .s:rtpath . "\\mingw_64\\bin;" .  s:rtpath . "\\mingw_32\\bin;" . $PATH
+        else
+            let $PATH = s:rtpath . "\\bin;" . gccpath . "\\bin;" . $PATH
+        endif
+        let g:rplugin_debug_info["Rtools new PATH"] = $PATH
+    endif
+    let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
+endfunction
+
+function UnSetRtoolsPath()
+    let $PATH = s:oldpath
+endfunction
 
 function CheckRtools()
     if s:rtpath == ""
@@ -116,7 +123,7 @@ function CheckRtools()
 
     if s:rtpath != ""
         let Rtvf = s:rtpath . "/VERSION.txt"
-        let g:RtoolsVersion = Rtvf
+        let g:rplugin_debug_info["Rtools version file"] = Rtvf
         if !filereadable(s:rtpath . "/mingw_32/bin/gcc.exe")
             call RWarningMsg('Did you install Rtools with 32 bit support? "' .
                         \ s:rtpath . "/mingw_32/bin/gcc.exe" . '" not found.')
@@ -134,29 +141,6 @@ function CheckRtools()
             endif
         endif
     endif
-endfunction
-
-function SumatraInPath()
-    if s:sumatra_in_path
-        return 1
-    endif
-    if $PATH =~ "SumatraPDF"
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-
-    " $ProgramFiles has different values for win32 and win64
-    if executable($ProgramFiles . "\\SumatraPDF\\SumatraPDF.exe")
-        let $PATH = $ProgramFiles . "\\SumatraPDF;" . $PATH
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-    if executable($ProgramFiles . " (x86)\\SumatraPDF\\SumatraPDF.exe")
-        let $PATH = $ProgramFiles . " (x86)\\SumatraPDF;" . $PATH
-        let s:sumatra_in_path = 1
-        return 1
-    endif
-    return 0
 endfunction
 
 function SetRHome()
@@ -207,7 +191,7 @@ function CleanNvimAndStartR()
 endfunction
 
 function SendCmdToR_Windows(...)
-    if g:R_ca_ck
+    if g:R_clear_line
         let cmd = "\001" . "\013" . a:1 . "\n"
     else
         let cmd = a:1 . "\n"

@@ -1,14 +1,7 @@
 ### Nvim-R
 
 This is the development code of Nvim-R which improves Vim's support to edit
-R code. It started as a copy of the
-[Vim-R-plugin](https://github.com/jcfaria/Vim-R-plugin) adapted to Neovim, but
-now also supports Vim.
-
-The R package *nvimcom* is included in the source code and is automatically
-installed and updated whenever necessary. The Nvim-R plugin sets the
-environment variable `R_DEFAULT_PACKAGES`, including `nvimcom` in the list of
-packages to be loaded on R startup.
+R code.
 
 ## Installation
 
@@ -33,9 +26,9 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
 
    1. The editor has some code to load Afrobarometer data on Mozambique, R is
       running below the editor and the Object Browser is on the right side. On
-      the R Console, we can see messages inform the packages [setwidth] and
-      nvimcom were loaded. The messages are in blue because they were
-      colorized by the package [colorout].
+      the R Console, we can see messages inform some packages were loaded. The
+      messages are in blue because they were colorized by the package
+      [colorout].
 
    2. When the command `library("foreign")` is sent to R, the string *read.spss*
       turns blue because it is immediately recognized as a loaded function
@@ -58,11 +51,11 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
 
 In addition to sending lines of code to R Console, Nvim-R and R communicate
 with each other through TCP connections. The R package *nvimcom* runs a TCP
-server that receives messages from either Vim/Neovim, and it also sends messages through
-a TCP connection to Vim/Neovim. Moreover, *nvimcom* includes the application
-*nclientserver* which is never used by R itself, but is run by Vim/Neovim,
-providing both a TCP client and a TCP server. The Diagram below shows the
-three paths of communication between Vim/Neovim and R:
+server that receives messages from Vim/Neovim, and it also sends messages
+through a TCP connection to Vim/Neovim. Moreover, *nvimcom* includes the
+application *nclientserver* which is never used by R itself, but is run by
+Vim/Neovim, providing both a TCP client and a TCP server. The Diagram below
+shows the three paths of communication between Vim/Neovim and R:
 
   - The black path is followed by all commands that you trigger in the editor
     and that you can see being pasted into R Console. There are three
@@ -74,7 +67,7 @@ three paths of communication between Vim/Neovim and R:
      - When running R in an external terminal emulator, Tmux is used to send
        commands to R Console.
 
-     - On Windows operating system, Nvim-R sends a message to R (nvimcom)
+     - On Windows operating system, Nvim-R can send a message to R (nvimcom)
        which forwards the command to R Console.
 
   - The blue path is followed by the few commands that you trigger, but that
@@ -87,7 +80,7 @@ three paths of communication between Vim/Neovim and R:
 
   - The red path is followed by R messages that tell the editor to update the
     Object Browser, update the syntax highlight to include newly loaded
-    libraries and open the PDF output after weaving an Rnoweb file and
+    libraries and open the PDF output after knitting an Rnoweb file and
     compiling the LaTeX result.
 
 
@@ -97,6 +90,5 @@ three paths of communication between Vim/Neovim and R:
 [Vundle]: https://github.com/gmarik/Vundle.vim
 [Pathogen]: https://github.com/tpope/vim-pathogen
 [Neovim]: https://github.com/neovim/neovim
-[setwidth]: https://cran.r-project.org/web/packages/setwidth/index.html
 [southernlights]: https://github.com/jalvesaq/southernlights
 [colorout]: https://github.com/jalvesaq/colorout

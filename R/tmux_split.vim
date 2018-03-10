@@ -20,7 +20,11 @@ function StartR_TmuxSplit(rcmd)
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
+                \ 'set-environment NVIMR_PORT ' . $NVIMR_PORT ,
                 \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
+    if $NVIM_IP_ADDRESS != ""
+        call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
+    endif
     if &t_Co == 256
         call extend(tmuxconf, ['set default-terminal "' . $TERM . '"'])
     endif
@@ -28,7 +32,7 @@ function StartR_TmuxSplit(rcmd)
     call system("tmux source-file '" . g:rplugin_tmpdir . "/tmux" . $NVIMR_ID . ".conf" . "'")
     call delete(g:rplugin_tmpdir . "/tmux" . $NVIMR_ID . ".conf")
     let tcmd = "tmux split-window "
-    if g:R_vsplit
+    if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
         if g:R_rconsole_width == -1
             let tcmd .= "-h"
         else
@@ -61,7 +65,7 @@ function StartR_TmuxSplit(rcmd)
 endfunction
 
 function SendCmdToR_TmuxSplit(...)
-    if g:R_ca_ck
+    if g:R_clear_line
         let cmd = "\001" . "\013" . a:1
     else
         let cmd = a:1

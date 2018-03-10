@@ -36,7 +36,10 @@ function ROnJobStdout(job_id, data, etype)
 endfunction
 
 function ROnJobStderr(job_id, data, etype)
-    call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . substitute(join(a:data), '\r', '', 'g'))
+    let msg = substitute(join(a:data), '\r', '', 'g')
+    if msg !~ "^\s*$"
+        call RWarningMsg("[" . GetJobTitle(a:job_id) . "] " . msg)
+    endif
 endfunction
 
 function ROnJobExit(job_id, data, etype)

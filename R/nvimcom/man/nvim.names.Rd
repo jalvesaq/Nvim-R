@@ -1,6 +1,6 @@
 \name{nvim.names}
 \alias{nvim.names}
-\title{List function arguments}
+\title{Names of list elements}
 \description{
   List the names of either the object elements or its slots.
 }
