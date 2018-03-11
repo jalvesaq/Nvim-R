@@ -1939,6 +1939,16 @@ the value of R_csv_app in your |vimrc|. Examples:
    let R_csv_app = "localc"
    let R_csv_app = "c:/Program Files (x86)/LibreOffice 4/program/scalc.exe"
 <
+You should prefix the application name with `terminal:` if it is a terminal
+application and you want to run it in Vim/Neovim's built in terminal emulator.
+Example:
+>
+   let R_csv_app = 'terminal:scim'
+<
+If you are running Vim/Neovim within Tmux, you may prefer:
+>
+   let R_csv_app = 'tmux new-window scim'
+<
 If the default field delimiter causes problems in your case, you can change it
 in your |vimrc|. Valid values are `"\t"`, `";"` and `","`. Example:
 >
@@ -2963,6 +2973,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
+ * Accept prefix "terminal:" in `R_csv_app`.
 
 0.9.11 (2018-01-29)
 

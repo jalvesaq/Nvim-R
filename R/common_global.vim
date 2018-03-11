@@ -1235,7 +1235,19 @@ function GetROutput(outf)
 endfunction
 
 function RViewDF(oname)
-    if exists("g:R_csv_app")
+    if exists('g:R_csv_app')
+        if g:R_csv_app =~# '^terminal:'
+            let csv_app = split(g:R_csv_app, ':')[1]
+            if executable(csv_app)
+                call system('cp "' . g:rplugin_tmpdir . '/Rinsert" "' . a:oname . '.csv"')
+                tabnew
+                exe 'terminal ' . csv_app . ' ' . a:oname . '.csv'
+                startinsert
+            else
+                call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
+            endif
+            return
+        endif
         if !executable(g:R_csv_app)
             call RWarningMsg('R_csv_app ("' . g:R_csv_app . '") is not executable')
             return
@@ -1252,7 +1264,7 @@ function RViewDF(oname)
     echo 'Opening "' . a:oname . '.csv"'
     silent exe 'tabnew ' . a:oname . '.csv'
     silent 1,$d
-    silent exe 'read ' . substitute(g:rplugin_tmpdir, " ", '\\ ', 'g') . '/Rinsert'
+    silent exe 'read ' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
     silent 1d
     set filetype=csv
     set nomodified
