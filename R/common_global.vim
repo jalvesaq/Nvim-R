@@ -676,9 +676,17 @@ function StartNClientServer(w)
         echon "\rWait..."
     endif
     if $NVIMR_ID == ""
-        let randstr = split(system(nvc . ' random'))
-        let $NVIMR_ID = randstr[0]
-        let $NVIMR_SECRET = randstr[1]
+        let randstr = system(nvc . ' random')
+        if v:shell_error
+            call RWarningMsg('Using insecure communication with R due to failure to get random numbers from nclientserver: '
+                        \ . substitute(randstr, "[\r\n]", ' ', 'g'))
+            let $NVIMR_ID = strftime('%m%d%Y%M%S%H')
+            let $NVIMR_SECRET = strftime('%m%H%M%d%Y%S')
+        else
+            let randlst = split(randstr)
+            let $NVIMR_ID = randlst[0]
+            let $NVIMR_SECRET = randlst[1]
+        endif
     endif
     let g:rplugin_jobs["ClientServer"] = StartJob([nvc], g:rplugin_job_handlers)
 endfunction
