@@ -1256,8 +1256,10 @@ function RViewDF(oname)
             endif
             return
         endif
-        if !executable(g:R_csv_app)
-            call RWarningMsg('R_csv_app ("' . g:R_csv_app . '") is not executable')
+
+        let csv_app = split(g:R_csv_app)[0]
+        if !executable(csv_app)
+            call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
             return
         endif
         normal! :<Esc>
