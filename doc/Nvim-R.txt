@@ -716,7 +716,7 @@ You can also add the string "# " to the beginning of a line by typing
 the value of R_rcomment_string to control what string will be added
 to the beginning of the line. Example:
 >
-   let R_rcomment_string = "# "
+   let R_rcomment_string = '# '
 <
 Finally, you can also add comments to the right of a line with the
 <LocalLeader>; shortcut. By default, the comment starts at the 40th column,
@@ -965,7 +965,7 @@ you are using Neovim to syntax highlight R's output and it is not correctly
 detecting R's `OutDec` option, then, to get numbers correctly recognized, you
 should put in your |vimrc|:
 >
-   let R_OutDec = ","
+   let R_OutDec = ','
 <
 On Unix systems, before sending a command to R Console, if the terminal width
 has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
@@ -1035,14 +1035,14 @@ terminal emulator that it finds in the following list:
 If Vim does not select your favorite terminal emulator, you may define it in
 your |vimrc| by setting the variable R_term, as shown below:
 >
-   let R_term = "xterm"
+   let R_term = 'xterm'
 <
 If your terminal emulator is not listed above, or if you are not satisfied
 with the way your terminal emulator is called by the plugin, you may define in
 your |vimrc| the variable R_term_cmd, as in the examples below:
 >
-   let R_term_cmd = "xterm -title R -e"
-   let R_term_cmd = "xfce4-terminal --icon=/path/to/icons/R.png --title=R -x"
+   let R_term_cmd = 'xterm -title R -e'
+   let R_term_cmd = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
@@ -1112,13 +1112,13 @@ keys to be replaced by `<-`, set the value of |R_assign_map| in your
 |vimrc|, as in the example below which emulates RStudio behavior (may only
 work on GVim):
 >
-   let R_assign_map = "<M-->"
+   let R_assign_map = '<M-->'
 <
 Note: If you are using Vim in a terminal emulator, you have to put in your
 |vimrc|:
 >
    set <M-->=^[-
-   let R_assign_map = "<M-->"
+   let R_assign_map = '<M-->'
 <
 where `^[` is obtained by pressing CTRL-V CTRL-[ in Insert mode.
 
@@ -1153,8 +1153,8 @@ is preceded by a space and followed by a non-word character.
 Valid values for the Object Browser placement are "script" or "console" and
 "right", "left", "top" or "bottom", separated by a comma. Examples:
 >
-   let R_objbr_place = "script,right"
-   let R_objbr_place = "console,left"
+   let R_objbr_place = 'script,right'
+   let R_objbr_place = 'console,left'
 <
 By default, the Object Browser will be created at the right of the script
 window, and with 40 columns. The minimum width of the Object Browser window is
@@ -1208,7 +1208,7 @@ If you do not want to see R examples in a Vim buffer, put in your |vimrc|:
 If you do not want to see R documentation in a Vim buffer, put in your
 |vimrc|:
 >
-   let R_nvimpager = "no"
+   let R_nvimpager = 'no'
 <
 This option can only be set to "no" in the |vimrc|. It will be automatically
 changed to a suitable value if it is set to "no" after Vim startup.
@@ -1257,7 +1257,7 @@ values to some variables in your |vimrc|, as in the example:
 Vim will run the first R executable in the path. You can set an alternative
 path to R in your |vimrc| as in the examples:
 >
-   let R_path = "/path/to/my/preferred/R/version/bin"
+   let R_path = '/path/to/my/preferred/R/version/bin'
    let R_path = "C:\\Program Files\\R\\R-3.3.1\\bin\\i386"
 <
 On Windows, Vim will try to find the R install path in the Windows Registry.
@@ -1309,7 +1309,7 @@ and available for omnicompletion even if R is not running yet. By default,
 only the functions of vanilla R are always highlighted. Below is the default
 value of R_start_libs:
 >
-   let R_start_libs = "base,stats,graphics,grDevices,utils,methods"
+   let R_start_libs = 'base,stats,graphics,grDevices,utils,methods'
 <
 
 ------------------------------------------------------------------------------
@@ -1370,7 +1370,7 @@ The string used to comment text with <LocalLeader>xc, <LocalLeader>xu,
 <LocalLeader>xx and <LocalLeader>o is defined by R_rcomment_string.
 Example:
 >
-   let R_rcomment_string = "# "
+   let R_rcomment_string = '# '
 <
 If the value of `r_indent_ess_comments` is 1, `R_rcomment_string` will be
 overridden and the string used to comment the line will change according to
@@ -1525,7 +1525,7 @@ temporary file.
 By default, R's `source()` is called with the argument `print.eval=TRUE`, but
 you can change the arguments passed to it. Example:
  >
-   let R_source_args = "print.eval = TRUE, max.deparse.length = 300"
+   let R_source_args = 'print.eval = TRUE, max.deparse.length = 300'
 <
 If you want that commented lines are included in the code to be sourced, put
 in your |vimrc|:
@@ -1579,7 +1579,7 @@ objects stored in the Rmd file available on the R console.  If you do not want
 the  objects stored in the Rmd file to be available in the global environment,
 you can set
 >
-    let R_rmd_environment = "new.env()"
+    let R_rmd_environment = 'new.env()'
 <
 
 ------------------------------------------------------------------------------
@@ -1647,6 +1647,16 @@ will be automatically opened if you put the following in your |vimrc|:
 >
    let R_openhtml = 1
 <
+The meanings of different values of R_openhtml are:
+
+   0: Never open the html.
+   1: Always open the html.
+   2: Decide between opening the html and reloading the page (Linux only).
+
+The browser application called by Nvim-R is whathever is returned by the R
+command `getOption("browser")`, unless it is NULL. In this case, Nvim-R will
+call `open` on both Windows and Mac OS X, and `xdg-open` on Linux.
+
 On Linux, if the application `xdotool` is installed the value of `R_openhtml`
 will be 2. Then, Nvim-R will run `xdotool` to try to find a window with the
 document title as its name and, then, send the <F5> key to this window. That
@@ -1733,7 +1743,7 @@ sourced by Nvim-R. These scripts may provide additional
 functionality and/or change the behavior of Nvim-R. If you have such
 scripts, put in your |vimrc|:
 >
-   let R_source = "~/path/to/MyScript.vim,/path/to/AnotherScript.vim"
+   let R_source = '~/path/to/MyScript.vim,/path/to/AnotherScript.vim'
 <
 Currently, there is only one script known to extend Nvim-R features:
 
@@ -1787,14 +1797,14 @@ replaced by the function name and `%args` by the list of arguments). See
 'statusline' to know how to format the status line. The example below put some
 colors in the status line (see |highlight-groups|):
 >
-   let R_sttline_fmt = "%#Function#%fun%#Delimiter#(%#Normal#%args%#Delimiter#)"
+   let R_sttline_fmt = '%#Function#%fun%#Delimiter#(%#Normal#%args%#Delimiter#)'
 <
 If you knew Vim Language, you could look at the Nvim-R source code (file
 `R/common_global.vim`) and set the value of `R_set_sttline_cmd`. The example
 below sets the color of individual arguments' names to the highlight group
 `Special`:
 >
-   let R_sttline_fmt = "%#Function#%fun%#Normal#(%args)"
+   let R_sttline_fmt = '%#Function#%fun%#Normal#(%args)'
    let R_set_sttline_cmd = "let sline = substitute(sline, " .
            \ "'\\( \\|(\\)\\(\\w\\.*\\w*\\.*\\w*\\)\\(=*\\)\\(.\\{-}\\)\\([,)]\\)', " .
            \ "'\\1%#Special#\\2%#Normal#\\3\\4\\5', 'g')"
@@ -1864,7 +1874,7 @@ script `~/bin/after_R_start` similar to the following:
 Then, make the script executable, and put in your |vimrc|:
 >
    let R_in_buffer = 0
-   let R_after_start = "after_R_start"
+   let R_after_start = 'after_R_start'
 <
 Similarly, on Mac OS X, the script below (developed by songcai) will bring the
 focus to Neovim terminal window:
@@ -1906,8 +1916,8 @@ You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of R_tmpdir and
 R_compldir, as in the example below:
 >
-   let R_tmpdir = "/dev/shm/R_tmp_dir"
-   let R_compldir = "~/.cache/Nvim-R"
+   let R_tmpdir = '/dev/shm/R_tmp_dir'
+   let R_compldir = '~/.cache/Nvim-R'
 <
 The default paths of these directories depend on the operating system. If you
 want to know what they are, while editing an R file, do in Normal mode:
@@ -1936,8 +1946,8 @@ If you do not want to install the csv.vim plugin, put in your |vimrc|:
 If you rather prefer to see the table in a graphical viewer, you should set
 the value of R_csv_app in your |vimrc|. Examples:
 >
-   let R_csv_app = "localc"
-   let R_csv_app = "c:/Program Files (x86)/LibreOffice 4/program/scalc.exe"
+   let R_csv_app = 'localc'
+   let R_csv_app = 'c:/Program Files (x86)/LibreOffice 4/program/scalc.exe'
 <
 You should prefix the application name with `terminal:` if it is a terminal
 application and you want to run it in Vim/Neovim's built in terminal emulator.
@@ -1947,12 +1957,12 @@ Example:
 <
 If you are running Vim/Neovim within Tmux, you may prefer:
 >
-   let R_csv_app = 'tmux new-window scim'
+   let R_csv_app = 'tmux new-window scim --txtdelim="\t"'
 <
 If the default field delimiter causes problems in your case, you can change it
 in your |vimrc|. Valid values are `"\t"`, `";"` and `","`. Example:
 >
-   let R_csv_delim = ","
+   let R_csv_delim = ','
 <
 There is also the option of configuring Nvim-R to run an R command to
 display the data. Example:
@@ -2343,7 +2353,7 @@ If you prefer to see help pages in an html browser, put in your `~/.Rprofile`:
 <
 and in your |vimrc| (see |R_nvimpager|):
 >
-   let R_nvimpager = "no"
+   let R_nvimpager = 'no'
 <
 
 ------------------------------------------------------------------------------
@@ -2417,7 +2427,7 @@ as the <LocalLeader> instead of the default backslash (see |maplocalleader|).
 For example, to change the <LocalLeader> to a comma, put at the beginning of
 your |vimrc| (before any mapping command):
 >
-   let maplocalleader = ","
+   let maplocalleader = ','
 <
 
 ------------------------------------------------------------------------------
@@ -2629,11 +2639,11 @@ document from the beginning.
    ~/.vimrc or ~/.config/nvim/init.vim or ~\AppData\Local\nvim\init.vim~
 >
    " Change Leader and LocalLeader keys:
-   let maplocalleader = ","
-   let mapleader = ";"
+   let maplocalleader = ','
+   let mapleader = ';'
 
    " Use Ctrl+Space to do omnicompletion:
-   if has("nvim") || has("gui_running")
+   if has('nvim') || has('gui_running')
        inoremap <C-Space> <C-x><C-o>
    else
        inoremap <Nul> <C-x><C-o>
@@ -2652,7 +2662,7 @@ You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
 interface of Neovim with 'termguicolors' (see |true-color|):
 >
-   if has("gui_running") || &termguicolors
+   if has('gui_running') || &termguicolors
      let rout_color_input    = 'guifg=#9e9e9e'
      let rout_color_normal   = 'guifg=#ff5f00'
      let rout_color_number   = 'guifg=#ffaf00'
@@ -2793,14 +2803,14 @@ goal.
 >
 	" Setup Vim to use the remote R only if the output of df includes
 	" the string 'remoteR', that is, the remote file system is mounted:
-        if system("df") =~ "remoteR"
+        if system('df') =~ 'remoteR'
             let $NVIM_IP_ADDRESS = substitute(system("hostname -I"), " .*", "", "")
-            let R_app = "/home/locallogin/bin/sshR"
-            let R_cmd = "/home/locallogin/bin/sshR"
-            let R_compldir = "/home/locallogin/.remoteR/NvimR_cache"
-            let R_tmpdir = "/home/locallogin/.remoteR/NvimR_cache/tmp"
-            let R_remote_tmpdir = "/home/remotelogin/.cache/NvimR_cache/tmp"
-            let R_nvimcom_home = "/home/locallogin/.remoteR/R_library/nvimcom"
+            let R_app = '/home/locallogin/bin/sshR'
+            let R_cmd = '/home/locallogin/bin/sshR'
+            let R_compldir = '/home/locallogin/.remoteR/NvimR_cache'
+            let R_tmpdir = '/home/locallogin/.remoteR/NvimR_cache/tmp'
+            let R_remote_tmpdir = '/home/remotelogin/.cache/NvimR_cache/tmp'
+            let R_nvimcom_home = '/home/locallogin/.remoteR/R_library/nvimcom'
         endif
 <
       - Mount the remote directories:
@@ -2886,8 +2896,8 @@ only if you have created new windows with the <C-a>c command. You can change
 the value of R_tmux_title to either set a different title or let Tmux set the
 title automatically. Examples:
 >
-   let R_tmux_title = "Nvim-R"
-   let R_tmux_title = "automatic"
+   let R_tmux_title = 'Nvim-R'
+   let R_tmux_title = 'automatic'
 <
 When R quits, Tmux will automatically close its pane. If you want that the
 pane remains open, see https://github.com/jalvesaq/Nvim-R/issues/229
@@ -2969,7 +2979,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-03-04)
+0.9.11.1 (2018-03-15)
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
