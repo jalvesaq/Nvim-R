@@ -2308,7 +2308,7 @@ function RLoadHTML(fullpath, browser)
     else
         let flines = readfile(a:fullpath)
         let ttline = match(flines, '<title>.*</title>')
-        if ttline != -1
+        if ttline != -1a
             let winname = substitute(flines[ttline], '.*<title>\(.*\)</title>.*', '\1', '')
         else
         endif
@@ -2319,18 +2319,14 @@ function RLoadHTML(fullpath, browser)
     let winname = substitute(winname, '^\(................\).*', '\1', '')
 
     let winname = substitute(winname, ' ', '\\ ', 'g')
-    let winnum = system('xdotool search --name ' . winname)
-    let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, a:browser, winname, winnum]
-    if winnum == ''
-        if has('nvim')
-            call jobstart([brwsr, a:fullpath], {'detach': 1})
-        else
-            call job_start([brwsr, a:fullpath])
-        endif
+    "let winnum = system('xdotool search --name ' . winname)
+    let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, winname]
+    if g:R_darwin_browser == 'chrome'
+        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh.scpt '. b:winname . ' file:///' . b:fullpath)
     else
-        call system('xdotool search --name ' . winname . ' windowactivate --sync')
-        call system('xdotool search --name ' . winname . ' key --clearmodifiers ' . g:R_html_reload_key)
+        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_safari.scpt '. b:winname . ' file:///' . b:fullpath)
     endif
+
 endfunction
 
 function ROpenDoc(fullpath, browser)
@@ -3565,12 +3561,13 @@ if g:R_complete != 1 && g:R_complete != 2
     call RWarningMsgInp("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
 endif
 
-if g:rplugin_is_darwin == 0 && !has('win32') && !has('win32unix') && executable('xdotool')
+if g:rplugin_is_darwin == 1 && !has('win32') && !has('win32unix') && executable('osascript')
     let g:R_openhtml = get(g:, "R_openhtml", 2)
+    let g:R_darwin_browser = get(g:, "R_darwin_browser", "safari")
 else
-    let g:R_openhtml = get(g:, "R_openhtml", 0)
+    let g:R_openhtml = get(g:, "R_openhtml", 1)
 endif
-if g:R_openhtml == 2 && !executable('xdotool')
+if g:R_openhtml == 2 && !executable('osascript')
     let g:R_openhtml = 0
 endif
 
