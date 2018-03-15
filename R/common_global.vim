@@ -2324,11 +2324,11 @@ function RLoadHTML(fullpath, browser)
 
     let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, winname]
     if g:R_darwin_browser == 'chrome'
-        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
-        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath)
+        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript ' . g:rplugin_home . '/R/tabrefresh_chrome.scpt '. winname . ' file:///' . a:fullpath
+        echom system('osascript ' . g:rplugin_home . '/R/tabrefresh_chrome.scpt '. winname . ' file:///' . a:fullpath)
     elseif g:R_darwin_browser == 'safari'
-        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
-        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_safari.scpt ' . winname . ' file:///' . a:fullpath)
+        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript ' . g:rplugin_home . '/R/tabrefresh_safari.scpt '  . winname . ' file:///' . a:fullpath
+        echom system('osascript ' . g:rplugin_home . '/R/tabrefresh_safari.scpt ' . winname . ' file:///' . a:fullpath)
     else
         call "Browser " . g:R_darwin_browser . " not supported."
     endif
