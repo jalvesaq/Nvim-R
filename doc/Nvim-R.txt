@@ -897,6 +897,7 @@ of
 |R_pdfviewer|         PDF application used to open PDF documents
 |R_openpdf|           Open PDF after processing rnoweb file
 |R_openhtml|          Open HTML after processing either Rrst or Rmd
+|R_darwin_browser|    The name of the browser(only chrome supported for now) on Mac where you want to open HTML files.
 |R_html_reload_key|   Shortcut to reload web browser
 |R_strict_rst|        Code style for generated rst files
 |R_insert_mode_cmds|  Allow R commands in insert mode

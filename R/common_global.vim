@@ -2319,12 +2319,20 @@ function RLoadHTML(fullpath, browser)
     let winname = substitute(winname, '^\(................\).*', '\1', '')
 
     let winname = substitute(winname, ' ', '\\ ', 'g')
-    "let winnum = system('xdotool search --name ' . winname)
+    let winname = substitute(winname, '"', '', 'g')
+
     let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, winname]
     if g:R_darwin_browser == 'chrome'
-        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh.scpt '. b:winname . ' file:///' . b:fullpath)
+        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
+        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath)
+    elseif g:R_darwin_browser == 'safari'
+        " For some reason safari refuses to open on my Mac when below command
+        " executes. When I execute this command in a vim command mode it works
+        " fine. So likely some sort of issue with system command. 
+        let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
+        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_safari.scpt ' . winname . ' file:///' . a:fullpath)
     else
-        call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_safari.scpt '. b:winname . ' file:///' . b:fullpath)
+        call "Browser " . g:R_darwin_browser . " not supported."
     endif
 
 endfunction
@@ -3563,7 +3571,7 @@ endif
 
 if g:rplugin_is_darwin == 1 && !has('win32') && !has('win32unix') && executable('osascript')
     let g:R_openhtml = get(g:, "R_openhtml", 2)
-    let g:R_darwin_browser = get(g:, "R_darwin_browser", "safari")
+    let g:R_darwin_browser = get(g:, "R_darwin_browser", "chrome")
 else
     let g:R_openhtml = get(g:, "R_openhtml", 1)
 endif
