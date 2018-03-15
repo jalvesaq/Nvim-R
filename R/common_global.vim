@@ -2319,6 +2319,7 @@ function RLoadHTML(fullpath, browser)
     let winname = substitute(winname, '^\(................\).*', '\1', '')
 
     let winname = substitute(winname, ' ', '\\ ', 'g')
+    "Some title windows have a quote that confuses the shell. Remove it
     let winname = substitute(winname, '"', '', 'g')
 
     let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, winname]
@@ -2326,9 +2327,6 @@ function RLoadHTML(fullpath, browser)
         let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
         call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath)
     elseif g:R_darwin_browser == 'safari'
-        " For some reason safari refuses to open on my Mac when below command
-        " executes. When I execute this command in a vim command mode it works
-        " fine. So likely some sort of issue with system command. 
         let g:rplugin_debug_info['OpenDocumentCommand'] = 'osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_chrome.scpt ' . winname . ' file:///' . a:fullpath
         call system('osascript $HOME/.nvim/plugged/Nvim-R/R/tabrefresh_safari.scpt ' . winname . ' file:///' . a:fullpath)
     else
