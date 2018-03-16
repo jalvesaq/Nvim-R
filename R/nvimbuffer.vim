@@ -1,12 +1,4 @@
-" This file contains code used only when R run in Neovim buffer
-
-function ExeOnRTerm(cmd)
-    let curwin = winnr()
-    exe 'sb ' . g:rplugin_R_bufname
-    exe a:cmd
-    call cursor("$", 1)
-    exe curwin . 'wincmd w'
-endfunction
+" This file contains code used only when R run in a Neovim buffer
 
 function SendCmdToR_Buffer(...)
     if g:rplugin_jobs["R"]
@@ -17,16 +9,17 @@ function SendCmdToR_Buffer(...)
         endif
 
         " Update the width, if necessary
-        if g:R_setwidth && len(filter(tabpagebuflist(), "v:val =~ bufnr(g:rplugin_R_bufname)")) >= 1
-            call ExeOnRTerm("let s:rwnwdth = winwidth(0)")
-            if s:rwnwdth != s:R_width && s:rwnwdth != -1 && s:rwnwdth > 10 && s:rwnwdth < 999
-                let s:R_width = s:rwnwdth
+        if g:R_setwidth
+            let rwnwdth = winwidth(g:rplugin_R_winnr)
+            if rwnwdth != s:R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
+                let s:R_width = rwnwdth
                 if has("win32")
                     let cmd = "options(width=" . s:R_width. "); ". cmd
                 else
                     call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
                     sleep 10m
                 endif
+                " Scroll issue in Neovim after R Console window is resized...
             endif
         endif
 
@@ -94,6 +87,7 @@ function StartR_InBuffer()
         call UnsetRHome()
     endif
     let g:rplugin_R_bufname = bufname("%")
+    let g:rplugin_R_winnr = winnr()
     let s:R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm

@@ -953,7 +953,15 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
             let g:R_hl_term = 0
         else
             let g:R_hl_term = 1
-            call ExeOnRTerm("set syntax=rout")
+            let isnormal = mode() == 'n'
+            let curwin = winnr()
+            exe 'sb ' . g:rplugin_R_bufname
+            set syntax=rout
+            call cursor("$", 1)
+            exe curwin . 'wincmd w'
+            if isnormal
+                stopinsert
+            endif
         endif
     endif
 
