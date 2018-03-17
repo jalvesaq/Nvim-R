@@ -677,7 +677,7 @@ function StartNClientServer(w)
     endif
     if $NVIMR_ID == ""
         let randstr = system(nvc . ' random')
-        if v:shell_error
+        if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
             call RWarningMsg('Using insecure communication with R due to failure to get random numbers from nclientserver: '
                         \ . substitute(randstr, "[\r\n]", ' ', 'g'))
             let $NVIMR_ID = strftime('%m%d%Y%M%S%H')
