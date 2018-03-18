@@ -872,6 +872,7 @@ of
 |Rout_more_colors|    More syntax highlighting in R output
 |R_hi_fun|            Highlight R functions
 |R_hi_fun_paren|      Highlight R functions only if followd by a `(`
+|R_hi_fun_globenv|    Highlight R functions from .GlobalEnv
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
 |R_rcomment_string|   String to comment code with \xx and \o
@@ -1314,6 +1315,7 @@ value of R_start_libs:
 
 ------------------------------------------------------------------------------
 							    *Rout_more_colors*
+							    *R_hi_fun_globenv*
 							    *R_hi_fun_paren*
 							    *R_hi_fun*
 6.10. Syntax highlight: functions and .Rout files~
@@ -1336,6 +1338,19 @@ the `(` is typed, put in your |vimrc|:
 Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
+By default, functions of the `.GlobalEnv` environment are not highlighted
+because sending commands to R might become noticeably slow when editing files
+with complex syntax highlight such as large RMarkdown scripts. Anyway, if you
+prefer these functions highlighted, put in your |vimrc|:
+>
+   let R_hi_fun_globenv = 1
+<
+Functions from `.GlobalEnv` are highlighted as functions from packages, but in
+Neovim (not in Vim) you can set a different highlight command for them in your
+|vimrc|, as in the example below:
+>
+   hi rGlobEnvFun ctermfg=117 guifg=#87d7ff cterm=italic gui=italic
+<
 If you prefer to completely disable the syntax highlight of R functions put in
 your |vimrc|:
 >

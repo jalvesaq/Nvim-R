@@ -51,6 +51,7 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.openlist")),
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.labelerr")),
+           as.integer(getOption("nvimcom.higlobfun")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
            paste0(paste(.packages(), collapse = " "), " Dec", getOption("OutDec")),

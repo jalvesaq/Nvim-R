@@ -59,6 +59,7 @@ static char search_list[1024];
 static char R_version[16];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
 static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ for the ncm-R plugin
+static int hifun = 0;      // Send message to Nvim-R to highlight GlobalEnv functions
 
 #ifdef WIN32
 static int r_is_busy = 1;
@@ -542,9 +543,12 @@ static void nvimcom_list_env()
     if(tmpdir[0] == 0)
         return;
 
-    if(envls_auto)
-        nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = FALSE)");
-
+    if(envls_auto){
+        if(hifun)
+            nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 2)");
+        else
+            nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 0)");
+    }
     if(objbr_auto != 1)
         return;
 
@@ -1260,13 +1264,14 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth, char **vcv, char **srchls, char **rvs)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, char **pth, char **vcv, char **srchls, char **rvs)
 {
     verbose = *vrb;
     opendf = *odf;
     openls = *ols;
     allnames = *anm;
     labelerr = *lbe;
+    hifun = *hif;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);
@@ -1292,7 +1297,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, char **pth,
     if(verbose > 1)
         REprintf("nclientserver port: %s\n", edsrvr);
 
-    if(getenv("NCM_R"))
+    if(getenv("NCM_R") || hifun)
         envls_auto = 1;
 
     snprintf(liblist, 510, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));

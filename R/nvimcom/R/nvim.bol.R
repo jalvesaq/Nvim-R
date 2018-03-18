@@ -269,7 +269,7 @@ CleanOmnils <- function(f)
 
 
 # Build Omni List
-nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg = TRUE) {
+nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg = 1) {
     nvim.OutDec <- options("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
@@ -292,8 +292,11 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg
         writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
         flush(stdout())
-        if(sendmsg)
-            .C("nvimcom_msg_to_nvim", 'FinishBuildROmniList()', PACKAGE="nvimcom")
+        if(sendmsg == 1){
+            .C("nvimcom_msg_to_nvim", "FinishBuildROmniList()", PACKAGE = "nvimcom")
+        } else if(sendmsg == 2){
+            .C("nvimcom_msg_to_nvim", "CheckRGlobalEnv()", PACKAGE = "nvimcom")
+        }
         return(invisible(NULL))
     }
 

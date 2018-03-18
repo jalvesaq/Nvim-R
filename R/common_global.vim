@@ -777,6 +777,11 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.labelerr = FALSE)']
     endif
+    if g:R_hi_fun_globenv
+        let start_options += ['options(nvimcom.higlobfun = TRUE)']
+    else
+        let start_options += ['options(nvimcom.higlobfun = FALSE)']
+    endif
     if g:R_nvimpager == "no"
         let start_options += ['options(nvimcom.nvimpager = FALSE)']
     else
@@ -2980,6 +2985,24 @@ function RVimLeave()
     endif
 endfunction
 
+let s:nglobfun = 0
+function CheckRGlobalEnv()
+    let s:globalenv_lines = readfile(g:rplugin_tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
+    let funlist = filter(copy(s:globalenv_lines), 'v:val =~# "\x06function\x06function\x06"')
+    if len(funlist) || len(s:nglobfun)
+        call map(funlist, 'substitute(v:val, "\x06.*", "", "")')
+        syntax clear rGlobEnvFun
+        for globf in funlist
+            if !exists('g:R_hi_fun_paren') || g:R_hi_fun_paren == 0
+                exe 'syntax keyword rGlobEnvFun ' . globf
+            else
+                exe 'syntax match rGlobEnvFun /\<' . globf . '\s*\ze(/'
+            endif
+        endfor
+    endif
+    let s:nglobfun = len(funlist)
+endfunction
+
 function FinishBuildROmniList()
     let s:NvimbolFinished = 1
 endfunction
@@ -3567,6 +3590,7 @@ let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
+let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
@@ -3640,6 +3664,13 @@ if has("win32")
 else
     let g:R_save_win_pos    = get(g:, "R_save_win_pos",    0)
     let g:R_arrange_windows = get(g:, "R_arrange_windows", 0)
+endif
+
+if g:R_hi_fun == 0
+    let g:R_hi_fun_globenv = 0
+endif
+if g:R_hi_fun_globenv && len(filter(split(execute('highlight', 'silent'), '\n'), 'v:val =~# "rGlobEnvFun"')) == 0
+    hi link rGlobEnvFun rFunction
 endif
 
 " Look for invalid options
