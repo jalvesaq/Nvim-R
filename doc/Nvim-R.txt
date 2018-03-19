@@ -1338,12 +1338,22 @@ the `(` is typed, put in your |vimrc|:
 Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
-By default, functions of the `.GlobalEnv` environment are not highlighted
-because sending commands to R might become noticeably slow when editing files
-with complex syntax highlight such as large RMarkdown scripts. Anyway, if you
-prefer these functions highlighted, put in your |vimrc|:
+By default, functions from the `.GlobalEnv` environment are not highlighted to
+avoid the need of both nvimcom saving a temporary file with the list objects
+in the `.GlobalEnv` after each command sent to R and Nvim-R reading and
+parsing this file, which might be slow in some machines. But if you prefer
+these functions highlighted, put in your |vimrc|:
 >
    let R_hi_fun_globenv = 1
+<
+The functions from `.GlobalEnv` will be highlighted when created, but the
+highlighting will not be cleared when the functions are deleted because
+sending commands to R could become noticeably slow when editing files with
+complex syntax highlight such as large RMarkdown scripts. Anyway, if you want
+the syntax highlighting of `.GlobalEnv` functions cleared and redone after
+each command sent to R, put in your |vimrc|:
+>
+   let R_hi_fun_globenv = 2
 <
 Functions from `.GlobalEnv` are highlighted as functions from packages, but in
 Neovim (not in Vim) you can set a different highlight command for them in your
@@ -2998,6 +3008,7 @@ inserted into a tmux window using <Shift> and the middle mouse button.
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
+ * New option: R_hi_fun_globenv
  * Accept prefix "terminal:" in `R_csv_app`.
 
 0.9.11 (2018-01-29)
