@@ -9,6 +9,7 @@
 #include <winsock2.h>
 #include <process.h>
 #include <windows.h>
+#include <time.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
 #else

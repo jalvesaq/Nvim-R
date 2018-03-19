@@ -516,7 +516,8 @@ function CheckNvimcomVersion()
             if nvers != s:required_nvimcom
                 let neednew = 1
             else
-                let rversion = split(system(g:rplugin_Rcmd . " --version"))[2]
+                let rversion = system(g:rplugin_Rcmd . ' --version')
+                let rversion = substitute(rversion, '.*R version \(\S\{-}\) .*', '\1', '')
                 let g:rplugin_debug_info['R_version'] = rversion
                 if g:rplugin_R_version != rversion
                     let neednew = 1
@@ -676,7 +677,11 @@ function StartNClientServer(w)
         echon "\rWait..."
     endif
     if $NVIMR_ID == ""
-        let randstr = system(nvc . ' random')
+        if has('nvim')
+            let randstr = system([nvc, 'random'])
+        else
+            let randstr = system(nvc . ' random')
+        endif
         if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
             call RWarningMsg('Using insecure communication with R due to failure to get random numbers from nclientserver: '
                         \ . substitute(randstr, "[\r\n]", ' ', 'g'))
