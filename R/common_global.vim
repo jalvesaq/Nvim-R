@@ -3072,7 +3072,7 @@ function BuildROmniList(pattern)
         return
     endif
 
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
         let s:globalenv_lines = []
     else
         let s:globalenv_lines = readfile(g:rplugin_tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
