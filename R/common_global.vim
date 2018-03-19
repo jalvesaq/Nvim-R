@@ -953,20 +953,24 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
         endif
     endif
 
-    if has("nvim") && g:R_in_buffer && !exists("g:R_hl_term")
-        if a:searchlist =~ "colorout"
-            let g:R_hl_term = 0
-        else
-            let g:R_hl_term = 1
-            let isnormal = mode() == 'n'
-            let curwin = winnr()
-            exe 'sb ' . g:rplugin_R_bufname
-            set syntax=rout
-            call cursor("$", 1)
-            exe curwin . 'wincmd w'
-            if isnormal
-                stopinsert
+    if has('nvim') && g:R_in_buffer
+        " Put the cursor and the end of the buffer to ensure automatic scrolling
+        " See: https://github.com/neovim/neovim/issues/2636
+        let isnormal = mode() ==# 'n'
+        let curwin = winnr()
+        exe 'sb ' . g:rplugin_R_bufname
+        if !exists('g:R_hl_term')
+            if a:searchlist =~# 'colorout'
+                let g:R_hl_term = 0
+            else
+                let g:R_hl_term = 1
+                set syntax=rout
             endif
+        endif
+        call cursor('$', 1)
+        exe curwin . 'wincmd w'
+        if isnormal
+            stopinsert
         endif
     endif
 
