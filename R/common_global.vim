@@ -1336,9 +1336,9 @@ function RSourceLines(...)
     endif
 
     if a:0 == 3 && a:3 == "NewtabInsert"
-        call writefile(lines, s:Rsource)
+        call writefile(lines, s:Rsource_write)
         call AddForDeletion(g:rplugin_tmpdir . '/Rinsert')
-        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . s:Rsource . '", "' . g:rplugin_tmpdir . '/Rinsert")')
+        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "' . g:rplugin_tmpdir . '/Rinsert")')
         return 1
     endif
 
@@ -1347,9 +1347,9 @@ function RSourceLines(...)
     if g:R_source_args == "bracketed paste"
         let rcmd = "\x1b[200~" . join(lines, "\n") . "\x1b[201~"
     else
-        call writefile(lines, s:Rsource)
+        call writefile(lines, s:Rsource_write)
         let sargs = GetSourceArgs(a:2)
-        let rcmd = 'base::source("' . s:Rsource . '"' . sargs . ')'
+        let rcmd = 'base::source("' . s:Rsource_read . '"' . sargs . ')'
     endif
 
     let ok = g:SendCmdToR(rcmd)
@@ -3571,7 +3571,13 @@ if !isdirectory(g:rplugin_tmpdir)
 endif
 
 " Make the file name of files to be sourced
-let s:Rsource = g:rplugin_tmpdir . "/Rsource-" . getpid()
+if exists("g:R_remote_tmpdir")
+	let s:Rsource_read = g:R_remote_tmpdir . "/Rsource-" . getpid()
+else
+	let s:Rsource_read = g:rplugin_tmpdir . "/Rsource-" . getpid()
+endif
+let s:Rsource_write = g:rplugin_tmpdir . "/Rsource-" . getpid()
+
 
 let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 
@@ -3862,7 +3868,7 @@ let g:rplugin_has_wmctrl = 0
 let s:docfile = g:rplugin_tmpdir . "/Rdoc"
 
 " List of files to be deleted on VimLeave
-let s:del_list = [s:Rsource]
+let s:del_list = [s:Rsource_write]
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
 " starting R:
