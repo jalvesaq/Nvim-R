@@ -2593,7 +2593,7 @@ function RAction(rcmd, ...)
     elseif a:0 == 1 && a:1 != "v"
         let rkeyword = RGetKeyword(a:1)
     else
-        if a:rcmd == "help" || (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
+        if (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
             let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
         else
             let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
@@ -2601,6 +2601,14 @@ function RAction(rcmd, ...)
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
+            if rkeyword =~ "::"
+                let rhelplist = split(rkeyword, "::")
+                let rhelppkg = rhelplist[0]
+                let rhelptopic = rhelplist[1]
+            else
+                let rhelppkg = ""
+                let rhelptopic = rkeyword
+            endif
             let s:running_rhelp = 1
             if g:R_nvimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
@@ -2612,7 +2620,7 @@ function RAction(rcmd, ...)
                         let pkg = ""
                     endif
                 endif
-                call AskRDoc(rkeyword, "", 1)
+                call AskRDoc(rhelptopic, rhelppkg, 1)
             endif
             return
         endif
