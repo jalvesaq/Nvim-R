@@ -2593,11 +2593,7 @@ function RAction(rcmd, ...)
     elseif a:0 == 1 && a:1 != "v"
         let rkeyword = RGetKeyword(a:1)
     else
-        if a:rcmd == "viewdf"
-            let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
-        else
-            let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
-        endif
+        let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
@@ -2656,10 +2652,14 @@ function RAction(rcmd, ...)
                 echo "Wait..."
                 call delete(g:rplugin_tmpdir . "/Rinsert")
                 call AddForDeletion(g:rplugin_tmpdir . "/Rinsert")
-                if has("win32") && &encoding == "utf-8"
-                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '", fenc="UTF-8")')
+                if rkeyword =~ '::'
+                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf(' . rkeyword . ')')
                 else
-                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                    if has("win32") && &encoding == "utf-8"
+                        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '", fenc="UTF-8")')
+                    else
+                        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                    endif
                 endif
             endif
             return

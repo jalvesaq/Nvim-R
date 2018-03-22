@@ -114,25 +114,31 @@ nvim_capture_source_output <- function(s, o)
 
 nvim_viewdf <- function(oname, fenc = "")
 {
-    oname_split <- unlist(strsplit(oname, "$", fixed = TRUE))
-    oname_split <- unlist(strsplit(oname_split, "[[", fixed = TRUE))
-    oname_split <- unlist(strsplit(oname_split, "]]", fixed = TRUE))
-    ok <- try(o <- get(oname_split[[1]], envir = .GlobalEnv), silent = TRUE)
-    if(length(oname_split) > 1){
-        for (i in 2:length(oname_split)) {
-            oname_integer <- suppressWarnings(o <- as.integer(oname_split[[i]]))
-            if(is.na(oname_integer)){
-                ok <- try(o <- ok[[oname_split[[i]]]], silent = TRUE)
-            } else {
-                ok <- try(o <- ok[[oname_integer]], silent = TRUE)
+    if(is.data.frame(oname) || is.matrix(oname)){
+        # Only when the rkeyword includes "::"
+        o <- oname
+        oname <- sub("::", "_", deparse(substitute(oname)))
+    } else {
+        oname_split <- unlist(strsplit(oname, "$", fixed = TRUE))
+        oname_split <- unlist(strsplit(oname_split, "[[", fixed = TRUE))
+        oname_split <- unlist(strsplit(oname_split, "]]", fixed = TRUE))
+        ok <- try(o <- get(oname_split[[1]], envir = .GlobalEnv), silent = TRUE)
+        if(length(oname_split) > 1){
+            for (i in 2:length(oname_split)) {
+                oname_integer <- suppressWarnings(o <- as.integer(oname_split[[i]]))
+                if(is.na(oname_integer)){
+                    ok <- try(o <- ok[[oname_split[[i]]]], silent = TRUE)
+                } else {
+                    ok <- try(o <- ok[[oname_integer]], silent = TRUE)
+                }
             }
         }
-    }
-    if(inherits(ok, "try-error")){
-        .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
-           PACKAGE="nvimcom")
-        return(invisible(NULL))
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
     }
     if(is.data.frame(o) || is.matrix(o)){
         if(getOption("nvimcom.delim") == "\t"){
