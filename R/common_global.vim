@@ -2593,7 +2593,7 @@ function RAction(rcmd, ...)
     elseif a:0 == 1 && a:1 != "v"
         let rkeyword = RGetKeyword(a:1)
     else
-        if (a:rcmd == "args" && g:R_listmethods) || a:rcmd == "viewdf"
+        if a:rcmd == "viewdf"
             let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
         else
             let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
@@ -2630,10 +2630,10 @@ function RAction(rcmd, ...)
         endif
         let rfun = a:rcmd
         if a:rcmd == "args"
-            if g:R_listmethods == 1
+            if g:R_listmethods == 1 && rkeyword !~ '::'
                 call g:SendCmdToR('nvim.list.args("' . rkeyword . '")')
             else
-                call g:SendCmdToR('args("' . rkeyword . '")')
+                call g:SendCmdToR('args(' . rkeyword . ')')
             endif
             return
         endif
