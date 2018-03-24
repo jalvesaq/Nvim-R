@@ -663,6 +663,8 @@ function StartNClientServer(w)
             let g:rplugin_nvimcom_bin_dir = nvimcomdir[1] . '/nvimcom/bin'
         elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/x64/' . nvc)
             let g:rplugin_nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/x64'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/i386/' . nvc)
+            let g:rplugin_nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/i386'
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
             return
