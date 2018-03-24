@@ -2590,7 +2590,7 @@ function RAction(rcmd, ...)
         let rkeyword = RBrowserGetName(1, 0)
     elseif a:0 == 1 && a:1 == "v" && line("'<") == line("'>")
         let rkeyword = strpart(getline("'>"), col("'<") - 1, col("'>") - col("'<") + 1)
-    elseif a:0 == 1 && a:1 != "v"
+    elseif a:0 == 1 && a:1 != "v" && a:1 !~ '^,'
         let rkeyword = RGetKeyword(a:1)
     else
         let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
@@ -2679,7 +2679,15 @@ function RAction(rcmd, ...)
             return
         endif
 
-        let raction = rfun . "(" . rkeyword . ")"
+        if a:0 == 1 && a:1 =~ '^,'
+            let argmnts = a:1
+        elseif a:0 == 2 && a:2 =~ '^,'
+            let argmnts = a:2
+        else
+            let argmnts = ''
+        endif
+        let raction = rfun . '(' . rkeyword . argmnts . ')'
+        let g:TheRaction = raction
         call g:SendCmdToR(raction)
     endif
 endfunction

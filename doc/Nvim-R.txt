@@ -2241,6 +2241,12 @@ string `"v"`:
 In this case, the beginning and the end of the selection must be in the same
 line.
 
+If either a second or a third optional argument starts with a comma, it will
+be inserted as argument(s) to the RAction function. Examples:
+>
+   nmap <silent> <LocalLeader>h :call RAction('head', ', n = 10')<CR>
+   nmap <silent> <LocalLeader>t :call RAction('tail', ', n = 10, addrownums = FALSE')<CR>
+<
 If the command that you want to send does not require an R object as argument,
 you can create a shortcut to it by following the example:
 >
