@@ -146,7 +146,7 @@ nvim.primitive.args <- function(x)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
+nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE, spath = FALSE)
 {
     frm <- NA
     funcmeth <- NA
@@ -172,7 +172,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
     if(is.na(frm[1])){
         if(is.null(pkg)){
             deffun <- paste(funcname, ".default", sep = "")
-            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
+            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv" && !spath) {
                 funcname <- deffun
                 funcmeth <- deffun
             } else if(!existsFunction(funcname)) {
@@ -191,7 +191,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
                     ff <- get(funcname, pos = idx)
                 frm <- formals(ff)
             } else {
-                if(!isNamespaceLoaded(pkg))
+                if(!isNamespaceLoaded(pkg) && !spath)
                     loadNamespace(pkg)
                 ff <- getAnywhere(funcname)
                 idx <- grep(pkg, ff$where)
@@ -201,7 +201,7 @@ nvim.args <- function(funcname, txt, pkg = NULL, objclass, extrainfo = FALSE)
         }
     }
 
-    if(pkgname[1] == ".GlobalEnv")
+    if(pkgname[1] == ".GlobalEnv" || spath)
         extrainfo <- FALSE
 
     if(extrainfo && length(frm) > 0)

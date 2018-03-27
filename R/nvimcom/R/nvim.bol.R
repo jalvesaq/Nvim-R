@@ -29,7 +29,7 @@ nvim.grepl <- function(pattern, x) {
     }
 }
 
-nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
+nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = FALSE) {
     if(curlevel == 0){
         xx <- try(get(x, envir), silent = TRUE)
         if(inherits(xx, "try-error"))
@@ -87,12 +87,14 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         if(x.group == "function"){
             if(curlevel == 0){
                 if(nvim.grepl("GlobalEnv", printenv)){
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = ""), "\n", sep="")
+                    cat(x, "\x06function\x06function\x06", printenv, "\x06",
+                        nvim.args(x, txt = "", spath = spath), "\n", sep = "")
                 } else {
                     info <- ""
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06", nvim.args(x, txt = "", pkg = printenv), info, "\n", sep="")
+                    cat(x, "\x06function\x06function\x06", printenv, "\x06",
+                        nvim.args(x, txt = "", pkg = printenv, spath = spath), info, "\n", sep = "")
                 }
             } else {
                 # some libraries have functions as list elements
@@ -122,7 +124,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         curlevel <- curlevel + 1
         if(length(xx) > 0){
             for(k in obj.names){
-                nvim.omni.line(paste(x, "$", k, sep=""), envir, printenv, curlevel, maxlevel)
+                nvim.omni.line(paste(x, "$", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
             }
         }
     } else if(isS4(xx) && curlevel <= maxlevel){
@@ -130,7 +132,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         curlevel <- curlevel + 1
         if(length(xx) > 0){
             for(k in obj.names){
-                nvim.omni.line(paste(x, "@", k, sep=""), envir, printenv, curlevel, maxlevel)
+                nvim.omni.line(paste(x, "@", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
             }
         }
     }
@@ -279,15 +281,19 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg
 
     if(omnilist == ".GlobalEnv"){
         sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
-        obj.list <- objects(".GlobalEnv", all.names = allnames)
-        l <- length(obj.list)
-        maxlevel <- nchar(pattern) - nchar(gsub("@", "", gsub("\\$", "", pattern)))
-        pattern <- sub("\\$.*", "", pattern)
-        pattern <- sub("@.*", "", pattern)
-        if(l > 0)
-            for(obj in obj.list)
-                if(length(grep(paste0("^", pattern), obj)) > 0)
-                    nvim.omni.line(obj, ".GlobalEnv", ".GlobalEnv", 0, maxlevel)
+        for(env in search()){
+            if(grepl("^package:", env) == FALSE){
+                obj.list <- objects(env, all.names = allnames)
+                l <- length(obj.list)
+                maxlevel <- nchar(pattern) - nchar(gsub("@", "", gsub("\\$", "", pattern)))
+                pattern <- sub("\\$.*", "", pattern)
+                pattern <- sub("@.*", "", pattern)
+                if(l > 0)
+                    for(obj in obj.list)
+                        if(length(grep(paste0("^", pattern), obj)) > 0)
+                            nvim.omni.line(obj, env, env, 0, maxlevel, spath = TRUE)
+            }
+        }
         sink()
         writeLines(text = paste(obj.list, collapse = "\n"),
                    con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
