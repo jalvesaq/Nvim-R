@@ -3163,6 +3163,9 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let descr = substitute(descr, "\x91", "\xe2\x80\x98", "g")
                 let descr = substitute(descr, "\x92", "\xe2\x80\x99", "g")
             endif
+            if descr ==# 'Description: '
+                let descr = ''
+            endif
             if tmp[0] == "Not a function"
                 let usage =  ""
             else
