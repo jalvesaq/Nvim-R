@@ -2335,46 +2335,10 @@ function RLoadHTML(fullpath, browser)
         endif
     endif
 
-    if g:R_openhtml == 1
-        if has('nvim')
-            call jobstart([brwsr, a:fullpath], {'detach': 1})
-        else
-            call job_start([brwsr, a:fullpath])
-        endif
-        return
-    endif
-
-    " Get title from YAML header, html title or buffer name:
-    let winname = ''
-    let flines = getline(1, 30)
-    let ttline = match(flines, '^title\s*:')
-    if ttline != -1
-        let winname = substitute(flines[ttline], 'title\s*:\s*[\x22\x27]*\(.*\)[\x22\x27]*\s*', '\1', '')
+    if has('nvim')
+        call jobstart([brwsr, a:fullpath], {'detach': 1})
     else
-        let flines = readfile(a:fullpath)
-        let ttline = match(flines, '<title>.*</title>')
-        if ttline != -1
-            let winname = substitute(flines[ttline], '.*<title>\(.*\)</title>.*', '\1', '')
-        else
-        endif
-    endif
-    if winname == ''
-        let winname = expand("%:r")
-    endif
-    let winname = substitute(winname, '^\(................\).*', '\1', '')
-
-    let winname = substitute(winname, ' ', '\\ ', 'g')
-    let winnum = system('xdotool search --name ' . winname)
-    let g:rplugin_debug_info['RefreshHTML'] = [a:fullpath, a:browser, winname, winnum]
-    if winnum == ''
-        if has('nvim')
-            call jobstart([brwsr, a:fullpath], {'detach': 1})
-        else
-            call job_start([brwsr, a:fullpath])
-        endif
-    else
-        call system('xdotool search --name ' . winname . ' windowactivate --sync')
-        call system('xdotool search --name ' . winname . ' key --clearmodifiers ' . g:R_html_reload_key)
+        call job_start([brwsr, a:fullpath])
     endif
 endfunction
 
@@ -3645,6 +3609,7 @@ let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
 let g:R_source            = get(g:, "R_source",            "")
 let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
+let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
@@ -3675,19 +3640,9 @@ if g:R_complete != 1 && g:R_complete != 2
     call RWarningMsgInp("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
 endif
 
-if g:rplugin_is_darwin == 0 && !has('win32') && !has('win32unix') && executable('xdotool')
-    let g:R_openhtml = get(g:, "R_openhtml", 2)
-else
-    let g:R_openhtml = get(g:, "R_openhtml", 0)
-endif
-if g:R_openhtml == 2 && !executable('xdotool')
-    let g:R_openhtml = 0
-endif
-
 if g:rplugin_is_darwin
     let g:R_openpdf = get(g:, "R_openpdf", 1)
     let g:R_pdfviewer = "skim"
-    let g:R_html_reload_key = get(g:, 'R_html_reload_key', 'R')
 else
     let g:R_openpdf = get(g:, "R_openpdf", 2)
     if has("win32")
@@ -3695,7 +3650,6 @@ else
     else
         let g:R_pdfviewer = get(g:, "R_pdfviewer", "zathura")
     endif
-    let g:R_html_reload_key = get(g:, 'R_html_reload_key', 'F5')
 endif
 
 if !exists("g:r_indent_ess_comments")
@@ -4032,4 +3986,9 @@ else
         call RWarningMsgInp("Completion of function arguments are now done by omni completion.")
         return []
     endfunction
+endif
+
+" 2018-03-27: Delete this warning before releasing the next version
+if g:R_openhtml == 2
+    call RWarningMsgInp("Valid values of R_openhtml are only 0 and 1. The value 2 is no longer valid.")
 endif
