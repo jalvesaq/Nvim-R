@@ -87,7 +87,7 @@ function StartR_InBuffer()
         call UnsetRHome()
     endif
     let g:rplugin_R_bufname = bufname("%")
-    let g:rplugin_R_winnr = winnr()
+    let g:rplugin_R_winnr = win_getid()
     let s:R_width = 0
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
