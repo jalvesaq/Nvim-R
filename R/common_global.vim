@@ -789,6 +789,11 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.higlobfun = FALSE)']
     endif
+    if g:R_setwidth == 2
+        let start_options += ['options(nvimcom.setwidth = TRUE)']
+    else
+        let start_options += ['options(nvimcom.setwidth = FALSE)']
+    endif
     if g:R_nvimpager == "no"
         let start_options += ['options(nvimcom.nvimpager = FALSE)']
     else
@@ -3608,6 +3613,7 @@ let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)
 let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
 let g:R_source            = get(g:, "R_source",            "")
 let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
+let g:R_setwidth          = get(g:, "R_setwidth",           1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
