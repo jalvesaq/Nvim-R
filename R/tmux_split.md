@@ -11,9 +11,7 @@ becomes buggy. Anyway, if you do want to try it, you have to put in your
 |vimrc|:
 
 ```vim
-let R_in_buffer = 0
-let R_applescript = 0
-let R_tmux_split = 1
+let R_source = '/path/to/Nvim-R/R/tmux_split.vim'
 ```
 
 Then, start Tmux before starting Vim:

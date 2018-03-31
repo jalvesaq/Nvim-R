@@ -1,7 +1,15 @@
+if $TMUX == ''
+    finish
+endif
 
 if exists("*TmuxActivePane")
     finish
 endif
+
+let g:R_in_buffer = 0
+let g:R_applescript = 0
+let g:rplugin_tmux_split = 1
+let g:R_tmux_title = get(g:, 'R_tmux_title', 'NvimR')
 
 " Adapted from screen plugin:
 function TmuxActivePane()
@@ -14,7 +22,8 @@ function TmuxActivePane()
     endif
 endfunction
 
-function StartR_TmuxSplit(rcmd)
+" Replace StartR_ExternalTerm with a function that starts R in a Tmux split pane
+function! StartR_ExternalTerm(rcmd)
     let g:rplugin_editor_pane = $TMUX_PANE
     let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
@@ -24,6 +33,9 @@ function StartR_TmuxSplit(rcmd)
                 \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
     if $NVIM_IP_ADDRESS != ""
         call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
+    endif
+    if $R_LIBS_USER != ""
+        call extend(tmuxconf, ['set-environment R_LIBS_USER ' . $R_LIBS_USER ])
     endif
     if &t_Co == 256
         call extend(tmuxconf, ['set default-terminal "' . $TERM . '"'])
@@ -62,6 +74,13 @@ function StartR_TmuxSplit(rcmd)
         call system("tmux rename-window " . g:R_tmux_title)
     endif
     call WaitNvimcomStart()
+    " Environment variables persist across Tmux windows.
+    " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
+    " when R was not started by Neovim:
+    call system("tmux set-environment -u NVIMR_TMPDIR")
+    " Also unset R_DEFAULT_PACKAGES so that other R instances do not
+    " load nvimcom unnecessarily
+    call system("tmux set-environment -u R_DEFAULT_PACKAGES")
 endfunction
 
 function SendCmdToR_TmuxSplit(...)

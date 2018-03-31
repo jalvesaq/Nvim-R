@@ -28,9 +28,7 @@ unlet s:tmuxversion
 
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
-if g:R_tmux_split
-    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/tmux_split.vim"
-else
-    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/extern_term.vim"
+if !exists('g:R_source') || (exists('g:R_source') && g:R_source !~# 'tmux_split.vim')
+    exe 'source ' . substitute(expand('<sfile>:h:h'), ' ', '\ ', 'g') . '/R/extern_term.vim'
 endif
 

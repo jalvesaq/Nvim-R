@@ -702,6 +702,10 @@ endfunction
 function StartR(whatr)
     let s:wait_nvimcom = 1
 
+    if !g:R_in_buffer && !exists('g:rplugin_tmux_split')
+        let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
+    endif
+
     if !isdirectory(g:rplugin_tmpdir)
         call mkdir(g:rplugin_tmpdir, "p", 0700)
     endif
@@ -872,11 +876,7 @@ function FinishStartingR()
         let rcmd = g:rplugin_R . " " . args_str
     endif
 
-    if g:R_tmux_split
-        call StartR_TmuxSplit(rcmd)
-    else
-        call StartR_ExternalTerm(rcmd)
-    endif
+    call StartR_ExternalTerm(rcmd)
 endfunction
 
 " Send SIGINT to R
@@ -910,12 +910,8 @@ function CheckIfNvimcomIsRunning(...)
             let s:nvimcom_home = ""
             let g:rplugin_nvimcom_bin_dir = ""
             let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
-            if g:R_tmux_split
-                call RWarningMsgInp(msg)
-            else
-                call RWarningMsg(msg)
-                sleep 500m
-            endif
+            call RWarningMsg(msg)
+            sleep 500m
         endif
     endif
 endfunction
@@ -1030,14 +1026,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
     elseif g:R_applescript
         call foreground()
         sleep 200m
-    elseif g:R_tmux_split
-        " Environment variables persist across Tmux windows.
-        " Unset NVIMR_TMPDIR to avoid nvimcom loading its C library
-        " when R was not started by Neovim:
-        call system("tmux set-environment -u NVIMR_TMPDIR")
-        " Also unset R_DEFAULT_PACKAGES so that other R instances do not
-        " load nvimcom unnecessarily
-        call system("tmux set-environment -u R_DEFAULT_PACKAGES")
     else
         call delete(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
         call delete(g:rplugin_tmpdir . "/openR")
@@ -1910,7 +1898,9 @@ function ClearRInfo()
     let s:R_pid = 0
     let g:rplugin_nvimcom_port = 0
 
-    if g:R_tmux_split && g:R_tmux_title != "automatic" && g:R_tmux_title != ""
+    " Legacy support for running R in a Tmux split pane
+    if exists('g:rplugin_tmux_split') && exists('g:R_tmux_title') && g:rplugin_tmux_split
+                \ && g:R_tmux_title != 'automatic' && g:R_tmux_title != ''
         call system("tmux set automatic-rename on")
     endif
 
@@ -1951,7 +1941,7 @@ function RQuit(how)
 
     call g:SendCmdToR(qcmd)
 
-    if g:R_tmux_split && a:how == "save"
+    if exists('g:rplugin_tmux_split') || a:how == 'save'
         sleep 200m
     endif
 
@@ -2196,8 +2186,9 @@ function ShowRDoc(rkeyword)
         stopinsert
     endif
 
-    " If the help command was triggered in the R Console, jump to Vim pane
-    if g:R_tmux_split && !s:running_rhelp
+    " Legacy support for running R in a Tmux split pane.
+    " If the help command was triggered in the R Console, jump to Vim pane:
+    if exists('g:rplugin_tmux_split') && g:rplugin_tmux_split && !s:running_rhelp
         let slog = system("tmux select-pane -t " . g:rplugin_editor_pane)
         if v:shell_error
             call RWarningMsg(slog)
@@ -3588,7 +3579,6 @@ let g:R_csv_warn          = get(g:, "R_csv_warn",           1)
 let g:R_min_editor_width  = get(g:, "R_min_editor_width",  80)
 let g:R_rconsole_width    = get(g:, "R_rconsole_width",    80)
 let g:R_rconsole_height   = get(g:, "R_rconsole_height",   15)
-let g:R_tmux_title        = get(g:, "R_tmux_title",   "NvimR")
 let g:R_listmethods       = get(g:, "R_listmethods",        0)
 let g:R_specialplot       = get(g:, "R_specialplot",        0)
 let g:R_notmuxconf        = get(g:, "R_notmuxconf",         0)
@@ -3602,7 +3592,6 @@ let g:R_objbr_openlist    = get(g:, "R_objbr_openlist",     0)
 let g:R_objbr_allnames    = get(g:, "R_objbr_allnames",     0)
 let g:R_objbr_labelerr    = get(g:, "R_objbr_labelerr",     1)
 let g:R_applescript       = get(g:, "R_applescript",        0)
-let g:R_tmux_split        = get(g:, "R_tmux_split",         0)
 let g:R_esc_term          = get(g:, "R_esc_term",           1)
 let g:R_close_term        = get(g:, "R_close_term",         1)
 let g:R_wait              = get(g:, "R_wait",              60)
@@ -3611,7 +3600,6 @@ let g:R_show_args         = get(g:, "R_show_args",          1)
 let g:R_show_arg_help     = get(g:, "R_show_arg_help",      1)
 let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)
 let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
-let g:R_source            = get(g:, "R_source",            "")
 let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
 let g:R_setwidth          = get(g:, "R_setwidth",           1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
@@ -3727,14 +3715,6 @@ if g:rplugin_is_darwin
     endif
 else
     let g:R_applescript = 0
-endif
-
-if has("gui_running") || g:R_applescript || g:R_in_buffer || $TMUX == ""
-    let g:R_tmux_split = 0
-endif
-
-if !g:R_in_buffer && !g:R_tmux_split
-    let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 endif
 
 
@@ -3997,4 +3977,9 @@ endif
 " 2018-03-27: Delete this warning before releasing the next version
 if g:R_openhtml == 2
     call RWarningMsgInp("Valid values of R_openhtml are only 0 and 1. The value 2 is no longer valid.")
+endif
+
+" 2018-03-31
+if exists('g:R_tmux_split')
+    call RWarningMsg('The option R_tmux_split no longer exists. Please see https://github.com/jalvesaq/Nvim-R/blob/master/R/tmux_split.md')
 endif
