@@ -9,14 +9,15 @@ function SendCmdToR_Buffer(...)
         endif
 
         " Update the width, if necessary
-        if g:R_setwidth
+        if g:R_setwidth != 0 && g:R_setwidth != 2
             let rwnwdth = winwidth(g:rplugin_R_winnr)
             if rwnwdth != s:R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
                 let s:R_width = rwnwdth
+                let Rwidth = s:R_width + s:number_col
                 if has("win32")
-                    let cmd = "options(width=" . s:R_width. "); ". cmd
+                    let cmd = "options(width=" . Rwidth . "); ". cmd
                 else
-                    call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . s:R_width. ")")
+                    call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . Rwidth . ")")
                     sleep 10m
                 endif
             endif
@@ -86,6 +87,15 @@ function StartR_InBuffer()
     let g:rplugin_R_bufname = bufname("%")
     let g:rplugin_R_winnr = win_getid()
     let s:R_width = 0
+    if &number
+        if g:R_setwidth < 0 && g:R_setwidth > -17
+            let s:number_col = g:R_setwidth
+        else
+            let s:number_col = -6
+        endif
+    else
+        let s:number_col = 0
+    endif
     let b:objbrtitle = objbrttl
     let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term

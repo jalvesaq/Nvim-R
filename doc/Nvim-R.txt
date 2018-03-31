@@ -967,7 +967,7 @@ should put in your |vimrc|:
 >
    let R_OutDec = ','
 <
-On Unix systems, before sending a command to R Console, if the terminal width
+On Unix systems, BEFORE sending a command to R Console, if the terminal width
 has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
 where X is the new terminal width. You can set the value of R_setwidth to 0 to
 avoid the width being set. Example:
@@ -977,12 +977,36 @@ avoid the width being set. Example:
 On Windows, the command is sent to R Console because it would crash R if sent
 through nvimcom.
 
+If you have the option 'number' set in your |vimrc|, Nvim-R will calculate the
+number of columns available for R as the window width - 6. If you want a
+different adjustment, you should set `R_setwidth` as a negative value between
+-1 and -16. Example:
+>
+   let R_setwidth = -7
+<
+You can also set the value of `R_setwidth` to `2`. In this case, nvimcom will
+check the value of the environment variable `COLUMNS` AFTER each command is
+executed and if the environment variable is set, R's width option will be set
+accordingly. This is the most precise way of setting the option "width", but
+it has the disadvantage of setting it only after the command is executed. That
+is, the width will be outdated for the first command executed after a change
+in the number of columns of the R Console window.
+
 Tips:
 
   - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
     console orientation (vertical and horizontal). See |window-moving| for a
     complete description of commands.
 
+  - If you have set the option 'number' and want to disable it just for the
+    built-in terminal emulator, put in your |init.vim|:
+>
+    autocmd TermOpen * setlocal nonumber
+<
+    or in your |vimrc|:
+>
+    autocmd TerminalOpen * setlocal nonumber
+<
   - If you want to press `gz` in Normal mode to emulate the <C-a>z Tmux
     command (zoom Window), put the following in your |vimrc|:
 >
@@ -2792,7 +2816,7 @@ The contents of `reload_html` could be:
 <
 The above script requires that `xdotool` is installed, and it works with
 Firefox. If you prefer Google-Chrome, just replace `firefox` with
-`google-chrome`. Other browsers might require futher adjustments. The script
+`google-chrome`. Other browsers might require further adjustments. The script
 will not work on Mac OS X because both Firefox and Google-Chrome run on the
 native OS X environment, and the `xdotool` application can manipulate only
 applications running on the X Server.

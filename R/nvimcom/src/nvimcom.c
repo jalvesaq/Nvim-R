@@ -60,6 +60,8 @@ static char R_version[16];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
 static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ for the ncm-R plugin
 static int hifun = 0;      // Send message to Nvim-R to highlight GlobalEnv functions
+static int setwidth = 0;   // Set the option width after each command is executed
+static int oldcolwd = 0;   // Last set width
 
 #ifdef WIN32
 static int r_is_busy = 1;
@@ -855,6 +857,26 @@ Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
         needsfillmsg = 0;
         nvimcom_nvimclient("FillRLibList()", edsrvr);
     }
+    if(setwidth && getenv("COLUMNS")){
+        int columns = atoi(getenv("COLUMNS"));
+        if(columns > 0 && columns != oldcolwd){
+            oldcolwd = columns;
+
+            /* From R-exts: Evaluating R expressions from C */
+            SEXP s, t;
+            PROTECT(t = s = allocList(2));
+            SET_TYPEOF(s, LANGSXP);
+            SETCAR(t, install("options"));
+            t = CDR(t);
+            SETCAR(t, ScalarInteger((int)columns));
+            SET_TAG(t, install("width"));
+            eval(s, R_GlobalEnv);
+            UNPROTECT(1);
+
+            if(verbose > 2)
+                Rprintf("nvimcom: width = %d columns\n", columns);
+        }
+    }
     return(TRUE);
 }
 
@@ -1264,7 +1286,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, char **pth, char **vcv, char **srchls, char **rvs)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **srchls, char **rvs)
 {
     verbose = *vrb;
     opendf = *odf;
@@ -1272,6 +1294,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, c
     allnames = *anm;
     labelerr = *lbe;
     hifun = *hif;
+    setwidth = *swd;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);
@@ -1332,7 +1355,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, c
         ofd = fds[1];
         ih = addInputHandler(R_InputHandlers, ifd, &nvimcom_uih, 32);
     } else {
-        REprintf("setwidth error: pipe != 0\n");
+        REprintf("nvimcom error: pipe != 0\n");
         ih = NULL;
     }
 #endif

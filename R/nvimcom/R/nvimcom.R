@@ -28,6 +28,8 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.allnames = FALSE)
         options(nvimcom.texerrs = TRUE)
         options(nvimcom.labelerr = TRUE)
+        options(nvimcom.higlobfun = TRUE)
+        options(nvimcom.setwidth = TRUE)
         options(nvimcom.nvimpager = TRUE)
         options(nvimcom.delim = "\t")
     }
@@ -52,6 +54,7 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.labelerr")),
            as.integer(getOption("nvimcom.higlobfun")),
+           as.integer(getOption("nvimcom.setwidth")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
            paste0(paste(.packages(), collapse = " "), " Dec", getOption("OutDec")),
