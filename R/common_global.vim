@@ -3569,7 +3569,6 @@ let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
-let g:R_parenblock        = get(g:, "R_parenblock",         1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
@@ -3615,15 +3614,26 @@ endif
 if !has("nvim") && !has("patch-8.0.0910")
     let g:R_in_buffer = 0
 endif
-if g:R_in_buffer
-    let g:R_nvimpager = get(g:, "R_nvimpager", "vertical")
-    let g:R_setwidth  = get(g:, "R_setwidth",           1)
+
+if has('win32') && !g:R_in_buffer
+    " Sending multiple lines at once to Rgui on Windows does not work.
+    let g:R_parenblock = get(g:, 'R_parenblock',         0)
 else
-    let g:R_nvimpager = get(g:, "R_nvimpager", "tab")
-    if !has('win32')
-        let g:R_setwidth  = get(g:, "R_setwidth",  2)
+    let g:R_parenblock = get(g:, 'R_parenblock',         1)
+endif
+
+if g:R_in_buffer
+    let g:R_nvimpager = get(g:, 'R_nvimpager', 'vertical')
+    let g:R_setwidth  = get(g:, 'R_setwidth',           1)
+else
+    let g:R_nvimpager = get(g:, 'R_nvimpager', 'tab')
+    if has('win32')
+        let g:R_setwidth  = get(g:, 'R_setwidth',  0)
+    else
+        let g:R_setwidth   = get(g:, 'R_setwidth', 2)
     endif
 endif
+
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
 let g:R_source_args      = get(g:, "R_source_args", "print.eval=TRUE")
 let g:R_user_maps_only   = get(g:, "R_user_maps_only",              0)

@@ -79,6 +79,7 @@ function StartR_ExternalTerm(rcmd)
             let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
                         \ {'err_cb': 'ROnJobStderr', 'exit_cb': 'ROnJobExit'})
         endif
+        call AddForDeletion(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')
