@@ -3601,7 +3601,6 @@ let g:R_show_arg_help     = get(g:, "R_show_arg_help",      1)
 let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)
 let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
 let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
-let g:R_setwidth          = get(g:, "R_setwidth",           1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
@@ -3618,8 +3617,12 @@ if !has("nvim") && !has("patch-8.0.0910")
 endif
 if g:R_in_buffer
     let g:R_nvimpager = get(g:, "R_nvimpager", "vertical")
+    let g:R_setwidth  = get(g:, "R_setwidth",           1)
 else
     let g:R_nvimpager = get(g:, "R_nvimpager", "tab")
+    if !has('win32')
+        let g:R_setwidth  = get(g:, "R_setwidth",  2)
+    endif
 endif
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
 let g:R_source_args      = get(g:, "R_source_args", "print.eval=TRUE")
