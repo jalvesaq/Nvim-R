@@ -793,7 +793,7 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.higlobfun = FALSE)']
     endif
-    if g:R_setwidth == 2
+    if exists('g:R_setwidth') && g:R_setwidth == 2
         let start_options += ['options(nvimcom.setwidth = TRUE)']
     else
         let start_options += ['options(nvimcom.setwidth = FALSE)']
@@ -3624,14 +3624,8 @@ endif
 
 if g:R_in_buffer
     let g:R_nvimpager = get(g:, 'R_nvimpager', 'vertical')
-    let g:R_setwidth  = get(g:, 'R_setwidth',           1)
 else
     let g:R_nvimpager = get(g:, 'R_nvimpager', 'tab')
-    if has('win32')
-        let g:R_setwidth  = get(g:, 'R_setwidth',  0)
-    else
-        let g:R_setwidth   = get(g:, 'R_setwidth', 2)
-    endif
 endif
 
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
@@ -3908,7 +3902,7 @@ if g:R_applescript
     exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/osx.vim"
 endif
 
-if !has("win32") && !g:R_applescript && !g:R_in_buffer
+if (exists('g:R_source') && g:R_source =~# 'tmux_split.vim') || (!has("win32") && !g:R_applescript && !g:R_in_buffer)
     exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/tmux.vim"
 endif
 
