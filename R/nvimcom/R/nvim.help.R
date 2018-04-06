@@ -42,11 +42,15 @@ nvim.help <- function(topic, w, firstobj, package)
     # try devtools first (if loaded)
     if ("devtools" %in% loadedNamespaces()) {
         if (missing(package)) {
-            tryCatch(pkgload::dev_help(topic),
-                     error = function(e) .C("nvimcom_msg_to_nvim",
-                                            "RWarningMsg('Unable to get dev documentation.')",
-                                            PACKAGE = "nvimcom"))
-            return(invisible(NULL))
+            hasfun <- FALSE
+            try(hasfun <- is.function(pkgload::dev_help), silent = TRUE)
+            if(hasfun){
+                tryCatch(pkgload::dev_help(topic),
+                         error = function(e) .C("nvimcom_msg_to_nvim",
+                                                "RWarningMsg('Unable to get dev documentation.')",
+                                                PACKAGE = "nvimcom"))
+                return(invisible(NULL))
+            }
         } else {
             if (package %in% devtools::dev_packages()) {
                 ret <- try(devtools::dev_help(topic), silent = TRUE)
