@@ -46,10 +46,10 @@ nvim.help <- function(topic, w, firstobj, package)
             try(hasfun <- is.function(pkgload::dev_help), silent = TRUE)
             if(hasfun){
                 tryCatch(pkgload::dev_help(topic),
-                         error = function(e) .C("nvimcom_msg_to_nvim",
-                                                "RWarningMsg('Unable to get dev documentation.')",
+                         error = function(e) e,
+                         finally = function(e) .C("nvimcom_msg_to_nvim",
+                                                "RWarningMsg('Unable to get dev documentation. Attempting to get installed documentation')",
                                                 PACKAGE = "nvimcom"))
-                return(invisible(NULL))
             }
         } else {
             if (package %in% devtools::dev_packages()) {
