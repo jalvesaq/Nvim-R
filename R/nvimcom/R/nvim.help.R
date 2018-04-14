@@ -51,19 +51,19 @@ nvim.help <- function(topic, w, firstobj, package)
 
         if (!inherits(ret, "try-error")) {
             return(invisible(NULL))
-        }
-        if (!missing(package) && package %in% devtools::dev_packages()) {
+        } else if(!missing(package) && package %in% devtools::dev_packages()) {
             warn(ret)
             return(invisible(NULL))
         }
-    } else if("pkgload" %in% loadedNamespaces()) {
+    } 
+
+    if("pkgload" %in% loadedNamespaces()) {
         ret <- try(pkgload::dev_help(topic), silent = TRUE)
 
         if(!inherits(ret, "try-error")) {
             suppressMessages(print(ret))
             return(invisible(NULL))
-        }
-        if (!missing(package) && pkgload::is_dev_package(package)) {
+        } else if(!missing(package) && pkgload::is_dev_package(package)) {
             warn(ret)
             return(invisible(NULL))
         }
