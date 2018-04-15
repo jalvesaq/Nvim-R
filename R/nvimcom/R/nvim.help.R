@@ -46,17 +46,6 @@ nvim.help <- function(topic, w, firstobj, package)
            PACKAGE = "nvimcom")
     }
 
-    if("devtools" %in% loadedNamespaces()) {
-        ret <- suppressMessages(try(devtools::dev_help(topic), silent = TRUE))
-
-        if (!inherits(ret, "try-error")) {
-            return(invisible(NULL))
-        } else if(!missing(package) && package %in% devtools::dev_packages()) {
-            warn(ret)
-            return(invisible(NULL))
-        }
-    } 
-
     if("pkgload" %in% loadedNamespaces()) {
         ret <- try(pkgload::dev_help(topic), silent = TRUE)
 
@@ -68,6 +57,17 @@ nvim.help <- function(topic, w, firstobj, package)
             return(invisible(NULL))
         }
     }
+
+    if("devtools" %in% loadedNamespaces()) {
+        ret <- suppressMessages(try(devtools::dev_help(topic), silent = TRUE))
+
+        if (!inherits(ret, "try-error")) {
+            return(invisible(NULL))
+        } else if(!missing(package) && package %in% devtools::dev_packages()) {
+            warn(ret)
+            return(invisible(NULL))
+        }
+    } 
 
     if(missing(package))
         h <- utils::help(topic, help_type = "text")
