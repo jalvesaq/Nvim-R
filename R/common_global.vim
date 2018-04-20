@@ -1182,6 +1182,10 @@ endfunction
 
 function SendLineToRAndInsertOutput()
     let lin = getline(".")
+    let cleanl = substitute(lin, '".\{-}"', '', 'g')
+    if cleanl =~ ';'
+        call RWarningMsg('`print(line)` works only if `line` is a single command')
+    endif
     call RInsert("print(" . lin . ")", "comment")
 endfunction
 
