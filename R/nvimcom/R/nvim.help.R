@@ -39,29 +39,35 @@ nvim.help <- function(topic, w, firstobj, package)
     on.exit(options(pager = oldpager), add = TRUE)
     options(pager = nvim.hmsg)
 
-    # try devtools first (if loaded)
-    if ("devtools" %in% loadedNamespaces()) {
-        if (missing(package)) {
-            hasfun <- FALSE
-            try(hasfun <- is.function(pkgload::dev_help), silent = TRUE)
-            if(hasfun){
-                tryCatch(pkgload::dev_help(topic),
-                         error = function(e) e,
-                         finally = function(e) .C("nvimcom_msg_to_nvim",
-                                                "RWarningMsg('Unable to get dev documentation. Attempting to get installed documentation')",
-                                                PACKAGE = "nvimcom"))
-            }
-        } else {
-            if (package %in% devtools::dev_packages()) {
-                ret <- try(devtools::dev_help(topic), silent = TRUE)
-                if (inherits(ret, "try-error"))
-                    .C("nvimcom_msg_to_nvim",
-                       paste0("RWarningMsg('", as.character(ret), "')"),
-                       PACKAGE = "nvimcom")
-                return(invisible(NULL))
-            }
+    warn <- function(msg)
+    {
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('", as.character(msg), "')"),
+           PACKAGE = "nvimcom")
+    }
+
+    if("pkgload" %in% loadedNamespaces()) {
+        ret <- try(pkgload::dev_help(topic), silent = TRUE)
+
+        if(!inherits(ret, "try-error")) {
+            suppressMessages(print(ret))
+            return(invisible(NULL))
+        } else if(!missing(package) && pkgload::is_dev_package(package)) {
+            warn(ret)
+            return(invisible(NULL))
         }
     }
+
+    if("devtools" %in% loadedNamespaces()) {
+        ret <- suppressMessages(try(devtools::dev_help(topic), silent = TRUE))
+
+        if (!inherits(ret, "try-error")) {
+            return(invisible(NULL))
+        } else if(!missing(package) && package %in% devtools::dev_packages()) {
+            warn(ret)
+            return(invisible(NULL))
+        }
+    } 
 
     if(missing(package))
         h <- utils::help(topic, help_type = "text")
