@@ -1186,7 +1186,8 @@ function SendLineToRAndInsertOutput()
     if cleanl =~ ';'
         call RWarningMsg('`print(line)` works only if `line` is a single command')
     endif
-    call RInsert("print(" . lin . ")", "comment")
+    let cleanl = substitute(lin, '\s*#.*', "", "")
+    call RInsert("print(" . cleanl . ")", "comment")
 endfunction
 
 function FinishRInsert(type)
