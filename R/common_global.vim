@@ -1891,10 +1891,6 @@ function RSetWD()
 endfunction
 
 function ClearRInfo()
-    if exists("g:rplugin_rconsole_pane")
-        unlet g:rplugin_rconsole_pane
-    endif
-
     call delete(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
@@ -2977,18 +2973,29 @@ function RVimLeave()
     endif
 endfunction
 
-let s:globfunlist = []
 let s:nglobfun = 0
 function CheckRGlobalEnv()
+    if g:R_hi_fun_globenv == 0
+        return
+    endif
     let s:globalenv_lines = readfile(g:rplugin_tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
     let funlist = filter(copy(s:globalenv_lines), 'v:val =~# "\x06function\x06function\x06"')
-    call map(funlist, 'substitute(v:val, "\x06.*", "", "")')
-    if g:R_hi_fun_globenv == 1 && len(funlist)
-        " Simply highlight new functions
+
+    if g:R_hi_fun_globenv == 2 && (s:nglobfun || len(funlist))
+        " Completely redo the syntax highlight of .GlobalEnv functions
+        syntax clear rGlobEnvFun
+        let s:nglobfun = len(funlist)
+    endif
+
+    if len(funlist)
+        " Highlight functions that were not highlighted yet
+        call map(funlist, 'substitute(v:val, "\x06.*", "", "")')
+        let hifunlist = filter(split(execute("syntax"), "\n"), 'v:val =~# "rGlobEnvFun"')
+        let hifunlist = map(hifunlist, 'substitute(v:val, ".* ", "", "")')
         for globf in funlist
             let found = 0
-            for hifun in s:globfunlist
-                if globf ==# hifun
+            for hf in hifunlist
+                if globf ==# hf
                     let found = 1
                     break
                 endif
@@ -2999,21 +3006,9 @@ function CheckRGlobalEnv()
                 else
                     exe 'syntax match rGlobEnvFun /\<' . globf . '\s*\ze(/'
                 endif
-                let s:globfunlist += [globf]
-            endif
-        endfor
-    elseif g:R_hi_fun_globenv == 2 && (s:nglobfun || len(funlist))
-        " Completely redo the syntax highlight of .GlobalEnv functions
-        syntax clear rGlobEnvFun
-        for globf in funlist
-            if !exists('g:R_hi_fun_paren') || g:R_hi_fun_paren == 0
-                exe 'syntax keyword rGlobEnvFun ' . globf
-            else
-                exe 'syntax match rGlobEnvFun /\<' . globf . '\s*\ze(/'
             endif
         endfor
     endif
-    let s:nglobfun = len(funlist)
 endfunction
 
 function FinishBuildROmniList()

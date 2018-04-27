@@ -169,6 +169,7 @@ function FillRLibList()
         redraw
     endif
     let b:rplugin_new_libs = s:new_libs
+    call CheckRGlobalEnv()
 endfunction
 
 
