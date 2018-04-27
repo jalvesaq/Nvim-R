@@ -1,5 +1,7 @@
 " This file contains code used only when R run in a Neovim buffer
 
+let g:R_auto_scroll = get(g:, 'R_auto_scroll', 0)
+
 function SendCmdToR_Buffer(...)
     if g:rplugin_jobs["R"]
         if g:R_clear_line
@@ -21,6 +23,17 @@ function SendCmdToR_Buffer(...)
                     sleep 10m
                 endif
                 " Scroll issue in Neovim after R Console window is resized...
+            endif
+        endif
+
+        if g:R_auto_scroll && cmd !~ '^quit('
+            let isnormal = mode() ==# 'n'
+            let curwin = winnr()
+            exe 'sb ' . g:rplugin_R_bufname
+            call cursor('$', 1)
+            exe curwin . 'wincmd w'
+            if isnormal
+                stopinsert
             endif
         endif
 
