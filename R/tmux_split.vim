@@ -62,7 +62,7 @@ function! StartR_ExternalTerm(rcmd)
         call RWarningMsg(rlog)
         return
     endif
-    let g:rplugin_rconsole_pane = TmuxActivePane()
+    let s:rplugin_rconsole_pane = TmuxActivePane()
     let rlog = system("tmux select-pane -t " . g:rplugin_editor_pane)
     if v:shell_error
         call RWarningMsg(rlog)
@@ -90,18 +90,18 @@ function SendCmdToR_TmuxSplit(...)
         let cmd = a:1
     endif
 
-    if !exists("g:rplugin_rconsole_pane")
+    if !exists("s:rplugin_rconsole_pane")
         " Should never happen
-        call RWarningMsg("Missing internal variable: g:rplugin_rconsole_pane")
+        call RWarningMsg("Missing internal variable: s:rplugin_rconsole_pane")
     endif
     let str = substitute(cmd, "'", "'\\\\''", "g")
     if str =~ '^-'
         let str = ' ' . str
     endif
     if a:0 == 2 && a:2 == 0
-        let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
+        let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . s:rplugin_rconsole_pane
     else
-        let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin_rconsole_pane
+        let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . s:rplugin_rconsole_pane
     endif
     let rlog = system(scmd)
     if v:shell_error
