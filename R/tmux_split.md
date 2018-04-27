@@ -1,18 +1,31 @@
 # Integration with Tmux
 
 Before Neovim's built-in terminal emulator was developed, the best way of
-running R was inside a Tmux session. Although I did not remove the code to run
-R in a Tmux pane, this possibility is not listed in |Nvim-R-options| section
-because it requires users to know how to configure and use Tmux.
+running R was inside a Tmux session. It is still possible to run R in a Tmux
+split pane, as explained in this section, but I no longer use this feature and
+it is no longer supported. This means that I will not add new features to Tmux
+split and will not test if it still works after changes are introduced in
+other parts of the plugin. However, I will drop the integration in the future
+only if it becomes too buggy. Currently, the code is working, but if someone
+wants to maintain it, then, the steps are:
 
-It is still possible to run R in a Tmux split pane, as explained in this
-section, but this feature is no longer supported and I will remove it if it
-becomes buggy. Anyway, if you do want to try it, you have to put in your
-|vimrc|:
+  - Create a new repository.
+
+  - Copy both tmux_split.vim and tmux_split.md (renamed as README.md) to the
+    new repository.
+
+  - Tell me the link to the repository, so I can add the link to the "R_source"
+    section of the Nvim-R documentation.
+
+Currently, if you do want to try it, you should either use this development
+version of Nvim-R or download `tmux_split.vim` from
+<https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/R/tmux_split.vim>
+and, then, put in your vimrc:
 
 ```vim
-let R_source = '/path/to/Nvim-R/R/tmux_split.vim'
+let R_source = '/path/to/tmux_split.vim'
 ```
+
 
 Then, start Tmux before starting Vim:
 
@@ -27,6 +40,8 @@ one for Vim and the other for Tmux. Then, it's useful to know some Tmux
 commands. After you finished editing the file, you have to type `exit` to quit
 the Tmux session.
 
+Note: the old way of enabling Tmux split by setting the value of
+`R_tmux_split` no longer works.
 
 ## Tmux configuration
 
@@ -150,7 +165,7 @@ character, it will not be passed to applications running under Tmux. To send
 
 You do not need to copy code from Vim to R because you can use the plugin's
 shortcuts to send the code. For pasting the output of R commands into Vim's
-buffer, you can use the command :|Rinsert|. If you want to copy text from an
+buffer, you can use the command `:Rinsert`. If you want to copy text from an
 application running inside the Tmux to another application also running in
 Tmux, as explained in the previous subsection, you can enter Tmux copy/scroll
 mode, select the text, copy it, switch to the other application pane and,

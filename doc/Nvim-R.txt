@@ -42,7 +42,7 @@ to deal with. Cryptic error message are bugs... Please report them at:
     https://github.com/jalvesaq/Nvim-R/issues
 
 Patches and git pull requests are welcome. If you want a feature that only few
-people might be interested in, you can write a script to be sourced by Nvim-R 
+people might be interested in, you can write a script to be sourced by Nvim-R
 (see |R_source|).
 
 
@@ -268,6 +268,9 @@ started by Nvim-R, as in the example below:
 Finally, run the command `:RDebugInfo` after <LocalLeader>rf and check the
 path where nvimcom was installed.
 
+On Windows, nvimcom compilation will fail if your `.Rprofile` outputs anything
+during R Startup.
+
 
 ------------------------------------------------------------------------------
 3.4. Optional steps~
@@ -447,26 +450,26 @@ Please see |Nvim-R-key-bindings| to learn how to customize the key bindings
 without editing the plugin directly.
 
 The plugin commands that send code to R Console are the most commonly used. If
-the code to be sent to R has a single line it is sent directly to R Console. 
-If it has more than one line (a selection of lines, a block of lines between 
-two marks, a paragraph etc) the lines are written to a file and the plugin 
-sends to R the command to source the file. To send to R Console the line 
-currently under the cursor you should type <LocalLeader>d. If you want to see 
-what lines are being sourced when sending a selection of lines, you can use 
+the code to be sent to R has a single line it is sent directly to R Console.
+If it has more than one line (a selection of lines, a block of lines between
+two marks, a paragraph etc) the lines are written to a file and the plugin
+sends to R the command to source the file. To send to R Console the line
+currently under the cursor you should type <LocalLeader>d. If you want to see
+what lines are being sourced when sending a selection of lines, you can use
 either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
 
 You can also use the command `:RSend` to type and, then, send a line of code
 to R. If you use this command frequently, you may consider creating a map for
 it in your |vimrc|. For example:
 >
-   nmap <LocalLeader>: :RSend 
+   nmap <LocalLeader>: :RSend
 <
 Observe that there is an empty space after `:RSend`, so you do not have to
 type it.
 
 The command <LocalLeader>o runs in the background the R command `print(line)`,
-where `line` is the line under cursor, and adds the output as commented lines
-to the source code.
+where `line` is the line under the cursor, and adds the output as commented
+lines to the source code.
 
 If the cursor is over the header of an R chunk with the `child` option (from
 Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
@@ -931,16 +934,19 @@ of
 
 By default, R runs in a Vim/Neovim buffer created with the command |:term|,
 and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
-Nvim-R sets the option "editor" to a function that makes the object to be
-edited in a new tab when `R_esc_term` = 1 (the default value).
+In Terminal mode, What you type is passed directly to R while in Normal mode
+Vim's navigation commands work as usual (see |motion.txt|).
 
-If you want to use `vi`, `vim` or `nvim` in Neovim's terminal, put in your
-|vimrc|:
+If you need the <Esc> key in R, for example if you want to use `vi`, `vim` or
+`nvim` within R Console, put in your |vimrc|:
 >
    let R_esc_term = 0
 <
 Then, you will have to press the default <C-\><C-N> to go from Terminal to
 Normal mode.
+
+Nvim-R sets the option "editor" to a function that makes the object to be
+edited in a new tab when `R_esc_term` = 1 (the default value).
 
 Neovim does not close its built-in terminal emulator when the application
 running in it quits, but Nvim-R does close it for you. If you rather prefer
@@ -948,6 +954,16 @@ that the terminal remains open after R quits, put in your |vimrc|:
 >
    let R_close_term = 0
 >
+Neovim stops automatically scrolling the R Console if you move the cursor to
+any line that is not the last one. This emulates the behavior of other
+terminal emulator, but if you do not like this behavior, put in your
+|init.vim|:
+>
+   let R_auto_scroll = 1
+<
+Then, Nvim-R will enter the R Console and move the cursor to its last line
+before sending commands to it.
+
 You may either use the package colorout (Unix only) to colorize R output or
 let Neovim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
@@ -986,7 +1002,7 @@ different adjustment, you should set `R_setwidth` as a negative value between
 <
 You can also set the value of `R_setwidth` to `2`. In this case, nvimcom will
 check the value of the environment variable `COLUMNS` AFTER each command is
-executed and if the environment variable is set, R's width option will be set
+executed and if the environment variable exists, R's width option will be set
 accordingly. This is the most precise way of setting the option "width", but
 it has the disadvantage of setting it only after the command is executed. That
 is, the width will be outdated for the first command executed after a change
@@ -1552,12 +1568,11 @@ lines one by one, put in your |vimrc|:
 >
    let R_parenblock = 0
 <
-Bracketed paste mode will bracket R code in special escape sequences 
-when it is being sent to R so that R can tell the differences between
-stuff that you type directly to the console and stuff that you send. It
-is particularly useful when you are using a version of R which is compiled 
-against readline 7.0+ or when rice console is used. To enable it, put in 
-your |vimrc|:
+Bracketed paste mode will bracket R code in special escape sequences when it
+is being sent to R so that R can tell the differences between stuff that you
+type directly to the console and stuff that you send. It is particularly
+useful when you are using a version of R which is compiled against readline
+7.0+ or when rice console is used. To enable it, put in your |vimrc|:
 >
    let R_bracketed_paste = 1
 <
@@ -2321,7 +2336,6 @@ R/sumatra.vim
 R/synctex_evince_backward.py
 R/synctex_evince_forward.py
 R/tmux.vim
-R/tmux_split.vim
 R/vimbuffer.vim
 R/vimrcom.vim
 R/windows.vim
@@ -2846,7 +2860,7 @@ R saves temporary files in the `/tmp` directory of the machine where it is
 running. To make the communication between local Vim and remote R possible,
 each application have to know the IP addres of the other, and some remote
 directories must be mounted locally. Here is an example of how to achieve this
-goal.
+goal (tested on April, 2017).
 
    1. Setup the remote machine to accept ssh login from the local machine
       without password (search the Internet to discover how to do it).
@@ -2920,12 +2934,13 @@ goal.
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-03-15)
+0.9.11.1 (2018-04-27)
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
- * New option: R_hi_fun_globenv
+ * New options: R_hi_fun_globenv, R_auto_scroll.
  * Accept prefix "terminal:" in `R_csv_app`.
+ * Remove option R_tmux_split.
 
 0.9.11 (2018-01-29)
 
