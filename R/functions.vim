@@ -1,5 +1,16 @@
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Support for rGlobEnvFun
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" File types that embed R, such as Rnoweb, require at least one keyword
+" defined immediately
+syn keyword rGlobEnvFun ThisIsADummyGlobEnvFunKeyword
+hi def link rGlobEnvFun  Function
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Only source this once
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if exists("*RmFromRLibList")
     if len(s:lists_to_load) > 0
         for s:lib in s:lists_to_load
