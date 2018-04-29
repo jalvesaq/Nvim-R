@@ -1042,10 +1042,10 @@ function StartObjBrowser()
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
     if bufloaded(b:objbrtitle)
-        let thiswn = winnr()
+        let curwin = win_getid()
         exe "sb " . b:objbrtitle
         quit
-        exe thiswn . 'wincmd w'
+        call win_gotoid(curwin)
     else
         " Copy the values of some local variables that will be inherited
         let g:tmp_objbrtitle = b:objbrtitle
