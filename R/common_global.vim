@@ -1038,11 +1038,14 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
 endfunction
 
 function StartObjBrowser()
-    " Either load or reload the Object Browser
+    " Either open or close the Object Browser
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
     if bufloaded(b:objbrtitle)
+        let thiswn = winnr()
         exe "sb " . b:objbrtitle
+        quit
+        exe thiswn . 'wincmd w'
     else
         " Copy the values of some local variables that will be inherited
         let g:tmp_objbrtitle = b:objbrtitle
@@ -1085,6 +1088,7 @@ function StartObjBrowser()
         unlet g:tmp_curbufname
         call SendToNvimcom("\002" . g:rplugin_myport)
     endif
+    exe "set switchbuf=" . savesb
 endfunction
 
 " Open an Object Browser window
@@ -2978,6 +2982,9 @@ function CheckRGlobalEnv()
     if g:R_hi_fun_globenv == 0
         return
     endif
+    if !filereadable(g:rplugin_tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
+        return
+    endif
     let s:globalenv_lines = readfile(g:rplugin_tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
     let funlist = filter(copy(s:globalenv_lines), 'v:val =~# "\x06function\x06function\x06"')
 
@@ -3678,11 +3685,8 @@ else
     let g:R_arrange_windows = get(g:, "R_arrange_windows", 0)
 endif
 
-if g:R_hi_fun == 0
+if g:R_hi_fun == 0 || (exists("g:r_syntax_fun_pattern") && g:r_syntax_fun_pattern == 1)
     let g:R_hi_fun_globenv = 0
-endif
-if g:R_hi_fun_globenv && len(filter(split(execute('highlight', 'silent'), '\n'), 'v:val =~# "rGlobEnvFun"')) == 0
-    hi link rGlobEnvFun rFunction
 endif
 
 " Look for invalid options

@@ -378,7 +378,7 @@ Send
 Command
   . List space                                         \rl
   . Clear console                                      \rr
-  . Clear all                                          \rm
+  . Remove objects and clear console                   \rm
   --------------------------------------------------------
   . Print (cur)                                        \rp
   . Names (cur)                                        \rn
@@ -436,7 +436,7 @@ Edit
 -----------------------------------------------------------
 
 Object Browser
-  . Show/Update                                        \ro
+  . Open/Close                                         \ro
   . Expand (all lists)                                 \r=
   . Collapse (all lists)                               \r-
   . Toggle (cur)                                     Enter
@@ -657,10 +657,10 @@ manually delete them.
 ------------------------------------------------------------------------------
 4.4. The Object Browser~
 
-You have to use <LocalLeader>ro to start the Object Browser. The Object Browser
-has two views: .GlobalEnv and Libraries. If you press <Enter> on the first
-line of the Object Browser it will toggle the view between the objects in
-.GlobalEnv and the currently loaded libraries.
+You have to use <LocalLeader>ro to either open or close the Object Browser.
+The Object Browser has two views: .GlobalEnv and Libraries. If you press
+<Enter> on the first line of the Object Browser it will toggle the view
+between the objects in .GlobalEnv and the currently loaded libraries.
 
 In the .GlobalEnv view, if an object has the attribute "label", it will also
 be displayed. For instance, the code below would make the Object Browser
@@ -2941,6 +2941,7 @@ goal (tested on April, 2017).
  * New options: R_hi_fun_globenv, R_auto_scroll.
  * Accept prefix "terminal:" in `R_csv_app`.
  * Remove option R_tmux_split.
+ * Change: if the Object Browser is already open, \ro will close it.
 
 0.9.11 (2018-01-29)
 

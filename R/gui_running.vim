@@ -46,7 +46,7 @@ function RCreateMenuItem(type, label, plug, combo, target)
 endfunction
 
 function RBrowserMenu()
-    call RCreateMenuItem("nvi", 'Object\ browser.Show/Update', '<Plug>RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
+    call RCreateMenuItem("nvi", 'Object\ browser.Open/Close', '<Plug>RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
     call RCreateMenuItem("nvi", 'Object\ browser.Expand\ (all\ lists)', '<Plug>ROpenLists', 'r=', ':call RBrOpenCloseLs(1)')
     call RCreateMenuItem("nvi", 'Object\ browser.Collapse\ (all\ lists)', '<Plug>RCloseLists', 'r-', ':call RBrOpenCloseLs(0)')
     if &filetype == "rbrowser"
