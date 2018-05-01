@@ -1190,16 +1190,22 @@ is preceded by a space and followed by a non-word character.
 							    *R_objbr_labelerr*
 6.5. Object Browser options~
 
-Valid values for the Object Browser placement are "script" or "console" and
-"right", "left", "top" or "bottom", separated by a comma. Examples:
+By default, the Object Browser will be created at the right of the script
+window, and with 40 columns. Valid values for the Object Browser placement are
+the combination of either "script" or "console" and "right", "left", "above",
+"below", separated by a comma. You can also simply choose "RIGHT", "LEFT",
+"TOP" or "BOTTOM" to start the Object Browser as far as possible to the
+indicated direction. Examples:
 >
    let R_objbr_place = 'script,right'
    let R_objbr_place = 'console,left'
+   let R_objbr_place = 'LEFT'
+   let R_objbr_place = 'RIGHT'
 <
-By default, the Object Browser will be created at the right of the script
-window, and with 40 columns. The minimum width of the Object Browser window is
-9 columns. You can change the object browser's default width by setting the
-value of |R_objbr_w| in your |vimrc|, as below:
+
+The minimum width of the Object Browser window is 9 columns. You can change
+the object browser's default width by setting the value of |R_objbr_w| in your
+|vimrc|, as below:
 >
    let R_objbr_w = 30
 <
@@ -2941,7 +2947,10 @@ goal (tested on April, 2017).
  * New options: R_hi_fun_globenv, R_auto_scroll.
  * Accept prefix "terminal:" in `R_csv_app`.
  * Remove option R_tmux_split.
- * Change: if the Object Browser is already open, \ro will close it.
+ * Changes:
+   - If the Object Browser is already open, \ro will close it.
+   - The values "bottom" and "top" are no longer valid for R_objbr_place
+     (use "below" and "above" instead).
 
 0.9.11 (2018-01-29)
 

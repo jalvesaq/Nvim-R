@@ -702,7 +702,7 @@ endfunction
 function StartR(whatr)
     let s:wait_nvimcom = 1
 
-    if !g:R_in_buffer && !exists('g:rplugin_tmux_split')
+    if !g:R_in_buffer
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
     endif
 
@@ -1051,34 +1051,37 @@ function StartObjBrowser()
         let g:tmp_objbrtitle = b:objbrtitle
         let g:tmp_curbufname = bufname("%")
 
-        let splr = &splitright
-        let splb = &splitbelow
-        if g:R_objbr_place =~ "left" || g:R_objbr_place =~ "right"
-            if g:R_objbr_place =~ "left"
-                set nosplitright
-            else
-                set splitright
-            endif
+        if g:R_objbr_place =~# 'RIGHT'
+            sil exe 'botright vsplit ' . b:objbrtitle
+        elseif g:R_objbr_place =~# 'LEFT'
+            sil exe 'topleft vsplit ' . b:objbrtitle
+        elseif g:R_objbr_place =~# 'TOP'
+            sil exe 'topleft split ' . b:objbrtitle
+        elseif g:R_objbr_place =~# 'BOTTOM'
+            sil exe 'botright split ' . b:objbrtitle
         else
-            if g:R_objbr_place =~ "bottom"
-                set splitbelow
+            if g:R_objbr_place =~? 'console'
+                sil exe 'sb ' . g:rplugin_R_bufname
+            endif
+            if g:R_objbr_place =~# 'right'
+                sil exe 'rightbelow vsplit ' . b:objbrtitle
+            elseif g:R_objbr_place =~# 'left'
+                sil exe 'leftabove vsplit ' . b:objbrtitle
+            elseif g:R_objbr_place =~# 'above'
+                sil exe 'aboveleft vsplit ' . b:objbrtitle
+            elseif g:R_objbr_place =~# 'below'
+                sil exe 'belowright vsplit ' . b:objbrtitle
             else
-                set nosplitbelow
+                call RWarningMsg('Invalid value for R_objbr_place: "' . R_objbr_place . '"')
+                exe "set switchbuf=" . savesb
+                return
             endif
         endif
-
-        if g:R_objbr_place =~ "console"
-            exe 'sb ' . g:rplugin_R_bufname
-        endif
-        if g:R_objbr_place =~ "left" || g:R_objbr_place =~ "right"
-            sil exe "vsplit " . b:objbrtitle
-            sil exe "vertical resize " . g:R_objbr_w
+        if g:R_objbr_place =~? 'left' || g:R_objbr_place =~? 'right'
+            sil exe 'vertical resize ' . g:R_objbr_w
         else
-            sil exe "split " . b:objbrtitle
-            sil exe "resize " . g:R_objbr_h
+            sil exe 'resize ' . g:R_objbr_h
         endif
-        let &splitright = splr
-        let $splitbelow = splb
         sil set filetype=rbrowser
 
         " Inheritance of some local variables
@@ -3690,24 +3693,25 @@ if g:R_hi_fun == 0 || (exists("g:r_syntax_fun_pattern") && g:r_syntax_fun_patter
 endif
 
 " Look for invalid options
-let objbrplace = split(g:R_objbr_place, ",")
-let obpllen = len(objbrplace) - 1
-if obpllen > 1
-    call RWarningMsgInp("Too many options for R_objbr_place.")
+let objbrplace = split(g:R_objbr_place, ',')
+if len(objbrplace) > 2
+    call RWarningMsgInp('Too many options for R_objbr_place.')
     let g:rplugin_failed = 1
     finish
 endif
-for idx in range(0, obpllen)
-    if objbrplace[idx] != "console" && objbrplace[idx] != "script" &&
-                \ objbrplace[idx] != "left" && objbrplace[idx] != "right" &&
-                \ objbrplace[idx] != "top" && objbrplace[idx] != "bottom"
-        call RWarningMsgInp('Invalid option for R_objbr_place: "' . objbrplace[idx] . '". Valid options are: console or script and right or left."')
+for pos in objbrplace
+    if pos !=? 'console' && pos !=? 'script' &&
+                \ pos !=# 'left' && pos !=# 'right' &&
+                \ pos !=# 'LEFT' && pos !=# 'RIGHT' &&
+                \ pos !=# 'above' && pos !=# 'below' &&
+                \ pos !=# 'TOP' && pos !=# 'BOTTOM'
+        call RWarningMsgInp('Invalid value for R_objbr_place: "' . pos . ". Please see Nvim-R's documentation.")
         let g:rplugin_failed = 1
         finish
     endif
 endfor
+unlet pos
 unlet objbrplace
-unlet obpllen
 
 
 " ^K (\013) cleans from cursor to the right and ^U (\025) cleans from cursor
