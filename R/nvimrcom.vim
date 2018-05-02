@@ -50,6 +50,9 @@ function ROnJobExit(job_id, data, etype)
     if a:data != 0
         call RWarningMsg('"' . key . '"' . ' exited with status ' . a:data)
     endif
+    if key ==# 'R'
+        call ClearRInfo()
+    endif
 endfunction
 
 function IsJobRunning(key)
