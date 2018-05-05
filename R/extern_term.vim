@@ -1,4 +1,14 @@
 
+" Define a function to retrieve tmux settings
+function TmuxOption(option, isglobal)
+	if a:isglobal == "global"
+		let result = system("tmux -L NvimR show-options -gv ". a:option)
+	else
+		let result = system("tmux -L NvimR show-window-options -gv ". a:option)
+	endif
+	return substitute(result, '\n\+$', '', '')
+endfunction
+
 function StartR_ExternalTerm(rcmd)
     if g:R_notmuxconf
         let tmuxcnf = ' '

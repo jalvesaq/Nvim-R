@@ -26,16 +26,6 @@ else
 endif
 unlet s:tmuxversion
 
-" Define a function to retrieve tmux settings
-function TmuxOption(option, isglobal)
-	if a:isglobal == "global"
-		let result = system("tmux show-options -gv ". a:option)
-	else
-		let result = system("tmux show-window-options -gv ". a:option)
-	endif
-	return substitute(result, '\n\+$', '', '')
-endfunction
-
 let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
 let g:R_setwidth = get(g:, 'R_setwidth', 2)
