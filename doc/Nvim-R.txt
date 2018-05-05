@@ -1082,6 +1082,7 @@ with the way your terminal emulator is called by the plugin, you may define in
 your |vimrc| the variable R_term_cmd, as in the examples below:
 >
    let R_term_cmd = 'xterm -title R -e'
+   let R_term_cmd = 'tilix -a session-add-right -e'
    let R_term_cmd = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
 <
 Please, look at the manual of your terminal emulator to know how to call it.

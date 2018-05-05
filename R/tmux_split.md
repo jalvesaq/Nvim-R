@@ -1,13 +1,24 @@
 # Integration with Tmux
 
 Before Neovim's built-in terminal emulator was developed, the best way of
-running R was inside a Tmux session. It is still possible to run R in a Tmux
-split pane, as explained in this section, but I no longer use this feature and
-it is no longer supported. This means that I will not add new features to Tmux
-split and will not test if it still works after changes are introduced in
-other parts of the plugin. However, I will drop the integration in the future
-only if it becomes too buggy. Currently, the code is working, but if someone
-wants to maintain it, then, the steps are:
+running R was inside a Tmux session, and as an alternative to running R in a
+Tmux split pane, you could try the Tilix terminal emulator, and put in your
+`vimrc`:
+
+```vim
+let R_in_buffer = 0
+let R_term_cmd = 'tilix -a session-add-right -e'
+```
+
+Anyway, it is still possible to run R in a Tmux split pane, as explained in
+this section, but I no longer use this feature and it is no longer supported.
+This means that I will not add new features to tmux-split and will not test if
+it still works after changes are introduced in other parts of the plugin.
+However, I will drop the integration in the future only if it becomes too
+buggy.
+
+Currently, the code is working, but if someone wants to maintain it, then, the
+steps are:
 
   - Create a new repository.
 
@@ -20,7 +31,7 @@ wants to maintain it, then, the steps are:
 Currently, if you do want to try it, you should either use this development
 version of Nvim-R or download `tmux_split.vim` from
 <https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/R/tmux_split.vim>
-and, then, put in your vimrc:
+and, then, put in your `vimrc`:
 
 ```vim
 let R_source = '/path/to/tmux_split.vim'
