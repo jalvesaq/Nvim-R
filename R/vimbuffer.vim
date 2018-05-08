@@ -101,6 +101,7 @@ function StartR_InBuffer()
         set syntax=rout
         let s:hl_term = g:R_hl_term
     endif
+    set winfixwidth
     exe "sbuffer " . edbuf
     call WaitNvimcomStart()
 endfunction

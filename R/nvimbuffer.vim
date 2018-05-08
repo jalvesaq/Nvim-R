@@ -120,6 +120,7 @@ function StartR_InBuffer()
         tnoremap <buffer> <Esc> <C-\><C-n>
     endif
     autocmd TermClose <buffer> call OnTermClose()
+    set winfixwidth
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()
