@@ -811,6 +811,7 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.delim = "\t")']
     endif
+    let start_options += ['options(nvimcom.lsenvtol = ' . g:R_ls_env_tol . ')']
 
     let rwd = ""
     if g:R_nvim_wd == 0
@@ -3615,6 +3616,7 @@ let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
+let g:R_ls_env_tol        = get(g:, "R_ls_env_tol",       500)
 let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")

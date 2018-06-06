@@ -297,8 +297,10 @@ by https://github.com/vim-pandoc/vim-pandoc-syntax
 
 See https://github.com/w0rp/ale if you want a syntax checker.
 
-Gabriel Alcaras is developing a plugin for asynchronous R completion:
+Gabriel Alcaras's plugin for asynchronous R completion:
 https://github.com/gaalcaras/ncm-R
+It will slowdown R if its workspace has too many objects, data.frames with too
+many columns or lists with too many elements (see |R_ls_env_tol|).
 
 
 ==============================================================================
@@ -705,6 +707,9 @@ background):
 >
    obj <- obj
 <
+Note: The Object Browser may slowdown R if its workspace has too many
+objects, data.frames with too many columns or lists with too many elements.
+
 
 ------------------------------------------------------------------------------
 4.5. Commenting and uncommenting lines~
@@ -1388,8 +1393,10 @@ By default, functions from `.GlobalEnv` and other environments in the
 `search()` path whose names do not start with `"package:"` are not highlighted
 to avoid the need of both nvimcom saving a temporary file with the list
 objects in these environments after each command sent to R and Nvim-R reading
-and parsing this file, which might be slow in some machines. But if you prefer
-these functions highlighted, put in your |vimrc|:
+and parsing this file, which might be slow in some machines, and especially if
+R's workspace has too many objects, data.frames with too many columns or lists
+with too many elements. Anyway, if you prefer these functions highlighted, put
+in your |vimrc|:
 >
    let R_hi_fun_globenv = 1
 <
@@ -1413,6 +1420,15 @@ If you prefer to completely disable the syntax highlighting of R functions put
 in your |vimrc|:
 >
    let R_hi_fun = 0
+<
+On Unix systems, the highlighting of new functions created in the `.GlobalEnv`
+will be interrupted if nvimcom takes more than 500 milliseconds to create the
+list of objects that Nvim-R needs to find and, then, highlight new functions.
+If you want that nvimcom be either more or less tolerant to delays, put a
+different value in your |vimrc|. Valid values are between 10 and 10000
+milliseconds. Example:
+>
+   let R_ls_env_tol = 700
 <
 
 ------------------------------------------------------------------------------
@@ -2941,11 +2957,11 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-04-27)
+0.9.11.1 (2018-06-06)
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
- * New options: R_hi_fun_globenv, R_auto_scroll.
+ * New options: R_hi_fun_globenv, R_auto_scroll, R_ls_env_tol.
  * Accept prefix "terminal:" in `R_csv_app`.
  * Remove option R_tmux_split.
  * Changes:

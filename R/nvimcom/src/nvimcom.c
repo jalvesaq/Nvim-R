@@ -62,6 +62,7 @@ static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ f
 static int hifun = 0;      // Send message to Nvim-R to highlight GlobalEnv functions
 static int setwidth = 0;   // Set the option width after each command is executed
 static int oldcolwd = 0;   // Last set width
+static long int lsenv_tol = 500000; // Tolerance to delay caused by building GlobalEnvList_
 
 #ifdef WIN32
 static int r_is_busy = 1;
@@ -541,21 +542,39 @@ static void nvimcom_list_env()
 {
     const char *varName;
     SEXP envVarsSEXP, varSEXP;
+#ifndef WIN32
+    struct timeval begin, middle, end, tdiff1, tdiff2;
+#endif
 
     if(tmpdir[0] == 0)
         return;
 
     if(envls_auto){
+#ifndef WIN32
+        gettimeofday(&begin, NULL);
+#endif
         if(hifun)
             nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 2)");
         else
             nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 0)");
+#ifndef WIN32
+        gettimeofday(&end, NULL);
+        timersub(&end, &begin, &tdiff1);
+        long int tdiff = 1000000 * (long int)tdiff1.tv_sec + (long int)tdiff1.tv_usec;
+        if(verbose > 2)
+            Rprintf("Time listing .GlobalEnv objects (in milliseconds): %ld\n", tdiff / 1000);
+        if(tdiff > lsenv_tol){
+            envls_auto = 0;
+            nvimcom_nvimclient("RWarningMsg('Listing objects of .GlobalEnv is too slow: highlighting of new local functions was disabled.')", edsrvr);
+            if(verbose)
+                REprintf("Warning: nvimcom took %ld milliseconds to list the .GlobalEnv.\n", tdiff / 1000);
+        }
+#endif
     }
     if(objbr_auto != 1)
         return;
 
 #ifndef WIN32
-    struct timeval begin, middle, end, tdiff1, tdiff2;
     if(verbose > 1)
         gettimeofday(&begin, NULL);
 #endif
@@ -1286,7 +1305,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **srchls, char **rvs)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **srchls, char **rvs, int *lstol)
 {
     verbose = *vrb;
     opendf = *odf;
@@ -1295,6 +1314,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, i
     labelerr = *lbe;
     hifun = *hif;
     setwidth = *swd;
+    lsenv_tol = 1000 * (long int)*lstol;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);
