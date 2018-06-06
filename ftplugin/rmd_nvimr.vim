@@ -13,6 +13,10 @@ endif
 " be defined after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
+    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
+endif
+
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 
 if g:R_rmdchunk == 1
@@ -129,9 +133,6 @@ if has("gui_running")
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/gui_running.vim"
     call MakeRMenu()
 endif
-
-let s:has_pandoc = 0
-let s:has_soffice = 0
 
 call RSourceOtherScripts()
 
