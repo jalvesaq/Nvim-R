@@ -134,8 +134,8 @@ function! RDocExSection()
     endif
 endfunction
 
-nmap <buffer><silent> ge :call RDocExSection()<CR>
-nmap <buffer><silent> q :q<CR>
+nnoremap <buffer><silent> ge :call RDocExSection()<CR>
+nnoremap <buffer><silent> q :q<CR>
 
 setlocal bufhidden=wipe
 setlocal noswapfile

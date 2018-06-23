@@ -2283,7 +2283,7 @@ function ShowRDoc(rkeyword)
         for idx in range(1, len(msgs) - 2)
             exe "syn match PreProc '^   " . msgs[idx] . "'"
         endfor
-        exe 'nmap <buffer><silent> <CR> :call AskRDoc("' . rkeyw . '", expand("<cword>"), 0)<CR>'
+        exe 'nnoremap <buffer><silent> <CR> :call AskRDoc("' . rkeyw . '", expand("<cword>"), 0)<CR>'
         redraw
         call cursor(5, 4)
     else
@@ -2548,7 +2548,7 @@ function OpenRExample()
             exe "belowright split " . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') . "/example.R"
         endif
     endif
-    nmap <buffer><silent> q :q<CR>
+    nnoremap <buffer><silent> q :q<CR>
     setlocal bufhidden=wipe
     setlocal noswapfile
     set buftype=nofile
