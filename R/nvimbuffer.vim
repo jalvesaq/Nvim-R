@@ -1,6 +1,6 @@
 " This file contains code used only when R run in a Neovim buffer
 
-let g:R_auto_scroll = get(g:, 'R_auto_scroll', 0)
+let g:R_auto_scroll = get(g:, 'R_auto_scroll', 1)
 
 function SendCmdToR_Buffer(...)
     if g:rplugin_jobs["R"]

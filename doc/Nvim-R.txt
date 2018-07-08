@@ -961,14 +961,17 @@ that the terminal remains open after R quits, put in your |vimrc|:
 >
 Neovim stops automatically scrolling the R Console if you move the cursor to
 any line that is not the last one. This emulates the behavior of other
-terminal emulator, but if you do not like this behavior, put in your
-|init.vim|:
+terminal emulator, but considering that (1) R only outputs something after we
+send a command to it, and (2) when we send a command to R, we want to see its
+output, Nvim-R will enter the R Console and move the cursor to its last line
+before sending commands to it, forcing the auto scrolling of the terminal.
+This will trigger an auto command that relies on the cursor moving to the
+terminal window. If you have defined such auto command, you will may want to
+put the line below in your |init.vim| to disable the auto scrolling of the
+terminal:
 >
-   let R_auto_scroll = 1
+   let R_auto_scroll = 0
 <
-Then, Nvim-R will enter the R Console and move the cursor to its last line
-before sending commands to it.
-
 You may either use the package colorout (Unix only) to colorize R output or
 let Neovim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
@@ -1423,10 +1426,10 @@ in your |vimrc|:
 <
 On Unix systems, the highlighting of new functions created in the `.GlobalEnv`
 will be interrupted if nvimcom takes more than 500 milliseconds to create the
-list of objects that Nvim-R needs to find and, then, highlight new functions.
-If you want that nvimcom be either more or less tolerant to delays, put a
-different value in your |vimrc|. Valid values are between 10 and 10000
-milliseconds. Example:
+list of objects that Nvim-R needs to find and, then, highlight new functions
+(this also affects `ncm-R` completion). If you want that nvimcom be either more
+or less tolerant to delays, put a different value in your |vimrc|. Valid
+values are between 10 and 10000 milliseconds. Example:
 >
    let R_ls_env_tol = 700
 <
@@ -2957,7 +2960,7 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-06-06)
+0.9.11.1 (2018-07-08)
 
  * Minor bug fixes.
  * New command:  :RDebugInfo
