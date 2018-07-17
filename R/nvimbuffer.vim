@@ -121,6 +121,9 @@ function StartR_InBuffer()
     endif
     autocmd TermClose <buffer> call OnTermClose()
     set winfixwidth
+    " Set b:pdf_is_open to avoid error when the user has to go to R Console to
+    " deal with latex errors while compiling the pdf
+    let b:pdf_is_open = 1
     exe "sbuffer " . edbuf
     stopinsert
     call WaitNvimcomStart()

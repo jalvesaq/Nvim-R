@@ -176,6 +176,10 @@ function RWeave(bibtex, knit, pdf)
         let b:pdf_is_open = 1
     endif
 
+    if exists('g:R_latex_build_dir')
+        let pdfcmd .= ', builddir="' . g:R_latex_build_dir . '"'
+    endif
+
     if a:knit == 0 && exists("g:R_sweaveargs")
         let pdfcmd = pdfcmd . ", " . g:R_sweaveargs
     endif

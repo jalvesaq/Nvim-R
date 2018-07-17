@@ -107,7 +107,7 @@ GetRnwLines <- function(texf, concf, l)
     l
 }
 
-ShowTexErrors <- function(texf, l)
+ShowTexErrors <- function(texf, logf, l)
 {
     llen <- length(l)
     lf <- character(llen)
@@ -165,97 +165,120 @@ ShowTexErrors <- function(texf, l)
         if(length(ismaster) > 0 && file.exists(concf)){
             l[ismaster] <- GetRnwLines(texf, concf, l[ismaster])
         }
-        msg <- paste0('\nSelected lines of "', sub("\\.tex$", ".log", texf),
-                      '":\n\n', paste(lf, l, sep = ": ", collapse = "\n"), "\n")
+        msg <- paste0("\nSelected lines of: ", logf, "\n\n",
+                      paste(lf, l, sep = ": ", collapse = "\n"), "\n")
         if(has.pdfTeX.errors)
             msg <- paste0(msg, 'There are pdfTeX errors or warnings. See "',
-                          sub("\\.tex$", ".log", texf), '" for details.\n')
+                          logf, '" for details.\n')
         cat(msg)
     }
 }
 
-nvim.interlace.rnoweb <- function(rnowebfile, rnwdir, latexcmd = "latexmk",
+nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
                                   latexargs, synctex = TRUE, bibtex = FALSE,
-                                  knit = TRUE, buildpdf = TRUE, view = TRUE, ...)
+                                  knit = TRUE, buildpdf = TRUE, view = TRUE,
+                                  builddir, ...)
 {
     oldwd <- getwd()
     on.exit(setwd(oldwd))
     setwd(rnwdir)
 
-    Sres <- NA
-
-    if(missing(latexargs))
-        latexargs <- c("-pdf", '-pdflatex="xelatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"')
-
-    # Check whether the .tex was already compiled
-    twofiles <- c(rnowebfile, sub("\\....$", ".tex", rnowebfile))
-    if(sum(file.exists(twofiles)) == 2){
-        fi <- file.info(twofiles)$mtime
-        if(fi[1] < fi[2])
-            Sres <- twofiles[2]
-    }
+    texf <- sub("\\....$", ".tex", rnwf)
+    tdiff <- as.numeric(file.info(rnwf)$mtime - file.info(texf)$mtime)
 
     # Compile the .tex file
-    if(is.na(Sres) || !buildpdf){
+    if(is.na(tdiff) || tdiff > 0 || !buildpdf){
         if(knit){
             if(!require(knitr))
                 stop("Please, install the 'knitr' package.")
             if(synctex)
                 knitr::opts_knit$set(concordance = TRUE)
-            Sres <- knit(rnowebfile, envir = globalenv())
+            texf <- knit(rnwf, envir = globalenv())
         } else {
-            Sres <- Sweave(rnowebfile, ...)
+            texf <- Sweave(rnwf, ...)
         }
     }
 
     if(!buildpdf)
         return(invisible(NULL))
 
-    # Compile the .pdf
-    if(exists("Sres")){
-        stts <- system2(latexcmd, c(latexargs, gsub(" ", "\\\\ ", Sres)))
-        sout <- readLines(sub("\\.tex$", ".log", Sres))
+    if(missing(latexargs))
+        latexargs <- c("-pdf", '-pdflatex="xelatex %O -file-line-error -interaction=nonstopmode -synctex=1 %S"')
 
-        if(stts == 0)
-            haserror <- FALSE
-        else
-            haserror <- TRUE
+    # We cannot capture the output to see where the log was saved
+    # because if pdflatex is running in stopmode the user will have
+    # to see the output immediately
+    stts <- system2(latexcmd, c(latexargs, gsub(" ", "\\\\ ", texf)))
 
-        if(!haserror && bibtex){
-            haserror <- system(paste("bibtex", sub("\\.tex$", ".aux", Sres)))
-            if(!haserror){
-                haserror <- system(paste(latexcmd, Sres))
-                if(!haserror)
-                    haserror <- system(paste(latexcmd, Sres))
-            }
+    haserror <- FALSE
+    if(bibtex && stts == 0){
+        haserror <- system(paste("bibtex", sub("\\.tex$", ".aux", texf)))
+        if(!haserror){
+            haserror <- system(paste(latexcmd, texf))
+            if(!haserror)
+                haserror <- system(paste(latexcmd, texf))
         }
+    }
 
-        pdff <- ""
-        if(view){
-            idx <- grep("Latexmk: All targets .* are up-to-date", sout)
-            if(length(idx)){
-                pdff <- sub("Latexmk: All targets \\((.*)\\) are up-to-date", "\\1", sout[idx])
+    logf <- sub("\\....$", ".log", rnwf)
+    if(!missing(builddir) && dir.exists(builddir))
+        logf <- paste0(builddir, "/", logf)
+
+    if(!file.exists(logf)){
+        if(latexcmd == "latexmk" && file.exists("~/.latexmkrc")){
+            lmk <- readLines("~/.latexmkrc")
+            idx <- grep("\\$out_dir\\s*=", lmk)
+            if(length(idx) == 1){
+                logf <- paste0(sub(".*\\$out_dir\\s*=\\s*['\"](.*)['\"].*",
+                                   "\\1", lmk[idx]), "/",
+                               sub("\\....$", ".log", rnwf))
+            }
+        } else {
+            idx <- grep("-output-directory=", latexargs)
+            if(length(idx) == 1){
+                logf <- paste0(sub("-output-directory=", "", latexargs[idx]),
+                               "/", sub("\\....$", ".log", rnwf))
             } else {
-                idx <- grep("Output written on .*\\.pdf .*", sout)
-                if(length(idx)){
-                    pdff <- sub("Output written on (.*\\.pdf) .*", "\\1", sout[idx])
-                } else if(!haserror){
-                    pdff <- sub("\\.tex$", ".pdf", Sres)
+                idx <- grep("-output-directory$", latexargs)
+                if(length(idx) == 1 && idx < length(latexargs)){
+                    logf <- paste0(latexargs[idx+1], "/", sub("\\....$", ".log", rnwf))
                 }
             }
-            if(pdff != ""){
-                if(!grepl("^/", pdff))
-                    pdff <- paste0(getwd(), "/", pdff)
-                .C("nvimcom_msg_to_nvim",
-                   paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
-                   PACKAGE = "nvimcom")
+        }
+    }
+
+    if(!file.exists(logf)){
+        warning('File "', logf, '" not found.')
+        return(invisible(NULL))
+    }
+
+    sout <- readLines(logf)
+
+    pdff <- ""
+    if(view){
+        idx <- grep("Latexmk: All targets .* are up-to-date", sout)
+        if(length(idx)){
+            pdff <- sub("Latexmk: All targets \\((.*)\\) are up-to-date", "\\1", sout[idx])
+        } else {
+            idx <- grep('Output written on "*.*\\.pdf.*', sout)
+            if(length(idx)){
+                pdff <- sub('Output written on "*(.*\\.pdf).*', "\\1", sout[idx])
+            } else if(!haserror){
+                pdff <- sub("\\.tex$", ".pdf", texf)
             }
         }
-
-        if(getOption("nvimcom.texerrs")){
-            cat("\nExit status of '", latexcmd, "': ", stts, "\n", sep = "")
-            ShowTexErrors(Sres, sout)
+        if(pdff != ""){
+            if(!grepl("^/", pdff))
+                pdff <- paste0(getwd(), "/", pdff)
+            .C("nvimcom_msg_to_nvim",
+               paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
+               PACKAGE = "nvimcom")
         }
+    }
+
+    if(getOption("nvimcom.texerrs")){
+        cat("\nExit status of '", latexcmd, "': ", stts, "\n", sep = "")
+        ShowTexErrors(texf, logf, sout)
     }
     return(invisible(NULL))
 }

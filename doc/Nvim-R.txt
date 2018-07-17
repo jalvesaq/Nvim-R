@@ -1654,11 +1654,15 @@ separate them in an R's `c()` command.
 If you want to pass arguments to the `Sweave()` function, set the value of the
 R_sweaveargs variable.
 
-If the value of `R_texerr` is `1`, LaTeX errors and warnings produced by the
-compilation of the .tex document into .pdf file will be output to R Console at
-the end of the compilation. So, you do not have to scroll the R Console
-seeking for these messages.
-
+If the value of `R_texerr` is `1`, nvmimcom will output to R Console LaTeX
+errors and warnings produced by the compilation of the .tex document into
+.pdf. So, you do not have to scroll the R Console seeking for these messages.
+However, if Nvim-R cannot not find the LaTeX log file because it is not saved
+in the same directory as the Rnoweb, you should set the value of
+`R_latex_build_dir`. Example:
+>
+   let R_latex_build_dir = 'build'
+<
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*

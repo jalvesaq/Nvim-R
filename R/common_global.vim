@@ -2349,7 +2349,7 @@ endfunction
 
 function ROpenDoc(fullpath, browser)
     if !filereadable(a:fullpath)
-        call WarningMsg('The file "' . a:fullpath . '" does not exist.')
+        call RWarningMsg('The file "' . a:fullpath . '" does not exist.')
         return
     endif
     if a:fullpath =~ '.odt$'

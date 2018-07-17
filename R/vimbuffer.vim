@@ -102,6 +102,9 @@ function StartR_InBuffer()
         let s:hl_term = g:R_hl_term
     endif
     set winfixwidth
+    " Set b:pdf_is_open to avoid error when the user has to go to R Console to
+    " deal with latex errors while compiling the pdf
+    let b:pdf_is_open = 1
     exe "sbuffer " . edbuf
     call WaitNvimcomStart()
 endfunction
