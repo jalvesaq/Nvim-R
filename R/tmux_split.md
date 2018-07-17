@@ -14,11 +14,10 @@ Anyway, it is still possible to run R in a Tmux split pane, as explained in
 this section, but I no longer use this feature and it is no longer supported.
 This means that I will not add new features to tmux-split and will not test if
 it still works after changes are introduced in other parts of the plugin.
-However, I will drop the integration in the future only if it becomes too
-buggy.
+However, I may fix simple bugs if they are reported, and I will drop the
+integration in the future only if it becomes too buggy.
 
-Currently, the code is working, but if someone wants to maintain it, then, the
-steps are:
+If someone wants to maintain the code, then, the steps are:
 
   - Create a new repository.
 
@@ -51,7 +50,7 @@ one for Vim and the other for Tmux. Then, it's useful to know some Tmux
 commands. After you finished editing the file, you have to type `exit` to quit
 the Tmux session.
 
-Note: the old way of enabling Tmux split by setting the value of
+**Note:** the old way of enabling Tmux split by setting the value of
 `R_tmux_split` no longer works.
 
 ## Tmux configuration
