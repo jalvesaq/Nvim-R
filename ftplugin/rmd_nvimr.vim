@@ -67,7 +67,7 @@ function! s:GetBibFileName()
         if IsJobRunning('BibComplete')
             call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
         else
-            let aa = [s:py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
         endif
     endif
@@ -152,19 +152,7 @@ let b:SendChunkToR = function("SendRmdChunkToR")
 if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
     let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
 elseif !IsJobRunning("BibComplete") && !has_key(g:rplugin_debug_info, 'BibComplete')
-    let s:res = system('python3 --version')
-    if v:shell_error == 0 && s:res =~ 'Python 3'
-        let s:py3 = 'python3'
-    else
-        let s:res = system('python --version')
-        if v:shell_error == 0 && s:res =~ 'Python 3'
-            let s:py3 = 'python'
-        else
-            let g:rplugin_debug_info['BibComplete'] = "No Python 3"
-            let s:py3 = ''
-        endif
-    endif
-    if s:py3 != ''
+    if PyBTeXOK('rmd')
         call s:GetBibFileName()
         autocmd BufWritePost <buffer> call s:GetBibFileName()
     endif

@@ -3363,7 +3363,7 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
-function s:CompleteBib(base)
+function s:CompleteBib(base, prefix)
     if !IsJobRunning("BibComplete")
         return []
     endif
@@ -3386,7 +3386,7 @@ function s:CompleteBib(base)
         let lines = readfile(g:rplugin_tmpdir . "/bibcompl")
         for line in lines
             let tmp = split(line, "\x09")
-            call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
+            call add(resp, {'word': a:prefix . tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
         endfor
     endif
     return resp
@@ -3443,8 +3443,22 @@ function CompleteR(findstart, base)
 
         " bib complete
         if &filetype == 'rmd' && b:IsInRCode(0) == 0 && a:base[0] == '@'
-            let resp = s:CompleteBib(a:base)
+            let resp = s:CompleteBib(substitute(a:base, '^@', '', ''), '@')
             return resp
+        elseif &filetype == 'rnoweb' && b:IsInRCode(0) == 0
+            let line = getline('.')
+            let cpos = getpos(".")
+            let idx = cpos[2] - 2
+            let piece = line[0:idx]
+            let piece = substitute(piece, ".*\\", "\\", '')
+            let piece = substitute(piece, ".*}", "", '')
+            if piece =~ s:cite_ptrn
+                let resp = s:CompleteBib(a:base, '')
+                return resp
+            endif
+            return []
+        endif
+
         endif
 
         let lnum = line(".")
@@ -3532,6 +3546,37 @@ function RBuildTags()
         return
     endif
     call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
+endfunction
+
+function PyBTeXOK(ft)
+    if exists("g:R_bib_disable") && type(g:R_bib_disable) == 3
+        for ft in g:R_bib_disable
+            if tolower(ft) == a:ft
+                return 0
+            endif
+        endfor
+    endif
+
+    let out = system('python3 --version')
+    if v:shell_error == 0 && out =~ 'Python 3'
+        let g:rplugin_py3 = 'python3'
+    else
+        let out = system('python --version')
+        if v:shell_error == 0 && out =~ 'Python 3'
+            let g:rplugin_py3 = 'python'
+        else
+            let g:rplugin_debug_info['BibComplete'] = "No Python 3"
+            let g:rplugin_py3 = ''
+        endif
+    endif
+    if g:rplugin_py3 != ''
+        call system(g:rplugin_py3, "from pybtex.database import parse_file\n")
+        if v:shell_error != 0
+            let g:rplugin_debug_info['BibComplete'] = "No PyBTex"
+            let g:rplugin_py3 = ''
+        endif
+    endif
+    return g:rplugin_py3 != ''
 endfunction
 
 function ShowRDebugInfo()
@@ -3878,6 +3923,15 @@ endif
 let g:rplugin_has_wmctrl = 0
 
 let s:docfile = g:rplugin_tmpdir . "/Rdoc"
+
+if exists('g:R_cite_pattern')
+    let s:cite_ptrn = g:R_cite_pattern
+elseif exists('g:LatexBox_cite_pattern')
+    let s:cite_ptrn = g:LatexBox_cite_pattern
+else
+    " From LaTeX-Box/ftplugin/latex-box/complete.vim:
+    let s:cite_ptrn = '\C\\\a*cite\a*\*\?\(\[[^\]]*\]\)*\_\s*{'
+endif
 
 " List of files to be deleted on VimLeave
 let s:del_list = [s:Rsource_write]

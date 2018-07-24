@@ -41,13 +41,16 @@ def get_authors(prsns):
 
 def ParseBib(b):
     global E
+    M[b] = os.path.getmtime(b)
+    E[b] = {}
+
     try:
         bib = parse_file(b)
     except Exception as ERR:
-        print('Error parsing ' + b + ':\n' + str(ERR), file=sys.stderr)
-        quit()
-    M[b] = os.path.getmtime(b)
-    E[b] = {}
+        print('Error parsing ' + b + ': ' + str(ERR), file=sys.stderr)
+        sys.stderr.flush()
+        return
+
     for k in bib.entries:
         E[b][k] = {'key': k, 'title': '', 'year': '????'}
         E[b][k]['author'] = get_authors(bib.entries[k].persons)
@@ -57,7 +60,7 @@ def ParseBib(b):
             E[b][k]['year'] = bib.entries[k].fields['year']
 
 def GetComplLine(k, e):
-    return '@' + k + '\x09' + e['author'][0:40] + "\x09(" + e['year'] + ') ' + e['title']
+    return k + '\x09' + e['author'][0:40] + "\x09(" + e['year'] + ') ' + e['title']
 
 def GetMatch(d, ptrn):
     for b in D[d]:
@@ -97,6 +100,11 @@ def GetMatch(d, ptrn):
     print('let g:rplugin_bib_finished = 1')
     sys.stdout.flush()
 
+def set_bibfiles(d, bibls):
+    global D
+    D[d] = bibls
+    for b in bibls:
+        ParseBib(b)
 
 def loop():
     for line in map(str.rstrip, sys.stdin):
@@ -104,11 +112,12 @@ def loop():
             quit()
         elif line.find('SetBibliography ') == 0:
             s = line.replace('SetBibliography ', '')
-            mf, bf = s.split('\x05')
-            D[mf] = bf.split('\x06')
+            d, b = s.split('\x05')
+            set_bibfiles(d, b.split('\x06'))
         else:
             ptrn, d = line.split('\x05')
-            GetMatch(d, re.sub('^@', '', ptrn.lower()))
+            GetMatch(d, ptrn.lower())
 
-D[sys.argv[1]] = sys.argv[2:len(sys.argv)]
-loop()
+if __name__ == "__main__":
+    set_bibfiles(sys.argv[1], sys.argv[2:len(sys.argv)])
+    loop()

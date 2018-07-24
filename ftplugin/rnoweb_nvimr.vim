@@ -30,6 +30,30 @@ let b:PreviousRChunk = function("RnwPreviousChunk")
 let b:NextRChunk = function("RnwNextChunk")
 let b:SendChunkToR = function("RnwSendChunkToR")
 
+function! s:GetBibFileName()
+    if !exists('b:rplugin_bibf')
+        let b:rplugin_bibf = []
+    endif
+    let newbibf = glob(expand("%:p:h") . '/*.bib', 0, 1)
+    if newbibf != b:rplugin_bibf
+        let b:rplugin_bibf = newbibf
+        if IsJobRunning('BibComplete')
+            call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
+        else
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
+            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+        endif
+    endif
+endfunction
+
+" Citation completion
+if !IsJobRunning("BibComplete") && !has_key(g:rplugin_debug_info, 'BibComplete')
+    if PyBTeXOK('rnoweb')
+        call s:GetBibFileName()
+        autocmd BufWritePost <buffer> call s:GetBibFileName()
+    endif
+endif
+
 "==========================================================================
 " Key bindings and menu items
 
