@@ -13,10 +13,6 @@ endif
 " be defined after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
-if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
-    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
-endif
-
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 
 if g:R_rmdchunk == 1
@@ -32,6 +28,48 @@ function! RWriteRmdChunk()
         call cursor(curline, 5)
     else
         exe "normal! a`"
+    endif
+endfunction
+
+function! s:GetBibFileName()
+    if !exists('b:rplugin_bibf')
+        let b:rplugin_bibf = []
+    endif
+    let newbibf = []
+    let lastl = line('$')
+    let idx = 2
+    while idx < lastl
+        let line = getline(idx)
+        if line == '...' || line == '---'
+            break
+        endif
+        if line =~ '^\s*bibliography\s*:'
+            let bstr = substitute(line, '^\s*bibliography\s*:\s*\(.*\)\s*', '\1', '')
+            let bstr = substitute(bstr, '[\[\],"]', '', 'g')
+            let bstr = substitute(bstr, "'", '', 'g')
+            let bstr = substitute(bstr, "  *", " ", 'g')
+            let blist = split(bstr)
+            let blist = map(blist, 'expand(v:val)')
+            for fn in blist
+                if filereadable(fn)
+                    call add(newbibf, fn)
+                endif
+            endfor
+            break
+        endif
+        let idx += 1
+    endwhile
+    if newbibf == []
+        let newbibf = glob(expand("%:p:h") . '/*.bib', 0, 1)
+    endif
+    if newbibf != b:rplugin_bibf
+        let b:rplugin_bibf = newbibf
+        if IsJobRunning('BibComplete')
+            call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
+        else
+            let aa = [s:py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
+            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+        endif
     endif
 endfunction
 
@@ -109,6 +147,28 @@ let b:IsInRCode = function("RmdIsInRCode")
 let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
+
+" Citation completion
+if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
+    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
+elseif !IsJobRunning("BibComplete") && !has_key(g:rplugin_debug_info, 'BibComplete')
+    let s:res = system('python3 --version')
+    if v:shell_error == 0 && s:res =~ 'Python 3'
+        let s:py3 = 'python3'
+    else
+        let s:res = system('python --version')
+        if v:shell_error == 0 && s:res =~ 'Python 3'
+            let s:py3 = 'python'
+        else
+            let g:rplugin_debug_info['BibComplete'] = "No Python 3"
+            let s:py3 = ''
+        endif
+    endif
+    if s:py3 != ''
+        call s:GetBibFileName()
+        autocmd BufWritePost <buffer> call s:GetBibFileName()
+    endif
+endif
 
 "==========================================================================
 " Key bindings and menu items

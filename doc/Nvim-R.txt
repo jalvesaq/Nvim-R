@@ -66,6 +66,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
     packages).
   * Auto-completion of function arguments.
   * Auto-completion of knitr chunk options.
+  * Auto-completion of bibliographic entries (Rmd).
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
@@ -150,6 +151,9 @@ Additional dependencies for editing Rnoweb documents:~
 Additional dependency for editing Rmd documents on Linux:~
 
    xdotool: Required to reload the page on the web browser.
+
+   Python 3 and python3-pybtex library: required for omnicompletion of
+   citation keys (following the `@` symbol).
 
 
 Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
@@ -559,6 +563,15 @@ function name can be found in more than one library) and the function method
 itself). For both `library()` and `require()`, when completing the first
 argument, the popup list shows the names of installed packages, but only if R
 is running.
+
+In RMarkdown buffers, omnicompletion will look for bibliographic data in any
+`.bib` file listed in the `bibliography` field of the YAML header. If the
+`bibliography` field is not defined, it will use all `.bib` files that are in
+the same directory of the RMarkdown document as bibliography sources. Python 3
+and the python3-pybtex library are required for citation completion, and the
+completion will be enabled only if there is no other omni completion already
+activated for either the markdown or pandoc file type. The list of `.bib`
+files is updated whenever the buffer is saved.
 
 You can source all .R files in a directory with the Normal mode command
 :RSourceDir, which accepts an optional argument (the directory to be sourced).
@@ -2964,9 +2977,10 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.11.1 (2018-07-08)
+0.9.11.1 (2018-07-23)
 
  * Minor bug fixes.
+ * Bibliographic completion for Rmd.
  * New command:  :RDebugInfo
  * New options: R_hi_fun_globenv, R_auto_scroll, R_ls_env_tol.
  * Accept prefix "terminal:" in `R_csv_app`.

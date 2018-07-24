@@ -2658,7 +2658,6 @@ function RAction(rcmd, ...)
             let argmnts = ''
         endif
         let raction = rfun . '(' . rkeyword . argmnts . ')'
-        let g:TheRaction = raction
         call g:SendCmdToR(raction)
     endif
 endfunction
@@ -3364,6 +3363,35 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
+function s:CompleteBib(base)
+    if !IsJobRunning("BibComplete")
+        return []
+    endif
+    if b:rplugin_bibf == []
+        call RWarningMsgInp('Bib file not defined')
+        return []
+    endif
+    call delete(g:rplugin_tmpdir . "/bibcompl")
+    let g:rplugin_bib_finished = 0
+    call JobStdin(g:rplugin_jobs["BibComplete"], a:base . "\x05" . expand("%:p") . "\n")
+    call AddForDeletion(g:rplugin_tmpdir . "/bibcompl")
+    let resp = []
+    let wt = 0
+    sleep 20m
+    while wt < 10 && g:rplugin_bib_finished == 0
+        let wt += 1
+        sleep 50m
+    endwhile
+    if filereadable(g:rplugin_tmpdir . "/bibcompl")
+        let lines = readfile(g:rplugin_tmpdir . "/bibcompl")
+        for line in lines
+            let tmp = split(line, "\x09")
+            call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
+        endfor
+    endif
+    return resp
+endfunction
+
 function CompleteR(findstart, base)
     if a:findstart
         let line = getline(".")
@@ -3410,6 +3438,12 @@ function CompleteR(findstart, base)
                     \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
                     \ (&filetype == "r" && line =~ "^#\+")
             let resp = CompleteChunkOptions(a:base)
+            return resp
+        endif
+
+        " bib complete
+        if &filetype == 'rmd' && b:IsInRCode(0) == 0 && a:base[0] == '@'
+            let resp = s:CompleteBib(a:base)
             return resp
         endif
 

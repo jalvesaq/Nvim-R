@@ -10,6 +10,7 @@ ftplugin/rrst_nvimr.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim
 syntax/rout.vim
+R/bibcompl.py
 R/common_buffer.vim
 R/common_global.vim
 R/evince.vim
