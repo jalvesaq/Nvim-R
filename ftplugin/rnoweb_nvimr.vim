@@ -23,13 +23,6 @@ endif
 exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/rnw_fun.vim"
 call SetPDFdir()
 
-" Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,
-" rhelp and rdoc and which are called at common_global.vim
-let b:IsInRCode = function("RnwIsInRCode")
-let b:PreviousRChunk = function("RnwPreviousChunk")
-let b:NextRChunk = function("RnwNextChunk")
-let b:SendChunkToR = function("RnwSendChunkToR")
-
 function! s:GetBibFileName()
     if !exists('b:rplugin_bibf')
         let b:rplugin_bibf = []
@@ -46,13 +39,47 @@ function! s:GetBibFileName()
     endif
 endfunction
 
-" Citation completion
-if !IsJobRunning("BibComplete") && !has_key(g:rplugin_debug_info, 'BibComplete')
-    if PyBTeXOK('rnoweb')
+function! RnwNonRCompletion(findstart, base)
+    if a:findstart
+        let line = getline(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] -2
+        while line[idx] =~ '\w' && idx > 0
+            let idx -= 1
+        endwhile
+        return idx + 1
+    else
+        let citekey = substitute(a:base, '^@', '', '')
+        let resp = RCompleteBib(citekey)
+        return resp
+    endif
+endfunction
+
+" Use LaTeX-Box completion if available
+if exists('*g:LatexBox_Complete')
+    let b:rplugin_nonr_omnifunc = "g:LatexBox_Complete"
+elseif g:R_bib_disable == 0
+    if !exists("g:rplugin_py3")
+        call CheckPyBTeX()
+    endif
+    if !has_key(g:rplugin_debug_info, 'BibComplete')
+        " Use BibComplete if possible
         call s:GetBibFileName()
+        let b:rplugin_nonr_omnifunc = "RnwNonRCompletion"
         autocmd BufWritePost <buffer> call s:GetBibFileName()
     endif
 endif
+
+
+
+" Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,
+" rhelp and rdoc and which are called at common_global.vim
+let b:IsInRCode = function("RnwIsInRCode")
+let b:PreviousRChunk = function("RnwPreviousChunk")
+let b:NextRChunk = function("RnwNextChunk")
+let b:SendChunkToR = function("RnwSendChunkToR")
+
+let b:rplugin_knitr_pattern = "^<<.*>>=$"
 
 "==========================================================================
 " Key bindings and menu items

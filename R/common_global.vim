@@ -3363,7 +3363,7 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
-function s:CompleteBib(base, prefix)
+function RCompleteBib(base)
     if !IsJobRunning("BibComplete")
         return []
     endif
@@ -3386,81 +3386,59 @@ function s:CompleteBib(base, prefix)
         let lines = readfile(g:rplugin_tmpdir . "/bibcompl")
         for line in lines
             let tmp = split(line, "\x09")
-            call add(resp, {'word': a:prefix . tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
+            call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
         endfor
     endif
     return resp
 endfunction
 
+function FindStartRObj()
+    let line = getline(".")
+    let lnum = line(".")
+    let cpos = getpos(".")
+    let idx = cpos[2] - 2
+    let idx2 = cpos[2] - 2
+    call cursor(lnum, cpos[2] - 1)
+    if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
+        let idx2 = cpos[2]
+        let s:argkey = ''
+    else
+        let idx1 = idx2
+        while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
+                    \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
+            let idx1 -= 1
+        endwhile
+        let idx1 += 1
+        let argkey = strpart(line, idx1, idx2 - idx1 + 1)
+        let idx2 = cpos[2] - strlen(argkey)
+        let s:argkey = argkey
+    endif
+    return idx2 - 1
+endfunction
+
 function CompleteR(findstart, base)
     if a:findstart
         let line = getline(".")
-        let s:in_r_code = 1
-        if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") &&
-                    \ !((&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
-                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
-                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
-                    \ (&filetype == "r" && line =~ "^#\+")) &&
-                    \ b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
-            let s:in_r_code = 0
+        if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
+            let s:compl_type = 3
+            return FindStartRObj()
+        elseif b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ''
+            let s:compl_type = 2
             let Ofun = function(b:rplugin_nonr_omnifunc)
-            let thebegin = Ofun(a:findstart, a:base)
-            return thebegin
-        endif
-        let lnum = line(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] - 2
-        let idx2 = cpos[2] - 2
-        call cursor(lnum, cpos[2] - 1)
-        if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
-            let idx2 = cpos[2]
-            let s:argkey = ''
+            return Ofun(a:findstart, a:base)
         else
-            let idx1 = idx2
-            while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
-                        \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
-                let idx1 -= 1
-            endwhile
-            let idx1 += 1
-            let argkey = strpart(line, idx1, idx2 - idx1 + 1)
-            let idx2 = cpos[2] - strlen(argkey)
-            let s:argkey = argkey
+            let s:compl_type = 1
+            return FindStartRObj()
         endif
-        return idx2 - 1
     else
-        if !s:in_r_code
+        if s:compl_type == 3
+            return CompleteChunkOptions(a:base)
+        elseif s:compl_type == 2
             let Ofun = function(b:rplugin_nonr_omnifunc)
             return Ofun(a:findstart, a:base)
         endif
+
         let line = getline(".")
-        if (&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
-                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
-                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
-                    \ (&filetype == "r" && line =~ "^#\+")
-            let resp = CompleteChunkOptions(a:base)
-            return resp
-        endif
-
-        " bib complete
-        if &filetype == 'rmd' && b:IsInRCode(0) == 0 && a:base[0] == '@'
-            let resp = s:CompleteBib(substitute(a:base, '^@', '', ''), '@')
-            return resp
-        elseif &filetype == 'rnoweb' && b:IsInRCode(0) == 0
-            let line = getline('.')
-            let cpos = getpos(".")
-            let idx = cpos[2] - 2
-            let piece = line[0:idx]
-            let piece = substitute(piece, ".*\\", "\\", '')
-            let piece = substitute(piece, ".*}", "", '')
-            if piece =~ s:cite_ptrn
-                let resp = s:CompleteBib(a:base, '')
-                return resp
-            endif
-            return []
-        endif
-
-        endif
-
         let lnum = line(".")
         let cpos = getpos(".")
         let idx = cpos[2] - 2
@@ -3548,15 +3526,7 @@ function RBuildTags()
     call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
 endfunction
 
-function PyBTeXOK(ft)
-    if exists("g:R_bib_disable") && type(g:R_bib_disable) == 3
-        for ft in g:R_bib_disable
-            if tolower(ft) == a:ft
-                return 0
-            endif
-        endfor
-    endif
-
+function CheckPyBTeX()
     let out = system('python3 --version')
     if v:shell_error == 0 && out =~ 'Python 3'
         let g:rplugin_py3 = 'python3'
@@ -3661,6 +3631,7 @@ let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
+let g:R_bib_disable       = get(g:, "R_bib_disable",        0)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
 let g:R_after_start       = get(g:, "R_after_start",       "")

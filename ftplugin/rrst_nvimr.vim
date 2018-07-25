@@ -162,6 +162,8 @@ let b:PreviousRChunk = function("RrstPreviousChunk")
 let b:NextRChunk = function("RrstNextChunk")
 let b:SendChunkToR = function("SendRrstChunkToR")
 
+let b:rplugin_knitr_pattern = "^.. {r.*}$"
+
 "==========================================================================
 " Key bindings and menu items
 

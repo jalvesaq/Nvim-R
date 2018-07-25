@@ -143,20 +143,42 @@ function! SendRmdChunkToR(e, m)
     endif
 endfunction
 
+function! RmdNonRCompletion(findstart, base)
+    if a:findstart
+        let line = getline(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] -2
+        while line[idx] =~ '\w' && idx > 0
+            let idx -= 1
+        endwhile
+        return idx + 1
+    else
+        let citekey = substitute(a:base, '^@', '', '')
+        return RCompleteBib(citekey)
+    endif
+endfunction
+
+" Use pandoc completion if available
+if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
+    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
+elseif g:R_bib_disable == 0
+    " Use BibComplete if possible
+    if !exists("g:rplugin_py3")
+        call CheckPyBTeX()
+    endif
+    if !has_key(g:rplugin_debug_info, 'BibComplete')
+        call s:GetBibFileName()
+        let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+        autocmd BufWritePost <buffer> call s:GetBibFileName()
+    endif
+endif
+
 let b:IsInRCode = function("RmdIsInRCode")
 let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
 
-" Citation completion
-if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
-    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
-elseif !IsJobRunning("BibComplete") && !has_key(g:rplugin_debug_info, 'BibComplete')
-    if PyBTeXOK('rmd')
-        call s:GetBibFileName()
-        autocmd BufWritePost <buffer> call s:GetBibFileName()
-    endif
-endif
+let b:rplugin_knitr_pattern = "^``` *{r.*}$"
 
 "==========================================================================
 " Key bindings and menu items

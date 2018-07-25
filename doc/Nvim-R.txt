@@ -1866,12 +1866,9 @@ The completion works only if a pattern similar to "\cite{" precedes the
 cursor (see |R_cite_pattern|) and if there is no other LaTeX omnicompletion
 function already enabled (for example, by LaTeX-Box).
 
-You can disable the completion of citation keys for Rmd, Rnoweb or both.
-Examples:
+To disable the completion of citation keys, put in your |vimrc|:
 >
-   let R_bib_disable = ["rnoweb"]
-   let R_bib_disable = ["rmd"]
-   let R_bib_disable = ["rmd", "rnoweb"]
+   let R_bib_disable = 1
 <
 
 ------------------------------------------------------------------------------
