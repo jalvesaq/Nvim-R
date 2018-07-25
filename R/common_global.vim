@@ -3631,7 +3631,7 @@ let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
-let g:R_bib_disable       = get(g:, "R_bib_disable",        0)
+let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
 let g:R_after_start       = get(g:, "R_after_start",       "")
@@ -3894,15 +3894,6 @@ endif
 let g:rplugin_has_wmctrl = 0
 
 let s:docfile = g:rplugin_tmpdir . "/Rdoc"
-
-if exists('g:R_cite_pattern')
-    let s:cite_ptrn = g:R_cite_pattern
-elseif exists('g:LatexBox_cite_pattern')
-    let s:cite_ptrn = g:LatexBox_cite_pattern
-else
-    " From LaTeX-Box/ftplugin/latex-box/complete.vim:
-    let s:cite_ptrn = '\C\\\a*cite\a*\*\?\(\[[^\]]*\]\)*\_\s*{'
-endif
 
 " List of files to be deleted on VimLeave
 let s:del_list = [s:Rsource_write]

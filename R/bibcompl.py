@@ -62,7 +62,7 @@ def ParseBib(b):
 def GetComplLine(k, e):
     return k + '\x09' + e['author'][0:40] + "\x09(" + e['year'] + ') ' + e['title']
 
-def GetMatch(d, ptrn):
+def GetMatch(ptrn, d):
     for b in D[d]:
         if os.path.isfile(b):
             if b not in E or os.path.getmtime(b) > M[b]:
@@ -116,7 +116,7 @@ def loop():
             set_bibfiles(d, b.split('\x06'))
         else:
             ptrn, d = line.split('\x05')
-            GetMatch(d, ptrn.lower())
+            GetMatch(ptrn.lower(), d)
 
 if __name__ == "__main__":
     set_bibfiles(sys.argv[1], sys.argv[2:len(sys.argv)])

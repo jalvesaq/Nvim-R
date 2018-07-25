@@ -918,7 +918,7 @@ of
 |R_allnames|          Show names which begin with a dot
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
-|R_bib_disable|       Bibliography completion
+|R_non_r_compl|       Bibliography completion
 |R_complete|          Include objects in argument completion
 |R_show_args|         Show extra information during omnicompletion
 |R_show_arg_help|     Show extra information during arguments completion
@@ -1848,27 +1848,36 @@ Currently, there is only one script known to extend Nvim-R features:
 
 
 ------------------------------------------------------------------------------
-							       *R_bib_disable*
-6.28. Bibliography completion~
+							       *R_non_r_compl*
+6.28. Completion of non R code~
 
-In both RMarkdown buffers, omnicompletion will look for bibliographic data in
+In RMarkdown buffers, omnicompletion will look for bibliographic data in
 any `.bib` file listed in the `bibliography` field of the YAML header. If the
 `bibliography` field is not defined, it will use all `.bib` files that are in
-the same directory of the RMarkdown document as bibliography sources. Python 3
-and the python3-pybtex library are required for citation completion, and the
-completion will be enabled only if there is no other omni completion already
-activated for either the markdown or pandoc file type (for example, by
-vim-pandoc). The list of `.bib` files is updated whenever the buffer is saved.
+the same directory of the RMarkdown document as bibliography sources. The list
+of `.bib` files is updated whenever the buffer is saved. Python 3 and the
+python3-pybtex library are required for citation completion.
 
 The completion of citation keys also works in Rnoweb documents. But only
 `.bib` files in the same directory of the current Rnoweb document are parsed.
-The completion works only if a pattern similar to "\cite{" precedes the
-cursor (see |R_cite_pattern|) and if there is no other LaTeX omnicompletion
-function already enabled (for example, by LaTeX-Box).
+The completion works only if a pattern similar to "\cite{" precedes the cursor
+(see |R_cite_pattern|). In Rnoweb buffers, some of the most commonly used
+LaTeX commands are also completed.
 
-To disable the completion of citation keys, put in your |vimrc|:
+To disable the completion of non R code in Rmd and Rnoweb files, and use the
+omni completion provided by another plugin, put in your |vimrc|:
 >
-   let R_bib_disable = 1
+   let R_non_r_compl = 0
+<
+Then, Nvim-R may use another function to complete non R code.
+
+If you want a different function for completion of non R code, you should not
+set the value 'omnifunc' in your |vimrc| because you would lose the completion
+of R objects. It is better to use an |autocmd| to set the value of buffer the
+variable `b:rplugin_nonr_omnifunc`. Examples:
+>
+   autocmd FileType rnoweb let b:rplugin_nonr_omnifunc = "g:LatexBox_Complete"
+   autocmd FileType rmd let b:rplugin_nonr_omnifunc = "g:omnifunc=pandoc#completion#Complete"
 <
 
 ------------------------------------------------------------------------------
@@ -3011,7 +3020,7 @@ goal (tested on April, 2017).
  * Bibliographic completion for Rmd.
  * New command:  :RDebugInfo
  * New options: R_hi_fun_globenv, R_auto_scroll, R_ls_env_tol,
-   R_bib_disable, R_cite_pattern.
+   R_non_r_compl, R_cite_pattern.
  * Accept prefix "terminal:" in `R_csv_app`.
  * Remove option R_tmux_split.
  * Changes:

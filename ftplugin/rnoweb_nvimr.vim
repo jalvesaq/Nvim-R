@@ -13,6 +13,15 @@ endif
 " after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+if exists('g:R_cite_pattern')
+    let s:cite_ptrn = g:R_cite_pattern
+elseif exists('g:LatexBox_cite_pattern')
+    let s:cite_ptrn = g:LatexBox_cite_pattern
+else
+    " From LaTeX-Box/ftplugin/latex-box/complete.vim:
+    let s:cite_ptrn = '\C\\\a*cite\a*\*\?\(\[[^\]]*\]\)*\_\s*{'
+endif
+
 let g:R_rnowebchunk = get(g:, "R_rnowebchunk", 1)
 
 if g:R_rnowebchunk == 1
@@ -39,37 +48,155 @@ function! s:GetBibFileName()
     endif
 endfunction
 
+function! s:CompleteEnv(base)
+    " List from LaTeX-Box
+    let lenv = ['abstract]', 'align*}', 'align}', 'center}', 'description}',
+                \ 'document}', 'enumerate}', 'equation}', 'figure}',
+                \ 'itemize}', 'table}', 'tabular}']
+
+    call filter(lenv, 'v:val =~ "' . a:base . '"')
+
+    call sort(lenv)
+    let rr = []
+    for env in lenv
+        call add(rr, {'word': env})
+    endfor
+    return rr
+endfunction
+
+function! s:CompleteLaTeXCmd(base)
+    " List from LaTeX-Box
+    let lcmd = ['\begin{', '\bottomrule', '\caption', '\chapter', '\cite',
+                \ '\citep', '\citet', '\cmidrule{', '\end{', '\eqref', '\hline',
+                \ '\includegraphics', '\item', '\label', '\midrule', '\multicolumn{',
+                \ '\multirow{', '\newcommand', '\pageref', '\ref', '\section{',
+                \ '\subsection{', '\subsubsection{', '\toprule', '\usepackage{']
+
+    let newbase = '\' . a:base
+    call filter(lcmd, 'v:val =~ newbase')
+
+    call sort(lcmd)
+    let rr = []
+    for cmd in lcmd
+        call add(rr, {'word': cmd})
+    endfor
+    return rr
+endfunction
+
+function! s:CompleteRef(base)
+    " Get \label{abc}
+    let lines = getline(1, '$')
+    let bigline = join(lines)
+    let labline = substitute(bigline, '^.\{-}\\label{', '', 'g')
+    let labline = substitute(labline, '\\label{', "\x05", 'g')
+    let labels = split(labline, "\x05")
+    call map(labels, 'substitute(v:val, "}.*", "", "g")')
+    call filter(labels, 'len(v:val) < 40')
+
+    " Get chunk label if it has fig.cap
+    let lfig = copy(lines)
+    call filter(lfig, 'v:val =~ "^<<.*fig\\.cap\\s*="')
+    call map(lfig, 'substitute(v:val, "^<<", "", "")')
+    call map(lfig, 'substitute(v:val, ",.*", "", "")')
+    call map(lfig, '"fig:" . v:val')
+    let labels += lfig
+
+    " Get label="tab:abc"
+    call filter(lines, 'v:val =~ "label\\s*=\\s*.tab:"')
+    call map(lines, 'substitute(v:val, ".*label\\s*=\\s*.", "", "")')
+    call map(lines, 'substitute(v:val, "' . "'" . '.*", "", "")')
+    call map(lines, "substitute(v:val, '" . '"' . ".*', '', '')")
+    let labels += lines
+
+    call filter(labels, 'v:val =~ "^' . a:base . '"')
+
+    let resp = []
+    for lbl in labels
+        call add(resp, {'word': lbl})
+    endfor
+    return resp
+endfunction
+
+let s:compl_type = 0
+
 function! RnwNonRCompletion(findstart, base)
     if a:findstart
-        let line = getline(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] -2
-        while line[idx] =~ '\w' && idx > 0
+        let line = getline('.')
+        let idx = col('.') - 2
+        let widx = idx
+
+        " Where is the cursor in 'text \command{ } text'?
+        let s:compl_type = 0
+        while idx >= 0
+            if line[idx] =~ '\w'
+                let widx = idx
+            elseif line[idx] == '\'
+                let s:compl_type = 1
+                return idx
+            elseif line[idx] == '{'
+                let s:compl_type = 2
+                return widx
+            elseif line[idx] == '}'
+                return widx
+            endif
             let idx -= 1
         endwhile
-        return idx + 1
     else
-        let citekey = substitute(a:base, '^@', '', '')
-        let resp = RCompleteBib(citekey)
-        return resp
+        if s:compl_type == 0
+            return []
+        elseif s:compl_type == 1
+            return s:CompleteLaTeXCmd(a:base)
+        endif
+
+        let line = getline('.')
+        let cpos = getpos(".")
+        let idx = cpos[2] - 2
+        let piece = line[0:idx]
+        let piece = substitute(piece, ".*\\", "\\", '')
+        let piece = substitute(piece, ".*}", "", '')
+
+        " Get completions even for 'empty' base
+        if piece =~ '^\\' && a:base == '{'
+            let piece .= '{'
+            let newbase = ''
+        else
+            let newbase = a:base
+        endif
+
+        if newbase != '' && piece =~ s:cite_ptrn
+            return RCompleteBib(newbase)
+        elseif piece == '\begin{'
+            let s:compl_type = 9
+            return s:CompleteEnv(newbase)
+        elseif piece == '\ref{' || piece == '\pageref{'
+            return s:CompleteRef(newbase)
+        endif
+
+        return []
     endif
 endfunction
 
-" Use LaTeX-Box completion if available
-if exists('*g:LatexBox_Complete')
-    let b:rplugin_nonr_omnifunc = "g:LatexBox_Complete"
-elseif g:R_bib_disable == 0
+function! s:OnCompleteDone()
+    if s:compl_type == 9
+        let s:compl_type = 0
+        if has_key(v:completed_item, 'word')
+            call append(line('.'), [repeat(' ', indent(line('.'))) . '\end{' . v:completed_item['word']])
+        endif
+    endif
+endfunction
+
+if g:R_non_r_compl
     if !exists("g:rplugin_py3")
         call CheckPyBTeX()
     endif
     if !has_key(g:rplugin_debug_info, 'BibComplete')
-        " Use BibComplete if possible
+        " Use RBibComplete if possible
         call s:GetBibFileName()
         let b:rplugin_nonr_omnifunc = "RnwNonRCompletion"
         autocmd BufWritePost <buffer> call s:GetBibFileName()
+        autocmd CompleteDone <buffer> call s:OnCompleteDone()
     endif
 endif
-
 
 
 " Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,

@@ -158,19 +158,21 @@ function! RmdNonRCompletion(findstart, base)
     endif
 endfunction
 
-" Use pandoc completion if available
-if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
-    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
-elseif g:R_bib_disable == 0
-    " Use BibComplete if possible
+if g:R_non_r_compl
     if !exists("g:rplugin_py3")
         call CheckPyBTeX()
     endif
+    " Use BibComplete if possible
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         call s:GetBibFileName()
         let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
         autocmd BufWritePost <buffer> call s:GetBibFileName()
     endif
+endif
+
+" If PyBTeX is not available, try pandoc
+if b:rplugin_nonr_omnifunc == '' && exists('*pandoc#completion#Complete')
+    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
 endif
 
 let b:IsInRCode = function("RmdIsInRCode")
