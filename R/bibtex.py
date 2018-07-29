@@ -99,12 +99,13 @@ def set_bibfiles(d, bibls):
     global D
     D[d] = []
     for b in bibls:
-        if os.path.isfile(b):
-            ParseBib(b)
-            D[d].append(b)
-        else:
-            print('File "' + b + '" not found.', file=sys.stderr)
-            sys.stderr.flush()
+        if b != '':
+            if os.path.isfile(b):
+                ParseBib(b)
+                D[d].append(b)
+            else:
+                print('File "' + b + '" not found.', file=sys.stderr)
+                sys.stderr.flush()
 
 def loop():
     for line in map(str.rstrip, sys.stdin):
