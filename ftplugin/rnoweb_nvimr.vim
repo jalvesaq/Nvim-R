@@ -37,15 +37,15 @@ call SetPDFdir()
 
 function! s:GetBibFileName()
     if !exists('b:rplugin_bibf')
-        let b:rplugin_bibf = []
+        let b:rplugin_bibf = ''
     endif
-    let newbibf = glob(expand("%:p:h") . '/*.bib', 0, 1)
+    let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
     if newbibf != b:rplugin_bibf
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
+            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
         else
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py'] + [expand("%:p")] + b:rplugin_bibf
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
         endif
     endif

@@ -1913,6 +1913,9 @@ collections. This can be done in the YAML header, as in the examples:
 <
 If you still get repeated keys: TODO FIXME solution not implemented yet...
 
+If Nvim-R cannot find the file `zotero.sqlite`, set the value of
+`R_zotero_sqlite` in your |vimrc|.
+
 If you will always use bibliographic completion from either .bib files or
 Zotero, put one of the following lines in your |vimrc|:
 >
