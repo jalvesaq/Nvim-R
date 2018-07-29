@@ -9,6 +9,96 @@ import sqlite3
 
 class ZoteroEntries:
 
+    # Translation of zotero.sqlite to CSL types
+    zct = {
+        'artwork'             : 'graphic',
+        'attachment'          : 'article',
+        'audioRecording'      : 'song',
+        'blogPost'            : 'post-weblog',
+        'bookSection'         : 'chapter',
+        'case'                : 'legal_case',
+        'computerProgram'     : 'book',
+        'conferencePaper'     : 'paper-conference',
+        'dictionaryEntry'     : 'entry-dictionary',
+        'document'            : 'report',
+        'email'               : 'personal_communication',
+        'encyclopediaArticle' : 'entry-encyclopedia',
+        'film'                : 'motion_picture',
+        'forumPost'           : 'post',
+        'hearing'             : 'bill',
+        'instantMessage'      : 'personal_communication',
+        'interview'           : 'interview',
+        'journalArticle'      : 'article-journal',
+        'letter'              : 'personal_communication',
+        'magazineArticle'     : 'article-magazine',
+        'newspaperArticle'    : 'article-newspaper',
+        'note'                : 'manuscript',
+        'podcast'             : 'broadcast',
+        'presentation'        : 'speech',
+        'radioBroadcast'      : 'broadcast',
+        'statute'             : 'legislation',
+        'tvBroadcast'         : 'broadcast',
+        'videoRecording'      : 'motion_picture'}
+
+    # Translation of zotero.sqlite to CSL fields
+    # FIXME: it's incomplete and accuracy isn't guaranteed.
+    zcf= {
+        'abstractNote'        : 'abstract',
+        'accessDate'          : 'accessed',
+        'applicationNumber'   : 'call-number',
+        'archiveLocation'     : 'archive_location',
+        'artworkMedium'       : 'medium',
+        'artworkSize'         : 'dimensions',
+        'audioFileType'       : 'medium',
+        'blogTitle'           : 'container-title',
+        'bookTitle'           : 'container-title',
+        'callNumber'          : 'call-number',
+        'code'                : 'container-title',
+        'codeNumber'          : 'volume',
+        'codePages'           : 'page',
+        'codeVolume'          : 'volume',
+        'conferenceName'      : 'event',
+        'court'               : 'authority',
+        'date'                : 'issued',
+        'dictionaryTitle'     : 'container-title',
+        'distributor'         : 'publisher',
+        'encyclopediaTitle'   : 'container-title',
+        'extra'               : 'note',
+        'filingDate'          : 'submitted',
+        'forumTitle'          : 'container-title',
+        'history'             : 'references',
+        'institution'         : 'publisher',
+        'interviewMedium'     : 'medium',
+        'issuingAuthority'    : 'authority',
+        'legalStatus'         : 'status',
+        'legislativeBody'     : 'authority',
+        'libraryCatalog'      : 'source',
+        'meetingName'         : 'event',
+        'numPages'            : 'number-of-pages',
+        'numberOfVolumes'     : 'number-of-volumes',
+        'pages'               : 'page',
+        'place'               : 'publisher-place',
+        'priorityNumbers'     : 'issue',
+        'proceedingsTitle'    : 'container-title',
+        'programTitle'        : 'container-title',
+        'programmingLanguage' : 'genre',
+        'publicationTitle'    : 'container-title',
+        'reporter'            : 'container-title',
+        'runningTime'         : 'dimensions',
+        'series'              : 'collection-title',
+        'seriesNumber'        : 'collection-number',
+        'seriesTitle'         : 'collection-title',
+        'session'             : 'chapter-number',
+        'shortTitle'          : 'title-short',
+        'system'              : 'medium',
+        'thesisType'          : 'genre',
+        'type'                : 'genre',
+        'university'          : 'publisher',
+        'url'                 : 'URL',
+        'versionNumber'       : 'version',
+        'websiteTitle'        : 'container-title',
+        'websiteType'         : 'genre'}
+
     def __init__(self):
 
         # Title words to be ignored
@@ -64,7 +154,14 @@ class ZoteroEntries:
 
     def _load_zotero_data(self):
         self._m = os.path.getmtime(self._z)
-        conn = sqlite3.connect(self._z)
+
+        # Make a copy of zotero.sqlite to avoid locks
+        with open(self._z, 'rb') as f:
+            b = f.read()
+        with open(os.getenv('NVIMR_COMPLDIR') + '/copy_of_zotero.sqlite', 'wb') as f:
+            f.write(b)
+
+        conn = sqlite3.connect(os.getenv('NVIMR_COMPLDIR') + '/copy_of_zotero.sqlite')
         self._cur = conn.cursor()
         self._add_most_fields()
         self._add_collection()
@@ -74,6 +171,8 @@ class ZoteroEntries:
         self._add_tags()
         self._calculate_citekeys()
         conn.close()
+        os.remove(os.getenv('NVIMR_COMPLDIR') + '/copy_of_zotero.sqlite')
+
         self._separate_by_collection()
 
     def _add_most_fields(self):
@@ -85,6 +184,7 @@ class ZoteroEntries:
                 and itemData.fieldID = fields.fieldID
                 and itemData.valueID = itemDataValues.valueID
             """
+        self._t = {}
         self._cur.execute(fields_query)
         for item_id, field, value, key in self._cur.fetchall():
             if item_id not in self._t:
@@ -247,61 +347,40 @@ class ZoteroEntries:
 
     def _get_yaml_ref(self, e):
         # Fix the type
-        e['etype'] = re.sub('(.*)article', 'article-\\1', e['etype'].lower())
-        e['etype'] = re.sub('booksection', 'chapter', e['etype'])
-        e['etype'] = e['etype'].replace('conferencepaper', 'paper-conference')
-        # Rename some fields
-        if 'publicationTitle' in e:
-            e['container-title'] = re.sub('"', '\\"', e.pop('publicationTitle'))
-        elif 'bookTitle' in e:
-            e['container-title'] = e.pop('bookTitle')
-        if 'seriesTitle' in e:
-            e['collection-title'] = e.pop('seriesTitle')
-        if 'journalAbbreviation' in e:
-            e['container-title-short'] = e.pop('journalAbbreviation')
-        if 'place' in e:
-            e['publisher-place'] = e.pop('place')
-        if 'shortTitle' in e:
-            e['title-short'] = e.pop('shortTitle')
-        if 'extra' in e:
-            e['note'] = re.sub('"', '\\"', e.pop('extra'))
-        if 'numPages' in e:
-            e['number-of-pages'] = e.pop('numPages')
-        if 'numberOfVolumes' in e:
-            e['number-of-volumes'] = e.pop('numberOfVolumes')
-        if 'accessDate' in e:
-            e['accessed'] = e.pop('accessDate')
-        if 'abstractNote' in e:
-            e['abstract'] = e.pop('abstractNote')
-        if 'bookAuthor' in e:
-            e['container-author'] = e.pop('bookAuthor')
-        # Escape double quotes
-        e['title'] = re.sub('"', '\\"', e['title'])
-        if 'note' in e:
-            e['note'] = re.sub('"', '\\"', e['note'])
+        if e['etype'] in self.zct:
+            e['etype'] = e['etype'].replace(e['etype'], self.zct[e['etype']])
+        # Escape quotes of all fields and rename some fields
+        for f in e:
+            if isinstance(e[f], str):
+                e[f] = re.sub('"', '\\"', e[f])
+            if f in self.zcf:
+                print("Replacing: " + f + ' -> ' + self.zcf[f], file=sys.stderr)
+                e[self.zcf[f]] = e.pop(f)
+            else:
+                print("Keeping  : " + f, file=sys.stderr)
 
         ref = '- type: ' + e['etype'] + '\n  id: ' + e['citekey'] + '\n'
-        for aa in ['author', 'editor', 'contributor', 'translator', 
+        for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:
                 ref += '  ' + aa + ':\n'
                 for last, first in e[aa]:
                     ref += '  - family: "' + last + '"\n'
                     ref += '    given: "' + first + '"\n'
-        if 'date' in e:
-            d = re.sub(' .*', '', e['date']).split('-')
+        if 'issued' in e:
+            d = re.sub(' .*', '', e['issued']).split('-')
             if d[0] != '0000':
                 ref += '  issued:\n    year: ' + e['year'] + '\n'
                 if d[1] != '00':
                     ref += '    month: ' + d[1] + '\n'
                 if d[2] != '00':
                     ref += '    day: ' + d[2] + '\n'
-        dont = ['etype', 'date', 'abstract', 'citekey', 'collection',
+        dont = ['etype', 'issued', 'abstract', 'citekey', 'collection',
                 'author', 'editor', 'contributor', 'translator',
                 'alastnm', 'container-author', 'tags', 'year']
-        for k in e:
-            if k not in dont:
-                ref += '  ' + k + ': "' + str(e[k]) + '"\n'
+        for f in e:
+            if f not in dont:
+                ref += '  ' + f + ': "' + str(e[f]) + '"\n'
         return ref
 
     def GetYamlRefs(self, d, keys):
@@ -312,7 +391,7 @@ class ZoteroEntries:
                     if k == self._e[c][r]['citekey']:
                         ref += self._get_yaml_ref(self._e[c][r])
         if ref != '':
-            ref = '---\nreferences:\n' + ref + '\n...\n\ndummy text\n'
+            ref = '---\nreferences:\n' + ref + '...\n\ndummy text\n'
         return ref
 
 
