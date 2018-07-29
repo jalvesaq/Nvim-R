@@ -10,7 +10,8 @@ ftplugin/rrst_nvimr.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim
 syntax/rout.vim
-R/bibcompl.py
+R/bibtex.py
+R/bibcompl.vim
 R/common_buffer.vim
 R/common_global.vim
 R/evince.vim
@@ -37,6 +38,8 @@ R/vimbuffer.vim
 R/vimrcom.vim
 R/windows.vim
 R/zathura.vim
+R/zotero.py
+R/zotref
 R/nvimrcom.vim
 R/nvimcom/DESCRIPTION
 R/nvimcom/NAMESPACE

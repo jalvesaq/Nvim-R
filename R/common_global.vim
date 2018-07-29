@@ -3363,35 +3363,6 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
-function RCompleteBib(base)
-    if !IsJobRunning("BibComplete")
-        return []
-    endif
-    if b:rplugin_bibf == []
-        call RWarningMsgInp('Bib file not defined')
-        return []
-    endif
-    call delete(g:rplugin_tmpdir . "/bibcompl")
-    let g:rplugin_bib_finished = 0
-    call JobStdin(g:rplugin_jobs["BibComplete"], a:base . "\x05" . expand("%:p") . "\n")
-    call AddForDeletion(g:rplugin_tmpdir . "/bibcompl")
-    let resp = []
-    let wt = 0
-    sleep 20m
-    while wt < 10 && g:rplugin_bib_finished == 0
-        let wt += 1
-        sleep 50m
-    endwhile
-    if filereadable(g:rplugin_tmpdir . "/bibcompl")
-        let lines = readfile(g:rplugin_tmpdir . "/bibcompl")
-        for line in lines
-            let tmp = split(line, "\x09")
-            call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
-        endfor
-    endif
-    return resp
-endfunction
-
 function FindStartRObj()
     let line = getline(".")
     let lnum = line(".")
@@ -3524,29 +3495,6 @@ function RBuildTags()
         return
     endif
     call g:SendCmdToR('rtags(ofile = "etags"); etags2ctags("etags", "tags"); unlink("etags")')
-endfunction
-
-function CheckPyBTeX()
-    let out = system('python3 --version')
-    if v:shell_error == 0 && out =~ 'Python 3'
-        let g:rplugin_py3 = 'python3'
-    else
-        let out = system('python --version')
-        if v:shell_error == 0 && out =~ 'Python 3'
-            let g:rplugin_py3 = 'python'
-        else
-            let g:rplugin_debug_info['BibComplete'] = "No Python 3"
-            let g:rplugin_py3 = ''
-        endif
-    endif
-    if g:rplugin_py3 != ''
-        call system(g:rplugin_py3, "from pybtex.database import parse_file\n")
-        if v:shell_error != 0
-            let g:rplugin_debug_info['BibComplete'] = "No PyBTex"
-            let g:rplugin_py3 = ''
-        endif
-    endif
-    return g:rplugin_py3 != ''
 endfunction
 
 function ShowRDebugInfo()

@@ -1851,19 +1851,74 @@ Currently, there is only one script known to extend Nvim-R features:
 							       *R_non_r_compl*
 6.28. Completion of non R code~
 
-In RMarkdown buffers, omnicompletion will look for bibliographic data in
-any `.bib` file listed in the `bibliography` field of the YAML header. If the
-`bibliography` field is not defined, it will use all `.bib` files that are in
-the same directory of the RMarkdown document as bibliography sources. The list
-of `.bib` files is updated whenever the buffer is saved. Python 3 and the
-python3-pybtex library are required for citation completion.
+Nvim-R can do omni completion of bibliographic citation keys from either
+`.bib` files or a local Zotero databse (usually at `~/Zotero/zotero.sqlite`).
+Both types of completion require Python 3. Additionally, bib completion
+requires the python3-pybtex library. The bib completion is enabled for both
+RMarkdown and Rnoweb file types while the Zotero completion is enabled only
+for RMarkdown.
 
-The completion of citation keys also works in Rnoweb documents. But only
-`.bib` files in the same directory of the current Rnoweb document are parsed.
-The completion works only if a pattern similar to "\cite{" precedes the cursor
-(see |R_cite_pattern|). In Rnoweb buffers, some of the most commonly used
-LaTeX commands are also completed.
+In RMarkdown buffers, omnicompletion from bib data will look for bibliographic
+data in any `.bib` file listed in the `bibliography` field of the YAML header.
+If the `bibliography` field is not defined, it will use all `.bib` files that
+are in the same directory of the RMarkdown document as bibliography sources.
+The list of `.bib` files is updated whenever the buffer is saved. Python 3 and
+the python3-pybtex library are required for citation completion.
 
+For Rnoweb documents, the completion of citation keys gathers data only from
+`.bib` files in the same directory of the current Rnoweb document, and the
+completion works only if a pattern similar to "\cite{" precedes the cursor
+(see |R_cite_pattern|). Some of the most commonly used LaTeX commands are also
+completed. The completion of the argument for both `\ref{}` and `\pageref{}`
+includes both the label of R chunks where the option `fig.cap` was found
+prefixed with `fig:` and the string attributed to the argument `label` in the
+R code, but only if they begin with the substring "tab:".
+
+The completion of citation keys from the Zotero database is enabled if there
+is no `bibliography` field in the YAML header, there is no `.bib` file in the
+same directory, and the file `~/Zotero/zotero.sqlite` exists. That is, no
+configuration is required to enable it. However, it is necessary to tell
+`rmarkdown::render` how to compile the document; specifically, you have to
+define the field `pandoc_args` as in the example below:
+>
+   ---
+   output:
+     pdf_document:
+       dev: "cairo_pdf"
+       pandoc_args: ['--filter', 'zotref', '--filter', 'pandoc-citeproc']
+   ...
+<
+The `zotref` filter will get the references from the Zotero database and build
+citations keys as "author_year_title", where "author" is the last name of the
+first author, and "title" is the first word of the title, excluding a few
+words. You can define what words are excluded from citation keys by setting
+the value of `R_banned_keys` in you |vimrc|. Example (with the default value
+for English locales):
+>
+   let R_banned_keys = 'a an the some from on in to of do with'
+<
+If two references have the same year, their titles begin with the same word,
+and their first author share the last name, the citation keys will be
+identical. For this reason, instead of searching for references in your whole
+Zotero database, it is better to restrict the search to one or more
+collections. This can be done in the YAML header, as in the examples:
+>
+   ---
+   collection: ['New Paper']
+   ...
+
+   ---
+   collection: ['PhD Thesis', 'New Paper']
+   ...
+<
+If you still get repeated keys: TODO FIXME solution not implemented yet...
+
+If you will always use bibliographic completion from either .bib files or
+Zotero, put one of the following lines in your |vimrc|:
+>
+   let R_bib_engine = 'zotero'
+   let R_bib_engine = 'bibtex'
+<
 To disable the completion of non R code in Rmd and Rnoweb files, and use the
 omni completion provided by another plugin, put in your |vimrc|:
 >

@@ -13,6 +13,9 @@ endif
 " be defined after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+" Bibliographic completion
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 
 if g:R_rmdchunk == 1
@@ -31,11 +34,8 @@ function! RWriteRmdChunk()
     endif
 endfunction
 
-function! s:GetBibFileName()
-    if !exists('b:rplugin_bibf')
-        let b:rplugin_bibf = []
-    endif
-    let newbibf = []
+function! s:GetYamlField(field)
+    let value = []
     let lastl = line('$')
     let idx = 2
     while idx < lastl
@@ -43,31 +43,79 @@ function! s:GetBibFileName()
         if line == '...' || line == '---'
             break
         endif
-        if line =~ '^\s*bibliography\s*:'
-            let bstr = substitute(line, '^\s*bibliography\s*:\s*\(.*\)\s*', '\1', '')
-            let bstr = substitute(bstr, '[\[\],"]', '', 'g')
-            let bstr = substitute(bstr, "'", '', 'g')
-            let bstr = substitute(bstr, "  *", " ", 'g')
-            let blist = split(bstr)
-            let blist = map(blist, 'expand(v:val)')
-            for fn in blist
-                if filereadable(fn)
-                    call add(newbibf, fn)
+        if line =~ '^\s*' . a:field . '\s*:'
+            let bstr = substitute(line, '^\s*' . a:field . '\s*:\s*\(.*\)\s*', '\1', '')
+            if bstr =~ '^".*"$' || bstr =~ "^'.*'$"
+                let bib = substitute(bstr, '"', '', 'g')
+                let bib = substitute(bib, "'", '', 'g')
+                let bibl = [bib]
+            elseif bstr =~ '^\[.*\]$'
+                try
+                    let l:bbl = eval(bstr)
+                catch *
+                    call RWarningMsg('YAML line invalid for Vim: ' . line)
+                    let bibl = []
+                endtry
+                if exists('l:bbl')
+                    let bibl = l:bbl
                 endif
+            else
+                let bibl = [bstr]
+            endif
+            for fn in bibl
+                call add(value, fn)
             endfor
             break
         endif
         let idx += 1
     endwhile
-    if newbibf == []
-        let newbibf = glob(expand("%:p:h") . '/*.bib', 0, 1)
+    if value == []
+        return ''
+    endif
+    if a:field == "bibliography"
+        call map(value, "expand(v:val)")
+    endif
+    return join(value, "\x06")
+endfunction
+
+function! s:GetBibFileName()
+    if !exists('b:rplugin_bibf')
+        let b:rplugin_bibf = ''
+    endif
+    let newbibf = s:GetYamlField('bibliography')
+    if newbibf == ''
+        let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
     endif
     if newbibf != b:rplugin_bibf
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
+            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
         else
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
+            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+        endif
+    endif
+endfunction
+
+function! s:GetCollectionName()
+    let newc = s:GetYamlField('collection')
+    if !exists('b:rplugin_cllctn') || newc != b:rplugin_cllctn
+        let b:rplugin_cllctn = newc
+        if IsJobRunning('BibComplete')
+            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_cllctn . "\n")
+        else
+            let $BannedWords = g:R_banned_keys
+            let $ZoteroSQLpath = g:R_zotero_sqlite
+            let $RmdFile = expand("%:p")
+            let $Collections = b:rplugin_cllctn
+            if $PATH !~ g:rplugin_home
+                if has("win32")
+                    let $PATH = g:rplugin_home . '/R' . ';' . $PATH
+                else
+                    let $PATH = g:rplugin_home . '/R' . ':' . $PATH
+                endif
+            endif
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/zotero.py']
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
         endif
     endif
@@ -159,14 +207,26 @@ function! RmdNonRCompletion(findstart, base)
 endfunction
 
 if g:R_non_r_compl
-    if !exists("g:rplugin_py3")
+    if b:rplugin_bib_engine == 'bibtex'
         call CheckPyBTeX()
-    endif
-    " Use BibComplete if possible
-    if !has_key(g:rplugin_debug_info, 'BibComplete')
-        call s:GetBibFileName()
-        let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
-        autocmd BufWritePost <buffer> call s:GetBibFileName()
+        if !has_key(g:rplugin_debug_info, 'BibComplete')
+            call s:GetBibFileName()
+            let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+            if !exists("s:did_bib_autocmd")
+                let s:did_bib_autocmd = 1
+                autocmd BufWritePost <buffer> call s:GetBibFileName()
+            endif
+        endif
+    elseif b:rplugin_bib_engine == 'zotero'
+        call CheckZotero()
+        if !has_key(g:rplugin_debug_info, 'BibComplete')
+            call s:GetCollectionName()
+            let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+            if !exists("s:did_bib_autocmd")
+                let s:did_bib_autocmd = 1
+                autocmd BufWritePost <buffer> call s:GetCollectionName()
+            endif
+        endif
     endif
 endif
 

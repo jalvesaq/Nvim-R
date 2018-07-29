@@ -13,6 +13,9 @@ endif
 " after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
+" Bibliographic completion
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+
 if exists('g:R_cite_pattern')
     let s:cite_ptrn = g:R_cite_pattern
 elseif exists('g:LatexBox_cite_pattern')
@@ -42,7 +45,7 @@ function! s:GetBibFileName()
         if IsJobRunning('BibComplete')
             call JobStdin(g:rplugin_jobs["BibComplete"], 'SetBibliography ' . expand("%:p") . "\x05" . join(b:rplugin_bibf, "\x06") . "\n")
         else
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibcompl.py'] + [expand("%:p")] + b:rplugin_bibf
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py'] + [expand("%:p")] + b:rplugin_bibf
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
         endif
     endif

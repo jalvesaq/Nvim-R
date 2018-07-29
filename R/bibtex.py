@@ -1,16 +1,11 @@
 import sys
 import os
 import re
-
-try:
-    from pybtex.database import parse_file
-except:
-    print('let g:rplugin_debug_info["BibComplete"] = "No PyBTeX"')
-    quit()
+from pybtex.database import parse_file
 
 E = {} # Bib entries by bib file
 M = {} # mtime of each bib file
-D = {} # List bib files of each markdown document
+D = {} # List of bib files of each markdown document
 
 def get_authors(prsns):
     if 'author' in prsns:
@@ -52,7 +47,7 @@ def ParseBib(b):
         return
 
     for k in bib.entries:
-        E[b][k] = {'key': k, 'title': '', 'year': '????'}
+        E[b][k] = {'citekey': k, 'title': '', 'year': '????'}
         E[b][k]['author'] = get_authors(bib.entries[k].persons)
         if 'title' in bib.entries[k].fields:
             E[b][k]['title'] = bib.entries[k].fields['title']
@@ -79,13 +74,13 @@ def GetMatch(ptrn, d):
     p6 = []
     for b in D[d]:
         for k in E[b]:
-            if E[b][k]['key'].lower().find(ptrn) == 0:
+            if E[b][k]['citekey'].lower().find(ptrn) == 0:
                 p1.append(GetComplLine(k, E[b][k]))
             elif E[b][k]['author'].lower().find(ptrn) == 0:
                 p2.append(GetComplLine(k, E[b][k]))
             elif E[b][k]['title'].lower().find(ptrn) == 0:
                 p3.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['key'].lower().find(ptrn) > 0:
+            elif E[b][k]['citekey'].lower().find(ptrn) > 0:
                 p4.append(GetComplLine(k, E[b][k]))
             elif E[b][k]['author'].lower().find(ptrn) > 0:
                 p5.append(GetComplLine(k, E[b][k]))
@@ -102,22 +97,26 @@ def GetMatch(ptrn, d):
 
 def set_bibfiles(d, bibls):
     global D
-    D[d] = bibls
+    D[d] = []
     for b in bibls:
-        ParseBib(b)
+        if os.path.isfile(b):
+            ParseBib(b)
+            D[d].append(b)
+        else:
+            print('File "' + b + '" not found.', file=sys.stderr)
+            sys.stderr.flush()
 
 def loop():
     for line in map(str.rstrip, sys.stdin):
-        if line == 'QuitRightNow':
-            quit()
-        elif line.find('SetBibliography ') == 0:
-            s = line.replace('SetBibliography ', '')
-            d, b = s.split('\x05')
+        if line[0] == "\x04":
+            line = line.replace("\x04", "")
+            d, b = line.split('\x05')
             set_bibfiles(d, b.split('\x06'))
-        else:
+        elif line[0] == "\x03":
+            line = line.replace("\x03", "")
             ptrn, d = line.split('\x05')
             GetMatch(ptrn.lower(), d)
 
 if __name__ == "__main__":
-    set_bibfiles(sys.argv[1], sys.argv[2:len(sys.argv)])
+    set_bibfiles(sys.argv[1], sys.argv[2].split("\x06"))
     loop()

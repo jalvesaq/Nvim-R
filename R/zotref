@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+"""
+Pandoc filter to add references from Zotero database to the YAML header.
+"""
+
+import sys
+import os
+import subprocess
+import io
+import re
+import json
+from zotero import ZoteroEntries
+
+if __name__ == "__main__":
+    # Get all references from ~/Zotero/zotero.sqlite
+    z = ZoteroEntries()
+
+    # Get json from pandoc (stdin)
+    i = sys.stdin.read()
+    j = json.load(io.StringIO(i))
+
+    # Get all citations from the markdown document
+    cites = re.findall('"citationId":"([^"]+)","citationHash', i)
+    c = sorted(set(cites))
+
+    # Get the references for the found citekeys formatted as the YAML and put
+    # the string into the YAML header of a dummy markdown document.
+    r = z.GetYamlRefs(os.getenv('RmdFile'), c)
+
+    # If debugging:
+    # print('>>' + r + '<<', file=sys.stderr)
+
+    if r != '':
+        # Convert the doc into json
+        r = r.encode('utf-8')
+        p = subprocess.run(['pandoc', '-f', 'markdown', '-t', 'json'],
+                           stdout=subprocess.PIPE, input=r)
+        refi = p.stdout.decode()
+        refj = json.load(io.StringIO(refi))
+
+        # Add the references to the original metadata:
+        j['meta']['references'] = refj['meta']['references']
+
+    # Print the new json representation of the new document
+    sys.stdout.write(json.dumps(j))
