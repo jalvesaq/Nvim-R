@@ -218,7 +218,6 @@ class ZoteroEntries:
             ORDER by itemCreators.ORDERIndex
             """
         self._cur.execute(author_query)
-        #print('_add_authors', file=sys.stderr)
         for item_id, ctype, lastname, firstname in self._cur.fetchall():
             if item_id in self._t:
                 if ctype in self._t[item_id]:
@@ -228,8 +227,6 @@ class ZoteroEntries:
                 # Special field for citation seeking
                 if ctype == 'author':
                     self._t[item_id]['alastnm'] += ' ' + lastname
-            #print(item_id, ctype, end='', file=sys.stderr)
-            #print(self._t[item_id][ctype], file=sys.stderr)
 
     def _add_type(self):
         type_query = u"""
@@ -269,7 +266,6 @@ class ZoteroEntries:
                 self._t[item_id]['tags'] += [item_tag]
 
     def _calculate_citekeys(self):
-        #print('_calculate_citekeys', file=sys.stderr)
         ptrn = '^(' + ' |'.join(self._w) + ' )'
         for k in self._t:
             if 'date' in self._t[k]:
@@ -285,7 +281,6 @@ class ZoteroEntries:
                 self._t[k]['title'] = ''
                 titlew = ''
             if 'author' in self._t[k]:
-                #print(self._t[k]['author'], file=sys.stderr)
                 lastname = self._t[k]['author'][0][0]
             else:
                 lastname = ''
@@ -354,10 +349,7 @@ class ZoteroEntries:
             if isinstance(e[f], str):
                 e[f] = re.sub('"', '\\"', e[f])
             if f in self.zcf:
-                print("Replacing: " + f + ' -> ' + self.zcf[f], file=sys.stderr)
                 e[self.zcf[f]] = e.pop(f)
-            else:
-                print("Keeping  : " + f, file=sys.stderr)
 
         ref = '- type: ' + e['etype'] + '\n  id: ' + e['citekey'] + '\n'
         for aa in ['author', 'editor', 'contributor', 'translator',
