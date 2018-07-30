@@ -289,6 +289,14 @@ class ZoteroEntries:
             key = lastname.lower() + '_' + year + '_' + titlew.lower()
             key = re.sub(' ', '', key)
             self._t[k]['citekey'] = key
+            if 'extra' in self._t[k] and re.search('^@\S+', self._t[k]['extra']):
+                self._t[k]['citekey'] = re.sub('^@', '', self._t[k]['extra'])
+                self._t[k]['citekey'] = re.sub('[\n ].*', '', self._t[k]['citekey'])
+                self._t[k]['extra'] = re.sub('^@[^\n ]+', '', self._t[k]['extra'])
+                self._t[k]['extra'] = self._t[k]['extra'].strip()
+                if self._t[k]['extra'] == '':
+                    self._t[k].pop('extra')
+
 
     def _separate_by_collection(self):
         self._e = {}

@@ -1897,8 +1897,8 @@ for English locales):
 >
    let R_banned_keys = 'a an the some from on in to of do with'
 <
-If two references have the same year, their titles begin with the same word,
-and their first author share the last name, the citation keys will be
+Note: If two references have the same year, their titles begin with the same
+word, and their first author share the last name, the citation keys will be
 identical. For this reason, instead of searching for references in your whole
 Zotero database, it is better to restrict the search to one or more
 collections. This can be done in the YAML header, as in the examples:
@@ -1911,7 +1911,11 @@ collections. This can be done in the YAML header, as in the examples:
    collection: ['PhD Thesis', 'New Paper']
    ...
 <
-If you still get repeated keys: TODO FIXME solution not implemented yet...
+If you still get repeated keys, write your custom key as the first string in
+Zotero's "Extra" field. The key must start with the `@` symbol. If you need to
+put a real comment in the "Extra" field, add an empty space after the key and
+write your comment. The key will be deleted, but everything after the space
+will remain.
 
 If Nvim-R cannot find the file `zotero.sqlite`, set the value of
 `R_zotero_sqlite` in your |vimrc|.
@@ -1937,6 +1941,9 @@ variable `b:rplugin_nonr_omnifunc`. Examples:
    autocmd FileType rnoweb let b:rplugin_nonr_omnifunc = "g:LatexBox_Complete"
    autocmd FileType rmd let b:rplugin_nonr_omnifunc = "g:omnifunc=pandoc#completion#Complete"
 <
+Note: On Windows, Nvim-R's bibliographic completion works only with ascii
+letters, and the use of `zotref` as filter does not work.
+
 
 ------------------------------------------------------------------------------
 								  *R_complete*
