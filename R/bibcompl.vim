@@ -123,3 +123,43 @@ function CheckPyBTeX()
         let g:rplugin_py3 = ''
     endif
 endfunction
+
+function GetZoteroAttachment()
+    let oldisk = &iskeyword
+    set iskeyword=@,48-57,_,192-255,@-@
+    let wrd = expand('<cword>')
+    exe 'set iskeyword=' . oldisk
+    if wrd =~ '^@'
+        let wrd = substitute(wrd, '^@', '', '')
+        if wrd != ''
+            let g:rplugin_last_attach = ''
+            call JobStdin(g:rplugin_jobs["BibComplete"], "\x02" . wrd . "\n")
+            sleep 20m
+            let count = 0
+            while count < 100 && g:rplugin_last_attach == ''
+                let count += 1
+                sleep 10m
+            endwhile
+            if g:rplugin_last_attach == 'nOnE'
+                call RWarningMsg(wrd . "'s attachment not found")
+            elseif g:rplugin_last_attach == ''
+                call RWarningMsg('No reply from BibComplete')
+            else
+                if g:rplugin_last_attach =~ ':storage:'
+                    let fpath = expand('~/Zotero/storage/') . substitute(g:rplugin_last_attach, ':storage:', '/', '')
+                else
+                    let fpath = g:rplugin_last_attach
+                endif
+                if filereadable(fpath)
+                    if has('win32') || g:rplugin_is_darwin
+                        call system('open "' . fpath . '"')
+                    else
+                        call system('xdg-open "' . fpath . '"')
+                    endif
+                else
+                    call RWarningMsg('Could not find "' . fpath . '"')
+                endif
+            endif
+        endif
+    endif
+endfunction

@@ -5,14 +5,14 @@ import re
 import sqlite3
 
 # A lot of code was either adapted or plainly copied from citation_vim,
-# by Rafael Schouten: https://github.com/rafaqz/citation.vim
+# written by Rafael Schouten: https://github.com/rafaqz/citation.vim
+# Code and/or ideas were also adapted from zotxt, pypandoc, and pandocfilters.
 
 class ZoteroEntries:
 
-    # Translation of zotero.sqlite to CSL types
+    # Conversion from zotero.sqlite to CSL types
     zct = {
         'artwork'             : 'graphic',
-        'attachment'          : 'article',
         'audioRecording'      : 'song',
         'blogPost'            : 'post-weblog',
         'bookSection'         : 'chapter',
@@ -40,7 +40,7 @@ class ZoteroEntries:
         'tvBroadcast'         : 'broadcast',
         'videoRecording'      : 'motion_picture'}
 
-    # Translation of zotero.sqlite to CSL fields
+    # Conversion from zotero.sqlite to CSL fields
     # FIXME: it's incomplete and accuracy isn't guaranteed.
     zcf= {
         'abstractNote'        : 'abstract',
@@ -147,8 +147,7 @@ class ZoteroEntries:
                 if c in self._e:
                     self._d[d].append(c)
                 else:
-                    print('Collection "' + c + '" not found in Zotero database.',
-                          file=sys.stderr)
+                    print('Collection "' + c + '" not found in Zotero database.', file=sys.stderr)
                     sys.stderr.flush()
 
 
@@ -168,16 +167,17 @@ class ZoteroEntries:
         self._add_authors()
         self._add_type()
         self._add_note()
-        self._add_tags()
+        self._add_tags() # Not used yet
+        self._add_attachments()
         self._calculate_citekeys()
+        self._separate_by_collection()
         conn.close()
         os.remove(os.getenv('NVIMR_COMPLDIR') + '/copy_of_zotero.sqlite')
 
-        self._separate_by_collection()
 
     def _add_most_fields(self):
-        fields_query = u"""
-            SELECT items.itemID, fields.fieldName, itemDataValues.value, items.key
+        query = u"""
+            SELECT items.itemID, fields.fieldName, itemDataValues.value
             FROM items, itemData, fields, itemDataValues
             WHERE
                 items.itemID = itemData.itemID
@@ -185,14 +185,14 @@ class ZoteroEntries:
                 and itemData.valueID = itemDataValues.valueID
             """
         self._t = {}
-        self._cur.execute(fields_query)
-        for item_id, field, value, key in self._cur.fetchall():
+        self._cur.execute(query)
+        for item_id, field, value in self._cur.fetchall():
             if item_id not in self._t:
                 self._t[item_id] = {'collection': None, 'alastnm': '', 'tags': []}
             self._t[item_id][field] = value
 
     def _add_collection(self):
-        collection_query = u"""
+        query = u"""
             SELECT items.itemID, collections.collectionName
             FROM items, collections, collectionItems
             WHERE
@@ -201,13 +201,13 @@ class ZoteroEntries:
             ORDER by collections.collectionName != "To Read",
                 collections.collectionName
             """
-        self._cur.execute(collection_query)
+        self._cur.execute(query)
         for item_id, item_collection in self._cur.fetchall():
             if item_id in self._t:
                 self._t[item_id]['collection'] = item_collection
 
     def _add_authors(self):
-        author_query = u"""
+        query = u"""
             SELECT items.itemID, creatorTypes.creatorType, creators.lastName, creators.firstName
             FROM items, itemCreators, creators, creatorTypes
             WHERE
@@ -217,7 +217,7 @@ class ZoteroEntries:
                 and itemCreators.creatorTypeID = creatorTypes.creatorTypeID
             ORDER by itemCreators.ORDERIndex
             """
-        self._cur.execute(author_query)
+        self._cur.execute(query)
         for item_id, ctype, lastname, firstname in self._cur.fetchall():
             if item_id in self._t:
                 if ctype in self._t[item_id]:
@@ -226,44 +226,54 @@ class ZoteroEntries:
                     self._t[item_id][ctype] = [[lastname, firstname]]
                 # Special field for citation seeking
                 if ctype == 'author':
-                    self._t[item_id]['alastnm'] += ' ' + lastname
+                    self._t[item_id]['alastnm'] += ', ' + lastname
 
     def _add_type(self):
-        type_query = u"""
+        query = u"""
             SELECT items.itemID, itemTypes.typeName
             FROM items, itemTypes
             WHERE
                 items.itemTypeID = itemTypes.itemTypeID
             """
-        self._cur.execute(type_query)
+        self._cur.execute(query)
         for item_id, item_type in self._cur.fetchall():
             if item_id in self._t:
                 self._t[item_id]['etype'] = item_type
 
     def _add_note(self):
-        note_query = u"""
+        query = u"""
             SELECT itemNotes.parentItemID, itemNotes.note
             FROM itemNotes
             WHERE
                 itemNotes.parentItemID IS NOT NULL;
             """
-        self._cur.execute(note_query)
+        self._cur.execute(query)
         for item_id, item_note in self._cur.fetchall():
             if item_id in self._t:
                 self._t[item_id]['note'] = item_note
 
     def _add_tags(self):
-        tag_query = u"""
+        query = u"""
             SELECT items.itemID, tags.name
             FROM items, tags, itemTags
             WHERE
                 items.itemID = itemTags.itemID
                 and tags.tagID = itemTags.tagID
             """
-        self._cur.execute(tag_query)
+        self._cur.execute(query)
         for item_id, item_tag in self._cur.fetchall():
             if item_id in self._t:
                 self._t[item_id]['tags'] += [item_tag]
+
+    def _add_attachments(self):
+        query = u"""
+            SELECT items.key, itemAttachments.parentItemID, itemAttachments.path
+            FROM items, itemAttachments
+            WHERE items.itemID = itemAttachments.itemID
+            """
+        self._cur.execute(query)
+        for pKey, pId, aPath in self._cur.fetchall():
+            self._t[pId]['attachment'] = pKey + ':' + aPath
 
     def _calculate_citekeys(self):
         ptrn = '^(' + ' |'.join(self._w) + ' )'
@@ -299,19 +309,22 @@ class ZoteroEntries:
 
 
     def _separate_by_collection(self):
+        self._cur.execute(u"SELECT itemID FROM deletedItems")
+        d = []
+        for item_id, in self._cur.fetchall():
+            d.append(item_id)
+
         self._e = {}
         for k in self._t:
+            if k in d or self._t[k]['etype'] == 'attachment':
+                continue
+            self._t[k]['alastnm'] = re.sub('^, ', '', self._t[k]['alastnm'])
             if self._t[k]['collection'] not in self._e:
                 self._e[self._t[k]['collection']] = {}
             self._e[self._t[k]['collection']][str(k)] = self._t[k]
 
-    def _get_compl_line(self, k, e):
-        line = e['citekey'] + '\x09'
-        if 'author' in e:
-            for a in e['author']:
-                line += a[0] + ', '
-        line = re.sub(', $', '', line)
-        line += "\x09(" + e['year'] + ') ' + e['title']
+    def _get_compl_line(self, e):
+        line = e['citekey'] + '\x09' + e['alastnm'] + "\x09(" + e['year'] + ') ' + e['title']
         return line
 
     def GetMatch(self, ptrn, d):
@@ -328,17 +341,17 @@ class ZoteroEntries:
         for c in self._d[d]:
             for k in self._e[c]:
                 if self._e[c][k]['citekey'].lower().find(ptrn) == 0:
-                    p1.append(self._get_compl_line(k, self._e[c][k]))
+                    p1.append(self._get_compl_line(self._e[c][k]))
                 elif self._e[c][k]['alastnm'] and self._e[c][k]['alastnm'][0][0].lower().find(ptrn) == 0:
-                    p2.append(self._get_compl_line(k, self._e[c][k]))
+                    p2.append(self._get_compl_line(self._e[c][k]))
                 elif self._e[c][k]['title'].lower().find(ptrn) == 0:
-                    p3.append(self._get_compl_line(k, self._e[c][k]))
+                    p3.append(self._get_compl_line(self._e[c][k]))
                 elif self._e[c][k]['citekey'].lower().find(ptrn) > 0:
-                    p4.append(self._get_compl_line(k, self._e[c][k]))
+                    p4.append(self._get_compl_line(self._e[c][k]))
                 elif self._e[c][k]['alastnm'] and self._e[c][k]['alastnm'][0][0].lower().find(ptrn) > 0:
-                    p5.append(self._get_compl_line(k, self._e[c][k]))
+                    p5.append(self._get_compl_line(self._e[c][k]))
                 elif self._e[c][k]['title'].lower().find(ptrn) > 0:
-                    p6.append(self._get_compl_line(k, self._e[c][k]))
+                    p6.append(self._get_compl_line(self._e[c][k]))
         resp = p1 + p2 + p3 + p4 + p5 + p6
         f = open(os.environ['NVIMR_TMPDIR'] + '/bibcompl', 'w')
         if resp:
@@ -394,6 +407,16 @@ class ZoteroEntries:
             ref = '---\nreferences:\n' + ref + '...\n\ndummy text\n'
         return ref
 
+    def GetAttachment(self, citekey):
+        for c in self._e:
+            for k in self._e[c]:
+                if self._e[c][k]['citekey'] == citekey and 'attachment' in self._e[c][k]:
+                    print('let g:rplugin_last_attach = "' + self._e[c][k]['attachment'] + '"')
+                    sys.stdout.flush()
+                    return
+        print('let g:rplugin_last_attach = "nOnE"')
+        sys.stdout.flush()
+
 
 if __name__ == "__main__":
     Z = ZoteroEntries()
@@ -406,3 +429,5 @@ if __name__ == "__main__":
             S = S.replace("\x03", "")
             P, D = S.split('\x05')
             Z.GetMatch(P.lower(), D)
+        elif S[0] == "\x02":
+            Z.GetAttachment(S.replace("\x02", ""))

@@ -66,7 +66,8 @@ people might be interested in, you can write a script to be sourced by Nvim-R
     packages).
   * Auto-completion of function arguments.
   * Auto-completion of knitr chunk options.
-  * Auto-completion of bibliographic entries (Rmd).
+  * Auto-completion of bibliographic entries (Rmd and Rnoweb).
+  * Open Zotero attachments (Rmd)
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
@@ -423,6 +424,8 @@ Command
   . Open PDF (cur file)                                \op
   . Search forward (SyncTeX)                           \gp
   . Go to LaTeX (SyncTeX)                              \gt
+  --------------------------------------------------------
+  . Open Zotero attachment (Rmd)                    CTRL-]
   --------------------------------------------------------
   . Build tags file (cur dir)                  :RBuildTags
 -----------------------------------------------------------
