@@ -28,8 +28,8 @@ if __name__ == "__main__":
     # the string into the YAML header of a dummy markdown document.
     r = z.GetYamlRefs(os.getenv('RmdFile'), c)
 
-    # If debugging:
-    # print('>>' + r + '<<', file=sys.stderr)
+    if os.getenv('DEBUG_zotref'):
+        print('\n' + r + '\n', file=sys.stderr)
 
     if r != '':
         # Convert the doc into json

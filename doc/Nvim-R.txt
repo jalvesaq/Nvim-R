@@ -1936,6 +1936,12 @@ omni completion provided by another plugin, put in your |vimrc|:
 <
 Then, Nvim-R may use another function to complete non R code.
 
+To see the dummy mardown document created by `zotref` with the references in
+its YAML header, set the environment variable `DEBUG_zotref` with any value
+in your |vimrc|. Example:
+>
+   let $DEBUG_zotref = '1'
+<
 If you want a different function for completion of non R code, you should not
 set the value 'omnifunc' in your |vimrc| because you would lose the completion
 of R objects. It is better to use an |autocmd| to set the value of buffer the
