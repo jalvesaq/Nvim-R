@@ -1,4 +1,4 @@
-
+""" Class ZoteroEntries and executable using the class """
 import sys
 import os
 import re
@@ -9,6 +9,7 @@ import sqlite3
 # Code and/or ideas were also adapted from zotxt, pypandoc, and pandocfilters.
 
 class ZoteroEntries:
+    """ Create an object storing all references from ~/Zotero/zotero.sqlite """
 
     # Conversion from zotero.sqlite to CSL types
     zct = {
@@ -42,7 +43,7 @@ class ZoteroEntries:
 
     # Conversion from zotero.sqlite to CSL fields
     # FIXME: it's incomplete and accuracy isn't guaranteed.
-    zcf= {
+    zcf = {
         'abstractNote'        : 'abstract',
         'accessDate'          : 'accessed',
         'applicationNumber'   : 'call-number',
@@ -131,6 +132,8 @@ class ZoteroEntries:
         self.SetCollections(os.getenv('RmdFile'), os.getenv('Collections'))
 
     def SetCollections(self, d, s):
+        """ Define which Zotero collections each Rmarkdown document uses """
+
         if s is None:
             clist = ['']
         elif s.find('\x06') >= 0:
@@ -323,11 +326,13 @@ class ZoteroEntries:
                 self._e[self._t[k]['collection']] = {}
             self._e[self._t[k]['collection']][str(k)] = self._t[k]
 
-    def _get_compl_line(self, e):
+    @classmethod
+    def _get_compl_line(cls, e):
         line = e['citekey'] + '\x09' + e['alastnm'] + "\x09(" + e['year'] + ') ' + e['title']
         return line
 
     def GetMatch(self, ptrn, d):
+        """ Find citation key and save completion lines in temporary file """
         if os.path.getmtime(self._z) > self._m:
             self._load_zotero_data()
 
@@ -397,6 +402,8 @@ class ZoteroEntries:
         return ref
 
     def GetYamlRefs(self, d, keys):
+        """ Build a dummy Markdown documment with the references in the YAML header """
+
         ref = ''
         for c in self._d[d]:
             for r in self._e[c]:
@@ -407,14 +414,31 @@ class ZoteroEntries:
             ref = '---\nreferences:\n' + ref + '...\n\ndummy text\n'
         return ref
 
-    def GetAttachment(self, citekey):
-        for c in self._e:
-            for k in self._e[c]:
-                if self._e[c][k]['citekey'] == citekey and 'attachment' in self._e[c][k]:
-                    print('let g:rplugin_last_attach = "' + self._e[c][k]['attachment'] + '"')
-                    sys.stdout.flush()
-                    return
-        print('let g:rplugin_last_attach = "nOnE"')
+    def GetAttachment(self, cllctns, citekey):
+        """ Tell Vim what attachment is associated with the citation key """
+
+        if cllctns == '':
+            clls = self._e.keys()
+        else:
+            clls = cllctns.split("\x06")
+        sys.stderr.flush()
+        for c in clls:
+            if c not in self._e:
+                self._cmd_to_vim('let g:rplugin_last_attach = "nOcLlCtN:' + c + '"')
+                return
+            else:
+                for k in self._e[c]:
+                    if self._e[c][k]['citekey'] == citekey:
+                        if 'attachment' in self._e[c][k]:
+                            self._cmd_to_vim('let g:rplugin_last_attach = "' + self._e[c][k]['attachment'] + '"')
+                            return
+                        self._cmd_to_vim('let g:rplugin_last_attach = "nOaTtAChMeNt"')
+                        return
+        self._cmd_to_vim('let g:rplugin_last_attach = "nOcItEkEy"')
+
+    @classmethod
+    def _cmd_to_vim(cls, cmd):
+        print(cmd)
         sys.stdout.flush()
 
 
@@ -430,4 +454,6 @@ if __name__ == "__main__":
             P, D = S.split('\x05')
             Z.GetMatch(P.lower(), D)
         elif S[0] == "\x02":
-            Z.GetAttachment(S.replace("\x02", ""))
+            S = S.replace("\x02", "")
+            L = S.split('\x05')
+            Z.GetAttachment(L[0], L[1])
