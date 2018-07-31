@@ -27,6 +27,7 @@ R/qpdfview.vim
 R/r.snippets
 R/rmd.snippets
 R/rnw_fun.vim
+R/nvimr.py
 R/rstudio.vim
 R/setcompldir.vim
 R/skim.vim
