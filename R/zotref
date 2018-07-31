@@ -29,15 +29,16 @@ if __name__ == "__main__":
     r = z.GetYamlRefs(os.getenv('RmdFile'), c)
 
     if os.getenv('DEBUG_zotref'):
-        print('\n' + r + '\n', file=sys.stderr)
+        sys.stderr.write('\n' + r + '\n')
+        sys.stderr.flush()
 
     if r != '':
         # Convert the doc into json
         r = r.encode('utf-8')
-        p = subprocess.run(['pandoc', '-f', 'markdown', '-t', 'json'],
-                           stdout=subprocess.PIPE, input=r)
-        refi = p.stdout.decode()
-        refj = json.load(io.StringIO(refi))
+        p = subprocess.Popen(['pandoc', '-f', 'markdown', '-t', 'json'],
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        refi = p.communicate(r)[0]
+        refj = json.load(io.StringIO(refi.decode()))
 
         # Add the references to the original metadata:
         j['meta']['references'] = refj['meta']['references']

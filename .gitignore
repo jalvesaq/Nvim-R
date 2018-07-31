@@ -9,3 +9,4 @@ R/nvimcom/src/apps/*.dll
 R/nvimcom/src/apps/nclientserver
 R/nvimcom/src/apps/nclientserver.exe
 R/__pycache__/
+R/nvimr.pyc

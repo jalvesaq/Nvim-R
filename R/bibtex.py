@@ -138,6 +138,7 @@ class BibEntries:
 
 if __name__ == "__main__":
     B = BibEntries()
+    # Python 2.7 hangs here
     for S in map(str.rstrip, sys.stdin):
         if S[0] == "\x04":
             S = S.replace("\x04", "")
