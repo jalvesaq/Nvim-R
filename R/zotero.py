@@ -1,8 +1,9 @@
-""" Class ZoteroEntries and executable using the class """
+""" Class ZoteroEntries and main function using the class """
 import sys
 import os
 import re
 import sqlite3
+from nvimr import nvimr_cmd, nvimr_warn
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -119,13 +120,12 @@ class ZoteroEntries:
             if os.path.isfile(os.getenv('HOME') + '/Zotero/zotero.sqlite'):
                 zsql = os.getenv('HOME') + '/Zotero/zotero.sqlite'
         if zsql is None:
-            print('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.', file=sys.stderr)
+            nvimr_warn('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.')
             sys.exit(1)
 
         self._z = zsql
 
         self._load_zotero_data()
-        sys.stderr.flush()
 
         # List of collections for each markdown document
         self._d = {}
@@ -150,8 +150,7 @@ class ZoteroEntries:
                 if c in self._e:
                     self._d[d].append(c)
                 else:
-                    print('Collection "' + c + '" not found in Zotero database.', file=sys.stderr)
-                    sys.stderr.flush()
+                    nvimr_warn('Collection "' + c + '" not found in Zotero database.')
 
 
     def _load_zotero_data(self):
@@ -363,8 +362,7 @@ class ZoteroEntries:
             f.write('\n'.join(resp) + '\n')
             f.flush()
         f.close()
-        print('let g:rplugin_bib_finished = 1')
-        sys.stdout.flush()
+        nvimr_cmd('let g:rplugin_bib_finished = 1')
 
     def _get_yaml_ref(self, e):
         # Fix the type
@@ -421,25 +419,19 @@ class ZoteroEntries:
             clls = self._e.keys()
         else:
             clls = cllctns.split("\x06")
-        sys.stderr.flush()
         for c in clls:
             if c not in self._e:
-                self._cmd_to_vim('let g:rplugin_last_attach = "nOcLlCtN:' + c + '"')
+                nvimr_cmd('let g:rplugin_last_attach = "nOcLlCtN:' + c + '"')
                 return
             else:
                 for k in self._e[c]:
                     if self._e[c][k]['citekey'] == citekey:
                         if 'attachment' in self._e[c][k]:
-                            self._cmd_to_vim('let g:rplugin_last_attach = "' + self._e[c][k]['attachment'] + '"')
+                            nvimr_cmd('let g:rplugin_last_attach = "' + self._e[c][k]['attachment'] + '"')
                             return
-                        self._cmd_to_vim('let g:rplugin_last_attach = "nOaTtAChMeNt"')
+                        nvimr_cmd('let g:rplugin_last_attach = "nOaTtAChMeNt"')
                         return
-        self._cmd_to_vim('let g:rplugin_last_attach = "nOcItEkEy"')
-
-    @classmethod
-    def _cmd_to_vim(cls, cmd):
-        print(cmd)
-        sys.stdout.flush()
+        nvimr_cmd('let g:rplugin_last_attach = "nOcItEkEy"')
 
 
 if __name__ == "__main__":
