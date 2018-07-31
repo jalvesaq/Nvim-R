@@ -1,156 +1,153 @@
+""" Class BibEntries and main function using the class """
 import sys
 import os
 import re
 from pybtex.database import parse_file
+from nvimr import nvimr_cmd, nvimr_warn
 
-E = {} # Bib entries by bib file
-M = {} # mtime of each bib file
-D = {} # List of bib files of each markdown document
+class BibEntries:
+    """ Create an object storing all references from bib files """
 
-def get_authors(prsns):
-    if 'author' in prsns:
-        persons = prsns['author']
-    elif 'editor' in prsns:
-        persons = prsns['editor']
-    else:
-        return ''
+    E = {} # Bib entries by bib file
+    M = {} # mtime of each bib file
+    D = {} # List of bib files of each Rmarkdown document
 
-    cit = ''
-    isetal = False
-    if len(persons) > 3:
-        isetal = True
+    def __init__(self):
+        self.SetBibfiles(sys.argv[1], sys.argv[2].split("\x06"))
 
-    for p in persons:
-        lname = ' '.join(p.last())
-        if lname == 'others':
-            cit += ' et al.'
-            break
-        cit += ', ' + lname.title()
-        if isetal:
-            cit += ' et al.'
-            break
-
-    cit = re.sub('^, ', '', cit)
-
-    return cit
-
-def ParseBib(b):
-    global E
-    M[b] = os.path.getmtime(b)
-    E[b] = {}
-
-    try:
-        bib = parse_file(b)
-    except Exception as ERR:
-        print('Error parsing ' + b + ': ' + str(ERR), file=sys.stderr)
-        sys.stderr.flush()
-        return
-
-    for k in bib.entries:
-        E[b][k] = {'citekey': k, 'title': '', 'year': '????'}
-        E[b][k]['author'] = get_authors(bib.entries[k].persons)
-        if 'title' in bib.entries[k].fields:
-            E[b][k]['title'] = bib.entries[k].fields['title']
-        if 'year' in bib.entries[k].fields:
-            E[b][k]['year'] = bib.entries[k].fields['year']
-        if 'file' in bib.entries[k].fields:
-            E[b][k]['file'] = bib.entries[k].fields['file']
-
-def GetComplLine(k, e):
-    return k + '\x09' + e['author'][0:40] + "\x09(" + e['year'] + ') ' + e['title']
-
-def GetMatch(ptrn, d):
-    for b in D[d]:
-        if os.path.isfile(b):
-            if b not in E or os.path.getmtime(b) > M[b]:
-                ParseBib(b)
+    @classmethod
+    def _get_authors(cls, prsns):
+        if 'author' in prsns:
+            persons = prsns['author']
+        elif 'editor' in prsns:
+            persons = prsns['editor']
         else:
-            D[d].remove(b)
+            return ''
 
-    # priority level
-    p1 = []
-    p2 = []
-    p3 = []
-    p4 = []
-    p5 = []
-    p6 = []
-    for b in D[d]:
-        for k in E[b]:
-            if E[b][k]['citekey'].lower().find(ptrn) == 0:
-                p1.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['author'].lower().find(ptrn) == 0:
-                p2.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['title'].lower().find(ptrn) == 0:
-                p3.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['citekey'].lower().find(ptrn) > 0:
-                p4.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['author'].lower().find(ptrn) > 0:
-                p5.append(GetComplLine(k, E[b][k]))
-            elif E[b][k]['title'].lower().find(ptrn) > 0:
-                p6.append(GetComplLine(k, E[b][k]))
-    resp = p1 + p2 + p3 + p4 + p5 + p6
-    f = open(os.environ['NVIMR_TMPDIR'] + '/bibcompl', 'w')
-    if resp:
-        f.write('\n'.join(resp) + '\n')
-        f.flush()
-    f.close()
-    print('let g:rplugin_bib_finished = 1')
-    sys.stdout.flush()
+        cit = ''
+        isetal = False
+        if len(persons) > 3:
+            isetal = True
 
-def set_bibfiles(d, bibls):
-    global D
-    D[d] = []
-    for b in bibls:
-        if b != '':
-            if os.path.isfile(b):
-                ParseBib(b)
-                D[d].append(b)
-            else:
-                print('File "' + b + '" not found.', file=sys.stderr)
-                sys.stderr.flush()
+        for p in persons:
+            lname = ' '.join(p.last())
+            if lname == 'others':
+                cit += ' et al.'
+                break
+            cit += ', ' + lname.title()
+            if isetal:
+                cit += ' et al.'
+                break
 
-def cmd_to_vim(cmd):
-    print(cmd)
-    sys.stdout.flush()
+        cit = re.sub('^, ', '', cit)
 
-def get_attachment(d, citekey):
-    """ Tell Vim what attachment is associated with the citation key """
+        return cit
 
-    for b in D[d]:
-        if os.path.isfile(b):
-            if b not in E or os.path.getmtime(b) > M[b]:
-                ParseBib(b)
-        else:
-            D[d].remove(b)
-            cmd_to_vim('let g:rplugin_last_attach = "nObIb:' + b + '"')
+    def _parse_bib(self, b):
+        self.M[b] = os.path.getmtime(b)
+        self.E[b] = {}
+
+        try:
+            bib = parse_file(b)
+        except Exception as ERR:
+            nvimr_warn('Error parsing ' + b + ': ' + str(ERR))
             return
 
-    for b in D[d]:
-        for k in E[b]:
-            if E[b][k]['citekey'] == citekey:
-                sys.stderr.flush()
-                if 'file' in E[b][k]:
-                    cmd_to_vim('let g:rplugin_last_attach = "' + E[b][k]['file'] + '"')
-                    return
-                cmd_to_vim('let g:rplugin_last_attach = "nOaTtAChMeNt"')
-                return
-    cmd_to_vim('let g:rplugin_last_attach = "nOcItEkEy"')
+        for k in bib.entries:
+            self.E[b][k] = {'citekey': k, 'title': '', 'year': '????'}
+            self.E[b][k]['author'] = self._get_authors(bib.entries[k].persons)
+            if 'title' in bib.entries[k].fields:
+                self.E[b][k]['title'] = bib.entries[k].fields['title']
+            if 'year' in bib.entries[k].fields:
+                self.E[b][k]['year'] = bib.entries[k].fields['year']
+            if 'file' in bib.entries[k].fields:
+                self.E[b][k]['file'] = bib.entries[k].fields['file']
 
-def loop():
-    for line in map(str.rstrip, sys.stdin):
-        if line[0] == "\x04":
-            line = line.replace("\x04", "")
-            d, b = line.split('\x05')
-            set_bibfiles(d, b.split('\x06'))
-        elif line[0] == "\x03":
-            line = line.replace("\x03", "")
-            ptrn, d = line.split('\x05')
-            GetMatch(ptrn.lower(), d)
-        elif line[0] == "\x02":
-            line = line.replace("\x02", "")
-            L = line.split('\x05')
-            get_attachment(L[0], L[1])
+    @classmethod
+    def _get_compl_line(cls, k, e):
+        return k + '\x09' + e['author'][0:40] + "\x09(" + e['year'] + ') ' + e['title']
+
+    def GetMatch(self, ptrn, d):
+        """ Find citation key and save completion lines in temporary file """
+        for b in self.D[d]:
+            if os.path.isfile(b):
+                if b not in self.E or os.path.getmtime(b) > self.M[b]:
+                    self._parse_bib(b)
+            else:
+                self.D[d].remove(b)
+
+        # priority level
+        p1 = []
+        p2 = []
+        p3 = []
+        p4 = []
+        p5 = []
+        p6 = []
+        for b in self.D[d]:
+            for k in self.E[b]:
+                if self.E[b][k]['citekey'].lower().find(ptrn) == 0:
+                    p1.append(self._get_compl_line(k, self.E[b][k]))
+                elif self.E[b][k]['author'].lower().find(ptrn) == 0:
+                    p2.append(self._get_compl_line(k, self.E[b][k]))
+                elif self.E[b][k]['title'].lower().find(ptrn) == 0:
+                    p3.append(self._get_compl_line(k, self.E[b][k]))
+                elif self.E[b][k]['citekey'].lower().find(ptrn) > 0:
+                    p4.append(self._get_compl_line(k, self.E[b][k]))
+                elif self.E[b][k]['author'].lower().find(ptrn) > 0:
+                    p5.append(self._get_compl_line(k, self.E[b][k]))
+                elif self.E[b][k]['title'].lower().find(ptrn) > 0:
+                    p6.append(self._get_compl_line(k, self.E[b][k]))
+        resp = p1 + p2 + p3 + p4 + p5 + p6
+        with open(os.environ['NVIMR_TMPDIR'] + '/bibcompl', 'w') as f:
+            if resp:
+                f.write('\n'.join(resp) + '\n')
+        nvimr_cmd('let g:rplugin_bib_finished = 1')
+
+    def SetBibfiles(self, d, bibls):
+        """ Define which bib files each Rmarkdown document uses """
+        self.D[d] = []
+        for b in bibls:
+            if b != '':
+                if os.path.isfile(b):
+                    self._parse_bib(b)
+                    self.D[d].append(b)
+                else:
+                    nvimr_warn('File "' + b + '" not found.')
+
+    def GetAttachment(self, d, citekey):
+        """ Tell Vim what attachment is associated with the citation key """
+
+        for b in self.D[d]:
+            if os.path.isfile(b):
+                if b not in self.E or os.path.getmtime(b) > self.M[b]:
+                    self._parse_bib(b)
+            else:
+                self.D[d].remove(b)
+                nvimr_cmd('let g:rplugin_last_attach = "nObIb:' + b + '"')
+                return
+
+        for b in self.D[d]:
+            for k in self.E[b]:
+                if self.E[b][k]['citekey'] == citekey:
+                    if 'file' in self.E[b][k]:
+                        nvimr_cmd('let g:rplugin_last_attach = "' + self.E[b][k]['file'] + '"')
+                        return
+                    nvimr_cmd('let g:rplugin_last_attach = "nOaTtAChMeNt"')
+                    return
+        nvimr_cmd('let g:rplugin_last_attach = "nOcItEkEy"')
 
 if __name__ == "__main__":
-    set_bibfiles(sys.argv[1], sys.argv[2].split("\x06"))
-    loop()
+    B = BibEntries()
+    for S in map(str.rstrip, sys.stdin):
+        if S[0] == "\x04":
+            S = S.replace("\x04", "")
+            D, L = S.split('\x05')
+            B.SetBibfiles(D, L.split('\x06'))
+        elif S[0] == "\x03":
+            S = S.replace("\x03", "")
+            Ptrn, D = S.split('\x05')
+            B.GetMatch(Ptrn.lower(), D)
+        elif S[0] == "\x02":
+            S = S.replace("\x02", "")
+            L = S.split('\x05')
+            B.GetAttachment(L[0], L[1])
