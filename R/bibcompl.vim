@@ -125,6 +125,10 @@ function CheckPyBTeX()
 endfunction
 
 function GetZoteroAttachment()
+    if b:IsInRCode(0)
+        exe 'tag ' . expand('<cword>')
+        return
+    endif
     let oldisk = &iskeyword
     set iskeyword=@,48-57,_,192-255,@-@
     let wrd = expand('<cword>')
@@ -133,22 +137,38 @@ function GetZoteroAttachment()
         let wrd = substitute(wrd, '^@', '', '')
         if wrd != ''
             let g:rplugin_last_attach = ''
-            call JobStdin(g:rplugin_jobs["BibComplete"], "\x02" . wrd . "\n")
+            if b:rplugin_bib_engine == 'zotero'
+                call JobStdin(g:rplugin_jobs["BibComplete"], "\x02" . b:rplugin_cllctn . "\x05" . wrd . "\n")
+            else
+                call JobStdin(g:rplugin_jobs["BibComplete"], "\x02" . expand("%:p") . "\x05" . wrd . "\n")
+            endif
             sleep 20m
             let count = 0
             while count < 100 && g:rplugin_last_attach == ''
                 let count += 1
                 sleep 10m
             endwhile
-            if g:rplugin_last_attach == 'nOnE'
+            if g:rplugin_last_attach == 'nOaTtAChMeNt'
                 call RWarningMsg(wrd . "'s attachment not found")
+            elseif g:rplugin_last_attach =~ 'nOcLlCtN:'
+                call RWarningMsg('Collection "' . substitute(g:rplugin_last_attach, 'nOcLlCtN:', '', '') . '" not found')
+            elseif g:rplugin_last_attach =~ 'nObIb:'
+                call RWarningMsg('"' . substitute(g:rplugin_last_attach, 'nObIb:', '', '') . '" not found')
+            elseif g:rplugin_last_attach == 'nOcItEkEy'
+                call RWarningMsg(wrd . " not found")
             elseif g:rplugin_last_attach == ''
                 call RWarningMsg('No reply from BibComplete')
             else
-                if g:rplugin_last_attach =~ ':storage:'
+                let fpath = g:rplugin_last_attach
+                if b:rplugin_bib_engine == 'zotero' && g:rplugin_last_attach =~ ':storage:'
                     let fpath = expand('~/Zotero/storage/') . substitute(g:rplugin_last_attach, ':storage:', '/', '')
-                else
-                    let fpath = g:rplugin_last_attach
+                elseif b:rplugin_bib_engine == 'bibtex'
+                    let fls = split(fpath, ':')
+                    if filereadable(fls[0])
+                        let fpath = [0]
+                    elseif len(fls) > 1 && filereadable(fls[1])
+                        let fpath = fls[1]
+                    endif
                 endif
                 if filereadable(fpath)
                     if has('win32') || g:rplugin_is_darwin

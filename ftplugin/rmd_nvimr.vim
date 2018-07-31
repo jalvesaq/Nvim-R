@@ -93,6 +93,7 @@ function! s:GetBibFileName()
         else
             let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+            nnoremap <buffer><silent> <c-]> :call GetZoteroAttachment()<cr>
         endif
     endif
 endfunction
