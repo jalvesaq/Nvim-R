@@ -116,7 +116,7 @@ function! s:GetCollectionName()
                     let $PATH = g:rplugin_home . '/R' . ':' . $PATH
                 endif
             endif
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/zotero.py']
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/zotcite']
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
             nnoremap <buffer><silent> <c-]> :call GetZoteroAttachment()<cr>
         endif

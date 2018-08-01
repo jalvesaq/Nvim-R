@@ -1,4 +1,4 @@
-""" Class ZoteroEntries and main function using the class """
+""" Class ZoteroEntries """
 import sys
 import os
 import re
@@ -432,21 +432,3 @@ class ZoteroEntries:
                         nvimr_cmd('let g:rplugin_last_attach = "nOaTtAChMeNt"')
                         return
         nvimr_cmd('let g:rplugin_last_attach = "nOcItEkEy"')
-
-
-if __name__ == "__main__":
-    Z = ZoteroEntries()
-    # Python 2.7 hangs here
-    for S in map(str.rstrip, sys.stdin):
-        if S[0] == "\x04":
-            S = S.replace('\x04', '')
-            L = S.split('\x05')
-            Z.SetCollections(L[0], L[1])
-        elif S[0] == "\x03":
-            S = S.replace("\x03", "")
-            P, D = S.split('\x05')
-            Z.GetMatch(P.lower(), D)
-        elif S[0] == "\x02":
-            S = S.replace("\x02", "")
-            L = S.split('\x05')
-            Z.GetAttachment(L[0], L[1])

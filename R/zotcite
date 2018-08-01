@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+""" Nvim-R application for using the ZoteroEntries class """
+
+import sys
+from zotero import ZoteroEntries
+
+if __name__ == "__main__":
+    Z = ZoteroEntries()
+    # Python 2.7 hangs here
+    for S in map(str.rstrip, sys.stdin):
+        if S[0] == "\x04":
+            S = S.replace('\x04', '')
+            L = S.split('\x05')
+            Z.SetCollections(L[0], L[1])
+        elif S[0] == "\x03":
+            S = S.replace("\x03", "")
+            P, D = S.split('\x05')
+            Z.GetMatch(P.lower(), D)
+        elif S[0] == "\x02":
+            S = S.replace("\x02", "")
+            L = S.split('\x05')
+            Z.GetAttachment(L[0], L[1])
