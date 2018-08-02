@@ -66,6 +66,19 @@ function RCompleteBib(base)
 endfunction
 
 function s:HasPython3()
+    if exists("g:R_python3")
+        if filereadable("g:R_python3")
+            if executable("g:R_python3")
+                let g:rplugin_py3 = g:R_python3
+                return 1
+            else
+                call RWarningMsg(g:R_python3 . ' is not executable')
+            endif
+        else
+            call RWarningMsg(g:R_python3 . ' not found')
+        endif
+        return 0
+    endif
     let out = system('python3 --version')
     if v:shell_error == 0 && out =~ 'Python 3'
         let g:rplugin_py3 = 'python3'
