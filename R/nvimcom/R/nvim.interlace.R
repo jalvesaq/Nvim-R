@@ -184,7 +184,19 @@ nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
     setwd(rnwdir)
 
     texf <- sub("\\....$", ".tex", rnwf)
-    tdiff <- as.numeric(file.info(rnwf)$mtime - file.info(texf)$mtime)
+    if(buildpdf){
+        rnwl <- readLines(rnwf)
+        chld <- rnwl[grep("^<<.*child *=.*", rnwl)]
+        chld <- sub(".*child *= *[\"']", "", chld)
+        chld <- sub("[\"'].*", "", chld)
+        sfls <- c(rnwf, chld)
+
+        for(f in sfls){
+            tdiff <- file.info(f)$mtime - file.info(texf)$mtime
+            if(is.na(tdiff) || tdiff > 0)
+                break
+        }
+    }
 
     # Compile the .tex file
     if(is.na(tdiff) || tdiff > 0 || !buildpdf){
