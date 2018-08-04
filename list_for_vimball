@@ -39,8 +39,6 @@ R/vimbuffer.vim
 R/vimrcom.vim
 R/windows.vim
 R/zathura.vim
-R/zotero.py
-R/zotref
 R/nvimrcom.vim
 R/nvimcom/DESCRIPTION
 R/nvimcom/NAMESPACE

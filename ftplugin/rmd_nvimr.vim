@@ -93,32 +93,7 @@ function! s:GetBibFileName()
         else
             let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
-            nnoremap <buffer><silent> <c-]> :call GetZoteroAttachment()<cr>
-        endif
-    endif
-endfunction
-
-function! s:GetCollectionName()
-    let newc = s:GetYamlField('collection')
-    if !exists('b:rplugin_cllctn') || newc != b:rplugin_cllctn
-        let b:rplugin_cllctn = newc
-        if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_cllctn . "\n")
-        else
-            let $BannedWords = g:R_banned_keys
-            let $ZoteroSQLpath = g:R_zotero_sqlite
-            let $RmdFile = expand("%:p")
-            let $Collections = b:rplugin_cllctn
-            if $PATH !~ g:rplugin_home
-                if has("win32")
-                    let $PATH = g:rplugin_home . '/R' . ';' . $PATH
-                else
-                    let $PATH = g:rplugin_home . '/R' . ':' . $PATH
-                endif
-            endif
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/zotcite']
-            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
-            nnoremap <buffer><silent> <c-]> :call GetZoteroAttachment()<cr>
+            nnoremap <buffer><silent> <c-]> :call GetBibAttachment()<cr>
         endif
     endif
 endfunction
@@ -208,31 +183,22 @@ function! RmdNonRCompletion(findstart, base)
     endif
 endfunction
 
-if g:R_non_r_compl
-    if b:rplugin_bib_engine == 'bibtex'
-        call CheckPyBTeX()
-        if !has_key(g:rplugin_debug_info, 'BibComplete')
-            call s:GetBibFileName()
-            let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
-            if !exists("s:did_bib_autocmd")
-                let s:did_bib_autocmd = 1
-                autocmd BufWritePost <buffer> call s:GetBibFileName()
-            endif
-        endif
-    elseif b:rplugin_bib_engine == 'zotero'
-        call CheckZotero()
-        if !has_key(g:rplugin_debug_info, 'BibComplete')
-            call s:GetCollectionName()
-            let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
-            if !exists("s:did_bib_autocmd")
-                let s:did_bib_autocmd = 1
-                autocmd BufWritePost <buffer> call s:GetCollectionName()
-            endif
+" If zotcite is installed, use it
+if exists('*zotcite#CompleteBib')
+    let b:rplugin_nonr_omnifunc = 'zotcite#CompleteBib'
+elseif g:R_non_r_compl
+    call CheckPyBTeX()
+    if !has_key(g:rplugin_debug_info, 'BibComplete')
+        call s:GetBibFileName()
+        let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+        if !exists("s:did_bib_autocmd")
+            let s:did_bib_autocmd = 1
+            autocmd BufWritePost <buffer> call s:GetBibFileName()
         endif
     endif
 endif
 
-" If PyBTeX is not available, try pandoc
+" If zotcite is not installed and PyBTeX is not available, try pandoc
 if b:rplugin_nonr_omnifunc == '' && exists('*pandoc#completion#Complete')
     let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
 endif

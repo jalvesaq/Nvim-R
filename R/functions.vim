@@ -7,9 +7,8 @@
 syn keyword rGlobEnvFun ThisIsADummyGlobEnvFunKeyword
 hi def link rGlobEnvFun  Function
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Only source this once
+" Only source the remaining of this script once
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if exists("*RmFromRLibList")
     if len(s:lists_to_load) > 0

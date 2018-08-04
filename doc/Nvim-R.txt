@@ -15,7 +15,7 @@ For Neovim >= 0.2.0 and Vim >= 8.0.0946
  5. Known bugs and workarounds                  |Nvim-R-known-bugs|
  6. Options                                     |Nvim-R-options|
  7. Custom key bindings                         |Nvim-R-key-bindings|
- 8. License and files                           |Nvim-R-files|
+ 8. License and files                           |Nvim-R-license|
  9. FAQ and tips                                |Nvim-R-tips|
 10. News                                        |Nvim-R-news|
 
@@ -67,7 +67,6 @@ people might be interested in, you can write a script to be sourced by Nvim-R
   * Auto-completion of function arguments.
   * Auto-completion of knitr chunk options.
   * Auto-completion of bibliographic entries (Rmd and Rnoweb).
-  * Open Zotero attachments (Rmd)
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
@@ -424,8 +423,6 @@ Command
   . Open PDF (cur file)                                \op
   . Search forward (SyncTeX)                           \gp
   . Go to LaTeX (SyncTeX)                              \gt
-  --------------------------------------------------------
-  . Open Zotero attachment (Rmd)                    CTRL-]
   --------------------------------------------------------
   . Build tags file (cur dir)                  :RBuildTags
 -----------------------------------------------------------
@@ -1854,94 +1851,54 @@ Currently, there is only one script known to extend Nvim-R features:
 							       *R_non_r_compl*
 6.28. Completion of non R code~
 
-Nvim-R can do omni completion of bibliographic citation keys from either
-`.bib` files or a local Zotero databse (usually at `~/Zotero/zotero.sqlite`).
-Both types of completion require Python 3. Additionally, bib completion
-requires the python3-pybtex library. The bib completion is enabled for both
-RMarkdown and Rnoweb file types while the Zotero completion is enabled only
-for RMarkdown.
+Rnoweb~
 
-In RMarkdown buffers, omnicompletion from bib data will look for bibliographic
-data in any `.bib` file listed in the `bibliography` field of the YAML header.
-If the `bibliography` field is not defined, it will use all `.bib` files that
-are in the same directory of the RMarkdown document as bibliography sources.
-The list of `.bib` files is updated whenever the buffer is saved. Python 3 and
-the python3-pybtex library are required for citation completion.
+The omnicompletion of bibliographic data from bib files requires Python 3 and
+the PyBTeX library for Python 3.
 
-For Rnoweb documents, the completion of citation keys gathers data only from
-`.bib` files in the same directory of the current Rnoweb document, and the
-completion works only if a pattern similar to "\cite{" precedes the cursor
-(see |R_cite_pattern|). Some of the most commonly used LaTeX commands are also
-completed. The completion of the argument for both `\ref{}` and `\pageref{}`
-includes both the label of R chunks where the option `fig.cap` was found
-prefixed with `fig:` and the string attributed to the argument `label` in the
-R code, but only if they begin with the substring "tab:".
+For Rnoweb documents, omnicompletion of non R code is similar to that provided
+by LaTeX-Box, but better adjusted for an Rnoweb document. The completion of
+citation keys gathers data from `.bib` files in the same directory of the
+current Rnoweb document, and the completion works only if a pattern similar to
+"\cite{" precedes the cursor (see |R_cite_pattern|). Some of the most commonly
+used LaTeX commands are also completed. The completion of the argument for
+both `\ref{}` and `\pageref{}` includes both the label of R chunks where the
+option `fig.cap` was found prefixed with `fig:` and the string attributed to
+the argument `label` in the R code, but only if they begin with the substring
+"tab:".
 
-The completion of citation keys from the Zotero database is enabled if there
-is no `bibliography` field in the YAML header, there is no `.bib` file in the
-same directory, and the file `~/Zotero/zotero.sqlite` exists. That is, no
-configuration is required to enable it. However, it is necessary to tell
-`rmarkdown::render` how to compile the document; specifically, you have to
-define the field `pandoc_args` as in the example below:
->
-   ---
-   output:
-     pdf_document:
-       dev: "cairo_pdf"
-       pandoc_args: ['--filter', 'zotref', '--filter', 'pandoc-citeproc']
-   ...
-<
-The `zotref` filter will get the references from the Zotero database and build
-citations keys as "author_year_title", where "author" is the last name of the
-first author, and "title" is the first word of the title, excluding a few
-words. You can define what words are excluded from citation keys by setting
-the value of `R_banned_keys` in you |vimrc|. Example (with the default value
-for English locales):
->
-   let R_banned_keys = 'a an the some from on in to of do with'
-<
-Note: If two references have the same year, their titles begin with the same
-word, and their first author share the last name, the citation keys will be
-identical. For this reason, instead of searching for references in your whole
-Zotero database, it is better to restrict the search to one or more
-collections. This can be done in the YAML header, as in the examples:
->
-   ---
-   collection: ['New Paper']
-   ...
+Rmarkdown~
 
-   ---
-   collection: ['PhD Thesis', 'New Paper']
-   ...
-<
-If you still get repeated keys, write your custom key as the first string in
-Zotero's "Extra" field. The key must start with the `@` symbol. If you need to
-put a real comment in the "Extra" field, add an empty space after the key and
-write your comment. The key will be deleted, but everything after the space
-will remain.
+For RMarkdown documents it is recommended the installation of zotcite for
+completing citation keys directly from Zotero database:
 
-If Nvim-R cannot find the file `zotero.sqlite`, set the value of
-`R_zotero_sqlite` in your |vimrc|.
+   https://github.com/jalvesaq/zotcite
 
-If you will always use bibliographic completion from either .bib files or
-Zotero, put one of the following lines in your |vimrc|:
->
-   let R_bib_engine = 'zotero'
-   let R_bib_engine = 'bibtex'
-<
+You can also use another plugin to insert citation keys if they use the same
+@zotero_key#your_citation_key scheme for building citation keys. The
+citation.vim plugin does just this, providing a source for Unite:
+
+   https://github.com/rafaqz/citation.vim
+
+If zotcite is not installed, Nvim-R will do omni completion of bibliographic
+citation keys from `.bib` files, requiring Python 3 and the PyBTeX library for
+Python 3 to work. Then, Nvim-R will look for bibliographic data in any `.bib`
+file listed in the `bibliography` field of the YAML header. If the
+`bibliography` field is not defined, it will use all `.bib` files that are in
+the same directory of the RMarkdown document as bibliography sources. The list
+of `.bib` files is updated whenever the buffer is saved.
+
+
+How to disable~
+
 To disable the completion of non R code in Rmd and Rnoweb files, and use the
 omni completion provided by another plugin, put in your |vimrc|:
 >
    let R_non_r_compl = 0
 <
-Then, Nvim-R may use another function to complete non R code.
+Then, Nvim-R may use another function to complete non R code, such as the ones
+from vim-pandoc or LaTeX-Box
 
-To see the dummy mardown document created by `zotref` with the references in
-its YAML header, set the environment variable `DEBUG_zotref` with any value
-in your |vimrc|. Example:
->
-   let $DEBUG_zotref = '1'
-<
 If you want a different function for completion of non R code, you should not
 set the value 'omnifunc' in your |vimrc| because you would lose the completion
 of R objects. It is better to use an |autocmd| to set the value of buffer the
@@ -1950,8 +1907,7 @@ variable `b:rplugin_nonr_omnifunc`. Examples:
    autocmd FileType rnoweb let b:rplugin_nonr_omnifunc = "g:LatexBox_Complete"
    autocmd FileType rmd let b:rplugin_nonr_omnifunc = "g:omnifunc=pandoc#completion#Complete"
 <
-Note: On Windows, Nvim-R's bibliographic completion works only with ascii
-letters, and the use of `zotref` as filter does not work.
+Note: On Windows, Nvim-R's bibliographic completion works only with ascii letters.
 
 
 ------------------------------------------------------------------------------
@@ -2434,8 +2390,8 @@ See also: |R_source|.
 
 
 ==============================================================================
-								*Nvim-R-files*
-8. License and files~
+							      *Nvim-R-license*
+8. License~
 
 The Nvim-R is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -2449,81 +2405,6 @@ details.
 
 A copy of the GNU General Public License is available at
 http://www.r-project.org/Licenses/
-
-The files released with Nvim-R runtime files are distributed under either Vim
-or Neovim license.
-
-The following files are part of the plugin and should be in your ~/.vim or
-~/.config/nvim directory after the installation:
-
-doc/Nvim-R.txt
-ftdetect/r.vim
-ftplugin/r_nvimr.vim
-ftplugin/rbrowser.vim
-ftplugin/rdoc.vim
-ftplugin/rhelp_nvimr.vim
-ftplugin/rmd_nvimr.vim
-ftplugin/rnoweb_nvimr.vim
-ftplugin/rrst_nvimr.vim
-syntax/rbrowser.vim
-syntax/rdoc.vim
-syntax/rout.vim
-R/common_buffer.vim
-R/common_global.vim
-R/evince.vim
-R/extern_term.vim
-R/flag.vim
-R/functions.vim
-R/gui_running.vim
-R/nvimbuffer.vim
-R/nvimrcom.vim
-R/okular.vim
-R/osx.vim
-R/pdfviewer.vim
-R/qpdfview.vim
-R/r.snippets
-R/rmd.snippets
-R/rnw_fun.vim
-R/setcompldir.vim
-R/skim.vim
-R/sumatra.vim
-R/synctex_evince_backward.py
-R/synctex_evince_forward.py
-R/tmux.vim
-R/vimbuffer.vim
-R/vimrcom.vim
-R/windows.vim
-R/zathura.vim
-R/nvimcom/DESCRIPTION
-R/nvimcom/NAMESPACE
-R/nvimcom/NEWS
-R/nvimcom/README.md
-R/nvimcom/man/etags2ctags.Rd
-R/nvimcom/man/nvimcom-package.Rd
-R/nvimcom/man/nvim.interlace.rmd.Rd
-R/nvimcom/man/nvim.interlace.rnoweb.Rd
-R/nvimcom/man/nvim.interlace.rrst.Rd
-R/nvimcom/man/nvim.list.args.Rd
-R/nvimcom/man/nvim.names.Rd
-R/nvimcom/man/nvim.plot.Rd
-R/nvimcom/man/nvim.print.Rd
-R/nvimcom/man/nvim.srcdir.Rd
-R/nvimcom/R/etags2ctags.R
-R/nvimcom/R/nvim.bol.R
-R/nvimcom/R/nvimcom.R
-R/nvimcom/R/nvim.help.R
-R/nvimcom/R/nvim.interlace.R
-R/nvimcom/R/nvim.print.R
-R/nvimcom/R/nvim.srcdir.R
-R/nvimcom/R/specialfuns.R
-R/nvimcom/src/apps
-R/nvimcom/src/install.libs.R
-R/nvimcom/src/Makevars
-R/nvimcom/src/Makevars.win
-R/nvimcom/src/nvimcom.c
-R/nvimcom/src/apps/Makefile
-R/nvimcom/src/apps/Makefile.win
-R/nvimcom/src/apps/nclientserver.c
 
 
 ==============================================================================
@@ -2808,7 +2689,7 @@ your desktop manager.
 9.16. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
-You have to tell LaTeX-BoX that the .tex file compiled by either `knitr()` or
+You have to tell LaTeX-Box that the .tex file compiled by either `knitr()` or
 `Sweave()` is the main LaTeX file. You can do this in two ways. Suppose that
 your Rnoweb file is called report.Rnw... You can:
 
