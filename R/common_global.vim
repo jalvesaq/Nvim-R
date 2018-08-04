@@ -2658,7 +2658,6 @@ function RAction(rcmd, ...)
             let argmnts = ''
         endif
         let raction = rfun . '(' . rkeyword . argmnts . ')'
-        let g:TheRaction = raction
         call g:SendCmdToR(raction)
     endif
 endfunction
@@ -3364,55 +3363,53 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
+function FindStartRObj()
+    let line = getline(".")
+    let lnum = line(".")
+    let cpos = getpos(".")
+    let idx = cpos[2] - 2
+    let idx2 = cpos[2] - 2
+    call cursor(lnum, cpos[2] - 1)
+    if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
+        let idx2 = cpos[2]
+        let s:argkey = ''
+    else
+        let idx1 = idx2
+        while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
+                    \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
+            let idx1 -= 1
+        endwhile
+        let idx1 += 1
+        let argkey = strpart(line, idx1, idx2 - idx1 + 1)
+        let idx2 = cpos[2] - strlen(argkey)
+        let s:argkey = argkey
+    endif
+    return idx2 - 1
+endfunction
+
 function CompleteR(findstart, base)
     if a:findstart
         let line = getline(".")
-        let s:in_r_code = 1
-        if (&filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp") &&
-                    \ !((&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
-                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
-                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
-                    \ (&filetype == "r" && line =~ "^#\+")) &&
-                    \ b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ""
-            let s:in_r_code = 0
+        if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
+            let s:compl_type = 3
+            return FindStartRObj()
+        elseif b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ''
+            let s:compl_type = 2
             let Ofun = function(b:rplugin_nonr_omnifunc)
-            let thebegin = Ofun(a:findstart, a:base)
-            return thebegin
-        endif
-        let lnum = line(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] - 2
-        let idx2 = cpos[2] - 2
-        call cursor(lnum, cpos[2] - 1)
-        if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
-            let idx2 = cpos[2]
-            let s:argkey = ''
+            return Ofun(a:findstart, a:base)
         else
-            let idx1 = idx2
-            while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
-                        \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
-                let idx1 -= 1
-            endwhile
-            let idx1 += 1
-            let argkey = strpart(line, idx1, idx2 - idx1 + 1)
-            let idx2 = cpos[2] - strlen(argkey)
-            let s:argkey = argkey
+            let s:compl_type = 1
+            return FindStartRObj()
         endif
-        return idx2 - 1
     else
-        if !s:in_r_code
+        if s:compl_type == 3
+            return CompleteChunkOptions(a:base)
+        elseif s:compl_type == 2
             let Ofun = function(b:rplugin_nonr_omnifunc)
             return Ofun(a:findstart, a:base)
         endif
-        let line = getline(".")
-        if (&filetype == "rnoweb" && line =~ "^<<.*>>=$") ||
-                    \ (&filetype == "rmd" && line =~ "^``` *{r.*}$") ||
-                    \ (&filetype == "rrst" && line =~ "^.. {r.*}$") ||
-                    \ (&filetype == "r" && line =~ "^#\+")
-            let resp = CompleteChunkOptions(a:base)
-            return resp
-        endif
 
+        let line = getline(".")
         let lnum = line(".")
         let cpos = getpos(".")
         let idx = cpos[2] - 2
@@ -3582,6 +3579,7 @@ let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
 let g:R_strict_rst        = get(g:, "R_strict_rst",         1)
 let g:R_synctex           = get(g:, "R_synctex",            1)
+let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
 let g:R_after_start       = get(g:, "R_after_start",       "")

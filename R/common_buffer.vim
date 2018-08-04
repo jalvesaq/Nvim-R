@@ -25,6 +25,7 @@
 
 " Set completion with CTRL-X CTRL-O to autoloaded function.
 if exists('&ofu')
+    let b:rplugin_knitr_pattern = ''
     if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
         if &omnifunc == "CompleteR"
             let b:rplugin_nonr_omnifunc = ""

@@ -13,9 +13,8 @@ endif
 " be defined after the global ones:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
-if exists('*pandoc#completion#Complete') && exists('*pandoc#bibliographies#Init')
-    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
-endif
+" Bibliographic completion
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
 
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 
@@ -32,6 +31,70 @@ function! RWriteRmdChunk()
         call cursor(curline, 5)
     else
         exe "normal! a`"
+    endif
+endfunction
+
+function! s:GetYamlField(field)
+    let value = []
+    let lastl = line('$')
+    let idx = 2
+    while idx < lastl
+        let line = getline(idx)
+        if line == '...' || line == '---'
+            break
+        endif
+        if line =~ '^\s*' . a:field . '\s*:'
+            let bstr = substitute(line, '^\s*' . a:field . '\s*:\s*\(.*\)\s*', '\1', '')
+            if bstr =~ '^".*"$' || bstr =~ "^'.*'$"
+                let bib = substitute(bstr, '"', '', 'g')
+                let bib = substitute(bib, "'", '', 'g')
+                let bibl = [bib]
+            elseif bstr =~ '^\[.*\]$'
+                try
+                    let l:bbl = eval(bstr)
+                catch *
+                    call RWarningMsg('YAML line invalid for Vim: ' . line)
+                    let bibl = []
+                endtry
+                if exists('l:bbl')
+                    let bibl = l:bbl
+                endif
+            else
+                let bibl = [bstr]
+            endif
+            for fn in bibl
+                call add(value, fn)
+            endfor
+            break
+        endif
+        let idx += 1
+    endwhile
+    if value == []
+        return ''
+    endif
+    if a:field == "bibliography"
+        call map(value, "expand(v:val)")
+    endif
+    return join(value, "\x06")
+endfunction
+
+function! s:GetBibFileName()
+    if !exists('b:rplugin_bibf')
+        let b:rplugin_bibf = ''
+    endif
+    let newbibf = s:GetYamlField('bibliography')
+    if newbibf == ''
+        let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
+    endif
+    if newbibf != b:rplugin_bibf
+        let b:rplugin_bibf = newbibf
+        if IsJobRunning('BibComplete')
+            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
+        else
+            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
+            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+            nnoremap <buffer><silent> <c-]> :call GetBibAttachment()<cr>
+        endif
     endif
 endfunction
 
@@ -105,10 +168,47 @@ function! SendRmdChunkToR(e, m)
     endif
 endfunction
 
+function! RmdNonRCompletion(findstart, base)
+    if a:findstart
+        let line = getline(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] -2
+        while line[idx] =~ '\w' && idx > 0
+            let idx -= 1
+        endwhile
+        return idx + 1
+    else
+        let citekey = substitute(a:base, '^@', '', '')
+        return RCompleteBib(citekey)
+    endif
+endfunction
+
+" If zotcite is installed, use it
+if exists('*zotcite#CompleteBib')
+    let b:rplugin_nonr_omnifunc = 'zotcite#CompleteBib'
+elseif g:R_non_r_compl
+    call CheckPyBTeX()
+    if !has_key(g:rplugin_debug_info, 'BibComplete')
+        call s:GetBibFileName()
+        let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+        if !exists("s:did_bib_autocmd")
+            let s:did_bib_autocmd = 1
+            autocmd BufWritePost <buffer> call s:GetBibFileName()
+        endif
+    endif
+endif
+
+" If zotcite is not installed and PyBTeX is not available, try pandoc
+if b:rplugin_nonr_omnifunc == '' && exists('*pandoc#completion#Complete')
+    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
+endif
+
 let b:IsInRCode = function("RmdIsInRCode")
 let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
+
+let b:rplugin_knitr_pattern = "^``` *{r.*}$"
 
 "==========================================================================
 " Key bindings and menu items

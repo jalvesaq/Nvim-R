@@ -56,7 +56,7 @@ function IsJobRunning(key)
     endif
 endfunction
 
-let g:rplugin_jobs = {"ClientServer": "no", "R": "no", "Terminal emulator": "no"}
+let g:rplugin_jobs = {"ClientServer": "no", "R": "no", "Terminal emulator": "no", "BibComplete": "no"}
 let g:rplugin_job_handlers = {
             \ 'out_cb':  'ROnJobStdout',
             \ 'err_cb':  'ROnJobStderr',
