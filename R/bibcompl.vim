@@ -73,10 +73,6 @@ function CheckPyBTeX()
 endfunction
 
 function GetBibAttachment()
-    if b:IsInRCode(0)
-        exe 'tag ' . expand('<cword>')
-        return
-    endif
     let oldisk = &iskeyword
     set iskeyword=@,48-57,_,192-255,@-@
     let wrd = expand('<cword>')
