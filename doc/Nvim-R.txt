@@ -420,6 +420,7 @@ Command
   . Markdown render (cur file)                         \kr
   . Spin (cur file) (only .R)                          \ks
   --------------------------------------------------------
+  . Open attachment of reference (Rmd, Rnoweb)         \oa
   . Open PDF (cur file)                                \op
   . Search forward (SyncTeX)                           \gp
   . Go to LaTeX (SyncTeX)                              \gt
@@ -1867,6 +1868,9 @@ option `fig.cap` was found prefixed with `fig:` and the string attributed to
 the argument `label` in the R code, but only if they begin with the substring
 "tab:".
 
+If the reference includes the field "file", you can open this file by typing
+<LocalLeader>od in Normal mode with the cursor over the citation key.
+
 Rmarkdown~
 
 For RMarkdown documents it is recommended the installation of zotcite for
@@ -1887,6 +1891,9 @@ file listed in the `bibliography` field of the YAML header. If the
 `bibliography` field is not defined, it will use all `.bib` files that are in
 the same directory of the RMarkdown document as bibliography sources. The list
 of `.bib` files is updated whenever the buffer is saved.
+
+If the reference includes the field "file", you can open this file by typing
+<LocalLeader>od in Normal mode with the cursor over the citation key.
 
 
 How to disable~
@@ -2339,6 +2346,9 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RSpinFile
    RNextRChunk
    RPreviousRChunk
+
+   Open attachment of bib item~
+   ROpenRefFile
 
    Object browser~
    RUpdateObjBrowser
