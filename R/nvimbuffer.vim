@@ -38,9 +38,9 @@ function SendCmdToR_Buffer(...)
         endif
 
         if a:0 == 2 && a:2 == 0
-            call jobsend(g:rplugin_jobs["R"], cmd)
+            call chansend(g:rplugin_jobs["R"], cmd)
         else
-            call jobsend(g:rplugin_jobs["R"], cmd . "\n")
+            call chansend(g:rplugin_jobs["R"], cmd . "\n")
         endif
         return 1
     else
@@ -61,7 +61,7 @@ function OnTermClose()
 
     " Set nvimcom port to 0 in nclientserver
     if g:rplugin_jobs["ClientServer"]
-        call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
+        call chansend(g:rplugin_jobs["ClientServer"], "\001R0\n")
     endif
 endfunction
 

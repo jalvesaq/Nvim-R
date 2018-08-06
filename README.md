@@ -61,7 +61,7 @@ shows the three paths of communication between Vim/Neovim and R:
     and that you can see being pasted into R Console. There are three
     different ways of sending the commands to R Console:
 
-     - When running R in a Neovim built-in terminal, the function `jobsend()`
+     - When running R in a Neovim built-in terminal, the function `chansend()`
        is used to send code to R Console.
 
      - When running R in an external terminal emulator, Tmux is used to send

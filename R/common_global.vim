@@ -2969,9 +2969,15 @@ function AddForDeletion(fname)
 endfunction
 
 function RVimLeave()
-    if IsJobRunning("ClientServer")
-        call JobStdin(g:rplugin_jobs["ClientServer"], "\x08Quit\n")
-    endif
+    for job in keys(g:rplugin_jobs)
+        if IsJobRunning(g:rplugin_jobs[job])
+            if has('nvim')
+                call chanclose(g:rplugin_jobs[job])
+            else
+                call job_stop(g:rplugin_jobs[job])
+            endif
+        endif
+    endfor
     for fn in s:del_list
         call delete(fn)
     endfor

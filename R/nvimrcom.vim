@@ -1,5 +1,5 @@
 function JobStdin(job, cmd)
-    call jobsend(a:job, a:cmd)
+    call chansend(a:job, a:cmd)
 endfunction
 
 function StartJob(cmd, opt)
