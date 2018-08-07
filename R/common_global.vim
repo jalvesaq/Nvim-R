@@ -2969,15 +2969,16 @@ function AddForDeletion(fname)
 endfunction
 
 function RVimLeave()
-    for job in keys(g:rplugin_jobs)
-        if IsJobRunning(g:rplugin_jobs[job])
-            if has('nvim')
+    if has('nvim')
+        for job in keys(g:rplugin_jobs)
+            if IsJobRunning(job)
                 call chanclose(g:rplugin_jobs[job])
-            else
-                call job_stop(g:rplugin_jobs[job])
             endif
-        endif
-    endfor
+        endfor
+    endif
+    " give some time to get the jobs closed
+    sleep 20m
+
     for fn in s:del_list
         call delete(fn)
     endfor
