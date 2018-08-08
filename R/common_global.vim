@@ -2972,7 +2972,11 @@ function RVimLeave()
     if has('nvim')
         for job in keys(g:rplugin_jobs)
             if IsJobRunning(job)
-                call chanclose(g:rplugin_jobs[job])
+                if exists('*chanclose')
+                    call chanclose(g:rplugin_jobs[job])
+                else
+                    call jobstop(g:rplugin_jobs[job])
+                endif
             endif
         endfor
     endif

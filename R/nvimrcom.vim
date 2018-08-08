@@ -1,5 +1,9 @@
 function JobStdin(job, cmd)
-    call chansend(a:job, a:cmd)
+    if exists('*chansend')
+        call chansend(a:job, a:cmd)
+    else
+        call jobsend(a:job, a:cmd)
+    endif
 endfunction
 
 function StartJob(cmd, opt)

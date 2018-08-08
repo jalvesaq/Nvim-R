@@ -37,10 +37,13 @@ function SendCmdToR_Buffer(...)
             endif
         endif
 
-        if a:0 == 2 && a:2 == 0
+        if !(a:0 == 2 && a:2 == 0)
+            let cmd = cmd . "\n"
+        endif
+        if exists('*chansend')
             call chansend(g:rplugin_jobs["R"], cmd)
         else
-            call chansend(g:rplugin_jobs["R"], cmd . "\n")
+            call jobsend(g:rplugin_jobs["R"], cmd)
         endif
         return 1
     else
@@ -61,7 +64,11 @@ function OnTermClose()
 
     " Set nvimcom port to 0 in nclientserver
     if g:rplugin_jobs["ClientServer"]
-        call chansend(g:rplugin_jobs["ClientServer"], "\001R0\n")
+        if exists('*chansend')
+            call chansend(g:rplugin_jobs["ClientServer"], "\001R0\n")
+        else
+            call jobsend(g:rplugin_jobs["ClientServer"], "\001R0\n")
+        endif
     endif
 endfunction
 
