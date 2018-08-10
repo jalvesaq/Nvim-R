@@ -184,6 +184,7 @@ nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
     setwd(rnwdir)
 
     texf <- sub("\\....$", ".tex", rnwf)
+    tdiff <- NA
     if(buildpdf){
         rnwl <- readLines(rnwf)
         chld <- rnwl[grep("^<<.*child *=.*", rnwl)]
