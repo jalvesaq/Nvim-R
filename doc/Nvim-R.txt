@@ -573,6 +573,7 @@ You can source all .R files in a directory with the Normal mode command
 
 ------------------------------------------------------------------------------
 								     *Rinsert*
+								     *Rformat*
 The command  `:Rinsert` <cmd>  inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
 and pasting the output R from its console to Vim. For example, to insert
@@ -1717,7 +1718,9 @@ When one types <C-a> in the R Console the cursor goes to the beginning of the
 line and when one types <C-k> the characters to the right of the cursor are
 deleted. This is useful to avoid characters left on the R Console being mixed
 with commands sent by Vim. However, sending <C-a> may be problematic if using
-Tmux. Nvim-R will add <C-a><C-k> to every command if you put in your |vimrc|:
+Tmux. Moreover, both <C-a> and <C-k> work only if your have not set the
+editing mode to "vi" in your `~/.inputrc`. Nvim-R will add <C-a><C-k> to every
+command if you put in your |vimrc|:
 >
    let R_clear_line = 1
 <
