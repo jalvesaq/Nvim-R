@@ -8,7 +8,7 @@
 nvim.interlace.rnoweb(rnwf, rnwdir, latexcmd = "latexmk",
                       latexargs,
                       synctex = TRUE, bibtex = FALSE,  knit = TRUE,
-                      buildpdf = TRUE, view = TRUE, ...)
+                      buildpdf = TRUE, view = TRUE, builddir, ...)
 }
 \arguments{
   \item{rnwf}{The Rnoweb file to be processed.}
@@ -20,5 +20,6 @@ nvim.interlace.rnoweb(rnwf, rnwdir, latexcmd = "latexmk",
   \item{knit}{Whether to use knitr instead of Sweave.}
   \item{buildpdf}{Whether to compile the PDF.}
   \item{view}{Logical value indicating whether to show the generated PDF document.}
+  \item{builddir}{Directory where latexmk will output files.}
   \item{\dots}{Further arguments to be passed to \code{Sweave}.}
 }

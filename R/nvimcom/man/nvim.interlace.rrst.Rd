@@ -7,13 +7,11 @@
   PDF if a LaTeX installation is not present.
 }
 \usage{
-nvim.interlace.rrst(Rrstfile, rrstdir, view = TRUE,
-                   compiler = "rst2pdf", ...)
+nvim.interlace.rrst(Rrstfile, rrstdir, compiler = "rst2pdf", ...)
 }
 \arguments{
   \item{Rrstfile}{The Rrst file to be processed.}
   \item{rrstdir}{The directory of the Rrst file.}
-  \item{view}{Logical value indicating whether to show the generated PDF document.}
   \item{compiler}{The compiler program to use for the rst to PDF conversion.}
   \item{\dots}{Further arguments to be passed to compiler (usually \code{rst2pdf} or \code{pdflatex}).}
 }
