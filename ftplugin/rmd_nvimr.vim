@@ -191,8 +191,8 @@ elseif g:R_non_r_compl
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         call s:GetBibFileName()
         let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
-        if !exists("s:did_bib_autocmd")
-            let s:did_bib_autocmd = 1
+        if !exists("b:rplugin_did_bib_autocmd")
+            let b:rplugin_did_bib_autocmd = 1
             autocmd BufWritePost <buffer> call s:GetBibFileName()
         endif
     endif
