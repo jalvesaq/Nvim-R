@@ -28,9 +28,9 @@ if exists('&ofu')
     let b:rplugin_knitr_pattern = ''
     if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
         if &omnifunc == "CompleteR"
-            let b:rplugin_nonr_omnifunc = ""
+            let b:rplugin_non_r_omnifunc = ""
         else
-            let b:rplugin_nonr_omnifunc = &omnifunc
+            let b:rplugin_non_r_omnifunc = &omnifunc
         endif
     endif
     if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rdoc" || &filetype == "rhelp" || &filetype == "rrst" || &filetype == "rmd"

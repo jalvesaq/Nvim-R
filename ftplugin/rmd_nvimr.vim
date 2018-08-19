@@ -185,12 +185,12 @@ endfunction
 
 " If zotcite is installed, use it
 if exists('*zotcite#CompleteBib')
-    let b:rplugin_nonr_omnifunc = 'zotcite#CompleteBib'
+    let b:rplugin_non_r_omnifunc = 'zotcite#CompleteBib'
 elseif g:R_non_r_compl
     call CheckPyBTeX()
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         call s:GetBibFileName()
-        let b:rplugin_nonr_omnifunc = "RmdNonRCompletion"
+        let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
         if !exists("b:rplugin_did_bib_autocmd")
             let b:rplugin_did_bib_autocmd = 1
             autocmd BufWritePost <buffer> call s:GetBibFileName()
@@ -199,8 +199,8 @@ elseif g:R_non_r_compl
 endif
 
 " If zotcite is not installed and PyBTeX is not available, try pandoc
-if b:rplugin_nonr_omnifunc == '' && exists('*pandoc#completion#Complete')
-    let b:rplugin_nonr_omnifunc = 'pandoc#completion#Complete'
+if b:rplugin_non_r_omnifunc == '' && exists('*pandoc#completion#Complete')
+    let b:rplugin_non_r_omnifunc = 'pandoc#completion#Complete'
 endif
 
 let b:IsInRCode = function("RmdIsInRCode")

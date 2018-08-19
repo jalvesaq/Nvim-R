@@ -3404,9 +3404,9 @@ function CompleteR(findstart, base)
         if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
             let s:compl_type = 3
             return FindStartRObj()
-        elseif b:IsInRCode(0) == 0 && b:rplugin_nonr_omnifunc != ''
+        elseif b:IsInRCode(0) == 0 && b:rplugin_non_r_omnifunc != ''
             let s:compl_type = 2
-            let Ofun = function(b:rplugin_nonr_omnifunc)
+            let Ofun = function(b:rplugin_non_r_omnifunc)
             return Ofun(a:findstart, a:base)
         else
             let s:compl_type = 1
@@ -3416,7 +3416,7 @@ function CompleteR(findstart, base)
         if s:compl_type == 3
             return CompleteChunkOptions(a:base)
         elseif s:compl_type == 2
-            let Ofun = function(b:rplugin_nonr_omnifunc)
+            let Ofun = function(b:rplugin_non_r_omnifunc)
             return Ofun(a:findstart, a:base)
         endif
 

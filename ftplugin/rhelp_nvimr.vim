@@ -65,7 +65,7 @@ function! RhelpComplete(findstart, base)
 endfunction
 
 let b:IsInRCode = function("RhelpIsInRCode")
-let b:rplugin_nonr_omnifunc = "RhelpComplete"
+let b:rplugin_non_r_omnifunc = "RhelpComplete"
 
 "==========================================================================
 " Key bindings and menu items

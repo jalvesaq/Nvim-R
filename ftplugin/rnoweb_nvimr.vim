@@ -196,7 +196,7 @@ if g:R_non_r_compl
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         " Use RBibComplete if possible
         call s:GetBibFileName()
-        let b:rplugin_nonr_omnifunc = "RnwNonRCompletion"
+        let b:rplugin_non_r_omnifunc = "RnwNonRCompletion"
         autocmd BufWritePost <buffer> call s:GetBibFileName()
         autocmd CompleteDone <buffer> call s:OnCompleteDone()
     endif
