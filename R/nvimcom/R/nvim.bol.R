@@ -272,7 +272,7 @@ CleanOmnils <- function(f)
 
 # Build Omni List
 nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg = 1) {
-    nvim.OutDec <- options("OutDec")
+    nvim.OutDec <- getOption("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
 
@@ -402,11 +402,11 @@ nvim.buildomnils <- function(p){
     odir <- dir(bdir)
     pbuilt <- odir[grep(paste0("omnils_", p, "_"), odir)]
     fbuilt <- odir[grep(paste0("fun_", p, "_"), odir)]
-    # if(length(pbuilt) > 1 || length(fbuilt) > 1 || length(fbuilt) == 0){
-    #     unlink(paste0(bdir, c(pbuilt, fbuilt)))
-    #     pbuilt <- character()
-    #     fbuilt <- character()
-    # }
+
+    # This option might not have been set if R is running remotely
+    if(is.null(getOption("nvimcom.verbose")))
+        options(nvimcom.verbose = 0)
+
     if(length(pbuilt) > 0){
         pvb <- sub(".*_.*_", "", pbuilt)
         if(pvb == pvi){
