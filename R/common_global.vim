@@ -657,7 +657,9 @@ function StartNClientServer(w)
     let nvimcomdir = readfile(g:rplugin_compldir . '/path_to_nvimcom')
 
     if g:rplugin_nvimcom_bin_dir == ""
-        if filereadable(nvimcomdir[0] . '/nvimcom/bin/' . nvc)
+        if exists("g:R_nvimcom_home") && filereadable(g:R_nvimcom_home . '/bin/' . nvc)
+            let g:rplugin_nvimcom_bin_dir = g:R_nvimcom_home . '/bin'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/' . nvc)
             let g:rplugin_nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin'
         elseif filereadable(nvimcomdir[1] . '/nvimcom/bin/' . nvc)
             let g:rplugin_nvimcom_bin_dir = nvimcomdir[1] . '/nvimcom/bin'
