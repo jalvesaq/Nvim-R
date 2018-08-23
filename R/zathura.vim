@@ -9,12 +9,12 @@ if executable("zathura")
     let s:zv = split(system('zathura --version 2>/dev/null'))
     if len(s:zv) > 1 && s:zv[1] < '0.3.1'
         let g:rplugin_pdfviewer = "none"
-        call RWarningMsgInp("Zathura version must be >= 0.3.1")
+        call RWarningMsg("Zathura version must be >= 0.3.1")
     endif
     unlet s:zv
 else
     let g:rplugin_pdfviewer = "none"
-    call RWarningMsgInp('Please, either install "zathura" or set the value of R_pdfviewer.')
+    call RWarningMsg('Please, either install "zathura" or set the value of R_pdfviewer.')
 endif
 if executable("dbus-send")
     let s:has_dbus_send = 1

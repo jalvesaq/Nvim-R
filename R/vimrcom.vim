@@ -68,7 +68,7 @@ let s:ff = globpath(&rtp, "r-plugin/functions.vim")
 let s:ft = globpath(&rtp, "ftplugin/r*_rplugin.vim")
 if s:ff != "" || s:ft != ""
     let s:ff = substitute(s:ff, "functions.vim", "", "g")
-    call RWarningMsgInp("Nvim-R conflicts with Vim-R-plugin. Please, uninstall Vim-R-plugin.\n" .
+    call RWarningMsg("Nvim-R conflicts with Vim-R-plugin. Please, uninstall Vim-R-plugin.\n" .
                 \ "At least the following directories and files are from a Vim-R-plugin installation:\n" . s:ff . "\n" . s:ft . "\n")
 endif
 unlet s:ff

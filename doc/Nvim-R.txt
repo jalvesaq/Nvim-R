@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.12
+Version: 0.9.12.1
 For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
@@ -2981,6 +2981,10 @@ goal (tested on April, 2017).
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.12.1 (2018-08-19)
+
+ * Nothing yet.
 
 0.9.12 (2018-08-19)
 

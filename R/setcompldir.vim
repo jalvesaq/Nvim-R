@@ -21,13 +21,13 @@ elseif $USERNAME != ""
 elseif $USER != ""
     let g:rplugin_userlogin = $USER
 else
-    call RWarningMsgInp("Could not determine user name.")
+    call RWarningMsg("Could not determine user name.")
     let g:rplugin_failed = 1
     finish
 endif
 let g:rplugin_userlogin = substitute(substitute(g:rplugin_userlogin, '.*\\', '', ''), '\W', '', 'g')
 if g:rplugin_userlogin == ""
-    call RWarningMsgInp("Could not determine user name.")
+    call RWarningMsg("Could not determine user name.")
     let g:rplugin_failed = 1
     finish
 endif

@@ -3,7 +3,7 @@ if !executable('tmux')
     if exists("*termopen")
         let g:R_in_buffer = 1
     else
-        call RWarningMsgInp("tmux executable not found")
+        call RWarningMsg("tmux executable not found")
     endif
     finish
 endif
@@ -19,7 +19,7 @@ else
         let s:tmuxversion = "1.0"
     endif
     if s:tmuxversion < "1.8"
-        call RWarningMsgInp("Nvim-R requires Tmux >= 1.8")
+        call RWarningMsg("Nvim-R requires Tmux >= 1.8")
         let g:rplugin_failed = 1
         finish
     endif

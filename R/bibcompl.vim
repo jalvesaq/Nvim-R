@@ -7,7 +7,7 @@ function RCompleteBib(base)
         return []
     endif
     if b:rplugin_bibf == ''
-        call RWarningMsgInp('Bib file not defined')
+        call RWarningMsg('Bib file not defined')
         return []
     endif
     call delete(g:rplugin_tmpdir . "/bibcompl")

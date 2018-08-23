@@ -46,25 +46,13 @@ let g:rplugin_debug_info = {}
 "==========================================================================
 
 function RWarningMsg(wmsg)
+    if v:vim_did_enter == 0
+        exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
+        return
+    endif
     echohl WarningMsg
     echomsg a:wmsg
     echohl None
-endfunction
-
-function RWarningMsgInp(wmsg)
-    let savedlz = &lazyredraw
-    if savedlz == 0
-        set lazyredraw
-    endif
-    let savedsm = &shortmess
-    set shortmess-=T
-    echohl WarningMsg
-    call input(a:wmsg . " [Press <Enter> to continue] ")
-    echohl None
-    if savedlz == 0
-        set nolazyredraw
-    endif
-    let &shortmess = savedsm
 endfunction
 
 if has("win32")
@@ -75,16 +63,16 @@ endif
 
 if has("nvim")
     if !has("nvim-" . s:nvv)
-        call RWarningMsgInp("Nvim-R requires Neovim >= " . s:nvv . ".")
+        call RWarningMsg("Nvim-R requires Neovim >= " . s:nvv . ".")
         let g:rplugin_failed = 1
         finish
     endif
 elseif v:version < "800"
-    call RWarningMsgInp("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.")
+    call RWarningMsg("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.")
     let g:rplugin_failed = 1
     finish
 elseif !has("channel") || !has("job")
-    call RWarningMsgInp("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    call RWarningMsg("Nvim-R requires either Neovim >= " . s:nvv . " or Vim >= 8.0.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin_failed = 1
     finish
 endif
@@ -2383,11 +2371,11 @@ function RSetPDFViewer()
     else
         exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/pdfviewer.vim"
         if !executable(g:R_pdfviewer)
-            call RWarningMsgInp("R_pdfviewer (" . g:R_pdfviewer . ") not found.")
+            call RWarningMsg("R_pdfviewer (" . g:R_pdfviewer . ") not found.")
             return
         endif
         if g:R_synctex
-            call RWarningMsgInp('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '" (SyncTeX will not work)')
+            call RWarningMsg('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '" (SyncTeX will not work)')
         endif
     endif
 
@@ -2397,7 +2385,7 @@ function RSetPDFViewer()
         else
             let g:rplugin_has_wmctrl = 0
             if &filetype == "rnoweb" && g:R_synctex
-                call RWarningMsgInp("The application wmctrl must be installed to edit Rnoweb effectively.")
+                call RWarningMsg("The application wmctrl must be installed to edit Rnoweb effectively.")
             endif
         endif
     endif
@@ -3494,7 +3482,7 @@ function RSourceOtherScripts()
         let flist = split(g:R_source, ",")
         for fl in flist
             if fl =~ " "
-                call RWarningMsgInp("Invalid file name (empty spaces are not allowed): '" . fl . "'")
+                call RWarningMsg("Invalid file name (empty spaces are not allowed): '" . fl . "'")
             else
                 exe "source " . escape(fl, ' \')
             endif
@@ -3661,7 +3649,7 @@ let g:R_indent_commented = get(g:, "R_indent_commented",            1)
 
 if g:R_complete != 1 && g:R_complete != 2
     let R_complete = 1
-    call RWarningMsgInp("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
+    call RWarningMsg("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
 endif
 
 if g:rplugin_is_darwin
@@ -3708,7 +3696,7 @@ endif
 " Look for invalid options
 let objbrplace = split(g:R_objbr_place, ',')
 if len(objbrplace) > 2
-    call RWarningMsgInp('Too many options for R_objbr_place.')
+    call RWarningMsg('Too many options for R_objbr_place.')
     let g:rplugin_failed = 1
     finish
 endif
@@ -3718,7 +3706,7 @@ for pos in objbrplace
                 \ pos !=# 'LEFT' && pos !=# 'RIGHT' &&
                 \ pos !=# 'above' && pos !=# 'below' &&
                 \ pos !=# 'TOP' && pos !=# 'BOTTOM'
-        call RWarningMsgInp('Invalid value for R_objbr_place: "' . pos . ". Please see Nvim-R's documentation.")
+        call RWarningMsg('Invalid value for R_objbr_place: "' . pos . ". Please see Nvim-R's documentation.")
         let g:rplugin_failed = 1
         finish
     endif
@@ -3893,7 +3881,7 @@ endif
 if exists("g:R_path")
     let g:rplugin_R_path = expand(g:R_path)
     if !isdirectory(g:rplugin_R_path)
-        call RWarningMsgInp('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
+        call RWarningMsg('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
         let g:rplugin_failed = 1
         finish
     endif
@@ -3905,7 +3893,7 @@ if exists("g:R_path")
         endif
     endif
     if !executable(g:rplugin_R)
-        call RWarningMsgInp('"' . g:rplugin_R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
+        call RWarningMsg('"' . g:rplugin_R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
         let g:rplugin_failed = 1
         finish
     endif
@@ -3940,7 +3928,7 @@ if has("gui_running")
 endif
 
 if !executable(g:rplugin_R)
-    call RWarningMsgInp("R executable not found: '" . g:rplugin_R . "'")
+    call RWarningMsg("R executable not found: '" . g:rplugin_R . "'")
 endif
 
 " Check if r-plugin/functions.vim exist
@@ -3948,7 +3936,7 @@ let s:ff = split(globpath(&rtp, "r-plugin/functions.vim"), " ", "\n")
 " Check if other Vim-R-plugin files are installed
 let s:ft = split(globpath(&rtp, "ftplugin/r*_rplugin.vim"), " ", "\n")
 if len(s:ff) > 0 || len(s:ft) > 0
-    call RWarningMsgInp("It seems that Vim-R-plugin is installed.\n" .
+    call RWarningMsg("It seems that Vim-R-plugin is installed.\n" .
                 \ "Please, completely uninstall it before using Nvim-R.\n" .
                 \ "Below is a list of what looks like Vim-R-plugin files:\n" . join(s:ff, "\n") . "\n" . join(s:ft) . "\n")
 endif
@@ -3958,7 +3946,7 @@ endif
 let s:ff = split(substitute(globpath(&rtp, "R/functions.vim"), "functions.vim", "", "g"), "\n")
 let s:ft = split(globpath(&rtp, "ftplugin/r*_nvimr.vim"), "\n")
 if len(s:ff) > 1 || len(s:ft) > 5
-    call RWarningMsgInp("It seems that Nvim-R is installed in more than one place.\n" .
+    call RWarningMsg("It seems that Nvim-R is installed in more than one place.\n" .
                 \ "Please, remove one of them to avoid conflicts.\n" .
                 \ "Below is a list of some of the possibly duplicated directories and files:\n" . join(s:ff, "\n") . "\n" . join(s:ft, "\n") . "\n")
 endif
@@ -3967,44 +3955,44 @@ unlet s:ft
 
 " 2016-08-25
 if exists("g:R_nvimcom_wait")
-    call RWarningMsgInp("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
+    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
 endif
 
 " 2017-02-07
 if exists("g:R_vsplit")
-    call RWarningMsgInp("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
+    call RWarningMsg("The option R_vsplit is deprecated. If necessary, use R_min_editor_width instead.")
 endif
 
 " 2017-03-14
 if exists("g:R_ca_ck")
-    call RWarningMsgInp("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
+    call RWarningMsg("The option R_ca_ck was renamed as R_clear_line. Please, update your vimrc.")
 endif
 
 " 2017-11-15
 if len(g:R_latexcmd[0]) == 1
-    call RWarningMsgInp("The option R_latexcmd should be a list. Please update your vimrc.")
+    call RWarningMsg("The option R_latexcmd should be a list. Please update your vimrc.")
 endif
 
 " 2017-12-06
 if exists("g:R_term") && g:R_term == "terminator"
-    call RWarningMsgInp('"terminator" is no longer supported. Please, choose another value for R_term.')
+    call RWarningMsg('"terminator" is no longer supported. Please, choose another value for R_term.')
 endif
 
 " 2017-12-14
 if hasmapto("<Plug>RCompleteArgs", "i")
-    call RWarningMsgInp("<Plug>RCompleteArgs no longer exists. Please, delete it from your vimrc.")
+    call RWarningMsg("<Plug>RCompleteArgs no longer exists. Please, delete it from your vimrc.")
 else
     " Delete <C-X><C-A> mapping in RCreateEditMaps()
     function RCompleteArgs()
         stopinsert
-        call RWarningMsgInp("Completion of function arguments are now done by omni completion.")
+        call RWarningMsg("Completion of function arguments are now done by omni completion.")
         return []
     endfunction
 endif
 
 " 2018-03-27: Delete this warning before releasing the next version
 if g:R_openhtml == 2
-    call RWarningMsgInp("Valid values of R_openhtml are only 0 and 1. The value 2 is no longer valid.")
+    call RWarningMsg("Valid values of R_openhtml are only 0 and 1. The value 2 is no longer valid.")
 endif
 
 " 2018-03-31

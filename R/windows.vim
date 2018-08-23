@@ -26,7 +26,7 @@ if !exists("g:rplugin_R_path")
         let s:rinstallpath = substitute(s:rinstallpath, '\s*$', '', 'g')
     endif
     if !exists("s:rinstallpath")
-        call RWarningMsgInp("Could not find R path in Windows Registry. If you have already installed R, please, set the value of 'R_path'.")
+        call RWarningMsg("Could not find R path in Windows Registry. If you have already installed R, please, set the value of 'R_path'.")
         let g:rplugin_failed = 1
         finish
     endif
