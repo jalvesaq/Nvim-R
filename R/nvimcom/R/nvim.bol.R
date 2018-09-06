@@ -213,7 +213,7 @@ GetFunDescription <- function(pkg)
     idx <- paste0(pth, "AnIndex")
 
     # Development packages might not have any written documentation yet
-    if(!file.exists(idx) || !file.size(idx))
+    if(!file.exists(idx) || !file.info(idx)$size)
         return(NULL)
 
     tab <- read.table(idx, sep = "\t", quote = "", stringsAsFactors = FALSE)
@@ -410,7 +410,7 @@ nvim.buildomnils <- function(p){
     if(length(pbuilt) > 0){
         pvb <- sub(".*_.*_", "", pbuilt)
         if(pvb == pvi){
-            if(file.mtime(paste0(bdir, "/README")) > file.mtime(paste0(bdir, pbuilt))){
+            if(file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime){
                 unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
                 nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
                 if(getOption("nvimcom.verbose") > 3)
