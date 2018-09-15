@@ -200,38 +200,54 @@ function! SendRmdChunkToR(e, m)
 endfunction
 
 function! RmdNonRCompletion(findstart, base)
+    if RmdIsInPythonCode(0) && exists('*jedi#completions')
+        return jedi#completions(a:findstart, a:base)
+    endif
+
+    if b:rplugin_bibf != ''
+        if a:findstart
+            let line = getline(".")
+            let cpos = getpos(".")
+            let idx = cpos[2] -2
+            while line[idx] =~ '\w' && idx > 0
+                let idx -= 1
+            endwhile
+            return idx + 1
+        else
+            let citekey = substitute(a:base, '^@', '', '')
+            return RCompleteBib(citekey)
+        endif
+    endif
+
+    if exists('*zotcite#CompleteBib')
+        return zotcite#CompleteBib(a:findstart, a:base)
+    endif
+
+    if exists('*pandoc#completion#Complete')
+        return pandoc#completion#Complete(a:findstart, a:base)
+    endif
+
     if a:findstart
-        let line = getline(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] -2
-        while line[idx] =~ '\w' && idx > 0
-            let idx -= 1
-        endwhile
-        return idx + 1
+        return 0
     else
-        let citekey = substitute(a:base, '^@', '', '')
-        return RCompleteBib(citekey)
+        return []
     endif
 endfunction
 
-" If zotcite is installed, use it
-if exists('*zotcite#CompleteBib')
-    let b:rplugin_non_r_omnifunc = 'zotcite#CompleteBib'
-elseif g:R_non_r_compl
+let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
+if !exists('b:rplugin_bibf')
+    let b:rplugin_bibf = ''
+endif
+
+if g:R_non_r_compl
     call CheckPyBTeX()
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         call s:GetBibFileName()
-        let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
         if !exists("b:rplugin_did_bib_autocmd")
             let b:rplugin_did_bib_autocmd = 1
             autocmd BufWritePost <buffer> call s:GetBibFileName()
         endif
     endif
-endif
-
-" If zotcite is not installed and PyBTeX is not available, try pandoc
-if b:rplugin_non_r_omnifunc == '' && exists('*pandoc#completion#Complete')
-    let b:rplugin_non_r_omnifunc = 'pandoc#completion#Complete'
 endif
 
 let b:IsInRCode = function("RmdIsInRCode")
