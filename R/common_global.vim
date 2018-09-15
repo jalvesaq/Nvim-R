@@ -1586,7 +1586,7 @@ function SendParagraphToR(e, m)
         let line = getline(i-1)
         while i > 1 && !(line =~ '^\s*$' ||
                     \ (&filetype == "rnoweb" && line =~ "^<<") ||
-                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{r"))
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{\\(r\\|python\\)"))
             let i -= 1
             let line = getline(i-1)
         endwhile
@@ -3403,6 +3403,9 @@ function CompleteR(findstart, base)
         if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
             let s:compl_type = 3
             return FindStartRObj()
+        elseif &filetype == 'rmd' && RmdIsInPythonCode(0) && exists('*jedi#completions')
+            let s:compl_type = 4
+            return jedi#completions(a:findstart, a:base)
         elseif b:IsInRCode(0) == 0 && b:rplugin_non_r_omnifunc != ''
             let s:compl_type = 2
             let Ofun = function(b:rplugin_non_r_omnifunc)
@@ -3414,6 +3417,8 @@ function CompleteR(findstart, base)
     else
         if s:compl_type == 3
             return CompleteChunkOptions(a:base)
+        elseif s:compl_type == 4
+            return jedi#completions(a:findstart, a:base)
         elseif s:compl_type == 2
             let Ofun = function(b:rplugin_non_r_omnifunc)
             return Ofun(a:findstart, a:base)
