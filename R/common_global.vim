@@ -1350,6 +1350,10 @@ function RSourceLines(...)
         let rcmd = 'base::source("' . s:Rsource_read . '"' . sargs . ')'
     endif
 
+    if a:0 == 3 && a:3 == "PythonCode"
+        let rcmd = 'reticulate::py_run_file("' . s:Rsource_read . '")'
+    endif
+
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
@@ -1729,8 +1733,13 @@ function SendLineToR(godown)
             return
         endif
         let line = substitute(line, "^(\\`\\`)\\?", "", "")
-        if RmdIsInRCode(1) == 0
-            return
+        if RmdIsInRCode(0) == 0
+            if RmdIsInPythonCode(0) == 0
+                call RWarningMsg("Not inside an R code chunk.")
+                return
+            else
+                let line = 'reticulate::py_run_string("' . substitute(line, '"', '\\"', 'g') . '")'
+            endif
         endif
     endif
 

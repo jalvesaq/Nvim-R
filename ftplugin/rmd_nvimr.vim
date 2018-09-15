@@ -98,6 +98,19 @@ function! s:GetBibFileName()
     endif
 endfunction
 
+function! RmdIsInPythonCode(vrb)
+    let chunkline = search("^[ \t]*```[ ]*{python", "bncW")
+    let docline = search("^[ \t]*```$", "bncW")
+    if chunkline > docline && chunkline != line(".")
+        return 1
+    else
+        if a:vrb
+            call RWarningMsg("Not inside a Python code chunk.")
+        endif
+        return 0
+    endif
+endfunction
+
 function! RmdIsInRCode(vrb)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW")
     let docline = search("^[ \t]*```$", "bncW")
@@ -117,12 +130,12 @@ function! RmdPreviousChunk() range
     for var in range(1, chunk)
         let curline = line(".")
         if RmdIsInRCode(0)
-            let i = search("^[ \t]*```[ ]*{r", "bnW")
+            let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "bnW")
             if i != 0
                 call cursor(i-1, 1)
             endif
         endif
-        let i = search("^[ \t]*```[ ]*{r", "bnW")
+        let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "bnW")
         if i == 0
             call cursor(curline, 1)
             call RWarningMsg("There is no previous R code chunk to go.")
@@ -138,7 +151,7 @@ function! RmdNextChunk() range
     let rg = range(a:firstline, a:lastline)
     let chunk = len(rg)
     for var in range(1, chunk)
-        let i = search("^[ \t]*```[ ]*{r", "nW")
+        let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "nW")
         if i == 0
             call RWarningMsg("There is no next R code chunk to go.")
             return
@@ -149,11 +162,29 @@ function! RmdNextChunk() range
     return
 endfunction
 
+" Send Python chunk to R
+function! SendRmdPyChunkToR(e, m)
+    let chunkline = search("^[ \t]*```[ ]*{python", "bncW") + 1
+    let docline = search("^[ \t]*```", "ncW") - 1
+    let lines = getline(chunkline, docline)
+    let ok = RSourceLines(lines, a:e, 'PythonCode')
+    if ok == 0
+        return
+    endif
+    if a:m == "down"
+        call RmdNextChunk()
+    endif
+endfunction
 
-" Send Rmd chunk to R
+
+" Send R chunk to R
 function! SendRmdChunkToR(e, m)
     if RmdIsInRCode(0) == 0
-        call RWarningMsg("Not inside an R code chunk.")
+        if RmdIsInPythonCode(0) == 0
+            call RWarningMsg("Not inside an R code chunk.")
+        else
+            call SendRmdPyChunkToR(a:e, a:m)
+        endif
         return
     endif
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW") + 1
