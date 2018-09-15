@@ -129,7 +129,7 @@ function! RmdPreviousChunk() range
     let chunk = len(rg)
     for var in range(1, chunk)
         let curline = line(".")
-        if RmdIsInRCode(0)
+        if RmdIsInRCode(0) || RmdIsInPythonCode(0)
             let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "bnW")
             if i != 0
                 call cursor(i-1, 1)
