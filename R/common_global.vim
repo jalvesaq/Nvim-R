@@ -1494,8 +1494,11 @@ endfunction
 
 " Send selection to R
 function SendSelectionToR(...)
+    let ispy = 0
     if &filetype != "r"
-        if b:IsInRCode(0) == 0
+        if &filetype == 'rmd' && RmdIsInPythonCode(0)
+            let ispy = 1
+        elseif b:IsInRCode(0) == 0
             if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
                 call RWarningMsg("Not inside an R code chunk.")
                 return
@@ -1558,6 +1561,8 @@ function SendSelectionToR(...)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         let ok = RSourceLines(lines, a:1, "NewtabInsert")
+    elseif ispy
+        let ok = RSourceLines(lines, a:1, 'PythonCode')
     else
         let ok = RSourceLines(lines, a:1)
     endif
