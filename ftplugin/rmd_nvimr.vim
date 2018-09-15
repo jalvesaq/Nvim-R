@@ -239,7 +239,7 @@ let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
 
-let b:rplugin_knitr_pattern = "^``` *{r.*}$"
+let b:rplugin_knitr_pattern = "^``` *{.*}$"
 
 "==========================================================================
 " Key bindings and menu items
