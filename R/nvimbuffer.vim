@@ -27,14 +27,21 @@ function SendCmdToR_Buffer(...)
         endif
 
         if g:R_auto_scroll && cmd !~ '^quit('
+            let sbopt = &switchbuf
+            set switchbuf=useopen,usetab
+            let curtab = tabpagenr()
             let isnormal = mode() ==# 'n'
             let curwin = winnr()
             exe 'sb ' . g:rplugin_R_bufname
             call cursor('$', 1)
+            if tabpagenr() != curtab
+                exe 'normal! ' . curtab . 'gt'
+            endif
             exe curwin . 'wincmd w'
             if isnormal
                 stopinsert
             endif
+            exe 'set switchbuf=' . sbopt
         endif
 
         if !(a:0 == 2 && a:2 == 0)
