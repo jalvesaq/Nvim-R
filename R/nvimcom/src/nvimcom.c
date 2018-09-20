@@ -1,3 +1,6 @@
+#ifndef WIN32
+#define _POSIX_C_SOURCE 200112L
+#endif
 #include <R.h>  /* to include Rconfig.h */
 #include <Rinternals.h>
 #include <R_ext/Parse.h>
