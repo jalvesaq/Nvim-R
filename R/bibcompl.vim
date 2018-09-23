@@ -38,10 +38,10 @@ function s:HasPython3()
                 let g:rplugin_py3 = g:R_python3
                 return 1
             else
-                call RWarningMsg(g:R_python3 . ' is not executable')
+                let g:rplugin_debug_info['BibComplete'] = g:R_python3 . ' is not executable'
             endif
         else
-            call RWarningMsg(g:R_python3 . ' not found')
+            let g:rplugin_debug_info['BibComplete'] = g:R_python3 . ' not found'
         endif
         return 0
     endif

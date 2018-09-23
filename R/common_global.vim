@@ -1350,6 +1350,10 @@ function RSourceLines(...)
         let rcmd = 'base::source("' . s:Rsource_read . '"' . sargs . ')'
     endif
 
+    if a:0 == 3 && a:3 == "PythonCode"
+        let rcmd = 'reticulate::py_run_file("' . s:Rsource_read . '")'
+    endif
+
     let ok = g:SendCmdToR(rcmd)
     return ok
 endfunction
@@ -1490,8 +1494,11 @@ endfunction
 
 " Send selection to R
 function SendSelectionToR(...)
+    let ispy = 0
     if &filetype != "r"
-        if b:IsInRCode(0) == 0
+        if &filetype == 'rmd' && RmdIsInPythonCode(0)
+            let ispy = 1
+        elseif b:IsInRCode(0) == 0
             if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
                 call RWarningMsg("Not inside an R code chunk.")
                 return
@@ -1554,6 +1561,8 @@ function SendSelectionToR(...)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         let ok = RSourceLines(lines, a:1, "NewtabInsert")
+    elseif ispy
+        let ok = RSourceLines(lines, a:1, 'PythonCode')
     else
         let ok = RSourceLines(lines, a:1)
     endif
@@ -1582,7 +1591,7 @@ function SendParagraphToR(e, m)
         let line = getline(i-1)
         while i > 1 && !(line =~ '^\s*$' ||
                     \ (&filetype == "rnoweb" && line =~ "^<<") ||
-                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{r"))
+                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{\\(r\\|python\\)"))
             let i -= 1
             let line = getline(i-1)
         endwhile
@@ -1729,8 +1738,13 @@ function SendLineToR(godown)
             return
         endif
         let line = substitute(line, "^(\\`\\`)\\?", "", "")
-        if RmdIsInRCode(1) == 0
-            return
+        if RmdIsInRCode(0) == 0
+            if RmdIsInPythonCode(0) == 0
+                call RWarningMsg("Not inside an R code chunk.")
+                return
+            else
+                let line = 'reticulate::py_run_string("' . substitute(line, '"', '\\"', 'g') . '")'
+            endif
         endif
     endif
 

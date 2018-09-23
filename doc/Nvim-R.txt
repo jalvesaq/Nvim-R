@@ -64,9 +64,11 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send to R the Sweave, knit and pdflatex commands.
   * Omni completion (auto-completion) for R objects (.GlobalEnv and loaded
     packages).
-  * Auto-completion of function arguments.
-  * Auto-completion of knitr chunk options.
-  * Auto-completion of bibliographic entries (Rmd and Rnoweb).
+  * Omni completion of function arguments.
+  * Omni completion of knitr chunk options.
+  * Omni completion of bibliographic entries (Rmd and Rnoweb).
+  * Omni completion of python code in knitr chunks if the jedi-vim plugin is
+    installed (Rmd).
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
@@ -1898,6 +1900,21 @@ of `.bib` files is updated whenever the buffer is saved.
 If the reference includes the field "file", you can open this file by typing
 <LocalLeader>od in Normal mode with the cursor over the citation key.
 
+If you include Python chunks in your Rmd document, you should put the lines
+below in your |vimrc| to get them highlighted:
+>
+   let g:markdown_fenced_languages = ['r', 'python']
+   let g:rmd_fenced_languages = ['r', 'python']
+<
+You may also want to install the jedi-vim plugin to get omni completion of
+Python code when the cursor is within a Python chunk:
+
+   https://github.com/davidhalter/jedi-vim
+
+Lines of Python code are sent to R Console as arguments to
+`reticulate::py_run_string()`. Hence, you must send to R the command
+`library(reticulate)` before sending lines of Python code.
+
 
 How to disable~
 
@@ -2982,9 +2999,10 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.12.1 (2018-08-19)
+0.9.12.1 (2018-09-16)
 
- * Nothing yet.
+ * Support for Python code in knitr chunks: integration with the R package
+   reticulate and with the jedi-vim plugin.
 
 0.9.12 (2018-08-19)
 

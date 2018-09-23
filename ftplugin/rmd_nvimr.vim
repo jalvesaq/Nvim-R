@@ -98,6 +98,19 @@ function! s:GetBibFileName()
     endif
 endfunction
 
+function! RmdIsInPythonCode(vrb)
+    let chunkline = search("^[ \t]*```[ ]*{python", "bncW")
+    let docline = search("^[ \t]*```$", "bncW")
+    if chunkline > docline && chunkline != line(".")
+        return 1
+    else
+        if a:vrb
+            call RWarningMsg("Not inside a Python code chunk.")
+        endif
+        return 0
+    endif
+endfunction
+
 function! RmdIsInRCode(vrb)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW")
     let docline = search("^[ \t]*```$", "bncW")
@@ -116,13 +129,13 @@ function! RmdPreviousChunk() range
     let chunk = len(rg)
     for var in range(1, chunk)
         let curline = line(".")
-        if RmdIsInRCode(0)
-            let i = search("^[ \t]*```[ ]*{r", "bnW")
+        if RmdIsInRCode(0) || RmdIsInPythonCode(0)
+            let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "bnW")
             if i != 0
                 call cursor(i-1, 1)
             endif
         endif
-        let i = search("^[ \t]*```[ ]*{r", "bnW")
+        let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "bnW")
         if i == 0
             call cursor(curline, 1)
             call RWarningMsg("There is no previous R code chunk to go.")
@@ -138,7 +151,7 @@ function! RmdNextChunk() range
     let rg = range(a:firstline, a:lastline)
     let chunk = len(rg)
     for var in range(1, chunk)
-        let i = search("^[ \t]*```[ ]*{r", "nW")
+        let i = search("^[ \t]*```[ ]*{\\(r\\|python\\)", "nW")
         if i == 0
             call RWarningMsg("There is no next R code chunk to go.")
             return
@@ -149,11 +162,29 @@ function! RmdNextChunk() range
     return
 endfunction
 
+" Send Python chunk to R
+function! SendRmdPyChunkToR(e, m)
+    let chunkline = search("^[ \t]*```[ ]*{python", "bncW") + 1
+    let docline = search("^[ \t]*```", "ncW") - 1
+    let lines = getline(chunkline, docline)
+    let ok = RSourceLines(lines, a:e, 'PythonCode')
+    if ok == 0
+        return
+    endif
+    if a:m == "down"
+        call RmdNextChunk()
+    endif
+endfunction
 
-" Send Rmd chunk to R
+
+" Send R chunk to R
 function! SendRmdChunkToR(e, m)
     if RmdIsInRCode(0) == 0
-        call RWarningMsg("Not inside an R code chunk.")
+        if RmdIsInPythonCode(0) == 0
+            call RWarningMsg("Not inside an R code chunk.")
+        else
+            call SendRmdPyChunkToR(a:e, a:m)
+        endif
         return
     endif
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW") + 1
@@ -169,28 +200,49 @@ function! SendRmdChunkToR(e, m)
 endfunction
 
 function! RmdNonRCompletion(findstart, base)
+    if RmdIsInPythonCode(0) && exists('*jedi#completions')
+        return jedi#completions(a:findstart, a:base)
+    endif
+
+    if b:rplugin_bibf != ''
+        if a:findstart
+            let line = getline(".")
+            let cpos = getpos(".")
+            let idx = cpos[2] -2
+            while line[idx] =~ '\w' && idx > 0
+                let idx -= 1
+            endwhile
+            return idx + 1
+        else
+            let citekey = substitute(a:base, '^@', '', '')
+            return RCompleteBib(citekey)
+        endif
+    endif
+
+    if exists('*zotcite#CompleteBib')
+        return zotcite#CompleteBib(a:findstart, a:base)
+    endif
+
+    if exists('*pandoc#completion#Complete')
+        return pandoc#completion#Complete(a:findstart, a:base)
+    endif
+
     if a:findstart
-        let line = getline(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] -2
-        while line[idx] =~ '\w' && idx > 0
-            let idx -= 1
-        endwhile
-        return idx + 1
+        return 0
     else
-        let citekey = substitute(a:base, '^@', '', '')
-        return RCompleteBib(citekey)
+        return []
     endif
 endfunction
 
-" If zotcite is installed, use it
-if exists('*zotcite#CompleteBib')
-    let b:rplugin_non_r_omnifunc = 'zotcite#CompleteBib'
-elseif g:R_non_r_compl
+let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
+if !exists('b:rplugin_bibf')
+    let b:rplugin_bibf = ''
+endif
+
+if g:R_non_r_compl
     call CheckPyBTeX()
     if !has_key(g:rplugin_debug_info, 'BibComplete')
         call s:GetBibFileName()
-        let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
         if !exists("b:rplugin_did_bib_autocmd")
             let b:rplugin_did_bib_autocmd = 1
             autocmd BufWritePost <buffer> call s:GetBibFileName()
@@ -198,17 +250,12 @@ elseif g:R_non_r_compl
     endif
 endif
 
-" If zotcite is not installed and PyBTeX is not available, try pandoc
-if b:rplugin_non_r_omnifunc == '' && exists('*pandoc#completion#Complete')
-    let b:rplugin_non_r_omnifunc = 'pandoc#completion#Complete'
-endif
-
 let b:IsInRCode = function("RmdIsInRCode")
 let b:PreviousRChunk = function("RmdPreviousChunk")
 let b:NextRChunk = function("RmdNextChunk")
 let b:SendChunkToR = function("SendRmdChunkToR")
 
-let b:rplugin_knitr_pattern = "^``` *{r.*}$"
+let b:rplugin_knitr_pattern = "^``` *{.*}$"
 
 "==========================================================================
 " Key bindings and menu items
