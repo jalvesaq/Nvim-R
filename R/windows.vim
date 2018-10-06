@@ -172,6 +172,11 @@ function StartR_Windows()
         return
     endif
 
+    if g:rplugin_R =~? 'Rterm' && g:R_app =~? 'Rterm'
+        call RWarningMsg('"R_app" cannot be "Rterm.exe". R will crash if you send any command.')
+        sleep 200m
+    endif
+
     let g:SendCmdToR = function('SendCmdToR_NotYet')
 
     call SetRHome()

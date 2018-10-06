@@ -1336,8 +1336,10 @@ You can set the path to a different R version for specific R scripts in your
 <
 By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
 Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
-buffer and `"Rgui.exe"` otherwise. If your R binary has a different name, you
-should set the value of `R_app` in your |vimrc|.
+buffer and `"Rgui.exe"` otherwise. Nvim-R cannot send messages to `Rterm.exe`
+in an external `cmd` window. If your R binary has a different name (for
+example, if it is called by a custom script), you should set the value of
+`R_app` in your |vimrc|.
 
 By default the plugin will call the application `R` to run the following
 commands:
@@ -2999,10 +3001,11 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.12.1 (2018-09-16)
+0.9.12.1 (2018-10-06)
 
  * Support for Python code in knitr chunks: integration with the R package
    reticulate and with the jedi-vim plugin.
+ * Minor bug fixes.
 
 0.9.12 (2018-08-19)
 
