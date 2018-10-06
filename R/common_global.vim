@@ -1040,7 +1040,6 @@ function StartObjBrowser()
     else
         " Copy the values of some local variables that will be inherited
         let g:tmp_objbrtitle = b:objbrtitle
-        let g:tmp_curbufname = bufname("%")
 
         if g:R_objbr_place =~# 'RIGHT'
             sil exe 'botright vsplit ' . b:objbrtitle
@@ -1077,9 +1076,7 @@ function StartObjBrowser()
 
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle
-        let b:rscript_buffer = g:tmp_curbufname
         unlet g:tmp_objbrtitle
-        unlet g:tmp_curbufname
         call SendToNvimcom("\002" . g:rplugin_myport)
     endif
     exe "set switchbuf=" . savesb
@@ -2142,7 +2139,7 @@ function AskRDoc(rkeyword, package, getclass)
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
-        exe "sb " . b:rscript_buffer
+        exe "sb " . g:rplugin_rscript_name
         exe "set switchbuf=" . savesb
     else
         if a:getclass
@@ -2212,7 +2209,7 @@ function ShowRDoc(rkeyword)
     if bufname("%") =~ "Object_Browser" || (exists("g:rplugin_R_bufname") && bufname("%") == g:rplugin_R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
-        exe "sb " . b:rscript_buffer
+        exe "sb " . g:rplugin_rscript_name
         exe "set switchbuf=" . savesb
     endif
     call SetRTextWidth(rkeyw)
@@ -2960,6 +2957,9 @@ function RBufEnter()
         if &buftype != "nofile" || (&buftype == "nofile" && &filetype == "rbrowser")
             let g:rplugin_lastft = &filetype
         endif
+    endif
+    if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp"
+        let g:rplugin_rscript_name = bufname("%")
     endif
 endfunction
 

@@ -44,7 +44,6 @@ function StartR_InBuffer()
 
     let edbuf = bufname("%")
     let objbrttl = b:objbrtitle
-    let curbufnm = bufname("%")
     set switchbuf=useopen
 
     if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
@@ -96,7 +95,6 @@ function StartR_InBuffer()
         let s:number_col = 0
     endif
     let b:objbrtitle = objbrttl
-    let b:rscript_buffer = curbufnm
     if exists("g:R_hl_term") && g:R_hl_term
         set syntax=rout
         let s:hl_term = g:R_hl_term
