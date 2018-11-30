@@ -2124,6 +2124,11 @@ function RGetFirstObj(rkeyword)
         let firstobj = "#n#"
     endif
 
+
+    if firstobj =~ '"'
+        let firstobj = substitute(firstobj, '"', '\\"', "g")
+    endif
+
     return firstobj
 endfunction
 
