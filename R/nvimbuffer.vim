@@ -5,7 +5,11 @@ let g:R_auto_scroll = get(g:, 'R_auto_scroll', 1)
 function SendCmdToR_Buffer(...)
     if g:rplugin_jobs["R"]
         if g:R_clear_line
-            let cmd = "\001" . "\013" . a:1
+            if g:R_editing_mode == "emacs"
+                let cmd = "\001\013" . a:1
+            else
+                let cmd = "\x1b0Da" . a:1
+            endif
         else
             let cmd = a:1
         endif
@@ -63,7 +67,11 @@ function OnTermClose()
     if exists("g:rplugin_R_bufname")
         if g:rplugin_R_bufname == bufname("%")
             if g:R_close_term
-                call feedkeys('<cr>')
+                if g:R_clear_line
+                    call feedkeys('a ')
+                else
+                    call feedkeys(' ')
+                endif
             endif
         endif
         unlet g:rplugin_R_bufname

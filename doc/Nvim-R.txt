@@ -914,6 +914,7 @@ of
 |R_rmd_environment|   Environment in which to save evaluated rmd code
 |R_never_unmake_menu| Do not unmake the menu when switching buffers
 |R_clear_line|        Clear R Console line before sending a command
+|R_editing_mode|      The mode defined in your `~/.inputrc`
 |R_pdfviewer|         PDF application used to open PDF documents
 |R_openpdf|           Open PDF after processing rnoweb file
 |R_openhtml|          Open HTML after processing either Rrst or Rmd
@@ -1715,18 +1716,22 @@ type.
 
 
 ------------------------------------------------------------------------------
-								*R_clear_line*
+							      *R_clear_line*
+							      *R_editing_mode*
 6.22. Clear R Console line before sending commands~
 
 When one types <C-a> in the R Console the cursor goes to the beginning of the
 line and when one types <C-k> the characters to the right of the cursor are
 deleted. This is useful to avoid characters left on the R Console being mixed
 with commands sent by Vim. However, sending <C-a> may be problematic if using
-Tmux. Moreover, both <C-a> and <C-k> work only if your have not set the
-editing mode to "vi" in your `~/.inputrc`. Nvim-R will add <C-a><C-k> to every
-command if you put in your |vimrc|:
+Tmux. Nvim-R will add <C-a><C-k> to every command if you put in your |vimrc|:
 >
    let R_clear_line = 1
+<
+If you have set the editing mode to "vi" in your `~/.inputrc`, you also have
+to put this line in your |vimrc|:
+>
+   let R_editing_mode = "vi"
 <
 
 ------------------------------------------------------------------------------
@@ -3001,10 +3006,11 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.12.1 (2018-10-06)
+0.9.12.1 (2019-01-01)
 
  * Support for Python code in knitr chunks: integration with the R package
    reticulate and with the jedi-vim plugin.
+ * New option: R_editing_mode
  * Minor bug fixes.
 
 0.9.12 (2018-08-19)

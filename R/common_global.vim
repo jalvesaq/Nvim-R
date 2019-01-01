@@ -3594,6 +3594,7 @@ let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 let g:R_allnames          = get(g:, "R_allnames",           0)
 let g:R_complete          = get(g:, "R_complete",           1)
 let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
+let g:R_editing_mode      = get(g:, "R_editing_mode", "emacs")
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
@@ -3740,6 +3741,7 @@ unlet objbrplace
 " before sending ^K. But the control characters may cause problems in some
 " circumstances.
 let g:R_clear_line = get(g:, "R_clear_line", 0)
+
 
 " ========================================================================
 " Check if default mean of communication with R is OK
