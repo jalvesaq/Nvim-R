@@ -3,7 +3,11 @@
 function SendCmdToR_Buffer(...)
     if IsJobRunning(g:rplugin_jobs["R"]) || 1
         if g:R_clear_line
-            let cmd = "\001" . "\013" . a:1
+            if g:R_editing_mode == "emacs"
+                let cmd = "\001\013" . a:1
+            else
+                let cmd = "\x1b0Da" . a:1
+            endif
         else
             let cmd = a:1
         endif
