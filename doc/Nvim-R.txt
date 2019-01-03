@@ -1733,6 +1733,17 @@ to put this line in your |vimrc|:
 >
    let R_editing_mode = "vi"
 <
+Then, Nvim-R will prefix the commands sent to R with the string <Esc>0Da. This
+might produce a beep when sending commands. Please, see 'belloff', and, if you
+still get a beep, you may want to disable the audible bell only for R by
+putting in your `~/.inputrc`:
+>
+   $if R
+       set bell-style none
+   $$else
+       set bell-style audible
+   $endif
+<
 
 ------------------------------------------------------------------------------
 							   *R_pdfviewer*
@@ -1842,6 +1853,11 @@ you prefer to remove only visible objects, put in your |vimrc|:
 >
    let g:R_rmhidden = 0
 <
+After removing the objects, Nvim-R will also send CTRL-L to the R Console to
+clear the screen. If you have set vi mode in your `~/.inputrc` you might also
+want to set CTRL-L to clear the screen, as explained at
+
+https://unix.stackexchange.com/questions/104094/is-there-any-way-to-enable-ctrll-to-clear-screen-when-set-o-vi-is-set
 
 ------------------------------------------------------------------------------
 								    *R_source*
