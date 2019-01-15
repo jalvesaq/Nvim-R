@@ -1723,24 +1723,24 @@ type.
 When one types <C-a> in the R Console the cursor goes to the beginning of the
 line and when one types <C-k> the characters to the right of the cursor are
 deleted. This is useful to avoid characters left on the R Console being mixed
-with commands sent by Vim. However, sending <C-a> may be problematic if using
-Tmux. Nvim-R will add <C-a><C-k> to every command if you put in your |vimrc|:
+with commands sent by Vim. Nvim-R will add <C-a><C-k> to every command if you
+put in your |vimrc|:
 >
    let R_clear_line = 1
 <
-If you have set the editing mode to "vi" in your `~/.inputrc`, you also have
-to put this line in your |vimrc|:
+Nvim-R reads your `~/.inputrc` and, if it finds the string "set editing-mode
+vi" it will send to R <Esc>0Da instead of <C-a><C-k>. If Nvim-R fails to
+detect that R is running in vi editing mode, you have to put this line in your
+|vimrc|:
 >
    let R_editing_mode = "vi"
 <
-Then, Nvim-R will prefix the commands sent to R with the string <Esc>0Da. This
-might produce a beep when sending commands. Please, see 'belloff', and, if you
-still get a beep, you may want to disable the audible bell only for R by
-putting in your `~/.inputrc`:
+This might produce a beep when sending commands, and you may want to disable
+the audible bell only for R by putting in your `~/.inputrc`:
 >
    $if R
        set bell-style none
-   $$else
+   $else
        set bell-style audible
    $endif
 <

@@ -3594,7 +3594,6 @@ let g:rplugin_is_darwin = system("uname") =~ "Darwin"
 let g:R_allnames          = get(g:, "R_allnames",           0)
 let g:R_complete          = get(g:, "R_complete",           1)
 let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
-let g:R_editing_mode      = get(g:, "R_editing_mode", "emacs")
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 let g:R_paragraph_begin   = get(g:, "R_paragraph_begin",    1)
@@ -3645,6 +3644,19 @@ endif
 if !has("nvim") && !has("patch-8.0.0910")
     let g:R_in_buffer = 0
 endif
+
+let s:editing_mode = "emacs"
+if filereadable(expand("~/.inputrc"))
+    let s:inputrc = readfile(expand("~/.inputrc"))
+    call map(s:inputrc, 'substitute(v:val, "^\s*#.*", "", "")')
+    call filter(s:inputrc, 'v:val =~ "set.*editing-mode"')
+    if len(s:inputrc) && s:inputrc[len(s:inputrc) - 1] =~ '^\s*set\s*editing-mode\s*vi\>'
+        let s:editing_mode = "vi"
+    endif
+endif
+let g:R_editing_mode = get(g:, "R_editing_mode", s:editing_mode)
+unlet s:inputrc
+unlet s:editing_mode
 
 if has('win32') && !g:R_in_buffer
     " Sending multiple lines at once to Rgui on Windows does not work.
