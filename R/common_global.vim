@@ -3653,9 +3653,9 @@ if filereadable(expand("~/.inputrc"))
     if len(s:inputrc) && s:inputrc[len(s:inputrc) - 1] =~ '^\s*set\s*editing-mode\s*vi\>'
         let s:editing_mode = "vi"
     endif
+    unlet s:inputrc
 endif
 let g:R_editing_mode = get(g:, "R_editing_mode", s:editing_mode)
-unlet s:inputrc
 unlet s:editing_mode
 
 if has('win32') && !g:R_in_buffer
