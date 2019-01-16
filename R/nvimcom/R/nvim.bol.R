@@ -346,8 +346,12 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg
         l <- length(obj.list)
         if(l > 0){
             sink(omnilist, append = FALSE)
-            for(obj in obj.list)
-                nvim.omni.line(obj, curpack, curlib, 0)
+            for(obj in obj.list){
+                ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
+                if(inherits(ol, "try-error"))
+                    warning(paste("Error while generating omni completion line for: ",
+                                  obj, " (", curpack, ", ", curlib, ").\n", sep = ""))
+            }
             sink()
             CleanOmnils(omnilist)
             # Build list of functions for syntax highlight
