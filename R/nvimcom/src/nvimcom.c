@@ -46,8 +46,8 @@ static int needsfillmsg = 0;
 static int openclosel = 0;
 static char edsrvr[128];
 static char nvimsecr[128];
-static char liblist[512];
-static char globenv[512];
+static char liblist[576];
+static char globenv[576];
 static char *obbrbuf1;
 static char *obbrbuf2;
 static int obbrbufzise = 4096;
@@ -130,8 +130,8 @@ static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
     if(strlen(msg) < 980){
         strncat(finalmsg, msg, 1023);
     } else {
-        char fn[512];
-        snprintf(fn, 510, "%s/nvimcom_msg", tmpdir);
+        char fn[576];
+        snprintf(fn, 575, "%s/nvimcom_msg", tmpdir);
         FILE *f = fopen(fn, "w");
         if(f == NULL){
             REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
@@ -256,9 +256,32 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 }
 #endif
 
+static void nvimcom_squo(const char *buf, char *buf2)
+{
+    int i, j;
+    while(j < 80){
+        if(buf[i] == '\''){
+            buf2[j] = '\'';
+            j++;
+            buf2[j] = '\'';
+        } else if(buf[i] == 0) {
+            buf2[j] = 0;
+            break;
+        } else {
+            buf2[j] = buf[i];
+        }
+        i++;
+        j++;
+    }
+}
+
 void nvimcom_msg_to_nvim(char **cmd)
 {
-    nvimcom_nvimclient(*cmd, edsrvr);
+    int clen = strlen(*cmd);
+    char *buf2 = calloc(clen*2, sizeof(char));
+    nvimcom_squo(*cmd, buf2);
+    nvimcom_nvimclient(buf2, edsrvr);
+    free(buf2);
 }
 
 static void nvimcom_toggle_list_status(const char *x)
@@ -307,18 +330,18 @@ static int nvimcom_get_list_status(const char *x, const char *xclass)
 char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const char *prefix, char *p)
 {
     char xclass[64];
-    char newenv[512];
+    char newenv[576];
     char curenvB[512];
     char ebuf[64];
     char pre[128];
-    char newpre[128];
+    char newpre[192];
     int len;
     const char *ename;
     SEXP listNames, label, lablab, eexp, elmt = R_NilValue;
     SEXP cmdSexp, cmdexpr, ans, cmdSexp2, cmdexpr2;
     ParseStatus status, status2;
     int er = 0;
-    char buf[128];
+    char buf[576];
 
     if(strlen(xname) > 64)
         return p;
@@ -396,9 +419,9 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
             curenvB[strlen(curenvB) - 1] = 0;
         }
         if(strcmp(xclass, "s4") == 0)
-            snprintf(newenv, 500, "%s%s@", curenvB, xname);
+            snprintf(newenv, 575, "%s%s@", curenvB, xname);
         else
-            snprintf(newenv, 500, "%s%s$", curenvB, xname);
+            snprintf(newenv, 575, "%s%s$", curenvB, xname);
         if((nvimcom_get_list_status(newenv, xclass) == 1)){
             len = strlen(prefix);
             if(nvimcom_is_utf8){
@@ -428,10 +451,10 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                 }
                 pre[len] = 0;
             }
-            sprintf(newpre, "%s%s", pre, strT);
+            snprintf(newpre, 191, "%s%s", pre, strT);
 
             if(strcmp(xclass, "s4") == 0){
-                snprintf(buf, 127, "slotNames(%s%s)", curenvB, xname);
+                snprintf(buf, 575, "slotNames(%s%s)", curenvB, xname);
                 PROTECT(cmdSexp = allocVector(STRSXP, 1));
                 SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
                 PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
@@ -452,7 +475,7 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                             int len1 = len - 1;
                             for(int i = 0; i < len; i++){
                                 ename = CHAR(STRING_ELT(ans, i));
-                                snprintf(buf, 127, "%s%s@%s", curenvB, xname, ename);
+                                snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
                                 PROTECT(cmdSexp2 = allocVector(STRSXP, 1));
                                 SET_STRING_ELT(cmdSexp2, 0, mkChar(buf));
                                 PROTECT(cmdexpr2 = R_ParseVector(cmdSexp2, -1, &status2, R_NilValue));
@@ -464,8 +487,9 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                                     p = nvimcom_strcat(p, "\"\n");
                                 } else {
                                     PROTECT(elmt = R_tryEval(VECTOR_ELT(cmdexpr2, 0), R_GlobalEnv, &er));
-                                    if(i == len1)
-                                        sprintf(newpre, "%s%s", pre, strL);
+                                    if(i == len1){
+                                        snprintf(newpre, 191, "%s%s", pre, strL);
+                                    }
                                     p = nvimcom_browser_line(&elmt, ename, newenv, newpre, p);
                                     UNPROTECT(1);
                                 }
@@ -488,7 +512,7 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                             elmt = VECTOR_ELT(*x, i);
                             p = nvimcom_browser_line(&elmt, ebuf, newenv, newpre, p);
                         }
-                        sprintf(newpre, "%s%s", pre, strL);
+                        snprintf(newpre, 191, "%s%s", pre, strL);
                         sprintf(ebuf, "[[%d]]", len1 + 1);
                         PROTECT(elmt = VECTOR_ELT(*x, len));
                         p = nvimcom_browser_line(&elmt, ebuf, newenv, newpre, p);
@@ -508,7 +532,7 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
                         p = nvimcom_browser_line(&elmt, ename, newenv, newpre, p);
                         UNPROTECT(1);
                     }
-                    sprintf(newpre, "%s%s", pre, strL);
+                    snprintf(newpre, 191, "%s%s", pre, strL);
                     ename = CHAR(STRING_ELT(listNames, len));
                     if(ename[0] == 0){
                         sprintf(ebuf, "[[%d]]", len + 1);
@@ -682,9 +706,11 @@ static void nvimcom_eval_expr(const char *buf)
     SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
     PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 
+    char buf2[80];
+    nvimcom_squo(buf, buf2);
     if (status != PARSE_OK && verbose > 1) {
         strcpy(rep, "RWarningMsg('Invalid command: ");
-        strncat(rep, buf, 80);
+        strncat(rep, buf2, 80);
         strcat(rep, "')");
         nvimcom_nvimclient(rep, edsrvr);
     } else {
@@ -693,7 +719,7 @@ static void nvimcom_eval_expr(const char *buf)
         PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
         if(er && verbose > 1){
             strcpy(rep, "RWarningMsg('Error running: ");
-            strncat(rep, buf, 80);
+            strncat(rep, buf2, 80);
             strcat(rep, "')");
             nvimcom_nvimclient(rep, edsrvr);
         }
@@ -756,8 +782,8 @@ static int nvimcom_checklibs()
         }
     }
 
-    char fn[512];
-    snprintf(fn, 510, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    char fn[576];
+    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
     FILE *f = fopen(fn, "w");
     if(f == NULL){
         REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
@@ -937,24 +963,24 @@ static void nvimcom_fire()
 
 static void nvimcom_send_running_info(int bindportn)
 {
-    char msg[1024];
+    char msg[2176];
 #ifdef WIN32
 #ifdef _WIN64
-    snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s', '%s')",
             nvimcom_version, nvimcom_home, bindportn, R_PID,
             (long long)GetForegroundWindow(), search_list, R_version);
 #else
-    snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s', '%s')",
             nvimcom_version, nvimcom_home, bindportn, R_PID,
             (long)GetForegroundWindow(), search_list, R_version);
 #endif
 #else
     if(getenv("WINDOWID"))
-        snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s', '%s')",
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s', '%s')",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
                 getenv("WINDOWID"), search_list, R_version);
     else
-        snprintf(msg, 1023, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s', '%s')",
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s', '%s')",
                 nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
 #endif
     nvimcom_nvimclient(msg, edsrvr);
@@ -1343,8 +1369,8 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, i
     if(getenv("NCM_R") || hifun)
         envls_auto = 1;
 
-    snprintf(liblist, 510, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
-    snprintf(globenv, 510, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
 
     char envstr[1024];
     envstr[0] = 0;
