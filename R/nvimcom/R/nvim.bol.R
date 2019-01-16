@@ -122,7 +122,8 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
     if((is.list(xx) || is.environment(xx)) && curlevel <= maxlevel){
         obj.names <- names(xx)
         curlevel <- curlevel + 1
-        if(length(xx) > 0){
+        xxl <- length(xx)
+        if(!is.null(xxl) && xxl > 0){
             for(k in obj.names){
                 nvim.omni.line(paste(x, "$", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
             }
@@ -130,7 +131,8 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
     } else if(isS4(xx) && curlevel <= maxlevel){
         obj.names <- slotNames(xx)
         curlevel <- curlevel + 1
-        if(length(xx) > 0){
+        xxl <- length(xx)
+        if(!is.null(xxl) && xxl > 0){
             for(k in obj.names){
                 nvim.omni.line(paste(x, "@", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
             }
