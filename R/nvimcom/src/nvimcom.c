@@ -258,7 +258,7 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 
 static void nvimcom_squo(const char *buf, char *buf2)
 {
-    int i, j;
+    int i = 0, j = 0;
     while(j < 80){
         if(buf[i] == '\''){
             buf2[j] = '\'';
@@ -277,11 +277,7 @@ static void nvimcom_squo(const char *buf, char *buf2)
 
 void nvimcom_msg_to_nvim(char **cmd)
 {
-    int clen = strlen(*cmd);
-    char *buf2 = calloc(clen*2, sizeof(char));
-    nvimcom_squo(*cmd, buf2);
-    nvimcom_nvimclient(buf2, edsrvr);
-    free(buf2);
+    nvimcom_nvimclient(*cmd, edsrvr);
 }
 
 static void nvimcom_toggle_list_status(const char *x)
