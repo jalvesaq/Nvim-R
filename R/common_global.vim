@@ -801,7 +801,8 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.delim = "\t")']
     endif
-    let start_options += ['options(nvimcom.lsenvtol = ' . g:R_ls_env_tol . ')']
+    let start_options += ['options(nvimcom.lsenvtol = ' . g:R_ls_env_tol . ')',
+                \ 'options(nvimcom.source.path = "' . s:Rsource_read . '")']
 
     let rwd = ""
     if g:R_nvim_wd == 0
@@ -1343,8 +1344,12 @@ function RSourceLines(...)
         let rcmd = "\x1b[200~" . join(lines, "\n") . "\x1b[201~"
     else
         call writefile(lines, s:Rsource_write)
-        let sargs = GetSourceArgs(a:2)
-        let rcmd = 'base::source("' . s:Rsource_read . '"' . sargs . ')'
+        let sargs = substitute(GetSourceArgs(a:2), '^, ', '', '')
+        if a:0 == 3
+            let rcmd = 'NvimR.' . a:3 . '(' . sargs . ')'
+        else
+            let rcmd = 'NvimR.source(' . sargs . ')'
+        endif
     endif
 
     if a:0 == 3 && a:3 == "PythonCode"
@@ -1410,7 +1415,7 @@ function SendMBlockToR(e, m)
         let lineB -= 1
     endif
     let lines = getline(lineA, lineB)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e, "block")
     if ok == 0
         return
     endif
@@ -1479,7 +1484,7 @@ function SendFunctionToR(e, m)
     endif
 
     let lines = getline(firstline, lastline)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e, "function")
     if  ok == 0
         return
     endif
@@ -1561,7 +1566,7 @@ function SendSelectionToR(...)
     elseif ispy
         let ok = RSourceLines(lines, a:1, 'PythonCode')
     else
-        let ok = RSourceLines(lines, a:1)
+        let ok = RSourceLines(lines, a:1, 'selection')
     endif
 
     if ok == 0
@@ -1606,7 +1611,7 @@ function SendParagraphToR(e, m)
         let j += 1
     endwhile
     let lines = getline(i, j)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e, "paragraph")
     if ok == 0
         return
     endif
@@ -1650,7 +1655,7 @@ function SendFHChunkToR()
             " Child R chunk
             if curbuf[idx] =~ chdchk
                 " First run everything up to child chunk and reset buffer
-                call RSourceLines(codelines, "silent")
+                call RSourceLines(codelines, "silent", "chunk")
                 let codelines = []
 
                 " Next run child chunk and continue
@@ -1668,7 +1673,7 @@ function SendFHChunkToR()
             let idx += 1
         endif
     endwhile
-    call RSourceLines(codelines, "silent")
+    call RSourceLines(codelines, "silent", "chunk")
 endfunction
 
 function KnitChild(line, godown)

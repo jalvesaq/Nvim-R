@@ -190,7 +190,7 @@ function! SendRmdChunkToR(e, m)
     let chunkline = search("^[ \t]*```[ ]*{r", "bncW") + 1
     let docline = search("^[ \t]*```", "ncW") - 1
     let lines = getline(chunkline, docline)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e, "chunk")
     if ok == 0
         return
     endif

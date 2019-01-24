@@ -148,7 +148,7 @@ function! SendRrstChunkToR(e, m)
     let chunkline = search("^\\.\\. {r", "bncW") + 1
     let docline = search("^\\.\\. \\.\\.", "ncW") - 1
     let lines = getline(chunkline, docline)
-    let ok = RSourceLines(lines, a:e)
+    let ok = RSourceLines(lines, a:e, "chunk")
     if ok == 0
         return
     endif

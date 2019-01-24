@@ -1625,8 +1625,8 @@ useful when you are using a version of R which is compiled against readline
 
 When you send multiple lines of code to R (a selection of lines, a paragraph,
 code between two marks or an R chunk of code), Nvim-R saves the lines in a
-temporary file and, then, sends to R the command `source()` to read the
-temporary file.
+temporary file and, then, sends to R a command which calls `base::source()` to
+run the commands from the temporary file.
 
 By default, R's `source()` is called with the argument `print.eval=TRUE`, but
 you can change the arguments passed to it. Example:

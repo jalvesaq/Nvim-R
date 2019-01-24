@@ -168,6 +168,21 @@ nvim_viewdf <- function(oname, fenc = "")
     return(invisible(NULL))
 }
 
+NvimR.source <- function(...)
+{
+    base::source(getOption("nvimcom.source.path"), ...)
+}
+
+NvimR.selection <- function(...) NvimR.source(...)
+
+NvimR.paragraph <- function(...) NvimR.source(...)
+
+NvimR.block <- function(...) NvimR.source(...)
+
+NvimR.function <- function(...) NvimR.source(...)
+
+NvimR.chunk <- function(...) NvimR.source(...)
+
 source.and.clean <- function(f, ...)
 {
     on.exit(unlink(f))

@@ -1,4 +1,5 @@
-export("nvim.list.args", "nvim.srcdir", "nvim.plot", "nvim.interlace.rnoweb",
+export("NvimR.source", "NvimR.selection", "NvimR.block", "NvimR.paragraph", "NvimR.function", "NvimR.chunk",
+       "nvim.list.args", "nvim.srcdir", "nvim.plot", "nvim.interlace.rnoweb",
        "nvim.interlace.rrst", "nvim.print", "nvim.names", "etags2ctags",
        "nvim.interlace.rmd", "vi")
 
