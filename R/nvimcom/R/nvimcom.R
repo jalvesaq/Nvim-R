@@ -168,9 +168,9 @@ nvim_viewdf <- function(oname, fenc = "")
     return(invisible(NULL))
 }
 
-NvimR.source <- function(...)
+NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE)
 {
-    base::source(getOption("nvimcom.source.path"), ...)
+    base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval, spaced = spaced)
 }
 
 NvimR.selection <- function(...) NvimR.source(...)

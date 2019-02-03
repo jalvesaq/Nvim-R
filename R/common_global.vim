@@ -3677,7 +3677,7 @@ else
 endif
 
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
-let g:R_source_args      = get(g:, "R_source_args", "print.eval=TRUE")
+let g:R_source_args      = get(g:, "R_source_args",                "")
 let g:R_user_maps_only   = get(g:, "R_user_maps_only",              0)
 let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
