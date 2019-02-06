@@ -17,8 +17,8 @@ function StartJob(cmd, opt)
 endfunction
 
 function GetJobTitle(job_id)
-    for key in keys(g:rplugin_jobs)
-        if g:rplugin_jobs[key] == a:job_id
+    for key in keys(g:rplugin.jobs)
+        if g:rplugin.jobs[key] == a:job_id
             return key
         endif
     endfor
@@ -49,7 +49,7 @@ endfunction
 function ROnJobExit(job_id, data, etype)
     let key = GetJobTitle(a:job_id)
     if key != "Job"
-        let g:rplugin_jobs[key] = 0
+        let g:rplugin.jobs[key] = 0
     endif
     if a:data != 0
         call RWarningMsg('"' . key . '"' . ' exited with status ' . a:data)
@@ -60,11 +60,11 @@ function ROnJobExit(job_id, data, etype)
 endfunction
 
 function IsJobRunning(key)
-    return g:rplugin_jobs[a:key]
+    return g:rplugin.jobs[a:key]
 endfunction
 
-let g:rplugin_jobs = {"ClientServer": 0, "R": 0, "Terminal emulator": 0, "BibComplete": 0}
-let g:rplugin_job_handlers = {
+let g:rplugin.jobs = {"ClientServer": 0, "R": 0, "Terminal emulator": 0, "BibComplete": 0}
+let g:rplugin.job_handlers = {
             \ 'on_stdout': function('ROnJobStdout'),
             \ 'on_stderr': function('ROnJobStderr'),
             \ 'on_exit':   function('ROnJobExit')}

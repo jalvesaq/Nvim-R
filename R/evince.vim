@@ -17,14 +17,14 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
 
     let pdfname = substitute(a:ppath, " ", "%20", "g")
 
-    if g:rplugin_evince_loop < 2
-        let g:rplugin_jobs["Python (Evince forward)"] = StartJob(["python",
-                    \ g:rplugin_home . "/R/synctex_evince_forward.py",
-                    \ texname, pdfname, string(a:texln)], g:rplugin_job_handlers)
+    if g:rplugin.evince_loop < 2
+        let g:rplugin.jobs["Python (Evince forward)"] = StartJob(["python",
+                    \ g:rplugin.home . "/R/synctex_evince_forward.py",
+                    \ texname, pdfname, string(a:texln)], g:rplugin.job_handlers)
     else
-        let g:rplugin_evince_loop = 0
+        let g:rplugin.evince_loop = 0
     endif
-    if g:rplugin_has_wmctrl
+    if g:rplugin.has_wmctrl
         call system("wmctrl -a '" . substitute(a:ppath, ".*/", "", "") . "'")
     endif
 endfunction
@@ -45,7 +45,7 @@ function Run_EvinceBackward()
     endif
     if !did_evince
         call add(s:evince_list, pdfpath)
-        let g:rplugin_jobs["Python (Evince backward)"] = StartJob(["python", g:rplugin_home . "/R/synctex_evince_backward.py", pdfpath], g:rplugin_job_handlers)
+        let g:rplugin.jobs["Python (Evince backward)"] = StartJob(["python", g:rplugin.home . "/R/synctex_evince_backward.py", pdfpath], g:rplugin.job_handlers)
     endif
 endfunction
 
@@ -53,6 +53,6 @@ endfunction
 " synctex_evince_forward.py keeps sending the message to Neovim run
 " SyncTeX_forward() again.
 function! Evince_Again()
-    let g:rplugin_evince_loop += 1
+    let g:rplugin.evince_loop += 1
     call SyncTeX_forward()
 endfunction

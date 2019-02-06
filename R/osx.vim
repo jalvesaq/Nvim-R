@@ -16,7 +16,7 @@ function StartR_OSX()
         let rcmd = "/Applications/R.app"
     endif
 
-    let args_str = join(g:rplugin_r_args)
+    let args_str = join(g:rplugin.r_args)
     if args_str != " "
         " https://github.com/jcfaria/Vim-R-plugin/issues/63
         " https://stat.ethz.ch/pipermail/r-sig-mac/2013-February/009978.html

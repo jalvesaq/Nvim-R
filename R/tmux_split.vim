@@ -8,7 +8,7 @@ endif
 
 let g:R_in_buffer = 0
 let g:R_applescript = 0
-let g:rplugin_tmux_split = 1
+let g:rplugin.tmux_split = 1
 let g:R_tmux_title = get(g:, 'R_tmux_title', 'NvimR')
 
 " Adapted from screen plugin:
@@ -24,9 +24,9 @@ endfunction
 
 " Replace StartR_ExternalTerm with a function that starts R in a Tmux split pane
 function! StartR_ExternalTerm(rcmd)
-    let g:rplugin_editor_pane = $TMUX_PANE
-    let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin_tmpdir . '"',
-                \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin_compldir, ' ', '\\ ', "g") . '"',
+    let g:rplugin.editor_pane = $TMUX_PANE
+    let tmuxconf = ['set-environment NVIMR_TMPDIR "' . g:rplugin.tmpdir . '"',
+                \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin.compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
                 \ 'set-environment NVIMR_PORT ' . $NVIMR_PORT ,
@@ -40,9 +40,9 @@ function! StartR_ExternalTerm(rcmd)
     if &t_Co == 256
         call extend(tmuxconf, ['set default-terminal "' . $TERM . '"'])
     endif
-    call writefile(tmuxconf, g:rplugin_tmpdir . "/tmux" . $NVIMR_ID . ".conf")
-    call system("tmux source-file '" . g:rplugin_tmpdir . "/tmux" . $NVIMR_ID . ".conf" . "'")
-    call delete(g:rplugin_tmpdir . "/tmux" . $NVIMR_ID . ".conf")
+    call writefile(tmuxconf, g:rplugin.tmpdir . "/tmux" . $NVIMR_ID . ".conf")
+    call system("tmux source-file '" . g:rplugin.tmpdir . "/tmux" . $NVIMR_ID . ".conf" . "'")
+    call delete(g:rplugin.tmpdir . "/tmux" . $NVIMR_ID . ".conf")
     let tcmd = "tmux split-window "
     if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
         if g:R_rconsole_width == -1
@@ -63,13 +63,13 @@ function! StartR_ExternalTerm(rcmd)
         return
     endif
     let s:rplugin_rconsole_pane = TmuxActivePane()
-    let rlog = system("tmux select-pane -t " . g:rplugin_editor_pane)
+    let rlog = system("tmux select-pane -t " . g:rplugin.editor_pane)
     if v:shell_error
         call RWarningMsg(rlog)
         return
     endif
     let g:SendCmdToR = function('SendCmdToR_TmuxSplit')
-    let g:rplugin_last_rcmd = a:rcmd
+    let g:rplugin.last_rcmd = a:rcmd
     if g:R_tmux_title != "automatic" && g:R_tmux_title != ""
         call system("tmux rename-window " . g:R_tmux_title)
     endif

@@ -1,7 +1,7 @@
 
 function StartRStudio()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        call JobStdin(g:rplugin_jobs["ClientServer"], "\x0bCheck if R is running\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "\x0bCheck if R is running\n")
         return
     endif
 
@@ -11,12 +11,12 @@ function StartRStudio()
         call SetRHome()
     endif
     if has("nvim")
-        let g:rplugin_jobs["RStudio"] = StartJob([g:RStudio_cmd], {
+        let g:rplugin.jobs["RStudio"] = StartJob([g:RStudio_cmd], {
                     \ 'on_stderr': function('ROnJobStderr'),
                     \ 'on_exit':   function('ROnJobExit'),
                     \ 'detach': 1 })
     else
-        let g:rplugin_jobs["RStudio"] = StartJob([g:RStudio_cmd], {
+        let g:rplugin.jobs["RStudio"] = StartJob([g:RStudio_cmd], {
                     \ 'err_cb':  'ROnJobStderr',
                     \ 'exit_cb': 'ROnJobExit',
                     \ 'stoponexit': '' })

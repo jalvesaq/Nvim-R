@@ -20,13 +20,13 @@ else
     endif
     if s:tmuxversion < "1.8"
         call RWarningMsg("Nvim-R requires Tmux >= 1.8")
-        let g:rplugin_failed = 1
+        let g:rplugin.failed = 1
         finish
     endif
 endif
 unlet s:tmuxversion
 
-let g:rplugin_tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
+let g:rplugin.tmuxsname = "NvimR-" . substitute(localtime(), '.*\(...\)', '\1', '')
 
 let g:R_setwidth = get(g:, 'R_setwidth', 2)
 

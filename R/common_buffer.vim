@@ -49,7 +49,7 @@ if !exists("b:objbrtitle")
     unlet s:tnr
 endif
 
-let g:rplugin_lastft = &filetype
+let g:rplugin.lastft = &filetype
 
 " Check if b:pdf_is_open already exists because this script is called when
 " FillRLibList() is called

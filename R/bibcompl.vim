@@ -10,19 +10,19 @@ function RCompleteBib(base)
         call RWarningMsg('Bib file not defined')
         return []
     endif
-    call delete(g:rplugin_tmpdir . "/bibcompl")
-    let g:rplugin_bib_finished = 0
-    call JobStdin(g:rplugin_jobs["BibComplete"], "\x03" . a:base . "\x05" . expand("%:p") . "\n")
-    call AddForDeletion(g:rplugin_tmpdir . "/bibcompl")
+    call delete(g:rplugin.tmpdir . "/bibcompl")
+    let g:rplugin.bib_finished = 0
+    call JobStdin(g:rplugin.jobs["BibComplete"], "\x03" . a:base . "\x05" . expand("%:p") . "\n")
+    call AddForDeletion(g:rplugin.tmpdir . "/bibcompl")
     let resp = []
     let wt = 0
     sleep 20m
-    while wt < 10 && g:rplugin_bib_finished == 0
+    while wt < 10 && g:rplugin.bib_finished == 0
         let wt += 1
         sleep 50m
     endwhile
-    if filereadable(g:rplugin_tmpdir . "/bibcompl")
-        let lines = readfile(g:rplugin_tmpdir . "/bibcompl")
+    if filereadable(g:rplugin.tmpdir . "/bibcompl")
+        let lines = readfile(g:rplugin.tmpdir . "/bibcompl")
         for line in lines
             let tmp = split(line, "\x09")
             call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
@@ -35,26 +35,26 @@ function s:HasPython3()
     if exists("g:R_python3")
         if filereadable("g:R_python3")
             if executable("g:R_python3")
-                let g:rplugin_py3 = g:R_python3
+                let g:rplugin.py3 = g:R_python3
                 return 1
             else
-                let g:rplugin_debug_info['BibComplete'] = g:R_python3 . ' is not executable'
+                let g:rplugin.debug_info['BibComplete'] = g:R_python3 . ' is not executable'
             endif
         else
-            let g:rplugin_debug_info['BibComplete'] = g:R_python3 . ' not found'
+            let g:rplugin.debug_info['BibComplete'] = g:R_python3 . ' not found'
         endif
         return 0
     endif
     let out = system('python3 --version')
     if v:shell_error == 0 && out =~ 'Python 3'
-        let g:rplugin_py3 = 'python3'
+        let g:rplugin.py3 = 'python3'
     else
         let out = system('python --version')
         if v:shell_error == 0 && out =~ 'Python 3'
-            let g:rplugin_py3 = 'python'
+            let g:rplugin.py3 = 'python'
         else
-            let g:rplugin_debug_info['BibComplete'] = "No Python 3"
-            let g:rplugin_py3 = ''
+            let g:rplugin.debug_info['BibComplete'] = "No Python 3"
+            let g:rplugin.py3 = ''
             return 0
         endif
     endif
@@ -65,10 +65,10 @@ function CheckPyBTeX()
     if !s:HasPython3()
         return
     endif
-    call system(g:rplugin_py3, "from pybtex.database import parse_file\n")
+    call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
     if v:shell_error != 0
-        let g:rplugin_debug_info['BibComplete'] = "No PyBTex"
-        let g:rplugin_py3 = ''
+        let g:rplugin.debug_info['BibComplete'] = "No PyBTex"
+        let g:rplugin.py3 = ''
     endif
 endfunction
 
@@ -80,24 +80,24 @@ function GetBibAttachment()
     if wrd =~ '^@'
         let wrd = substitute(wrd, '^@', '', '')
         if wrd != ''
-            let g:rplugin_last_attach = ''
-            call JobStdin(g:rplugin_jobs["BibComplete"], "\x02" . expand("%:p") . "\x05" . wrd . "\n")
+            let g:rplugin.last_attach = ''
+            call JobStdin(g:rplugin.jobs["BibComplete"], "\x02" . expand("%:p") . "\x05" . wrd . "\n")
             sleep 20m
             let count = 0
-            while count < 100 && g:rplugin_last_attach == ''
+            while count < 100 && g:rplugin.last_attach == ''
                 let count += 1
                 sleep 10m
             endwhile
-            if g:rplugin_last_attach == 'nOaTtAChMeNt'
+            if g:rplugin.last_attach == 'nOaTtAChMeNt'
                 call RWarningMsg(wrd . "'s attachment not found")
-            elseif g:rplugin_last_attach =~ 'nObIb:'
-                call RWarningMsg('"' . substitute(g:rplugin_last_attach, 'nObIb:', '', '') . '" not found')
-            elseif g:rplugin_last_attach == 'nOcItEkEy'
+            elseif g:rplugin.last_attach =~ 'nObIb:'
+                call RWarningMsg('"' . substitute(g:rplugin.last_attach, 'nObIb:', '', '') . '" not found')
+            elseif g:rplugin.last_attach == 'nOcItEkEy'
                 call RWarningMsg(wrd . " not found")
-            elseif g:rplugin_last_attach == ''
+            elseif g:rplugin.last_attach == ''
                 call RWarningMsg('No reply from BibComplete')
             else
-                let fpath = g:rplugin_last_attach
+                let fpath = g:rplugin.last_attach
                 let fls = split(fpath, ':')
                 if filereadable(fls[0])
                     let fpath = [0]
@@ -105,7 +105,7 @@ function GetBibAttachment()
                     let fpath = fls[1]
                 endif
                 if filereadable(fpath)
-                    if has('win32') || g:rplugin_is_darwin
+                    if has('win32') || g:rplugin.is_darwin
                         call system('open "' . fpath . '"')
                     else
                         call system('xdg-open "' . fpath . '"')

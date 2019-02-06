@@ -3,17 +3,17 @@ if exists("*SyncTeX_forward2")
     finish
 endif
 
-let g:rplugin_zathura_pid = {}
+let g:rplugin.zathura_pid = {}
 
 if executable("zathura")
     let s:zv = split(system('zathura --version 2>/dev/null'))
     if len(s:zv) > 1 && s:zv[1] < '0.3.1'
-        let g:rplugin_pdfviewer = "none"
+        let g:rplugin.pdfviewer = "none"
         call RWarningMsg("Zathura version must be >= 0.3.1")
     endif
     unlet s:zv
 else
-    let g:rplugin_pdfviewer = "none"
+    let g:rplugin.pdfviewer = "none"
     call RWarningMsg('Please, either install "zathura" or set the value of R_pdfviewer.')
 endif
 if executable("dbus-send")
@@ -23,19 +23,19 @@ else
 endif
 
 function ROpenPDF2(fullpath)
-    if !has_key(g:rplugin_zathura_pid, a:fullpath)
-        let g:rplugin_zathura_pid[a:fullpath] = 0
+    if !has_key(g:rplugin.zathura_pid, a:fullpath)
+        let g:rplugin.zathura_pid[a:fullpath] = 0
     endif
     let fname = substitute(a:fullpath, ".*/", "", "")
     if system("wmctrl -xl") =~ 'Zathura.*' . fname &&
-                \ has_key(g:rplugin_zathura_pid, a:fullpath) &&
-                \ g:rplugin_zathura_pid[a:fullpath] != 0
+                \ has_key(g:rplugin.zathura_pid, a:fullpath) &&
+                \ g:rplugin.zathura_pid[a:fullpath] != 0
         call system("wmctrl -a '" . fname . "'")
     else
         call RStart_Zathura(a:fullpath)
     endif
 
-    if g:rplugin_has_wmctrl
+    if g:rplugin.has_wmctrl
         call system("wmctrl -a '" . substitute(a:fullpath, ".*/", "", "") . "'")
     endif
 endfunction
@@ -45,14 +45,14 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
     let pdfname = substitute(a:ppath, ' ', '\\ ', 'g')
     let shortp  = substitute(a:ppath, '.*/', '', 'g')
 
-    if !has_key(g:rplugin_zathura_pid, a:ppath) || (has_key(g:rplugin_zathura_pid, a:ppath) && g:rplugin_zathura_pid[a:ppath] == 0)
+    if !has_key(g:rplugin.zathura_pid, a:ppath) || (has_key(g:rplugin.zathura_pid, a:ppath) && g:rplugin.zathura_pid[a:ppath] == 0)
         call RStart_Zathura(a:ppath)
         sleep 900m
     endif
 
-    let result = system("zathura --synctex-forward=" . a:texln . ":1:" . texname . " --synctex-pid=" . g:rplugin_zathura_pid[a:ppath] . " " . pdfname)
+    let result = system("zathura --synctex-forward=" . a:texln . ":1:" . texname . " --synctex-pid=" . g:rplugin.zathura_pid[a:ppath] . " " . pdfname)
     if v:shell_error
-        let g:rplugin_zathura_pid[a:ppath] = 0
+        let g:rplugin.zathura_pid[a:ppath] = 0
         if a:tryagain
             call RStart_Zathura(a:ppath)
             sleep 900m
@@ -63,20 +63,20 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
         endif
     endif
 
-    if g:rplugin_has_wmctrl
+    if g:rplugin.has_wmctrl
         call system("wmctrl -a '" . shortp . "'")
     endif
 endfunction
 
 function StartZathuraNeovim(fullpath)
-    let g:rplugin_jobs["Zathura"] = jobstart(["zathura",
+    let g:rplugin.jobs["Zathura"] = jobstart(["zathura",
                 \ "--synctex-editor-command",
                 \ "nclientserver %{input} %{line}", a:fullpath],
                 \ {"detach": 1, "on_stderr": function('ROnJobStderr')})
-    if g:rplugin_jobs["Zathura"] < 1
+    if g:rplugin.jobs["Zathura"] < 1
         call RWarningMsg("Failed to run Zathura...")
     else
-        let g:rplugin_zathura_pid[a:fullpath] = jobpid(g:rplugin_jobs["Zathura"])
+        let g:rplugin.zathura_pid[a:fullpath] = jobpid(g:rplugin.jobs["Zathura"])
     endif
 endfunction
 
@@ -89,25 +89,25 @@ function StartZathuraVim(fullpath)
                 \ "a3 = '" . a:fullpath . "'",
                 \ "zpid = subprocess.Popen(['zathura', '--synctex-editor-command', 'nclientserver %{input} %{line}', a3], stdout = FNULL, stderr = FNULL).pid",
                 \ "sys.stdout.write(str(zpid))" ]
-    call writefile(pycode, g:rplugin_tmpdir . "/start_zathura.py")
-    let pid = system("python '" . g:rplugin_tmpdir . "/start_zathura.py" . "'")
+    call writefile(pycode, g:rplugin.tmpdir . "/start_zathura.py")
+    let pid = system("python '" . g:rplugin.tmpdir . "/start_zathura.py" . "'")
     if pid == 0
         call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
     else
-        let g:rplugin_zathura_pid[a:fullpath] = pid
+        let g:rplugin.zathura_pid[a:fullpath] = pid
     endif
-    call delete(g:rplugin_tmpdir . "/start_zathura.py")
+    call delete(g:rplugin.tmpdir . "/start_zathura.py")
 endfunction
 
 function RStart_Zathura(fullpath)
-    if g:R_synctex && g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
+    if g:R_synctex && g:rplugin.nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
         call StartNClientServer('RStart_Zathura')
     endif
 
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
     let fname = substitute(a:fullpath, ".*/", "", "")
-    if g:rplugin_has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
+    if g:rplugin.has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
         let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . fname . '"')
         if len(info) > 0
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
@@ -125,7 +125,7 @@ function RStart_Zathura(fullpath)
         endif
     endif
 
-    let $NVIMR_PORT = g:rplugin_myport
+    let $NVIMR_PORT = g:rplugin.myport
     if exists("*jobpid")
         call StartZathuraNeovim(a:fullpath)
     else

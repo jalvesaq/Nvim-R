@@ -31,13 +31,21 @@ endif
 
 let s:lists_to_load = split(g:R_start_libs, ",")
 let s:new_libs = 0
-let g:rplugin_debug_lists = []
-let g:rplugin_loaded_libs = []
+if !exists('g:rplugin')
+    let g:rplugin = {}
+endif
+let g:rplugin.debug_lists = []
+let g:rplugin.loaded_libs = []
 let s:Rhelp_list = []
 let g:rplugin_omni_lines = []
 
+" For compatibility with ncm-R:
+let g:rplugin_loaded_libs = g:rplugin.loaded_libs
+
+" For compatibility with ncm-R:
+"
 " syntax/r.vim may have being called before ftplugin/r.vim
-if !exists("g:rplugin_compldir")
+if !exists("g:rplugin.compldir")
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/setcompldir.vim"
 endif
 
@@ -48,8 +56,8 @@ endif
 
 " Must be run for each buffer
 function SourceRFunList(lib)
-    if isdirectory(g:rplugin_compldir)
-        let fnf = split(globpath(g:rplugin_compldir, 'fun_' . a:lib . '_*'), "\n")
+    if isdirectory(g:rplugin.compldir)
+        let fnf = split(globpath(g:rplugin.compldir, 'fun_' . a:lib . '_*'), "\n")
         if len(fnf) == 1 && (!exists("g:R_hi_fun") || g:R_hi_fun != 0)
             " Highlight R functions
             if !exists("g:R_hi_fun_paren") || g:R_hi_fun_paren == 0
@@ -68,11 +76,11 @@ function SourceRFunList(lib)
                 endfor
             endif
         elseif len(fnf) == 0
-            let g:rplugin_debug_lists += ['Function list for "' . a:lib . '" not found.']
+            let g:rplugin.debug_lists += ['Function list for "' . a:lib . '" not found.']
         elseif len(fnf) > 1
-            let g:rplugin_debug_lists += ['There is more than one function list for "' . a:lib . '".']
+            let g:rplugin.debug_lists += ['There is more than one function list for "' . a:lib . '".']
             for obl in fnf
-                let g:rplugin_debug_lists += [obl]
+                let g:rplugin.debug_lists += [obl]
             endfor
         endif
     endif
@@ -94,9 +102,9 @@ function RLisObjs(arglead, cmdline, curpos)
 endfunction
 
 function RmFromRLibList(lib)
-    for idx in range(len(g:rplugin_loaded_libs))
-        if g:rplugin_loaded_libs[idx] == a:lib
-            call remove(g:rplugin_loaded_libs, idx)
+    for idx in range(len(g:rplugin.loaded_libs))
+        if g:rplugin.loaded_libs[idx] == a:lib
+            call remove(g:rplugin.loaded_libs, idx)
             break
         endif
     endfor
@@ -109,10 +117,10 @@ function RmFromRLibList(lib)
 endfunction
 
 function AddToRLibList(lib)
-    if isdirectory(g:rplugin_compldir)
-        let omf = split(globpath(g:rplugin_compldir, 'omnils_' . a:lib . '_*'), "\n")
+    if isdirectory(g:rplugin.compldir)
+        let omf = split(globpath(g:rplugin.compldir, 'omnils_' . a:lib . '_*'), "\n")
         if len(omf) == 1
-            let g:rplugin_loaded_libs += [a:lib]
+            let g:rplugin.loaded_libs += [a:lib]
 
             " List of objects for omni completion
             let olist = readfile(omf[0])
@@ -132,13 +140,13 @@ function AddToRLibList(lib)
                 endif
             endfor
         elseif len(omf) == 0
-            let g:rplugin_debug_lists += ['Omnils list for "' . a:lib . '" not found.']
+            let g:rplugin.debug_lists += ['Omnils list for "' . a:lib . '" not found.']
             call RmFromRLibList(a:lib)
             return
         elseif len(omf) > 1
-            let g:rplugin_debug_lists += ['There is more than one omnils and function list for "' . a:lib . '".']
+            let g:rplugin.debug_lists += ['There is more than one omnils and function list for "' . a:lib . '".']
             for obl in omf
-                let g:rplugin_debug_lists += [obl]
+                let g:rplugin.debug_lists += [obl]
             endfor
             call RmFromRLibList(a:lib)
             return
@@ -153,11 +161,11 @@ endfunction
 
 function FillRLibList()
     " Update the list of objects for omnicompletion
-    if filereadable(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
-        let s:lists_to_load = readfile(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+    if filereadable(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+        let s:lists_to_load = readfile(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
         for lib in s:lists_to_load
             let isloaded = 0
-            for olib in g:rplugin_loaded_libs
+            for olib in g:rplugin.loaded_libs
                 if lib == olib
                     let isloaded = 1
                     break
@@ -167,14 +175,14 @@ function FillRLibList()
                 call AddToRLibList(lib)
             endif
         endfor
-        call delete(g:rplugin_tmpdir . "/libnames_" . $NVIMR_ID)
+        call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     endif
     " Now we need to update the syntax in all R files. There should be a
     " better solution than setting a flag to let other buffers know that they
     " also need to update the syntax on CursorMoved event:
     " https://github.com/neovim/neovim/issues/901
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        let s:new_libs = len(g:rplugin_loaded_libs)
+        let s:new_libs = len(g:rplugin.loaded_libs)
         silent exe 'set syntax=' . &syntax
         redraw
     endif

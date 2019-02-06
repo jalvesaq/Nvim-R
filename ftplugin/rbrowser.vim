@@ -27,8 +27,8 @@ setlocal nowrap
 setlocal iskeyword=@,48-57,_,.
 setlocal nolist
 
-if !exists("g:rplugin_hasmenu")
-    let g:rplugin_hasmenu = 0
+if !exists("g:rplugin.hasmenu")
+    let g:rplugin.hasmenu = 0
 endif
 
 " Popup menu
@@ -37,15 +37,15 @@ if !exists("s:hasbrowsermenu")
 endif
 
 " Current view of the object browser: .GlobalEnv X loaded libraries
-let g:rplugin_curview = "GlobalEnv"
+let g:rplugin.curview = "GlobalEnv"
 
 function! UpdateOB(what)
     if a:what == "both"
-        let wht = g:rplugin_curview
+        let wht = g:rplugin.curview
     else
         let wht = a:what
     endif
-    if g:rplugin_curview != wht
+    if g:rplugin.curview != wht
         return "curview != what"
     endif
     if s:upobcnt
@@ -60,7 +60,7 @@ function! UpdateOB(what)
         let s:upobcnt = 0
         return "Object_Browser not listed"
     endif
-    if exists("g:rplugin_curbuf") && g:rplugin_curbuf != "Object_Browser"
+    if exists("g:rplugin.curbuf") && g:rplugin.curbuf != "Object_Browser"
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         sil noautocmd sb Object_Browser
@@ -80,9 +80,9 @@ function! UpdateOB(what)
     sil normal! ggdG
     let @@ = save_unnamed_reg
     if wht == "GlobalEnv"
-        let fcntt = readfile(g:rplugin_tmpdir . "/globenv_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     else
-        let fcntt = readfile(g:rplugin_tmpdir . "/liblist_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     endif
     call setline(1, fcntt)
     call cursor(curline, curcol)
@@ -90,7 +90,7 @@ function! UpdateOB(what)
         setlocal nomodifiable
     endif
     if rplugin_switchedbuf
-        exe "sil noautocmd sb " . g:rplugin_curbuf
+        exe "sil noautocmd sb " . g:rplugin.curbuf
         exe "set switchbuf=" . savesb
     endif
     let s:upobcnt = 0
@@ -100,11 +100,11 @@ endfunction
 function! RBrowserDoubleClick()
     " Toggle view: Objects in the workspace X List of libraries
     if line(".") == 1
-        if g:rplugin_curview == "libraries"
-            let g:rplugin_curview = "GlobalEnv"
+        if g:rplugin.curview == "libraries"
+            let g:rplugin.curview = "GlobalEnv"
             call SendToNvimcom("\004G RBrowserDoubleClick")
         else
-            let g:rplugin_curview = "libraries"
+            let g:rplugin.curview = "libraries"
             call SendToNvimcom("\004L RBrowserDoubleClick")
         endif
         return
@@ -113,7 +113,7 @@ function! RBrowserDoubleClick()
     " Toggle state of list or data.frame: open X closed
     let key = RBrowserGetName(0, 1)
     let curline = getline(".")
-    if g:rplugin_curview == "GlobalEnv"
+    if g:rplugin.curview == "GlobalEnv"
         if curline =~ "&#.*\t"
             call SendToNvimcom("\006&" . key)
         elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
@@ -208,7 +208,7 @@ function! RBrowserFindParent(word, curline, curpos)
         endif
     endwhile
 
-    if g:rplugin_curview == "GlobalEnv"
+    if g:rplugin.curview == "GlobalEnv"
         let spacelimit = 3
     else
         if s:isutf8
@@ -268,17 +268,17 @@ function! RBrowserGetName(cleantail, cleantick)
         let word = '`' . word . '`'
     endif
 
-    if (g:rplugin_curview == "GlobalEnv" && curpos == 4) || (g:rplugin_curview == "libraries" && curpos == 3)
+    if (g:rplugin.curview == "GlobalEnv" && curpos == 4) || (g:rplugin.curview == "libraries" && curpos == 3)
         " top level object
         let word = substitute(word, '\$\[\[', '[[', "g")
         let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
-        if g:rplugin_curview == "libraries"
+        if g:rplugin.curview == "libraries"
             return "package:" . substitute(word, "#", "", "")
         else
             return word
         endif
     else
-        if g:rplugin_curview == "libraries"
+        if g:rplugin.curview == "libraries"
             if s:isutf8
                 if curpos == 11
                     let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)

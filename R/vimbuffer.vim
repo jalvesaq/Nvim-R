@@ -1,7 +1,7 @@
 " This file contains code used only when R run in a Vim buffer
 
 function SendCmdToR_Buffer(...)
-    if IsJobRunning(g:rplugin_jobs["R"]) || 1
+    if IsJobRunning(g:rplugin.jobs["R"]) || 1
         if g:R_clear_line
             if g:R_editing_mode == "emacs"
                 let cmd = "\001\013" . a:1
@@ -14,7 +14,7 @@ function SendCmdToR_Buffer(...)
 
         " Update the width, if necessary
         if g:R_setwidth != 0 && g:R_setwidth != 2
-            let rwnwdth = winwidth(g:rplugin_R_winnr)
+            let rwnwdth = winwidth(g:rplugin.R_winnr)
             if rwnwdth != s:R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
                 let s:R_width = rwnwdth
                 let Rwidth = s:R_width + s:number_col
@@ -68,10 +68,10 @@ function StartR_InBuffer()
         call SetRHome()
     endif
 
-    if len(g:rplugin_r_args)
-        let rcmd = g:rplugin_R . " " . join(g:rplugin_r_args)
+    if len(g:rplugin.r_args)
+        let rcmd = g:rplugin.R . " " . join(g:rplugin.r_args)
     else
-        let rcmd = g:rplugin_R
+        let rcmd = g:rplugin.R
     endif
     if g:R_close_term
         let g:term_bufn = term_start(rcmd,
@@ -80,14 +80,14 @@ function StartR_InBuffer()
         let g:term_bufn = term_start(rcmd,
                     \ {'exit_cb': function('ROnJobExit'), "curwin": 1})
     endif
-    let g:rplugin_jobs["R"] = term_getjob(g:term_bufn)
+    let g:rplugin.jobs["R"] = term_getjob(g:term_bufn)
 
     if has("win32")
         redraw
         call UnsetRHome()
     endif
-    let g:rplugin_R_bufname = bufname("%")
-    let g:rplugin_R_winnr = win_getid()
+    let g:rplugin.R_bufname = bufname("%")
+    let g:rplugin.R_winnr = win_getid()
     let s:R_width = 0
     if &number
         if g:R_setwidth < 0 && g:R_setwidth > -17

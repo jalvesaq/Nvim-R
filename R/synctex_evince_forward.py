@@ -115,7 +115,7 @@ class EvinceWindowProxy:
                 sys.stdout.flush()
         else:
             self.window.SyncView(input_file, data, 0,  dbus_interface = "org.gnome.evince.Window")
-            sys.stdout.write("let g:rplugin_evince_loop = 0")
+            sys.stdout.write("let g:rplugin.evince_loop = 0")
             sys.stdout.flush()
 
     def _syncview_handler(self, window_list):

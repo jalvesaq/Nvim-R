@@ -101,7 +101,7 @@ class BibEntries:
         with open(os.environ['NVIMR_TMPDIR'] + '/bibcompl', 'w') as f:
             if resp:
                 f.write('\n'.join(resp) + '\n')
-        nvimr_cmd('let g:rplugin_bib_finished = 1')
+        nvimr_cmd('let g:rplugin.bib_finished = 1')
 
     def SetBibfiles(self, d, bibls):
         """ Define which bib files each Rmarkdown document uses """
@@ -123,18 +123,18 @@ class BibEntries:
                     self._parse_bib(b)
             else:
                 self.D[d].remove(b)
-                nvimr_cmd('let g:rplugin_last_attach = "nObIb:' + b + '"')
+                nvimr_cmd('let g:rplugin.last_attach = "nObIb:' + b + '"')
                 return
 
         for b in self.D[d]:
             for k in self.E[b]:
                 if self.E[b][k]['citekey'] == citekey:
                     if 'file' in self.E[b][k]:
-                        nvimr_cmd('let g:rplugin_last_attach = "' + self.E[b][k]['file'] + '"')
+                        nvimr_cmd('let g:rplugin.last_attach = "' + self.E[b][k]['file'] + '"')
                         return
-                    nvimr_cmd('let g:rplugin_last_attach = "nOaTtAChMeNt"')
+                    nvimr_cmd('let g:rplugin.last_attach = "nOaTtAChMeNt"')
                     return
-        nvimr_cmd('let g:rplugin_last_attach = "nOcItEkEy"')
+        nvimr_cmd('let g:rplugin.last_attach = "nOcItEkEy"')
 
 if __name__ == "__main__":
     B = BibEntries()

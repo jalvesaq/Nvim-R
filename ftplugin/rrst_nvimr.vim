@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rrst, Rnoweb, Rhelp and Rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin_failed")
+if exists("g:rplugin.failed")
     finish
 endif
 
@@ -95,11 +95,11 @@ function! RMakeHTMLrrst(t)
 endfunction
 
 function! RMakePDFrrst()
-    if !exists("g:rplugin_pdfviewer")
+    if !exists("g:rplugin.pdfviewer")
         call RSetPDFViewer()
     endif
 
-    if g:rplugin_nvimcom_port == 0
+    if g:rplugin.nvimcom_port == 0
         call RWarningMsg("The nvimcom package is required to make and open the PDF.")
     endif
     update

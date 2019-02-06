@@ -5,19 +5,19 @@ let s:sumatra_in_path = 0
 let g:R_set_home_env = get(g:, "R_set_home_env", 1)
 let g:R_i386 = get(g:, "R_i386", 0)
 
-if !exists("g:rplugin_R_path")
-    call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin_tmpdir . "/run_cmd.bat")
-    let ripl = system(g:rplugin_tmpdir . "/run_cmd.bat")
+if !exists("g:rplugin.R_path")
+    call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
+    let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
     let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
     if len(rip) == 0
         " Normally, 32 bit applications access only 32 bit registry and...
         " We have to try again if the user has installed R only in the other architecture.
         if has("win64")
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin_tmpdir . "/run_cmd.bat")
+            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin.tmpdir . "/run_cmd.bat")
         else
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin_tmpdir . "/run_cmd.bat")
+            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin.tmpdir . "/run_cmd.bat")
         endif
-        let ripl = system(g:rplugin_tmpdir . "/run_cmd.bat")
+        let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
         let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
     endif
     if len(rip) > 0
@@ -27,7 +27,7 @@ if !exists("g:rplugin_R_path")
     endif
     if !exists("s:rinstallpath")
         call RWarningMsg("Could not find R path in Windows Registry. If you have already installed R, please, set the value of 'R_path'.")
-        let g:rplugin_failed = 1
+        let g:rplugin.failed = 1
         finish
     endif
     let hasR32 = isdirectory(s:rinstallpath . '\bin\i386')
@@ -76,7 +76,7 @@ function SetRtoolsPath()
                 endif
             endfor
         endif
-        let g:rplugin_debug_info["Rtools where gcc"] = s:rtpath
+        let g:rplugin.debug_info["Rtools where gcc"] = s:rtpath
         if s:rtpath != "" && !isdirectory(s:rtpath)
             let s:rtpath = ""
         endif
@@ -91,7 +91,7 @@ function SetRtoolsPath()
                     break
                 endif
             endfor
-            let g:rplugin_debug_info["Rtools wmic"] = s:rtpath
+            let g:rplugin.debug_info["Rtools wmic"] = s:rtpath
         endif
     endif
     if s:rtpath != ""
@@ -101,7 +101,7 @@ function SetRtoolsPath()
         else
             let $PATH = s:rtpath . "\\bin;" . gccpath . "\\bin;" . $PATH
         endif
-        let g:rplugin_debug_info["Rtools new PATH"] = $PATH
+        let g:rplugin.debug_info["Rtools new PATH"] = $PATH
     endif
     let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
 endfunction
@@ -123,7 +123,7 @@ function CheckRtools()
 
     if s:rtpath != ""
         let Rtvf = s:rtpath . "/VERSION.txt"
-        let g:rplugin_debug_info["Rtools version file"] = Rtvf
+        let g:rplugin.debug_info["Rtools version file"] = Rtvf
         if !filereadable(s:rtpath . "/mingw_32/bin/gcc.exe")
             call RWarningMsg('Did you install Rtools with 32 bit support? "' .
                         \ s:rtpath . "/mingw_32/bin/gcc.exe" . '" not found.')
@@ -147,8 +147,8 @@ function SetRHome()
     " R and Vim use different values for the $HOME variable.
     if g:R_set_home_env
         let s:saved_home = $HOME
-        call writefile(['reg.exe QUERY "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"'], g:rplugin_tmpdir . "/run_cmd.bat")
-        let prs = system(g:rplugin_tmpdir . "/run_cmd.bat")
+        call writefile(['reg.exe QUERY "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        let prs = system(g:rplugin.tmpdir . "/run_cmd.bat")
         if len(prs) > 0
             let prs = substitute(prs, '.*REG_SZ\s*', '', '')
             let prs = substitute(prs, '\n', '', 'g')
@@ -168,11 +168,11 @@ endfunction
 
 function StartR_Windows()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        call JobStdin(g:rplugin_jobs["ClientServer"], "\x0bCheck if R is running\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "\x0bCheck if R is running\n")
         return
     endif
 
-    if g:rplugin_R =~? 'Rterm' && g:R_app =~? 'Rterm'
+    if g:rplugin.R =~? 'Rterm' && g:R_app =~? 'Rterm'
         call RWarningMsg('"R_app" cannot be "Rterm.exe". R will crash if you send any command.')
         sleep 200m
     endif
@@ -181,9 +181,9 @@ function StartR_Windows()
 
     call SetRHome()
     if has("nvim")
-        call system("start " . g:rplugin_R . ' ' . join(g:R_args))
+        call system("start " . g:rplugin.R . ' ' . join(g:R_args))
     else
-        silent exe "!start " . g:rplugin_R . ' ' . join(g:R_args)
+        silent exe "!start " . g:rplugin.R . ' ' . join(g:R_args)
     endif
     call UnsetRHome()
 
@@ -201,6 +201,6 @@ function SendCmdToR_Windows(...)
     else
         let cmd = a:1 . "\n"
     endif
-    call JobStdin(g:rplugin_jobs["ClientServer"], "\003" . cmd)
+    call JobStdin(g:rplugin.jobs["ClientServer"], "\003" . cmd)
     return 1
 endfunction

@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rnoweb, Rhelp and Rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin_failed")
+if exists("g:rplugin.failed")
     finish
 endif
 
@@ -32,7 +32,7 @@ if g:R_rnowebchunk == 1
     inoremap <buffer><silent> < <Esc>:call RWriteChunk()<CR>a
 endif
 
-exe "source " . substitute(g:rplugin_home, " ", "\\ ", "g") . "/R/rnw_fun.vim"
+exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/rnw_fun.vim"
 call SetPDFdir()
 
 function! s:GetBibFileName()
@@ -43,10 +43,10 @@ function! s:GetBibFileName()
     if newbibf != b:rplugin_bibf
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
+            call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
         else
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
-            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+            let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
+            let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
             call RCreateMaps("n",  '<Plug>ROpenRefFile',   'od', ':call GetBibAttachment()')
         endif
     endif
@@ -190,10 +190,10 @@ function! s:OnCompleteDone()
 endfunction
 
 if g:R_non_r_compl
-    if !exists("g:rplugin_py3")
+    if !exists("g:rplugin.py3")
         call CheckPyBTeX()
     endif
-    if !has_key(g:rplugin_debug_info, 'BibComplete')
+    if !has_key(g:rplugin.debug_info, 'BibComplete')
         " Use RBibComplete if possible
         call s:GetBibFileName()
         let b:rplugin_non_r_omnifunc = "RnwNonRCompletion"
@@ -250,8 +250,8 @@ if has("gui_running")
     call MakeRMenu()
 endif
 
-if g:R_synctex && $DISPLAY != "" && g:rplugin_pdfviewer == "evince"
-    let g:rplugin_evince_loop = 0
+if g:R_synctex && $DISPLAY != "" && g:rplugin.pdfviewer == "evince"
+    let g:rplugin.evince_loop = 0
     call Run_EvinceBackward()
 endif
 

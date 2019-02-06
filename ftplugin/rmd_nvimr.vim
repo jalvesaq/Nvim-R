@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rrst, Rnoweb, Rhelp and Rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin_failed")
+if exists("g:rplugin.failed")
     finish
 endif
 
@@ -89,10 +89,10 @@ function! s:GetBibFileName()
     if newbibf != b:rplugin_bibf
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin_jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
+            call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
         else
-            let aa = [g:rplugin_py3, g:rplugin_home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
-            let g:rplugin_jobs["BibComplete"] = StartJob(aa, g:rplugin_job_handlers)
+            let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
+            let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
             call RCreateMaps("n",  '<Plug>ROpenRefFile',   'od', ':call GetBibAttachment()')
         endif
     endif
@@ -241,7 +241,7 @@ endif
 
 if g:R_non_r_compl
     call CheckPyBTeX()
-    if !has_key(g:rplugin_debug_info, 'BibComplete')
+    if !has_key(g:rplugin.debug_info, 'BibComplete')
         call s:GetBibFileName()
         if !exists("b:rplugin_did_bib_autocmd")
             let b:rplugin_did_bib_autocmd = 1

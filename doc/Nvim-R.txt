@@ -2133,8 +2133,8 @@ R_compldir, as in the example below:
 The default paths of these directories depend on the operating system. If you
 want to know what they are, while editing an R file, do in Normal mode:
 >
-   :echo g:rplugin_tmpdir
-   :echo g:rplugin_compldir
+   :echo g:rplugin.tmpdir
+   :echo g:rplugin.compldir
 <
 
 ------------------------------------------------------------------------------

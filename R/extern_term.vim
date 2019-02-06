@@ -27,13 +27,13 @@ function StartR_ExternalTerm(rcmd)
                         \ "set terminal-overrides 'rxvt*:smcup@:rmcup@'" ]
         endif
 
-        call writefile(cnflines, g:rplugin_tmpdir . "/tmux.conf")
-        call AddForDeletion(g:rplugin_tmpdir . "/tmux.conf")
-        let tmuxcnf = '-f "' . g:rplugin_tmpdir . "/tmux.conf" . '"'
+        call writefile(cnflines, g:rplugin.tmpdir . "/tmux.conf")
+        call AddForDeletion(g:rplugin.tmpdir . "/tmux.conf")
+        let tmuxcnf = '-f "' . g:rplugin.tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin_tmpdir, ' ', '\\ ', 'g') .
-                \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin_compldir, ' ', '\\ ', 'g') .
+    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') .
+                \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
                 \ ' NVIMR_ID=' . $NVIMR_ID .
                 \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
                 \ ' NVIMR_PORT=' . $NVIMR_PORT .
@@ -46,29 +46,29 @@ function StartR_ExternalTerm(rcmd)
     let rcmd .= ' ' . a:rcmd
 
 
-    call system("tmux -L NvimR has-session -t " . g:rplugin_tmuxsname)
+    call system("tmux -L NvimR has-session -t " . g:rplugin.tmuxsname)
     if v:shell_error
-        if g:rplugin_is_darwin
+        if g:rplugin.is_darwin
             let rcmd = 'TERM=screen-256color ' . rcmd
             let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'",
-                        \ tmuxcnf, g:rplugin_tmuxsname, rcmd)
+                        \ tmuxcnf, g:rplugin.tmuxsname, rcmd)
             call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
             call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
             let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
         elseif g:R_term == "konsole"
             let opencmd = printf("%s 'tmux -L NvimR -2 %s new-session -s %s \"%s\"'",
-                        \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+                        \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname, rcmd)
         else
             let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\"",
-                        \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname, rcmd)
+                        \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname, rcmd)
         endif
     else
-        if g:rplugin_is_darwin
+        if g:rplugin.is_darwin
             call RWarningMsg("Tmux session with R is already running")
             return
         endif
         let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s",
-                    \ s:term_cmd, tmuxcnf, g:rplugin_tmuxsname)
+                    \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname)
     endif
 
     if g:R_silent_term
@@ -81,15 +81,15 @@ function StartR_ExternalTerm(rcmd)
     else
         let initterm = ['cd "' . getcwd() . '"',
                     \ opencmd ]
-        call writefile(initterm, g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call writefile(initterm, g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
         if has("nvim")
-            let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
+            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
                         \ {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
         else
-            let g:rplugin_jobs["Terminal emulator"] = StartJob(["sh", g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
+            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
                         \ {'err_cb': 'ROnJobStderr', 'exit_cb': 'ROnJobExit'})
         endif
-        call AddForDeletion(g:rplugin_tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call AddForDeletion(g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
     endif
 
     let g:SendCmdToR = function('SendCmdToR_Term')
@@ -113,9 +113,9 @@ function SendCmdToR_Term(...)
         let str = ' ' . str
     endif
     if a:0 == 2 && a:2 == 0
-        let scmd = "tmux -L NvimR set-buffer '" . str . "' && tmux -L NvimR paste-buffer -t " . g:rplugin_tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L NvimR set-buffer '" . str . "' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     else
-        let scmd = "tmux -L NvimR set-buffer '" . str . "\<C-M>' && tmux -L NvimR paste-buffer -t " . g:rplugin_tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L NvimR set-buffer '" . str . "\<C-M>' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     endif
     let rlog = system(scmd)
     if v:shell_error
@@ -133,7 +133,7 @@ let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 
 let g:R_silent_term = get(g:, "R_silent_term", 0)
 
-if g:rplugin_is_darwin
+if g:rplugin.is_darwin
     let g:R_term = "xterm"
     finish
 endif
@@ -161,7 +161,7 @@ endif
 
 if !exists("g:R_term") && !exists("g:R_term_cmd")
     call RWarningMsg("Please, set the variable 'g:R_term_cmd' in your vimrc. Read the plugin documentation for details.")
-    let g:rplugin_failed = 1
+    let g:rplugin.failed = 1
     finish
 endif
 

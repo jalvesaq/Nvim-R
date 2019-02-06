@@ -4,7 +4,7 @@ if exists("*SumatraInPath")
 endif
 
 function ROpenPDF2(fullpath)
-    if g:R_synctex && g:rplugin_nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
+    if g:R_synctex && g:rplugin.nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
         call StartNClientServer('ROpenPDFSumatra')
     endif
 
@@ -13,9 +13,9 @@ function ROpenPDF2(fullpath)
         let pname = substitute(a:fullpath, '.*/\(.*\)', '\1', '')
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . pdir
-        let $NVIMR_PORT = g:rplugin_myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin_tmpdir . "/run_cmd.bat")
-        call system(g:rplugin_tmpdir . "/run_cmd.bat")
+        let $NVIMR_PORT = g:rplugin.myport
+        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif
 endfunction
@@ -55,9 +55,9 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
         let pname = substitute(a:ppath, tdir . '/', '', '')
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . substitute(tdir, ' ', '\\ ', 'g')
-        let $NVIMR_PORT = g:rplugin_myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "nclientserver.exe %%f %%l" "' . pname . '"'], g:rplugin_tmpdir . "/run_cmd.bat")
-        call system(g:rplugin_tmpdir . "/run_cmd.bat")
+        let $NVIMR_PORT = g:rplugin.myport
+        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "nclientserver.exe %%f %%l" "' . pname . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif
 endfunction

@@ -53,7 +53,7 @@ function RBrowserMenu()
         imenu <silent> R.Object\ browser.Toggle\ (cur)<Tab>Enter <Esc>:call RBrowserDoubleClick()<CR>
         nmenu <silent> R.Object\ browser.Toggle\ (cur)<Tab>Enter :call RBrowserDoubleClick()<CR>
     endif
-    let g:rplugin_hasmenu = 1
+    let g:rplugin.hasmenu = 1
 endfunction
 
 function RControlMenu()
@@ -78,11 +78,11 @@ function RControlMenu()
     call RCreateMenuItem("nvi", 'Command.Summary\ (cur)', '<Plug>RSummary', 'rs', ':call RAction("summary")')
     call RCreateMenuItem("nvi", 'Command.Plot\ (cur)', '<Plug>RPlot', 'rg', ':call RAction("plot")')
     call RCreateMenuItem("nvi", 'Command.Plot\ and\ summary\ (cur)', '<Plug>RSPlot', 'rb', ':call RAction("plotsumm")')
-    let g:rplugin_hasmenu = 1
+    let g:rplugin.hasmenu = 1
 endfunction
 
 function MakeRMenu()
-    if g:rplugin_hasmenu == 1
+    if g:rplugin.hasmenu == 1
         return
     endif
 
@@ -250,7 +250,7 @@ function MakeRMenu()
     if !has("win32")
         amenu R.Help\ (plugin).Options.Terminal\ emulator :help R_term<CR>
     endif
-    if g:rplugin_is_darwin
+    if g:rplugin.is_darwin
         amenu R.Help\ (plugin).Options.Integration\ with\ Apple\ Script :help R_applescript<CR>
     endif
     amenu R.Help\ (plugin).Options.R\ path :help R_path<CR>
@@ -279,20 +279,20 @@ function MakeRMenu()
     amenu R.Help\ (plugin).News :help Nvim-R-news<CR>
 
     amenu R.Help\ (R)<Tab>:Rhelp :call g:SendCmdToR("help.start()")<CR>
-    let g:rplugin_hasmenu = 1
+    let g:rplugin.hasmenu = 1
 endfunction
 
 function UnMakeRMenu()
-    if g:rplugin_hasmenu == 0 || g:R_never_unmake_menu == 1 || &previewwindow || (&buftype == "nofile" && &filetype != "rbrowser")
+    if g:rplugin.hasmenu == 0 || g:R_never_unmake_menu == 1 || &previewwindow || (&buftype == "nofile" && &filetype != "rbrowser")
         return
     endif
     aunmenu R
-    let g:rplugin_hasmenu = 0
+    let g:rplugin.hasmenu = 0
 endfunction
 
 function MakeRBrowserMenu()
-    let g:rplugin_curbuf = bufname("%")
-    if g:rplugin_hasmenu == 1
+    let g:rplugin.curbuf = bufname("%")
+    if g:rplugin.hasmenu == 1
         return
     endif
     menutranslate clear

@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rnoweb, Rhelp, Rmd, Rrst and rdoc files:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin_failed")
+if exists("g:rplugin.failed")
     finish
 endif
 
@@ -43,15 +43,15 @@ function! ShowRout()
     silent update
 
     if has("win32")
-        let rcmd = g:rplugin_Rcmd . ' CMD BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
+        let rcmd = g:rplugin.Rcmd . ' CMD BATCH --no-restore --no-save "' . expand("%") . '" "' . s:routfile . '"'
     else
-        let rcmd = [g:rplugin_Rcmd, "CMD", "BATCH", "--no-restore", "--no-save", expand("%"),  s:routfile]
+        let rcmd = [g:rplugin.Rcmd, "CMD", "BATCH", "--no-restore", "--no-save", expand("%"),  s:routfile]
     endif
     if has("nvim")
-        let g:rplugin_jobs["R_CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
+        let g:rplugin.jobs["R_CMD"] = jobstart(rcmd, {'on_exit': function('GetRCmdBatchOutput')})
     else
         let rjob = job_start(rcmd, {'close_cb': function('GetRCmdBatchOutput')})
-        let g:rplugin_jobs["R_CMD"] = job_getchannel(rjob)
+        let g:rplugin.jobs["R_CMD"] = job_getchannel(rjob)
     endif
 endfunction
 
