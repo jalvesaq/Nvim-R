@@ -80,14 +80,17 @@ if !exists("g:Rout_more_colors")
     let g:Rout_more_colors = 0
 endif
 
+let g:Rout_prompt_str = get(g:, 'Rout_prompt_str', '>')
+let g:Rout_continue_str = get(g:, 'Rout_continue_str', '+')
+
 if g:Rout_more_colors
     syn include @routR syntax/r.vim
-    syn region routColoredR start="^>" end='$' contains=@routR keepend
-    syn region routColoredR start="^+" end='$' contains=@routR keepend
+    exe 'syn region routColoredR start=/^' . g:Rout_prompt_str . '/ end=/$/ contains=@routR keepend'
+    exe 'syn region routColoredR start=/^' . g:Rout_continue_str . '/ end=/$/ contains=@routR keepend'
 else
     " Input
-    syn match routInput /^>.*/
-    syn match routInput /^+.*/
+    exe 'syn match routInput /^' . g:Rout_prompt_str . '.*/'
+    exe 'syn match routInput /^' . g:Rout_continue_str . '.*/'
 endif
 
 " Index of vectors

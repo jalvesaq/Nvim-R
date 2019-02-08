@@ -55,8 +55,7 @@ static char strL[16];
 static char strT[16];
 static char tmpdir[512];
 static char nvimcom_home[1024];
-static char search_list[1024];
-static char R_version[16];
+static char r_info[1024];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
 static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ for the ncm-R plugin
 static int hifun = 0;      // Send message to Nvim-R to highlight GlobalEnv functions
@@ -962,22 +961,22 @@ static void nvimcom_send_running_info(int bindportn)
     char msg[2176];
 #ifdef WIN32
 #ifdef _WIN64
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s')",
             nvimcom_version, nvimcom_home, bindportn, R_PID,
-            (long long)GetForegroundWindow(), search_list, R_version);
+            (long long)GetForegroundWindow(), r_info);
 #else
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s')",
             nvimcom_version, nvimcom_home, bindportn, R_PID,
-            (long)GetForegroundWindow(), search_list, R_version);
+            (long)GetForegroundWindow(), r_info);
 #endif
 #else
     if(getenv("WINDOWID"))
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s', '%s')",
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s')",
                 nvimcom_version, nvimcom_home, bindportn, R_PID,
-                getenv("WINDOWID"), search_list, R_version);
+                getenv("WINDOWID"), r_info);
     else
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s', '%s')",
-                nvimcom_version, nvimcom_home, bindportn, R_PID, search_list, R_version);
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s')",
+                nvimcom_version, nvimcom_home, bindportn, R_PID, r_info);
 #endif
     nvimcom_nvimclient(msg, edsrvr);
 }
@@ -1327,7 +1326,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **srchls, char **rvs, int *lstol)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **rinfo, char **rvs, int *lstol)
 {
     verbose = *vrb;
     opendf = *odf;
@@ -1343,8 +1342,7 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, i
 
     if(getenv("NVIMR_TMPDIR")){
         strncpy(nvimcom_home, *pth, 1023);
-        strncpy(search_list, *srchls, 1023);
-        strncpy(R_version, *rvs, 15);
+        strncpy(r_info, *rinfo, 1023);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
             strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);

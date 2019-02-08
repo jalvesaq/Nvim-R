@@ -1398,6 +1398,14 @@ scripts, put the following in your |vimrc|:
 >
    let Rout_more_colors = 1
 <
+When syntax highlighting .Rout files, Nvim-R considers "> " as the prompt
+string and "+ " as the continuation string. If you have defined different
+prompt and continuation strings in your `~./Rprofile`, you should do the same
+in your |vimrc|. Example:
+>
+   let g:Rout_prompt_str = '» '
+   let g:Rout_continue_str = '… '
+<
 By default, Nvim-R highlights the names of R functions even if they are not
 followed by a parenthesis. If you prefer to highlight R functions only if
 the `(` is typed, put in your |vimrc|:

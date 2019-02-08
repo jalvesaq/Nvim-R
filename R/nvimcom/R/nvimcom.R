@@ -62,8 +62,12 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.setwidth")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
-           paste0(paste(.packages(), collapse = " "), " Dec", getOption("OutDec")),
-           paste0(version$major, ".", version$minor),
+           paste(paste0(version$major, ".", version$minor),
+                  getOption("OutDec"),
+                  getOption("prompt"),
+                  getOption("continue"),
+                  paste(.packages(), collapse = " "),
+                  sep = "\x02"),
            as.integer(getOption("nvimcom.lsenvtol")),
            PACKAGE="nvimcom")
     }

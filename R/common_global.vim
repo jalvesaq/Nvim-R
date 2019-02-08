@@ -924,7 +924,7 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searchlist, rversion)
+function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
     let s:nvimcom_version = a:nvimcomversion
     if exists("g:R_nvimcom_home")
         let s:nvimcom_home = g:R_nvimcom_home
@@ -934,7 +934,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
     let g:rplugin.nvimcom_port = a:bindportn
     let s:R_pid = a:rpid
     let $RCONSOLE = a:wid
-    let g:rplugin.R_version = a:rversion
     if s:nvimcom_version != s:required_nvimcom_dot
         call RWarningMsg('This version of Nvim-R requires nvimcom ' .
                     \ s:required_nvimcom . '.')
@@ -942,19 +941,13 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
         sleep 1
     endif
 
+    let Rinfo = split(a:r_info, "\x02")
+    let g:rplugin.R_version = Rinfo[0]
     if !exists("g:R_OutDec")
-        if a:searchlist =~ " Dec,"
-            let g:R_OutDec = ","
-        else
-            let lines = getline(1, "$")
-            for line in lines
-                if line =~ "OutDec[ \t]*=[ \t]*['\"],['\"]" || line =~ "['\"]OutDec['\"][ \t]*=[ \t]*['\"],['\"]"
-                    let g:R_OutDec = ","
-                    break
-                endif
-            endfor
-        endif
+        let g:R_OutDec = Rinfo[1]
     endif
+    let g:Rout_prompt_str = substitute(Rinfo[2], ' $', '', '')
+    let g:Rout_continue_str = substitute(Rinfo[3], ' $', '', '')
 
     if has('nvim') && g:R_in_buffer
         " Put the cursor and the end of the buffer to ensure automatic scrolling
@@ -963,7 +956,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, searc
         let curwin = winnr()
         exe 'sb ' . g:rplugin.R_bufname
         if !exists('g:R_hl_term')
-            if a:searchlist =~# 'colorout'
+            if Rinfo[4] =~# 'colorout'
                 let g:R_hl_term = 0
             else
                 let g:R_hl_term = 1
