@@ -2737,6 +2737,12 @@ the R package "debug":
    library(debug)
    mtrace(function_name)
 <
+If you receive a message about the package not being available on CRAN, you
+could try:
+>
+   install.packages("https://cran.r-project.org/src/contrib/Archive/debug/debug_1.3.1.tar.gz",
+   repos = NULL, type = "source")
+
 Once the library is installed and loaded, you should use
 `mtrace(function_name)` to enable the debugging of a function. Then, the next
 time that the function is called it will enter in debugging mode. Once
