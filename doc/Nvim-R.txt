@@ -1637,8 +1637,9 @@ temporary file and, then, sends to R a command which calls `base::source()` to
 run the commands from the temporary file.
 
 By default, R's `source()` is called with the arguments `print.eval=TRUE` and
-`spaced=FALSE`, but you can either add or change the arguments passed to it.
-Examples:
+`spaced=FALSE`. The argument `local=parent.frame()` is passed to `source()`
+too because it is run inside another function the. But you can either add or
+change the arguments passed to it. Examples:
  >
    let R_source_args = 'echo = TRUE'
    let R_source_args = 'print.eval = FALSE, echo = TRUE, spaced = TRUE'
