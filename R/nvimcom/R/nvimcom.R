@@ -177,15 +177,15 @@ NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE)
     base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval, spaced = spaced)
 }
 
-NvimR.selection <- function(...) NvimR.source(...)
+NvimR.selection <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
-NvimR.paragraph <- function(...) NvimR.source(...)
+NvimR.paragraph <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
-NvimR.block <- function(...) NvimR.source(...)
+NvimR.block <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
-NvimR.function <- function(...) NvimR.source(...)
+NvimR.function <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
-NvimR.chunk <- function(...) NvimR.source(...)
+NvimR.chunk <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
 source.and.clean <- function(f, ...)
 {
