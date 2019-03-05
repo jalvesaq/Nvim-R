@@ -563,12 +563,13 @@ function CheckNvimcomVersion()
             return 0
         endif
         let libpaths = readfile(g:rplugin.tmpdir . "/libpaths")
+        call map(libpaths, 'substitute(expand(v:val), "\\", "/", "g")')
         let g:rplugin.debug_info['libPaths'] = libpaths
-        if !(isdirectory(expand(libpaths[0])) && filewritable(expand(libpaths[0])) == 2) && !exists("g:R_remote_tmpdir")
-            if !isdirectory(expand(libpaths[1]))
+        if !(isdirectory(libpaths[0]) && filewritable(libpaths[0]) == 2) && !exists("g:R_remote_tmpdir")
+            if !isdirectory(libpaths[1])
                 let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
                 if resp[0] ==? "y"
-                    call mkdir(expand(libpaths[1]), "p")
+                    call mkdir(libpaths[1], "p")
                 endif
                 echo " "
             endif
@@ -660,18 +661,19 @@ function StartNClientServer(w)
     endif
 
     let nvimcomdir = readfile(g:rplugin.compldir . '/path_to_nvimcom')
+    call map(nvimcomdir, 'substitute(expand(v:val), "\\", "/", "g")')
 
     if g:rplugin.nvimcom_bin_dir == ""
         if exists("g:R_nvimcom_home") && filereadable(g:R_nvimcom_home . '/bin/' . nvc)
             let g:rplugin.nvimcom_bin_dir = g:R_nvimcom_home . '/bin'
-        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin'
-        elseif filereadable(expand(nvimcomdir[1]) . '/nvimcom/bin/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[1]) . '/nvimcom/bin'
-        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/x64/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin/x64'
-        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/i386/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin/i386'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin'
+        elseif filereadable(nvimcomdir[1] . '/nvimcom/bin/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = nvimcomdir[1] . '/nvimcom/bin'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/x64/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/x64'
+        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/i386/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/i386'
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
             return
