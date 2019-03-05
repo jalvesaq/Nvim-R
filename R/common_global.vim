@@ -489,6 +489,17 @@ function ShowRSysLog(slog, fname, msg)
     sleep 1
 endfunction
 
+function RSetDefaultPkg()
+    if $R_DEFAULT_PACKAGES == ""
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
+        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+    endif
+    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
+        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
+    endif
+endfunction
+
 function CheckNvimcomVersion()
     let neednew = 0
     if isdirectory(substitute(s:nvimcom_home, "nvimcom", "", "") . "00LOCK-nvimcom")
@@ -597,6 +608,7 @@ function CheckNvimcomVersion()
                 call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
                 return 0
             else
+                call RSetDefaultPkg()
                 echon "Building lists for omni completion... "
                 let rdp = $R_DEFAULT_PACKAGES
                 if rdp !~ "\<base\>"
@@ -622,6 +634,8 @@ function CheckNvimcomVersion()
         endif
         call delete("nvimcom_" . s:required_nvimcom . ".tar.gz")
         silent cd -
+    else
+        call RSetDefaultPkg()
     endif
     return 1
 endfunction
@@ -650,14 +664,14 @@ function StartNClientServer(w)
     if g:rplugin.nvimcom_bin_dir == ""
         if exists("g:R_nvimcom_home") && filereadable(g:R_nvimcom_home . '/bin/' . nvc)
             let g:rplugin.nvimcom_bin_dir = g:R_nvimcom_home . '/bin'
-        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin'
-        elseif filereadable(nvimcomdir[1] . '/nvimcom/bin/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = nvimcomdir[1] . '/nvimcom/bin'
-        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/x64/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/x64'
-        elseif filereadable(nvimcomdir[0] . '/nvimcom/bin/i386/' . nvc)
-            let g:rplugin.nvimcom_bin_dir = nvimcomdir[0] . '/nvimcom/bin/i386'
+        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin'
+        elseif filereadable(expand(nvimcomdir[1]) . '/nvimcom/bin/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[1]) . '/nvimcom/bin'
+        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/x64/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin/x64'
+        elseif filereadable(expand(nvimcomdir[0]) . '/nvimcom/bin/i386/' . nvc)
+            let g:rplugin.nvimcom_bin_dir = expand(nvimcomdir[0]) . '/nvimcom/bin/i386'
         else
             call RWarningMsg('Application "' . nvc . '" not found.')
             return
@@ -706,15 +720,6 @@ function StartR(whatr)
     " https://github.com/jalvesaq/Nvim-R/issues/157
     if !exists("*FillRLibList")
         exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/functions.vim"
-    endif
-
-    if $R_DEFAULT_PACKAGES == ""
-        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
-    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
-        let $R_DEFAULT_PACKAGES .= ",nvimcom"
-    endif
-    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
-        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
     endif
 
     let s:has_warning = 0
