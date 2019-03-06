@@ -862,6 +862,7 @@ of
 |R_close_term|        Close terminal buffer after R quited
 |R_hl_term|           Syntax highlight terminal as rout file type
 |R_OutDec|            Set comma as decimal separator in rout files
+|R_buffer_opts|       Options to be set in R buffer
 |R_term|              External terminal to be used
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
@@ -942,12 +943,13 @@ of
 
 
 ------------------------------------------------------------------------------
-								*R_esc_term*
-								*R_close_term*
-								*R_hl_term*
-								*R_OutDec*
-								*R_setwidth*
-								*R_in_buffer*
+							       *R_esc_term*
+							       *R_close_term*
+							       *R_hl_term*
+							       *R_OutDec*
+							       *R_setwidth*
+							       *R_buffer_opts*
+							       *R_in_buffer*
 6.1. R in Vim/Neovim buffer~
 
 By default, R runs in a Vim/Neovim buffer created with the command |:term|,
@@ -1029,6 +1031,14 @@ it has the disadvantage of setting it only after the command is executed. That
 is, the width will be outdated for the first command executed after a change
 in the number of columns of the R Console window.
 
+Nvim-R sets the option 'winfixwidth' in the window where R runs. This prevents
+the window of being automatically resized in some circumstances. It also sets
+the option 'nobuflisted'. You can set the value of `R_buffer_opts` to define
+what options should be set in the R Console buffer. It is a list of Vim
+options separated by spaces. Example with its default value:
+>
+   let R_buffer_opts = "winfixwidth nobuflisted"
+<
 Tips:
 
   - Use the commands CTRL-W H and CTRL-W K to switch the editor and the R
@@ -2169,6 +2179,8 @@ the value of R_csv_app in your |vimrc|. Examples:
    let R_csv_app = 'localc'
    let R_csv_app = 'c:/Program Files (x86)/LibreOffice 4/program/scalc.exe'
 <
+On Windows, `R_csv_app` works only in GVim, not in Neovim.
+
 You should prefix the application name with `terminal:` if it is a terminal
 application and you want to run it in Vim/Neovim's built in terminal emulator.
 Example:
@@ -3043,7 +3055,7 @@ goal (tested on April, 2017).
 
  * Support for Python code in knitr chunks: integration with the R package
    reticulate and with the jedi-vim plugin.
- * New option: R_editing_mode
+ * New options: R_editing_mode, R_buffer_opts.
  * Minor bug fixes.
 
 0.9.12 (2018-08-19)

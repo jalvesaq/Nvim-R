@@ -140,8 +140,9 @@ function StartR_InBuffer()
         tnoremap <buffer> <Esc> <C-\><C-n>
     endif
     autocmd TermClose <buffer> call OnTermClose()
-    set winfixwidth
-    set nobuflisted
+    for optn in split(g:R_buffer_opts)
+        exe 'setlocal ' . optn
+    endfor
     " Set b:pdf_is_open to avoid error when the user has to go to R Console to
     " deal with latex errors while compiling the pdf
     let b:pdf_is_open = 1
