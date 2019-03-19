@@ -500,6 +500,26 @@ function RSetDefaultPkg()
     endif
 endfunction
 
+function IsDirWritable(dir)
+    if has("nvim") && has("win32")
+        " The Neovim's filewritable() function gives wrong result on Windows:
+        " https://github.com/neovim/neovim/issues/9683
+        let dw = 0
+        try
+            if !filereadable(a:dir . '/IsItPossibleToWriteThisFile')
+                call writefile(['this is a test'], a:dir . '/IsItPossibleToWriteThisFile')
+                if filereadable(a:dir . '/IsItPossibleToWriteThisFile')
+                    let dw = 2
+                    call delete(a:dir . '/IsItPossibleToWriteThisFile')
+                endif
+            endif
+        catch E482
+        endtry
+        return dw
+    endif
+    return filewritable(a:dir)
+endfunction
+
 function CheckNvimcomVersion()
     let neednew = 0
     if isdirectory(substitute(s:nvimcom_home, "nvimcom", "", "") . "00LOCK-nvimcom")
@@ -565,7 +585,7 @@ function CheckNvimcomVersion()
         let libpaths = readfile(g:rplugin.tmpdir . "/libpaths")
         call map(libpaths, 'substitute(expand(v:val), "\\", "/", "g")')
         let g:rplugin.debug_info['libPaths'] = libpaths
-        if !(isdirectory(libpaths[0]) && filewritable(libpaths[0]) == 2) && !exists("g:R_remote_tmpdir")
+        if !(isdirectory(libpaths[0]) && IsDirWritable(libpaths[0]) == 2) && !exists("g:R_remote_tmpdir")
             if !isdirectory(libpaths[1])
                 let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
                 if resp[0] ==? "y"
