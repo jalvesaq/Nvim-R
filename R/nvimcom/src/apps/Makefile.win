@@ -1,4 +1,4 @@
-CC ?=gcc
+CC=gcc
 ifeq "$(WIN)" "64"
     CFLAGS+=-m64 -mwindows -std=gnu99 -O3 -Wall -DWIN32
 else
