@@ -138,6 +138,7 @@ nnoremap <buffer><silent> ge :call RDocExSection()<CR>
 nnoremap <buffer><silent> q :q<CR>
 
 setlocal bufhidden=wipe
+setlocal nonumber
 setlocal noswapfile
 set buftype=nofile
 autocmd VimResized <buffer> let g:R_newsize = 1
