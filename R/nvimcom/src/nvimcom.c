@@ -1326,7 +1326,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **rinfo, char **rvs, int *lstol)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **rinfo, int *lstol)
 {
     verbose = *vrb;
     opendf = *odf;
