@@ -841,9 +841,12 @@ static void nvimcom_list_libs()
         p = nvimcom_strcat(p, "\t");
         snprintf(rcmd, 127, "packageDescription('%s', fields='Title')", libn);
         nvimcom_char_eval_char(rcmd, pkgtitle, 127);
-        for(int j = 0; j < 128; j++)
+        for(int j = 0; j < 128; j++){
+            if(pkgtitle[j] == 0)
+                break;
             if(pkgtitle[j] == '\n')
                 pkgtitle[j] = ' ';
+        }
         p = nvimcom_strcat(p, pkgtitle);
         p = nvimcom_strcat(p, "\n");
         if(nvimcom_get_list_status(loadedlibs[i], "library") == 1){
