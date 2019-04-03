@@ -174,7 +174,11 @@ nvim_viewdf <- function(oname, fenc = "")
 
 NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE)
 {
-    base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval, spaced = spaced)
+    if (with(R.Version(), paste(major, minor, sep = '.')) >= '3.4.0') {
+        base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval, spaced = spaced)
+    } else {
+        base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval)
+    }
 }
 
 NvimR.selection <- function(..., local = parent.frame()) NvimR.source(..., local = local)
