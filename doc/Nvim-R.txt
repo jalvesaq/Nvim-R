@@ -978,12 +978,14 @@ Neovim stops automatically scrolling the R Console if you move the cursor to
 any line that is not the last one. This emulates the behavior of other
 terminal emulator, but considering that (1) R only outputs something after we
 send a command to it, and (2) when we send a command to R, we want to see its
-output, Nvim-R will enter the R Console and move the cursor to its last line
-before sending commands to it, forcing the auto scrolling of the terminal.
-This will trigger an auto command that relies on the cursor moving to the
-terminal window. If you have defined such auto command, you will may want to
-put the line below in your |init.vim| to disable the auto scrolling of the
-terminal:
+output, Nvim-R will move the cursor to the last line of R Console before
+sending a command to it, forcing the auto scrolling of the terminal.
+
+If you are using Neovim < 0.4.0, Nvim-R will enter the R Console to be able to
+move the cursor to its last line. This will trigger an auto command that
+relies on the cursor moving to the terminal window. If you have defined such
+auto command, you will may want to put the line below in your |init.vim| to
+disable the auto scrolling of the terminal:
 >
    let R_auto_scroll = 0
 <

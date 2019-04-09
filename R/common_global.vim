@@ -1097,6 +1097,8 @@ function StartObjBrowser()
             sil exe 'resize ' . g:R_objbr_h
         endif
         sil set filetype=rbrowser
+        let g:rplugin.ob_winnr = win_getid()
+        let g:rplugin.ob_buf = nvim_win_get_buf(g:rplugin.ob_winnr)
 
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle

@@ -66,7 +66,7 @@ if !exists("b:rplugin_new_libs")
     let b:rplugin_new_libs = 0
 endif
 " When using as a global plugin for non R files, RCheckLibList will not exist
-if exists("*RCheckLibList")
+if exists("*RCheckLibList") && !exists("*nvim_buf_set_option")
     autocmd BufEnter <buffer> call RCheckLibList()
 endif
 

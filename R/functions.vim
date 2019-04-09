@@ -177,14 +177,16 @@ function FillRLibList()
         endfor
         call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     endif
-    " Now we need to update the syntax in all R files. There should be a
-    " better solution than setting a flag to let other buffers know that they
-    " also need to update the syntax on CursorMoved event:
-    " https://github.com/neovim/neovim/issues/901
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        let s:new_libs = len(g:rplugin.loaded_libs)
-        silent exe 'set syntax=' . &syntax
-        redraw
+        if exists("*nvim_buf_set_option")
+            for bId in nvim_list_bufs()
+                call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
+            endfor
+        else
+            let s:new_libs = len(g:rplugin.loaded_libs)
+            silent exe 'set syntax=' . &syntax
+            redraw
+        endif
     endif
     let b:rplugin_new_libs = s:new_libs
     call CheckRGlobalEnv()

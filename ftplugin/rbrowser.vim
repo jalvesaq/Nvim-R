@@ -60,38 +60,47 @@ function! UpdateOB(what)
         let s:upobcnt = 0
         return "Object_Browser not listed"
     endif
-    if exists("g:rplugin.curbuf") && g:rplugin.curbuf != "Object_Browser"
-        let savesb = &switchbuf
-        set switchbuf=useopen,usetab
-        sil noautocmd sb Object_Browser
-        let rplugin_switchedbuf = 1
-    endif
 
-    setlocal modifiable
-    let curline = line(".")
-    let curcol = col(".")
-    if !exists("curline")
-        let curline = 3
-    endif
-    if !exists("curcol")
-        let curcol = 1
-    endif
-    let save_unnamed_reg = @@
-    sil normal! ggdG
-    let @@ = save_unnamed_reg
     if wht == "GlobalEnv"
         let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     else
         let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     endif
-    call setline(1, fcntt)
-    call cursor(curline, curcol)
-    if bufname("%") =~ "Object_Browser"
-        setlocal nomodifiable
-    endif
-    if rplugin_switchedbuf
-        exe "sil noautocmd sb " . g:rplugin.curbuf
-        exe "set switchbuf=" . savesb
+    if exists("*nvim_buf_set_lines")
+        let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
+        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:true)
+        call nvim_buf_set_lines(g:rplugin.ob_buf, 0, nvim_buf_line_count(g:rplugin.ob_buf), 0, fcntt)
+        call nvim_win_set_cursor(g:rplugin.ob_winnr, obcur)
+        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:false)
+    else
+        if exists("g:rplugin.curbuf") && g:rplugin.curbuf != "Object_Browser"
+            let savesb = &switchbuf
+            set switchbuf=useopen,usetab
+            sil noautocmd sb Object_Browser
+            let rplugin_switchedbuf = 1
+        endif
+
+        setlocal modifiable
+        let curline = line(".")
+        let curcol = col(".")
+        if !exists("curline")
+            let curline = 3
+        endif
+        if !exists("curcol")
+            let curcol = 1
+        endif
+        let save_unnamed_reg = @@
+        sil normal! ggdG
+        let @@ = save_unnamed_reg
+        call setline(1, fcntt)
+        call cursor(curline, curcol)
+        if bufname("%") =~ "Object_Browser"
+            setlocal nomodifiable
+        endif
+        if rplugin_switchedbuf
+            exe "sil noautocmd sb " . g:rplugin.curbuf
+            exe "set switchbuf=" . savesb
+        endif
     endif
     let s:upobcnt = 0
     return "End of UpdateOB()"

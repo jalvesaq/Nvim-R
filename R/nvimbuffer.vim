@@ -26,26 +26,32 @@ function SendCmdToR_Buffer(...)
                     call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . Rwidth . ")")
                     sleep 10m
                 endif
-                " Scroll issue in Neovim after R Console window is resized...
             endif
         endif
 
         if g:R_auto_scroll && cmd !~ '^quit('
-            let sbopt = &switchbuf
-            set switchbuf=useopen,usetab
-            let curtab = tabpagenr()
-            let isnormal = mode() ==# 'n'
-            let curwin = winnr()
-            exe 'sb ' . g:rplugin.R_bufname
-            call cursor('$', 1)
-            if tabpagenr() != curtab
-                exe 'normal! ' . curtab . 'gt'
+            if exists("*nvim_win_set_cursor")
+                " These functions exist only in Neovim >= 0.4.0:
+                call nvim_win_set_cursor(g:rplugin.R_winnr, [nvim_buf_line_count(nvim_win_get_buf(g:rplugin.R_winnr)), 0])
+            else
+                " TODO: Delete this code and update the documentation when
+                " everyone is using Neovim >= 0.4.0 (released on 2019-04-08)
+                let sbopt = &switchbuf
+                set switchbuf=useopen,usetab
+                let curtab = tabpagenr()
+                let isnormal = mode() ==# 'n'
+                let curwin = winnr()
+                exe 'sb ' . g:rplugin.R_bufname
+                call cursor('$', 1)
+                if tabpagenr() != curtab
+                    exe 'normal! ' . curtab . 'gt'
+                endif
+                exe curwin . 'wincmd w'
+                if isnormal
+                    stopinsert
+                endif
+                exe 'set switchbuf=' . sbopt
             endif
-            exe curwin . 'wincmd w'
-            if isnormal
-                stopinsert
-            endif
-            exe 'set switchbuf=' . sbopt
         endif
 
         if !(a:0 == 2 && a:2 == 0)
