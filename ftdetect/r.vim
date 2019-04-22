@@ -3,3 +3,4 @@ autocmd BufNewFile,BufRead *.Rout.save set ft=rout
 autocmd BufNewFile,BufRead *.Rout.fail set ft=rout
 autocmd BufNewFile,BufRead *.Rprofile set ft=r
 autocmd BufNewFile,BufRead *.Rproj set ft=r
+autocmd BufNewFile,BufRead *.Rproj set syntax=yaml
