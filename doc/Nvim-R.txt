@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.12.1
+Version: 0.9.13
 For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
@@ -3053,7 +3053,7 @@ goal (tested on April, 2017).
 								 *Nvim-R-news*
 10. News~
 
-0.9.12.1 (2019-01-01)
+0.9.13 (2019-05-05)
 
  * Support for Python code in knitr chunks: integration with the R package
    reticulate and with the jedi-vim plugin.
