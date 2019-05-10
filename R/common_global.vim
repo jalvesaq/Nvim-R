@@ -1098,7 +1098,9 @@ function StartObjBrowser()
         endif
         sil set filetype=rbrowser
         let g:rplugin.ob_winnr = win_getid()
-        let g:rplugin.ob_buf = nvim_win_get_buf(g:rplugin.ob_winnr)
+        if exists("*nvim_win_get_buf")
+            let g:rplugin.ob_buf = nvim_win_get_buf(g:rplugin.ob_winnr)
+        endif
 
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle
