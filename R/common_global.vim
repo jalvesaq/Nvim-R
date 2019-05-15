@@ -3674,7 +3674,11 @@ let g:R_ls_env_tol        = get(g:, "R_ls_env_tol",       500)
 let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
-if !exists(":terminal")
+if exists(":terminal") != 2
+    let g:R_in_buffer = 0
+endif
+if !has("nvim") && !exists("*term_start")
+    " exists(':terminal') return 2 even when Vim does not have the +terminal feature
     let g:R_in_buffer = 0
 endif
 
