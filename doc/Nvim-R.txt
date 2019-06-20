@@ -395,7 +395,10 @@ Command
   . Print (cur)                                        \rp
   . Names (cur)                                        \rn
   . Structure (cur)                                    \rt
-  . View data.frame (cur)                              \rv
+  . View data.frame (cur) in new tab                   \rv
+  . View data.frame (cur) in horizontal split          \vs
+  . View data.frame (cur) in vertical split            \vv
+  . View head(data.frame) (cur) in horizontal split    \vh
   . Run dput(cur) and show output in new tab           \td
   . Run print(cur) and show output in new tab          \tp
   --------------------------------------------------------
@@ -545,9 +548,13 @@ argument and insert the output in a new tab. The command <LocalLeader>tp will
 run `print()` in the same way.
 
 If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
-will show it in a new tab. If the csv.vim plugin is not installed, Nvim-R
-will warn you about that (see |Nvim-R-df-view|). Specially useful commands
-from the csv.vim plugin are |:CSVHeader|, |:ArrangeColumn| and |:CSVHiColumn|.
+will show it in a new tab, <LocalLeader>vs will show it in a horizontal split,
+<LocalLeader>vv will show it in a vertical split and <LocalLeader>vh will show
+the `head()` of the data.frame or matrix in a horizontal split that opens
+above the current window. This behaviour can be customised with new mappings
+(see |Nvim-R-df-view-mappings|). If the csv.vim plugin is not installed, Nvim-R will
+warn you about that (see |Nvim-R-df-view|). Specially useful commands from the
+csv.vim plugin are |:CSVHeader|, |:ArrangeColumn| and |:CSVHiColumn|.
 It can be installed from:
 
    http://www.vim.org/scripts/script.php?script_id=2830
@@ -3050,6 +3057,26 @@ goal (tested on April, 2017).
 <
       - Start Neovim (or Vim), and start R.
 
+
+------------------------------------------------------------------------------
+						     *Nvim-R-df-view-mappings*
+                                                      
+9.22 Create custom mappings for viewing data.frames or matrices~
+
+Using the method described in |Nvim-R-key-bindings|, you can customize how data.frames or
+matrices are viewed by passing a string of optional arguments to `RAction`,
+starting with a comma. The accepted arguments are:
+
+    - `location` which should be a string like `"vsplit"` or `"above 10split"`,
+    and determines where the data is opened (see |opening-window|).
+
+    - `nrows` which is the number of rows of the data to open.
+
+Examples:
+>
+   nmap <silent> <LocalLeader>vl :call RAction("viewdf", ", location='aboveleft vsp'")<CR>
+   nmap <silent> <LocalLeader>vt :call RAction("viewdf", ", location='topleft 11sp', nrows=10")<CR>
+<
 
 ==============================================================================
 								 *Nvim-R-news*

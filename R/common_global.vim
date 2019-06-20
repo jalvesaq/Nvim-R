@@ -1287,7 +1287,7 @@ function GetROutput(outf)
     redraw
 endfunction
 
-function RViewDF(oname)
+function RViewDF(oname, ...)
     if exists('g:R_csv_app')
         if g:R_csv_app =~# '^terminal:'
             let csv_app = split(g:R_csv_app, ':')[1]
@@ -1315,8 +1315,9 @@ function RViewDF(oname)
         endif
         return
     endif
+    let location = get(a:, 1, "tabnew")
     echo 'Opening "' . a:oname . '.csv"'
-    silent exe 'tabnew ' . a:oname . '.csv'
+    silent exe location . ' ' . a:oname . '.csv'
     silent 1,$d
     silent exe 'read ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
     silent 1d
@@ -2666,16 +2667,27 @@ function RAction(rcmd, ...)
             if exists("g:R_df_viewer")
                 call g:SendCmdToR(printf(g:R_df_viewer, rkeyword))
             else
+                if a:0 == 1 && a:1 =~ '^,'
+                    let argmnts = a:1
+                elseif a:0 == 2 && a:2 =~ '^,'
+                    let argmnts = a:2
+                else
+                    let argmnts = ''
+                endif
                 echo "Wait..."
                 call delete(g:rplugin.tmpdir . "/Rinsert")
                 call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
                 if rkeyword =~ '::'
-                    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf(' . rkeyword . ')')
+                    call SendToNvimcom("\x08" . $NVIMR_ID .
+                                \'nvimcom:::nvim_viewdf(' . rkeyword . argmnts . ')')
                 else
                     if has("win32") && &encoding == "utf-8"
-                        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '", fenc="UTF-8")')
+                        call SendToNvimcom("\x08" . $NVIMR_ID .
+                                    \'nvimcom:::nvim_viewdf("' . rkeyword . '"' . argmnts .
+                                    \', fenc="UTF-8"' . ')')
                     else
-                        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_viewdf("' . rkeyword . '")')
+                        call SendToNvimcom("\x08" . $NVIMR_ID .
+                                    \'nvimcom:::nvim_viewdf("' . rkeyword . '"' . argmnts . ')')
                     endif
                 endif
             endif
@@ -2802,6 +2814,9 @@ function RControlMaps()
     call RCreateMaps("ni", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names")')
     call RCreateMaps("ni", '<Plug>RObjectStr',    'rt', ':call RAction("str")')
     call RCreateMaps("ni", '<Plug>RViewDF',       'rv', ':call RAction("viewdf")')
+    call RCreateMaps("ni", '<Plug>RViewDF',       'vs', ':call RAction("viewdf", ", location=''split''")')
+    call RCreateMaps("ni", '<Plug>RViewDF',       'vv', ':call RAction("viewdf", ", location=''vsplit''")')
+    call RCreateMaps("ni", '<Plug>RViewDF',       'vh', ':call RAction("viewdf", ", location=''above 7split'', nrows=6")')
     call RCreateMaps("ni", '<Plug>RDputObj',      'td', ':call RAction("dputtab")')
     call RCreateMaps("ni", '<Plug>RPrintObj',     'tp', ':call RAction("printtab")')
 
@@ -2809,6 +2824,9 @@ function RControlMaps()
     call RCreateMaps("v", '<Plug>RObjectNames',  'rn', ':call RAction("nvim.names", "v")')
     call RCreateMaps("v", '<Plug>RObjectStr',    'rt', ':call RAction("str", "v")')
     call RCreateMaps("v", '<Plug>RViewDF',       'rv', ':call RAction("viewdf", "v")')
+    call RCreateMaps("v", '<Plug>RViewDF',       'vs', ':call RAction("viewdf", "v", ", location=''split''")')
+    call RCreateMaps("v", '<Plug>RViewDF',       'vv', ':call RAction("viewdf", "v", ", location=''vsplit''")')
+    call RCreateMaps("v", '<Plug>RViewDF',       'vh', ':call RAction("viewdf", "v", ", location=''above 7split'', nrows=6")')
     call RCreateMaps("v", '<Plug>RDputObj',      'td', ':call RAction("dputtab", "v")')
     call RCreateMaps("v", '<Plug>RPrintObj',     'tp', ':call RAction("printtab", "v")')
 
