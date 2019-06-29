@@ -1609,7 +1609,9 @@ function SendSelectionToR(...)
     if a:2 == "down"
         call GoDown()
     else
-        normal! gv
+        if a:0 < 3 || (a:0 == 3 && a:3 != "normal")
+            normal! gv
+        endif
     endif
 endfunction
 
@@ -2959,6 +2961,11 @@ function RCreateSendMaps()
     call RCreateMaps("v", '<Plug>RDSendSelection',  'sd', ':call SendSelectionToR("silent", "down")')
     call RCreateMaps("v", '<Plug>REDSendSelection', 'sa', ':call SendSelectionToR("echo", "down")')
     call RCreateMaps('v', '<Plug>RSendSelAndInsertOutput', 'so', ':call SendSelectionToR("echo", "stay", "NewtabInsert")')
+
+    call RCreateMaps("n", '<Plug>RSendSelection',   'ss', ':call SendSelectionToR("silent", "stay", "normal")')
+    call RCreateMaps("n", '<Plug>RESendSelection',  'se', ':call SendSelectionToR("echo", "stay", "normal")')
+    call RCreateMaps("n", '<Plug>RDSendSelection',  'sd', ':call SendSelectionToR("silent", "down", "normal")')
+    call RCreateMaps("n", '<Plug>REDSendSelection', 'sa', ':call SendSelectionToR("echo", "down", "normal")')
 
     " Paragraph
     "-------------------------------------
