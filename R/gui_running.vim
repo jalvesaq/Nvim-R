@@ -153,6 +153,9 @@ function MakeRMenu()
     call RCreateMenuItem("n", 'Send.Right\ part\ of\ line\ (cur)', '<Plug>RNRightPart', 'r<Right>', ':call RSendPartOfLine("right", 0)')
     call RCreateMenuItem("i", 'Send.Left\ part\ of\ line\ (cur)', '<Plug>RILeftPart', 'r<Left>', 'l:call RSendPartOfLine("left", 1)')
     call RCreateMenuItem("i", 'Send.Right\ part\ of\ line\ (cur)', '<Plug>RIRightPart', 'r<Right>', 'l:call RSendPartOfLine("right", 1)')
+    if &filetype == "r"
+        call RCreateMenuItem("ni", 'Send.Line \(above\ ones)', '<Plug>RSendAboveLines', 'su', ':call SendAboveLinesToR()')
+    endif
 
     "----------------------------------------------------------------------------
     " Control

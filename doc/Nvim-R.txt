@@ -384,6 +384,7 @@ Send
   . Left part of line (cur)                       \r<Left>
   . Right part of line (cur)                     \r<Right>
   . Line (evaluate and insert the output as comment)    \o
+  . All lines above the current one                    \su
 -----------------------------------------------------------
 
 Command
@@ -2354,6 +2355,7 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RDSendLineAndInsertOutput
 
    Send code to R console~
+   RSendAboveLines
    RSendSelection
    RESendSelection
    RDSendSelection
@@ -3052,6 +3054,10 @@ goal (tested on April, 2017).
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.13.1 (2019-06-29)
+
+ * New command \su (send all lines above the current one)
 
 0.9.13 (2019-05-05)
 

@@ -1521,6 +1521,12 @@ function SendFunctionToR(e, m)
     endif
 endfunction
 
+" Send all lines above to R
+function SendAboveLinesToR()
+    let lines = getline(1, line(".") - 1)
+    call RSourceLines(lines, "")
+endfunction
+
 " Send selection to R
 function SendSelectionToR(...)
     let ispy = 0
@@ -2976,6 +2982,9 @@ function RCreateSendMaps()
     call RCreateMaps('n', '<Plug>RNRightPart', 'r<right>', ':call RSendPartOfLine("right", 0)')
     call RCreateMaps('i', '<Plug>RILeftPart', 'r<left>', 'l:call RSendPartOfLine("left", 1)')
     call RCreateMaps('i', '<Plug>RIRightPart', 'r<right>', 'l:call RSendPartOfLine("right", 1)')
+    if &filetype == "r"
+        call RCreateMaps("n", '<Plug>RSendAboveLines',  'su', ':call SendAboveLinesToR()')
+    endif
 endfunction
 
 function RBufEnter()
