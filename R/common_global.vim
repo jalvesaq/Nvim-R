@@ -1686,7 +1686,7 @@ function SendFHChunkToR()
     let curbuf = getline(1, "$")
     let idx = 0
     while idx < here
-        if curbuf[idx] =~ begchk
+        if curbuf[idx] =~ begchk && curbuf[idx] !~ '\<eval\s*=\s*F'
             " Child R chunk
             if curbuf[idx] =~ chdchk
                 " First run everything up to child chunk and reset buffer
