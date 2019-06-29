@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.13
+Version: 0.9.13.1
 For Neovim >= 0.2.0 and Vim >= 8.0.0946
 
  1. Overview                                    |Nvim-R-overview|
