@@ -15,8 +15,13 @@ function SendCmdToR_Buffer(...)
         endif
 
         " Update the width, if necessary
-        if g:R_setwidth != 0 && g:R_setwidth != 2
-            let rwnwdth = winwidth(g:rplugin.R_winnr)
+        try
+            let bwid = bufwinid(g:rplugin.R_bufname)
+        catch /.*/
+            let bwid = -1
+        endtry
+        if g:R_setwidth != 0 && g:R_setwidth != 2 && bwid != -1
+            let rwnwdth = winwidth(bwid)
             if rwnwdth != s:R_width && rwnwdth != -1 && rwnwdth > 10 && rwnwdth < 999
                 let s:R_width = rwnwdth
                 let Rwidth = s:R_width + s:number_col
@@ -32,7 +37,9 @@ function SendCmdToR_Buffer(...)
         if g:R_auto_scroll && cmd !~ '^quit('
             if exists("*nvim_win_set_cursor")
                 " These functions exist only in Neovim >= 0.4.0:
-                call nvim_win_set_cursor(g:rplugin.R_winnr, [nvim_buf_line_count(nvim_win_get_buf(g:rplugin.R_winnr)), 0])
+                if bwid != -1
+                    call nvim_win_set_cursor(bwid, [nvim_buf_line_count(nvim_win_get_buf(bwid)), 0])
+                endif
             else
                 " TODO: Delete this code and update the documentation when
                 " everyone is using Neovim >= 0.4.0 (released on 2019-04-08)
@@ -127,7 +134,6 @@ function StartR_InBuffer()
         call UnsetRHome()
     endif
     let g:rplugin.R_bufname = bufname("%")
-    let g:rplugin.R_winnr = win_getid()
     let s:R_width = 0
     if &number
         if g:R_setwidth < 0 && g:R_setwidth > -17
