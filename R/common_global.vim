@@ -1944,6 +1944,9 @@ function ClearRInfo()
     call delete(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     call delete(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    for fn in s:del_list
+        call delete(fn)
+    endfor
     let g:SendCmdToR = function('SendCmdToR_fake')
     let s:R_pid = 0
     let g:rplugin.nvimcom_port = 0
