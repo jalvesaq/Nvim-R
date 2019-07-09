@@ -125,7 +125,7 @@ nvim_capture_source_output <- function(s, o)
     .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE="nvimcom")
 }
 
-nvim_viewdf <- function(oname, fenc = "")
+nvim_viewdf <- function(oname, fenc = "", nrows = NULL, location = "tabnew")
 {
     if(is.data.frame(oname) || is.matrix(oname)){
         # Only when the rkeyword includes "::"
@@ -154,6 +154,9 @@ nvim_viewdf <- function(oname, fenc = "")
         }
     }
     if(is.data.frame(o) || is.matrix(o)){
+        if(!is.null(nrows)){
+          o <- head(o, n = nrows)
+        }
         if(getOption("nvimcom.delim") == "\t"){
             write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
                         fileEncoding = fenc,
@@ -163,7 +166,7 @@ nvim_viewdf <- function(oname, fenc = "")
                         fileEncoding = fenc,
                         file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
         }
-        .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "')"), PACKAGE="nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "', '", location, "')"), PACKAGE="nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
            paste0("RWarningMsg('", '"', oname, '"', " is not a data.frame or matrix')"),
