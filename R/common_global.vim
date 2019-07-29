@@ -2892,7 +2892,7 @@ function RCreateMaps(type, plug, combo, target)
     if a:type =~ '0'
         let tg = a:target . '<CR>0'
         let il = 'i'
-    elseif a:type =~ 'N'
+    elseif a:type =~ '\.'
         let tg = a:target
         let il = 'a'
     else
@@ -3022,7 +3022,7 @@ function RCreateSendMaps()
     call RCreateMaps('ni0', '<Plug>RDSendLineAndInsertOutput', 'o', ':call SendLineToRAndInsertOutput()')
     call RCreateMaps('v', '<Plug>RDSendLineAndInsertOutput', 'o', ':call RWarningMsg("This command does not work over a selection of lines.")')
     call RCreateMaps('i', '<Plug>RSendLAndOpenNewOne', 'q', ':call SendLineToR("newline")')
-    call RCreateMaps("niN", '<Plug>RSendMotion', 'm', ':set opfunc=SendMotionToR<CR>g@')
+    call RCreateMaps("ni.", '<Plug>RSendMotion', 'm', ':set opfunc=SendMotionToR<CR>g@')
     call RCreateMaps('n', '<Plug>RNLeftPart', 'r<left>', ':call RSendPartOfLine("left", 0)')
     call RCreateMaps('n', '<Plug>RNRightPart', 'r<right>', ':call RSendPartOfLine("right", 0)')
     call RCreateMaps('i', '<Plug>RILeftPart', 'r<left>', 'l:call RSendPartOfLine("left", 1)')
