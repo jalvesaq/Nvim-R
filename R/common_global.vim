@@ -1739,8 +1739,9 @@ function RParenDiff(str)
 endfunction
 
 " Send current line to R.
-function SendLineToR(godown)
-    let line = getline(".")
+function SendLineToR(godown, ...)
+    let lnum = get(a:, 1, ".")
+    let line = getline(lnum)
     if strlen(line) == 0
         if a:godown =~ "down"
             call GoDown()
