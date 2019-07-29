@@ -1388,6 +1388,18 @@ function RSourceLines(...)
     return ok
 endfunction
 
+" Send motion to R
+function SendMotionToR(type)
+    let lstart = line("'[")
+    let lend = line("']")
+    if lstart == lend
+        call SendLineToR("stay", lstart)
+    else
+        let lines = getline(lstart, lend)
+        call RSourceLines(lines, "", "lines")
+    endif
+endfunction
+
 " Send file to R
 function SendFileToR(e)
     let flines = getline(1, "$")
@@ -3007,6 +3019,7 @@ function RCreateSendMaps()
     call RCreateMaps('ni0', '<Plug>RDSendLineAndInsertOutput', 'o', ':call SendLineToRAndInsertOutput()')
     call RCreateMaps('v', '<Plug>RDSendLineAndInsertOutput', 'o', ':call RWarningMsg("This command does not work over a selection of lines.")')
     call RCreateMaps('i', '<Plug>RSendLAndOpenNewOne', 'q', ':call SendLineToR("newline")')
+    call RCreateMaps("ni", '<Plug>RSendMotion', 'm', ':set opfunc=SendMotionToR<CR>g@')
     call RCreateMaps('n', '<Plug>RNLeftPart', 'r<left>', ':call RSendPartOfLine("left", 0)')
     call RCreateMaps('n', '<Plug>RNRightPart', 'r<right>', ':call RSendPartOfLine("right", 0)')
     call RCreateMaps('i', '<Plug>RILeftPart', 'r<left>', 'l:call RSendPartOfLine("left", 1)')
@@ -3654,9 +3667,9 @@ endif
 
 " Make the file name of files to be sourced
 if exists("g:R_remote_tmpdir")
-	let s:Rsource_read = g:R_remote_tmpdir . "/Rsource-" . getpid()
+    let s:Rsource_read = g:R_remote_tmpdir . "/Rsource-" . getpid()
 else
-	let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
+    let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
 endif
 let s:Rsource_write = g:rplugin.tmpdir . "/Rsource-" . getpid()
 
