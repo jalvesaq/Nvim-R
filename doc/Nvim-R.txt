@@ -373,6 +373,8 @@ Send
   . Selection (echo and down)                          \sa
   . Selection (evaluate and insert output in new tab)  \so
   --------------------------------------------------------
+  . Send motion region                                 \m{motion}
+  --------------------------------------------------------
   . Paragraph                                          \pp
   . Paragraph (echo)                                   \pe
   . Paragraph (and down)                               \pd
@@ -472,7 +474,11 @@ two marks, a paragraph etc) the lines are written to a file and the plugin
 sends to R the command to source the file. To send to R Console the line
 currently under the cursor you should type <LocalLeader>d. If you want to see
 what lines are being sourced when sending a selection of lines, you can use
-either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss.
+either <LocalLeader>se or <LocalLeader>sa instead of <LocalLeader>ss. The
+<LocalLeader>m{motion} command sends the lines from the motion command that
+follows <LocalLeader>m, e.g. <LocalLeader>m} (from the current line to the end
+of paragraph) or <LocalLeader>m3j (the next 3 lines including the current
+line).
 
 You can also use the command `:RSend` to type and, then, send a line of code
 to R. If you use this command frequently, you may consider creating a map for
@@ -2367,6 +2373,7 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RESendSelection
    RDSendSelection
    REDSendSelection
+   RSendMotion
    RSendSelAndInsertOutput
    RSendMBlock
    RESendMBlock
@@ -3082,9 +3089,10 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2019-06-29)
+0.9.13.1 (2019-07-31)
 
- * New command \su (send all lines above the current one)
+ * New command \su (send all lines above the current one).
+ * New command \m (send lines from motion command).
 
 0.9.13 (2019-05-05)
 
