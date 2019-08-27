@@ -107,11 +107,10 @@ Main dependencies:~
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 8.0:
+   or Vim >= 8.1:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
-      You need Vim >= 8.0.0946 to run R in its built-in terminal emulator.
 
 
    R >= 3.0.0:
