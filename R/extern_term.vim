@@ -91,6 +91,7 @@ function StartR_ExternalTerm(rcmd)
         endif
         call AddForDeletion(g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
     endif
+    let g:rplugin.debug_info['R open command'] = opencmd
 
     let g:SendCmdToR = function('SendCmdToR_Term')
     call WaitNvimcomStart()
