@@ -1038,8 +1038,21 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         call delete(g:rplugin.tmpdir . "/openR")
     endif
 
-    if g:R_after_start != ''
-        call system(g:R_after_start)
+    if type(g:R_after_start) == 1
+        " Backward compatibility: R_after_start was a string until November, 2019.
+        if g:R_after_start != ''
+            call system(g:R_after_start)
+        endif
+    elseif type(g:R_after_start) == 3
+        for cmd in g:R_after_start
+            if cmd =~ '^!'
+                call system(substitute(cmd, '^!', '', ''))
+            elseif cmd =~ '^:'
+                exe substitute(cmd, '^:', '', '')
+            else
+                call RWarningMsg("R_after_start must be a list of strings starting with either '!' or ':'")
+            endif
+        endfor
     endif
     call timer_start(1000, "SetSendCmdToR")
 endfunction
@@ -1119,6 +1132,14 @@ function RObjBrowser()
 
     call StartObjBrowser()
     let s:running_objbr = 0
+
+    if len(g:R_after_ob_open) > 0
+        redraw
+        for cmd in g:R_after_ob_open
+            exe substitute(cmd, '^:', '', '')
+        endfor
+    endif
+
     return
 endfunction
 
@@ -3683,7 +3704,8 @@ let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
-let g:R_after_start       = get(g:, "R_after_start",       "")
+let g:R_after_start       = get(g:, "R_after_start",       [])
+let g:R_after_ob_open     = get(g:, "R_after_ob_open",     [])
 let g:R_csv_warn          = get(g:, "R_csv_warn",           1)
 let g:R_min_editor_width  = get(g:, "R_min_editor_width",  80)
 let g:R_rconsole_width    = get(g:, "R_rconsole_width",    80)
