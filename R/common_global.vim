@@ -2770,66 +2770,6 @@ function! RMakeRmd(t)
     call g:SendCmdToR(rcmd)
 endfunction
 
-let s:ikblist = execute("imap")
-let s:nkblist = execute("nmap")
-let s:vkblist = execute("vmap")
-let s:iskblist = split(s:ikblist, "\n")
-let s:nskblist = split(s:nkblist, "\n")
-let s:vskblist = split(s:vkblist, "\n")
-let s:imaplist = []
-let s:vmaplist = []
-let s:nmaplist = []
-for i in s:iskblist
-    let si = split(i)
-    if len(si) == 3 && si[2] =~ "<Plug>R"
-        call add(s:imaplist, [si[1], si[2]])
-    endif
-endfor
-for i in s:nskblist
-    let si = split(i)
-    if len(si) == 3 && si[2] =~ "<Plug>R"
-        call add(s:nmaplist, [si[1], si[2]])
-    endif
-endfor
-for i in s:vskblist
-    let si = split(i)
-    if len(si) == 3 && si[2] =~ "<Plug>R"
-        call add(s:vmaplist, [si[1], si[2]])
-    endif
-endfor
-unlet s:ikblist
-unlet s:nkblist
-unlet s:vkblist
-unlet s:iskblist
-unlet s:nskblist
-unlet s:vskblist
-unlet i
-unlet si
-
-function RNMapCmd(plug)
-    for [el1, el2] in s:nmaplist
-        if el2 == a:plug
-            return el1
-        endif
-    endfor
-endfunction
-
-function RIMapCmd(plug)
-    for [el1, el2] in s:imaplist
-        if el2 == a:plug
-            return el1
-        endif
-    endfor
-endfunction
-
-function RVMapCmd(plug)
-    for [el1, el2] in s:vmaplist
-        if el2 == a:plug
-            return el1
-        endif
-    endfor
-endfunction
-
 function RControlMaps()
     " List space, clear console, clear all
     "-------------------------------------
