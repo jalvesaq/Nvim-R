@@ -72,6 +72,9 @@ function RVMapCmd(plug)
 endfunction
 
 function RCreateMenuItem(type, label, plug, combo, target)
+    if index(g:R_disable_cmds, a:plug) > -1
+        return
+    endif
     if a:type =~ '0'
         let tg = a:target . '<CR>0'
         let il = 'i'

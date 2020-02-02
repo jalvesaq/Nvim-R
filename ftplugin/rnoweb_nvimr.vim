@@ -47,7 +47,7 @@ function! s:GetBibFileName()
         else
             let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
-            call RCreateMaps('n',  'ROpenRefFile',   'od', ':call GetBibAttachment()')
+            call RCreateMaps('n', 'ROpenRefFile', 'od', ':call GetBibAttachment()')
         endif
     endif
 endfunction
@@ -238,11 +238,11 @@ call RCreateMaps('ni',  'RDSendChunk',  'cd', ':call b:SendChunkToR("silent", "d
 call RCreateMaps('ni',  'REDSendChunk', 'ca', ':call b:SendChunkToR("echo", "down")')
 call RCreateMaps('nvi', 'ROpenPDF',     'op', ':call ROpenPDF("Get Master")')
 if g:R_synctex
-    call RCreateMaps('ni',  'RSyncFor',     'gp', ':call SyncTeX_forward()')
-    call RCreateMaps('ni',  'RGoToTeX',     'gt', ':call SyncTeX_forward(1)')
+    call RCreateMaps('ni', 'RSyncFor',  'gp', ':call SyncTeX_forward()')
+    call RCreateMaps('ni', 'RGoToTeX',  'gt', ':call SyncTeX_forward(1)')
 endif
-call RCreateMaps('n',  'RNextRChunk',     'gn', ':call b:NextRChunk()')
-call RCreateMaps('n',  'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
+call RCreateMaps('n', 'RNextRChunk',     'gn', ':call b:NextRChunk()')
+call RCreateMaps('n', 'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
 " Menu R
 if has("gui_running")

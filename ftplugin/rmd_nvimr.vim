@@ -93,7 +93,7 @@ function! s:GetBibFileName()
         else
             let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
-            call RCreateMaps('n',  'ROpenRefFile',   'od', ':call GetBibAttachment()')
+            call RCreateMaps('n', 'ROpenRefFile', 'od', ':call GetBibAttachment()')
         endif
     endif
 endfunction
@@ -264,16 +264,16 @@ call RCreateStartMaps()
 call RCreateEditMaps()
 call RCreateSendMaps()
 call RControlMaps()
-call RCreateMaps('nvi', 'RSetwd',        'rd', ':call RSetWD()')
+call RCreateMaps('nvi', 'RSetwd', 'rd', ':call RSetWD()')
 
 " Only .Rmd files use these functions:
-call RCreateMaps('nvi', 'RKnit',          'kn', ':call RKnit()')
-call RCreateMaps('ni',  'RSendChunk',     'cc', ':call b:SendChunkToR("silent", "stay")')
-call RCreateMaps('ni',  'RESendChunk',    'ce', ':call b:SendChunkToR("echo", "stay")')
-call RCreateMaps('ni',  'RDSendChunk',    'cd', ':call b:SendChunkToR("silent", "down")')
-call RCreateMaps('ni',  'REDSendChunk',   'ca', ':call b:SendChunkToR("echo", "down")')
-call RCreateMaps('n',  'RNextRChunk',     'gn', ':call b:NextRChunk()')
-call RCreateMaps('n',  'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
+call RCreateMaps('nvi', 'RKnit',           'kn', ':call RKnit()')
+call RCreateMaps('ni',  'RSendChunk',      'cc', ':call b:SendChunkToR("silent", "stay")')
+call RCreateMaps('ni',  'RESendChunk',     'ce', ':call b:SendChunkToR("echo", "stay")')
+call RCreateMaps('ni',  'RDSendChunk',     'cd', ':call b:SendChunkToR("silent", "down")')
+call RCreateMaps('ni',  'REDSendChunk',    'ca', ':call b:SendChunkToR("echo", "down")')
+call RCreateMaps('n',   'RNextRChunk',     'gn', ':call b:NextRChunk()')
+call RCreateMaps('n',   'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
 " Menu R
 if has("gui_running")

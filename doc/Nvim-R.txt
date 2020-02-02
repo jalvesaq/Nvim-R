@@ -946,8 +946,9 @@ of
 |R_wait_reply|        Time to wait for R reply
 |R_nvim_wd|           Start R in Vim's working directory
 |R_after_start|       Commands to be executed after R startup
-|R_after_ob_open|    Commands to be executed after the Object Browser opening
-|R_user_maps_only|    Only set user specified key bindings
+|R_after_ob_open|     Commands to be executed after the Object Browser opening
+|R_user_maps_only|    Only user specified key bindings
+|R_disable_cmds|      List of commands to be disabled
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omnicompletion are stored
 |R_remote_tmpdir|     Mount point of remote temporary directory
@@ -2156,13 +2157,22 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
-6.34 Only set key bindings that are user specified~
+							    *R_disable_cmds*
+6.34 Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
-set those key-bindings specified by the user, put in your |vimrc|:
+use those key-bindings specified by the user, put in your |vimrc|:
 >
     let R_user_maps_only = 1
+<
+If you want to disable only some of Nvim-R commands, create a Vim list with
+their key bindings names in your |vimrc|. The complete list of key bindings
+names is shown at the Custom key bindings section (Nvim-R-key-bindings).
+Below is an example on how to disable the commands that sends `setwd()` and
+`dput()` to R Console:
+>
+   let R_disable_cmds = ['RSetwd', 'RDputObj']
 <
 
 ------------------------------------------------------------------------------
@@ -3101,10 +3111,11 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2019-07-31)
+0.9.13.1 (2020-02-01)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
+ * New option: R_disable_cmds.
  * New option: R_after_ob_open.
  * R_after_start is a list now.
 
