@@ -75,17 +75,17 @@ call RCreateStartMaps()
 call RCreateEditMaps()
 
 " Only .R files are sent to R
-call RCreateMaps("ni", '<Plug>RSendFile',     'aa', ':call SendFileToR("silent")')
-call RCreateMaps("ni", '<Plug>RESendFile',    'ae', ':call SendFileToR("echo")')
-call RCreateMaps("ni", '<Plug>RShowRout',     'ao', ':call ShowRout()')
+call RCreateMaps('ni', 'RSendFile',     'aa', ':call SendFileToR("silent")')
+call RCreateMaps('ni', 'RESendFile',    'ae', ':call SendFileToR("echo")')
+call RCreateMaps('ni', 'RShowRout',     'ao', ':call ShowRout()')
 
 " Knitr::spin
 " -------------------------------------
-call RCreateMaps("ni", '<Plug>RSpinFile',     'ks', ':call RSpin()')
+call RCreateMaps('ni', 'RSpinFile',     'ks', ':call RSpin()')
 
 call RCreateSendMaps()
 call RControlMaps()
-call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
+call RCreateMaps('nvi', 'RSetwd',        'rd', ':call RSetWD()')
 
 
 " Menu R

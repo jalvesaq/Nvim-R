@@ -74,7 +74,7 @@ call RCreateStartMaps()
 call RCreateEditMaps()
 call RCreateSendMaps()
 call RControlMaps()
-call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
+call RCreateMaps('nvi', 'RSetwd',        'rd', ':call RSetWD()')
 
 " Menu R
 if has("gui_running")

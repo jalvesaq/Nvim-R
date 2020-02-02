@@ -47,7 +47,7 @@ function! s:GetBibFileName()
         else
             let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
             let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
-            call RCreateMaps("n",  '<Plug>ROpenRefFile',   'od', ':call GetBibAttachment()')
+            call RCreateMaps('n',  'ROpenRefFile',   'od', ':call GetBibAttachment()')
         endif
     endif
 endfunction
@@ -219,30 +219,30 @@ call RCreateStartMaps()
 call RCreateEditMaps()
 call RCreateSendMaps()
 call RControlMaps()
-call RCreateMaps("nvi", '<Plug>RSetwd',        'rd', ':call RSetWD()')
+call RCreateMaps('nvi', 'RSetwd',        'rd', ':call RSetWD()')
 
 " Only .Rnw files use these functions:
-call RCreateMaps("nvi", '<Plug>RSweave',      'sw', ':call RWeave("nobib", 0, 0)')
-call RCreateMaps("nvi", '<Plug>RMakePDF',     'sp', ':call RWeave("nobib", 0, 1)')
-call RCreateMaps("nvi", '<Plug>RBibTeX',      'sb', ':call RWeave("bibtex", 0, 1)')
+call RCreateMaps('nvi', 'RSweave',      'sw', ':call RWeave("nobib", 0, 0)')
+call RCreateMaps('nvi', 'RMakePDF',     'sp', ':call RWeave("nobib", 0, 1)')
+call RCreateMaps('nvi', 'RBibTeX',      'sb', ':call RWeave("bibtex", 0, 1)')
 if exists("g:R_rm_knit_cache") && g:R_rm_knit_cache == 1
-    call RCreateMaps("nvi", '<Plug>RKnitRmCache', 'kr', ':call RKnitRmCache()')
+    call RCreateMaps('nvi', 'RKnitRmCache', 'kr', ':call RKnitRmCache()')
 endif
-call RCreateMaps("nvi", '<Plug>RKnit',        'kn', ':call RWeave("nobib", 1, 0)')
-call RCreateMaps("nvi", '<Plug>RMakePDFK',    'kp', ':call RWeave("nobib", 1, 1)')
-call RCreateMaps("nvi", '<Plug>RBibTeXK',     'kb', ':call RWeave("bibtex", 1, 1)')
-call RCreateMaps("nvi", '<Plug>RIndent',      'si', ':call RnwToggleIndentSty()')
-call RCreateMaps("ni",  '<Plug>RSendChunk',   'cc', ':call b:SendChunkToR("silent", "stay")')
-call RCreateMaps("ni",  '<Plug>RESendChunk',  'ce', ':call b:SendChunkToR("echo", "stay")')
-call RCreateMaps("ni",  '<Plug>RDSendChunk',  'cd', ':call b:SendChunkToR("silent", "down")')
-call RCreateMaps("ni",  '<Plug>REDSendChunk', 'ca', ':call b:SendChunkToR("echo", "down")')
-call RCreateMaps("nvi", '<Plug>ROpenPDF',     'op', ':call ROpenPDF("Get Master")')
+call RCreateMaps('nvi', 'RKnit',        'kn', ':call RWeave("nobib", 1, 0)')
+call RCreateMaps('nvi', 'RMakePDFK',    'kp', ':call RWeave("nobib", 1, 1)')
+call RCreateMaps('nvi', 'RBibTeXK',     'kb', ':call RWeave("bibtex", 1, 1)')
+call RCreateMaps('nvi', 'RIndent',      'si', ':call RnwToggleIndentSty()')
+call RCreateMaps('ni',  'RSendChunk',   'cc', ':call b:SendChunkToR("silent", "stay")')
+call RCreateMaps('ni',  'RESendChunk',  'ce', ':call b:SendChunkToR("echo", "stay")')
+call RCreateMaps('ni',  'RDSendChunk',  'cd', ':call b:SendChunkToR("silent", "down")')
+call RCreateMaps('ni',  'REDSendChunk', 'ca', ':call b:SendChunkToR("echo", "down")')
+call RCreateMaps('nvi', 'ROpenPDF',     'op', ':call ROpenPDF("Get Master")')
 if g:R_synctex
-    call RCreateMaps("ni",  '<Plug>RSyncFor',     'gp', ':call SyncTeX_forward()')
-    call RCreateMaps("ni",  '<Plug>RGoToTeX',     'gt', ':call SyncTeX_forward(1)')
+    call RCreateMaps('ni',  'RSyncFor',     'gp', ':call SyncTeX_forward()')
+    call RCreateMaps('ni',  'RGoToTeX',     'gt', ':call SyncTeX_forward(1)')
 endif
-call RCreateMaps("n",  '<Plug>RNextRChunk',     'gn', ':call b:NextRChunk()')
-call RCreateMaps("n",  '<Plug>RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
+call RCreateMaps('n',  'RNextRChunk',     'gn', ':call b:NextRChunk()')
+call RCreateMaps('n',  'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
 " Menu R
 if has("gui_running")
