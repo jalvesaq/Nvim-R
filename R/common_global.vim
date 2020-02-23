@@ -1305,9 +1305,9 @@ function RViewDF(oname, ...)
         if g:R_csv_app =~# '^terminal:'
             let csv_app = split(g:R_csv_app, ':')[1]
             if executable(csv_app)
-                call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.csv"')
+                call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.tsv"')
                 tabnew
-                exe 'terminal ' . csv_app . ' ' . a:oname . '.csv'
+                exe 'terminal ' . csv_app . ' ' . a:oname . '.tsv'
                 startinsert
             else
                 call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
@@ -1320,11 +1320,11 @@ function RViewDF(oname, ...)
             return
         endif
         normal! :<Esc>
-        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.csv"')
+        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.tsv"')
         if has("win32")
-            silent exe '!start "' . g:R_csv_app . '" "' . a:oname . '.csv"'
+            silent exe '!start "' . g:R_csv_app . '" "' . a:oname . '.tsv"'
         else
-            call system(g:R_csv_app . ' "' . a:oname . '.csv" >/dev/null 2>/dev/null &')
+            call system(g:R_csv_app . ' "' . a:oname . '.tsv" >/dev/null 2>/dev/null &')
         endif
         return
     endif
