@@ -553,15 +553,15 @@ the cursor is a data.frame or a matrix, instead of displaying the output of
 `dput()`, the commands will save the data.frame or matrix in a text file with
 values separated by tab characters and display this file. The command
 <LocalLeader>vh will show the `head()` of the data.frame or matrix in a
-horizontal split that opens above the current window. This behaviour can be
-customised with new mappings (see |Nvim-R-df-view-mappings| and
+horizontal split that opens above the current window. This behavior can be
+customized with new mappings (see |Nvim-R-df-view-mappings| and
 |Nvim-R-df-view|), and you can configure Nvim-R to call an external
 application to display the data.frame or matrix. All files involved in these
 operations are created in Nvim-R's temporary directory and deleted when R
 quits.
 
 When completing object names (CTRL-X CTRL-O) you have to press CTRL-N to go
-foward in the list and CTRL-P to go backward (see |popupmenu-completion|). If
+forward in the list and CTRL-P to go backward (see |popupmenu-completion|). If
 R is running and 'completeopt' includes the `preview` string, the preview
 window will display help for the argument selected in the pop up menu (see
 |R_show_arg_help|). For rnoweb, rmd and rrst file types, CTRL-X CTRL-O can
@@ -698,7 +698,7 @@ In the Object Browser window, while in Normal mode, you can either press
 <Enter> or double click (GVim only) over a data.frame or list to show/hide its
 elements (not if viewing the content of loaded libraries). If you are running
 R in an environment where the string UTF-8 is part of either LC_MESSAGES or
-LC_ALL variables, unicode line drawing characters will be used to draw lines
+LC_ALL variables, Unicode line drawing characters will be used to draw lines
 in the Object Browser. This is the case of most Linux distributions.
 
 In the Libraries view, you can either double click or press <Enter> on a
@@ -900,7 +900,7 @@ of
 |R_start_libs|        Objects for omnicompletion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
 |R_hi_fun|            Highlight R functions
-|R_hi_fun_paren|      Highlight R functions only if followd by a `(`
+|R_hi_fun_paren|      Highlight R functions only if followed by a `(`
 |R_hi_fun_globenv|    Highlight R functions from .GlobalEnv
 |R_routnotab|         Show output of R CMD BATCH in new window
 |R_indent_commented|  Indent lines commented with the \xx command
@@ -1288,7 +1288,7 @@ in the Object Browser.
 							      *R_nvimpager*
 							      *R_editor_w*
 							      *R_help_w*
-6.6. Vim as pager for R help~
+6.6. Vim as pager for R~
 
 6.6.1. Quick setup~
 
@@ -1315,7 +1315,7 @@ thus, you will be able to send commands to R as you do while editing an R
 script. You can, for example, use <LocalLeader>rh to jump to another R help
 document.
 
-The valid values of R_nvimpager are:
+The valid values of `R_nvimpager` are:
 
    "tab"       : Show the help document in a new tab. If there is already a
                  tab with an R help document tab, use it.
@@ -1338,6 +1338,10 @@ values to some variables in your |vimrc|, as in the example:
    let R_editor_w = 80
    let R_editor_h = 60
 <
+Unless the value of `R_nvimpager` is "tabnew", the buffer name will always be
+"R_doc" to force the reuse of the window when users jump from one help page to
+another.
+
 
 ------------------------------------------------------------------------------
 								      *R_path*

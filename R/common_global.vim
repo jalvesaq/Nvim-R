@@ -2051,7 +2051,7 @@ endfunction
 
 function SetRTextWidth(rkeyword)
     if g:R_nvimpager == "tabnew"
-        let s:rdoctitle = a:rkeyword . "\\ (help)"
+        let s:rdoctitle = a:rkeyword
     else
         let s:tnr = tabpagenr()
         if g:R_nvimpager != "tab" && s:tnr > 1
@@ -2372,8 +2372,16 @@ function ShowRDoc(rkeyword)
         exe 'nnoremap <buffer><silent> <CR> :call AskRDoc("' . rkeyw . '", expand("<cword>"), 0)<CR>'
         redraw
         call cursor(5, 4)
-    else
+    elseif a:rkeyword =~ '(help)'
         set filetype=rdoc
+        call cursor(1, 1)
+    else
+        set filetype=rout
+        setlocal bufhidden=wipe
+        setlocal nonumber
+        setlocal noswapfile
+        set buftype=nofile
+        nnoremap <buffer><silent> q :q<CR>
         call cursor(1, 1)
     endif
     let @@ = save_unnamed_reg
