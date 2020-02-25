@@ -103,7 +103,7 @@ nvim.edit <- function(name, file, title)
     sink()
 
     .C("nvimcom_msg_to_nvim",
-       paste0("ShowRObject('", initial, "')"),
+       paste0("EditRObject('", initial, "')"),
        PACKAGE="nvimcom")
 
     while(file.exists(waitf))
@@ -125,7 +125,17 @@ nvim_capture_source_output <- function(s, o)
     .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE="nvimcom")
 }
 
-nvim_viewdf <- function(oname, fenc = "", nrows = NULL, location = "tabnew")
+nvim_dput <- function(oname, howto = "tabnew")
+{
+    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+    eval(parse(text = paste0("dput(", oname, ")")))
+    sink()
+    .C("nvimcom_msg_to_nvim",
+       paste0('ShowRObj("', howto, '", "', oname, '", "r")'),
+       PACKAGE="nvimcom")
+}
+
+nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_viewer = NULL)
 {
     if(is.data.frame(oname) || is.matrix(oname)){
         # Only when the rkeyword includes "::"
@@ -157,6 +167,12 @@ nvim_viewdf <- function(oname, fenc = "", nrows = NULL, location = "tabnew")
         if(!is.null(nrows)){
           o <- head(o, n = nrows)
         }
+        if(!is.null(R_df_viewer)){
+            .C("nvimcom_msg_to_nvim",
+               paste0("g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
         if(getOption("nvimcom.delim") == "\t"){
             write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
                         fileEncoding = fenc,
@@ -166,11 +182,9 @@ nvim_viewdf <- function(oname, fenc = "", nrows = NULL, location = "tabnew")
                         fileEncoding = fenc,
                         file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
         }
-        .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "', '", location, "')"), PACKAGE="nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "', '", howto, "')"), PACKAGE="nvimcom")
     } else {
-        .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('", '"', oname, '"', " is not a data.frame or matrix')"),
-           PACKAGE="nvimcom")
+        nvim_dput(oname, howto)
     }
     return(invisible(NULL))
 }
@@ -217,7 +231,7 @@ nvim_format <- function(l1, l2, wco)
     return(invisible(NULL))
 }
 
-nvim_insert <- function(cmd, type = "default")
+nvim_insert <- function(cmd, howto = "tabnew")
 {
     try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
     if(inherits(ok, "try-error")){
@@ -226,7 +240,7 @@ nvim_insert <- function(cmd, type = "default")
            PACKAGE="nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
-           paste0('FinishRInsert("', type , '")'),
+           paste0('FinishRInsert("', howto, '")'),
            PACKAGE="nvimcom")
     }
     return(invisible(NULL))

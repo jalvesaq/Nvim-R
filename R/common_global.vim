@@ -1226,12 +1226,17 @@ function SendLineToRAndInsertOutput()
     call RInsert("print(" . cleanl . ")", "comment")
 endfunction
 
-function FinishRInsert(type)
-    if a:type == "newtab"
-        tabnew
-        set ft=rout
-    endif
+function ShowRObj(howto, bname, ftype)
+    let bfnm = substitute(a:bname, '[ [:punct:]]', '_', 'g')
+    call AddForDeletion(g:rplugin.tmpdir . "/" . bfnm)
+    silent exe a:howto . ' ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/' . bfnm
+    silent exe 'set ft=' . a:ftype
+    let objf = readfile(g:rplugin.tmpdir . "/Rinsert")
+    call setline(1, objf)
+    set nomodified
+endfunction
 
+function FinishRInsert(type)
     silent exe "read " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
 
     if a:type == "comment"
@@ -1301,6 +1306,9 @@ function GetROutput(outf)
 endfunction
 
 function RViewDF(oname, ...)
+    let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
+    call AddForDeletion(tsvnm)
+
     if exists('g:R_csv_app')
         if g:R_csv_app =~# '^terminal:'
             let csv_app = split(g:R_csv_app, ':')[1]
@@ -1313,33 +1321,35 @@ function RViewDF(oname, ...)
                 call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
             endif
             return
-        endif
-
-        if !executable(g:R_csv_app) && !executable(split(g:R_csv_app)[0])
+        elseif g:R_csv_app =~# '^tmux new-window '
+            let csv_app = substitute(g:R_csv_app, '^tmux new-window *', '', '')
+            if !executable(csv_app)
+                call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
+                return
+            endif
+        elseif !executable(g:R_csv_app) && !executable(split(g:R_csv_app)[0])
             call RWarningMsg('R_csv_app ("' . g:R_csv_app . '") is not executable')
             return
         endif
+
         normal! :<Esc>
-        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.tsv"')
+        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
         if has("win32")
-            silent exe '!start "' . g:R_csv_app . '" "' . a:oname . '.tsv"'
+            silent exe '!start "' . g:R_csv_app . '" "' . tsvnm . '"'
         else
-            call system(g:R_csv_app . ' "' . a:oname . '.tsv" >/dev/null 2>/dev/null &')
+            call system(g:R_csv_app . ' "' . tsvnm . '" >/dev/null 2>/dev/null &')
         endif
         return
     endif
+
     let location = get(a:, 1, "tabnew")
-    echo 'Opening "' . a:oname . '.csv"'
-    silent exe location . ' ' . a:oname . '.csv'
+    silent exe location . ' ' . substitute(tsvnm, ' ', '\\ ', 'g')
     silent 1,$d
     silent exe 'read ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
     silent 1d
     set filetype=csv
     set nomodified
     redraw
-    if !exists(":CSVTable") && g:R_csv_warn
-        call RWarningMsg("csv.vim is not installed (http://www.vim.org/scripts/script.php?script_id=2830)")
-    endif
 endfunction
 
 function GetSourceArgs(e)
@@ -2373,7 +2383,7 @@ function ShowRDoc(rkeyword)
 endfunction
 
 " This function is called by nvimcom
-function ShowRObject(fname)
+function EditRObject(fname)
     let fcont = readfile(a:fname)
     exe "tabnew " . substitute($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID, ' ', '\\ ', 'g')
     call setline(".", fcont)
@@ -2692,46 +2702,7 @@ function RAction(rcmd, ...)
             call g:SendCmdToR(raction)
             return
         endif
-        if a:rcmd == "viewdf"
-            if exists("g:R_df_viewer")
-                call g:SendCmdToR(printf(g:R_df_viewer, rkeyword))
-            else
-                if a:0 == 1 && a:1 =~ '^,'
-                    let argmnts = a:1
-                elseif a:0 == 2 && a:2 =~ '^,'
-                    let argmnts = a:2
-                else
-                    let argmnts = ''
-                endif
-                echo "Wait..."
-                call delete(g:rplugin.tmpdir . "/Rinsert")
-                call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
-                if rkeyword =~ '::'
-                    call SendToNvimcom("\x08" . $NVIMR_ID .
-                                \'nvimcom:::nvim_viewdf(' . rkeyword . argmnts . ')')
-                else
-                    if has("win32") && &encoding == "utf-8"
-                        call SendToNvimcom("\x08" . $NVIMR_ID .
-                                    \'nvimcom:::nvim_viewdf("' . rkeyword . '"' . argmnts .
-                                    \', fenc="UTF-8"' . ')')
-                    else
-                        call SendToNvimcom("\x08" . $NVIMR_ID .
-                                    \'nvimcom:::nvim_viewdf("' . rkeyword . '"' . argmnts . ')')
-                    endif
-                endif
-            endif
-            return
-        endif
-        if a:rcmd == "dputtab" || a:rcmd == "printtab"
-            if bufexists(rkeyword . ".R")
-                tabnew
-            else
-                exe "tabnew " . rkeyword . ".R"
-            endif
-            exe "Rinsert " . substitute(a:rcmd, "tab", "", "") . "(" . rkeyword . ")"
-            set nomodified
-            return
-        endif
+
         if g:R_open_example && a:rcmd == "example"
             call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.example("' . rkeyword . '")')
             return
@@ -2744,6 +2715,35 @@ function RAction(rcmd, ...)
         else
             let argmnts = ''
         endif
+
+        if a:rcmd == "viewobj" || a:rcmd == "dputtab"
+            call delete(g:rplugin.tmpdir . "/Rinsert")
+            call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
+
+            if a:rcmd == "viewobj"
+                if exists("g:R_df_viewer")
+                    let argmnts .= ', R_df_viewer = "' . g:R_df_viewer . '"'
+                endif
+                if rkeyword =~ '::'
+                    call SendToNvimcom("\x08" . $NVIMR_ID .
+                                \'nvimcom:::nvim_viewobj(' . rkeyword . argmnts . ')')
+                else
+                    if has("win32") && &encoding == "utf-8"
+                        call SendToNvimcom("\x08" . $NVIMR_ID .
+                                    \'nvimcom:::nvim_viewobj("' . rkeyword . '"' . argmnts .
+                                    \', fenc="UTF-8"' . ')')
+                    else
+                        call SendToNvimcom("\x08" . $NVIMR_ID .
+                                    \'nvimcom:::nvim_viewobj("' . rkeyword . '"' . argmnts . ')')
+                    endif
+                endif
+            else
+                call SendToNvimcom("\x08" . $NVIMR_ID .
+                            \'nvimcom:::nvim_dput("' . rkeyword . '"' . argmnts . ')')
+            endif
+            return
+        endif
+
         let raction = rfun . '(' . rkeyword . argmnts . ')'
         call g:SendCmdToR(raction)
     endif
@@ -2828,22 +2828,20 @@ function RControlMaps()
     call RCreateMaps('ni', 'RObjectPr',    'rp', ':call RAction("print")')
     call RCreateMaps('ni', 'RObjectNames', 'rn', ':call RAction("nvim.names")')
     call RCreateMaps('ni', 'RObjectStr',   'rt', ':call RAction("str")')
-    call RCreateMaps('ni', 'RViewDF',      'rv', ':call RAction("viewdf")')
-    call RCreateMaps('ni', 'RViewDF',      'vs', ':call RAction("viewdf", ", location=''split''")')
-    call RCreateMaps('ni', 'RViewDF',      'vv', ':call RAction("viewdf", ", location=''vsplit''")')
-    call RCreateMaps('ni', 'RViewDF',      'vh', ':call RAction("viewdf", ", location=''above 7split'', nrows=6")')
+    call RCreateMaps('ni', 'RViewDF',      'rv', ':call RAction("viewobj")')
+    call RCreateMaps('ni', 'RViewDF',      'vs', ':call RAction("viewobj", ", howto=''split''")')
+    call RCreateMaps('ni', 'RViewDF',      'vv', ':call RAction("viewobj", ", howto=''vsplit''")')
+    call RCreateMaps('ni', 'RViewDF',      'vh', ':call RAction("viewobj", ", howto=''above 7split'', nrows=6")')
     call RCreateMaps('ni', 'RDputObj',     'td', ':call RAction("dputtab")')
-    call RCreateMaps('ni', 'RPrintObj',    'tp', ':call RAction("printtab")')
 
     call RCreateMaps('v', 'RObjectPr',     'rp', ':call RAction("print", "v")')
     call RCreateMaps('v', 'RObjectNames',  'rn', ':call RAction("nvim.names", "v")')
     call RCreateMaps('v', 'RObjectStr',    'rt', ':call RAction("str", "v")')
-    call RCreateMaps('v', 'RViewDF',       'rv', ':call RAction("viewdf", "v")')
-    call RCreateMaps('v', 'RViewDF',       'vs', ':call RAction("viewdf", "v", ", location=''split''")')
-    call RCreateMaps('v', 'RViewDF',       'vv', ':call RAction("viewdf", "v", ", location=''vsplit''")')
-    call RCreateMaps('v', 'RViewDF',       'vh', ':call RAction("viewdf", "v", ", location=''above 7split'', nrows=6")')
+    call RCreateMaps('v', 'RViewDF',       'rv', ':call RAction("viewobj", "v")')
+    call RCreateMaps('v', 'RViewDF',       'vs', ':call RAction("viewobj", "v", ", howto=''split''")')
+    call RCreateMaps('v', 'RViewDF',       'vv', ':call RAction("viewobj", "v", ", howto=''vsplit''")')
+    call RCreateMaps('v', 'RViewDF',       'vh', ':call RAction("viewobj", "v", ", howto=''above 7split'', nrows=6")')
     call RCreateMaps('v', 'RDputObj',      'td', ':call RAction("dputtab", "v")')
-    call RCreateMaps('v', 'RPrintObj',     'tp', ':call RAction("printtab", "v")')
 
     " Arguments, example, help
     "-------------------------------------
@@ -3569,7 +3567,7 @@ function ShowRDebugInfo()
     endfor
 endfunction
 
-command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>, "default")
+command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>, "here")
 command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call RBuildTags()
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
@@ -3649,7 +3647,6 @@ let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
 let g:R_after_start       = get(g:, "R_after_start",       [])
 let g:R_after_ob_open     = get(g:, "R_after_ob_open",     [])
-let g:R_csv_warn          = get(g:, "R_csv_warn",           1)
 let g:R_min_editor_width  = get(g:, "R_min_editor_width",  80)
 let g:R_rconsole_width    = get(g:, "R_rconsole_width",    80)
 let g:R_rconsole_height   = get(g:, "R_rconsole_height",   15)

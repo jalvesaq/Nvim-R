@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.13.1
-For Neovim >= 0.2.0 and Vim >= 8.0.0946
+For Neovim >= 0.2.1 and Vim >= 8.1
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -292,23 +292,20 @@ Please read the section |Nvim-R-options|. Emacs/ESS users should also read
 Install additional plugins~
 
 You may be interested in installing additional general plugins to get
-functionality not provided by this file type plugin. Particularly interesting
-are vim-signature, csv.vim and snipMate. Please read |Nvim-R-tips| for details.
-
-If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
-LaTeX code (see |Nvim-R-latex-box| for details).
-
-Note: Some of vim-latex keybindings might clash with Nvim-R ones.
-
-If you edit RMarkdown files, you may prefer the syntax highlighting provided
-by https://github.com/vim-pandoc/vim-pandoc-syntax
-
-See https://github.com/w0rp/ale if you want a syntax checker.
+functionality not provided by this file type plugin, such as vim-signature.
+Please read |Nvim-R-tips| for details.
 
 Gabriel Alcaras's plugin for asynchronous R completion:
 https://github.com/gaalcaras/ncm-R
 It will slowdown R if its workspace has too many objects, data.frames with too
 many columns or lists with too many elements (see |R_ls_env_tol|).
+
+See https://github.com/w0rp/ale if you want a syntax checker.
+
+If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
+LaTeX code (see |Nvim-R-latex-box| for details).
+
+Note: Some of vim-latex keybindings might clash with Nvim-R ones.
 
 
 ==============================================================================
@@ -401,7 +398,6 @@ Command
   . View data.frame (cur) in vertical split            \vv
   . View head(data.frame) (cur) in horizontal split    \vh
   . Run dput(cur) and show output in new tab           \td
-  . Run print(cur) and show output in new tab          \tp
   --------------------------------------------------------
   . Arguments (cur)                                    \ra
   . Example (cur)                                      \re
@@ -549,20 +545,20 @@ is the same available for omnicompletion (see |R_start_libs|). You may close
 the R documentation buffer by simply pressing `q`.
 
 The command <LocalLeader>td will run `dput()` with the object under cursor as
-argument and insert the output in a new tab. The command <LocalLeader>tp will
-run `print()` in the same way.
-
-If the object under the cursor is a data.frame or a matrix, <LocalLeader>rv
-will show it in a new tab, <LocalLeader>vs will show it in a horizontal split,
-<LocalLeader>vv will show it in a vertical split and <LocalLeader>vh will show
-the `head()` of the data.frame or matrix in a horizontal split that opens
-above the current window. This behaviour can be customised with new mappings
-(see |Nvim-R-df-view-mappings|). If the csv.vim plugin is not installed, Nvim-R will
-warn you about that (see |Nvim-R-df-view|). Specially useful commands from the
-csv.vim plugin are |:CSVHeader|, |:ArrangeColumn| and |:CSVHiColumn|.
-It can be installed from:
-
-   http://www.vim.org/scripts/script.php?script_id=2830
+argument and insert the output in a new tab. The command <LocalLeader>rv will
+also run `dput()` with the object under cursor as argument and show the output
+in a new tab, while <LocalLeader>vs will show it in a horizontal split, and
+<LocalLeader>vv will show it in a vertical split. However, if the object under
+the cursor is a data.frame or a matrix, instead of displaying the output of
+`dput()`, the commands will save the data.frame or matrix in a text file with
+values separated by tab characters and display this file. The command
+<LocalLeader>vh will show the `head()` of the data.frame or matrix in a
+horizontal split that opens above the current window. This behaviour can be
+customised with new mappings (see |Nvim-R-df-view-mappings| and
+|Nvim-R-df-view|), and you can configure Nvim-R to call an external
+application to display the data.frame or matrix. All files involved in these
+operations are created in Nvim-R's temporary directory and deleted when R
+quits.
 
 When completing object names (CTRL-X CTRL-O) you have to press CTRL-N to go
 foward in the list and CTRL-P to go backward (see |popupmenu-completion|). If
@@ -2203,32 +2199,30 @@ See |Nvim-R-remote|.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*
+							      *R_csv_app*
+							      *R_csv_delim*
 6.37 View a data.frame or matrix~
 
-The csv.vim plugin helps to visualize and edit csv files, and if it is not
-installed, Nvim-R will warn you about that when you do <LocalLeader>rv.
-If you do not want to install the csv.vim plugin, put in your |vimrc|:
+
+You can see data.frames and matrices in external applications. You should
+prefix the application name with `terminal:` if it is a terminal application
+and you want to run it in Vim/Neovim's built in terminal emulator. For
+example, if you want to use Visidata to see tabular data put in your |vimrc|:
 >
-   let R_csv_warn = 0
+   let R_csv_app = 'terminal:vd'
 <
-If you rather prefer to see the table in a graphical viewer, you should set
-the value of R_csv_app in your |vimrc|. Examples:
+If you are running Vim/Neovim within Tmux, you may prefer:
+>
+   let R_csv_app = 'tmux new-window vd'
+<
+You may also try to see the table in a graphical viewer such as LibreOffice
+Calc:
 >
    let R_csv_app = 'localc'
    let R_csv_app = 'c:/Program Files (x86)/LibreOffice 4/program/scalc.exe'
 <
 On Windows, `R_csv_app` works only in GVim, not in Neovim.
 
-You should prefix the application name with `terminal:` if it is a terminal
-application and you want to run it in Vim/Neovim's built in terminal emulator.
-Example:
->
-   let R_csv_app = 'terminal:scim'
-<
-If you are running Vim/Neovim within Tmux, you may prefer:
->
-   let R_csv_app = 'tmux new-window scim --txtdelim="\t"'
-<
 If the default field delimiter causes problems in your case, you can change it
 in your |vimrc|. Valid values are `"\t"`, `";"` and `","`. Example:
 >
@@ -2423,7 +2417,6 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RObjectStr
    RViewDF
    RDputObj
-   RPrintObj
    RSetwd
    RSummary
    RListSpace
@@ -2460,6 +2453,8 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RUpdateObjBrowser
    ROpenLists
    RCloseLists
+
+See also: |R_user_maps_only| and |R_disable_cmds|.
 
 The completion of function arguments only happens in Insert mode.
 
@@ -3092,14 +3087,14 @@ goal (tested on April, 2017).
                                                       
 9.22 Create custom mappings for viewing data.frames or matrices~
 
-Using the method described in |Nvim-R-key-bindings|, you can customize how data.frames or
-matrices are viewed by passing a string of optional arguments to `RAction`,
-starting with a comma. The accepted arguments are:
+Using the method described in |Nvim-R-key-bindings|, you can customize how
+data.frames or matrices are viewed by passing a string of optional arguments
+to `RAction`, starting with a comma. The accepted arguments are:
 
-    - `location` which should be a string like `"vsplit"` or `"above 10split"`,
-    and determines where the data is opened (see |opening-window|).
+   - `location` which should be a string like `"vsplit"` or `"above 10split"`,
+     and determines where the data is opened (see |opening-window|).
 
-    - `nrows` which is the number of rows of the data to open.
+   - `nrows` which is the number of rows of the data to open.
 
 Examples:
 >
@@ -3111,13 +3106,15 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-02-01)
+0.9.13.1 (2020-02-25)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
  * New option: R_disable_cmds.
  * New option: R_after_ob_open.
  * R_after_start is a list now.
+ * Recommend Visidata and delete option R_csv_warn.
+ * Delete command triggered by <LocalLeader>tp.
 
 0.9.13 (2019-05-05)
 

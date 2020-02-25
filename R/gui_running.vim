@@ -133,7 +133,6 @@ function RControlMenu()
     call RCreateMenuItem('nvi', 'Command.View\ data\.frame\ (cur)\ in\ vertical\ split', 'RViewDF', 'vv', ':call RAction("viewdf", ", location=''vsplit''")')
     call RCreateMenuItem('nvi', 'Command.View\ head(data\.frame)\ (cur)\ in\ horizontal\ split', 'RViewDF', 'vh', ':call RAction("viewdf", ", location=''above 7split'', nrows=6")')
     call RCreateMenuItem('nvi', 'Command.Run\ dput(cur)\ and\ show\ output\ in\ new\ tab', 'RDputObj', 'td', ':call RAction("dputtab")')
-    call RCreateMenuItem('nvi', 'Command.Run\ print(cur)\ and\ show\ output\ in\ new\ tab', 'RPrintObj', 'tp', ':call RAction("printtab")')
     "-------------------------------
     menu R.Command.-Sep2- <nul>
     call RCreateMenuItem('nvi', 'Command.Arguments\ (cur)', 'RShowArgs', 'ra', ':call RAction("args")')
