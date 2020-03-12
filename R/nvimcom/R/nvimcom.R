@@ -64,7 +64,7 @@ NvimcomEnv$pkgdescr <- list()
            as.character(utils::packageVersion("nvimcom")),
            paste(paste0(version$major, ".", version$minor),
                   getOption("OutDec"),
-                  getOption("prompt"),
+                  gsub("\n", "#N#", getOption("prompt")),
                   getOption("continue"),
                   paste(.packages(), collapse = " "),
                   sep = "\x02"),

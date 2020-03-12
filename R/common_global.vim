@@ -967,6 +967,8 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     endif
     let g:Rout_prompt_str = substitute(Rinfo[2], ' $', '', '')
     let g:Rout_continue_str = substitute(Rinfo[3], ' $', '', '')
+    let g:Rout_prompt_str = substitute(g:Rout_prompt_str, '.*#N#', '', '')
+    let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
 
     if has('nvim') && g:R_in_buffer
         " Put the cursor and the end of the buffer to ensure automatic scrolling
