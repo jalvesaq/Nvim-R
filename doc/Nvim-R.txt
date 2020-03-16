@@ -2338,10 +2338,10 @@ field Source editor:
 							 *Nvim-R-key-bindings*
 7. Custom key bindings~
 
-When creating custom key bindings for Nvim-R, it is necessary to
-create three maps for most functions because the way the function is called is
-different in each Vim mode. Thus, key bindings must be made for Normal mode,
-Insert mode, and Visual mode.
+When creating custom key bindings for Nvim-R, it is necessary to create three
+maps for most functions because the way the function is called is different in
+each Vim mode. Thus, key bindings must be made for Normal mode, Insert mode,
+and Visual mode.
 
 To customize a key binding you should put in your |vimrc| something like:
 >
@@ -2419,7 +2419,10 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RObjectNames
    RObjectPr
    RObjectStr
-   RViewDF
+   RViewDF	(view data.frame or other object)
+   RViewDFs	(view object in split window)
+   RViewDFv	(view object in vertically split window)
+   RViewDFa	(view object in split window above the current one)
    RDputObj
    RSetwd
    RSummary
@@ -2430,22 +2433,22 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RDSendChunk
    RESendChunk
    REDSendChunk
-   RSendChunkFH (from the first chunk to here)
-   RBibTeX    (Sweave)
-   RBibTeXK   (Knitr)
+   RSendChunkFH	(from the first chunk to here)
+   RBibTeX	(Sweave)
+   RBibTeXK	(Knitr)
    RSweave
    RKnit
    RMakeHTML
-   RMakePDF   (Sweave)
-   RMakePDFK  (Knitr)
-   RMakePDFKb (.Rmd, beamer)
-   RMakeODT   (.Rmd, Open document)
-   RMakeWord  (.Rmd, Word document)
-   RMakeRmd   (rmarkdown default)
-   RMakeAll   (rmarkdown all in yaml)
+   RMakePDF	(Sweave)
+   RMakePDFK	(Knitr)
+   RMakePDFKb	(.Rmd, beamer)
+   RMakeODT	(.Rmd, Open document)
+   RMakeWord	(.Rmd, Word document)
+   RMakeRmd	(rmarkdown default)
+   RMakeAll	(rmarkdown all in yaml)
    ROpenPDF
-   RSyncFor   (SyncTeX search forward)
-   RGoToTeX   (Got to LaTeX output)
+   RSyncFor	(SyncTeX search forward)
+   RGoToTeX	(Got to LaTeX output)
    RSpinFile
    RNextRChunk
    RPreviousRChunk
