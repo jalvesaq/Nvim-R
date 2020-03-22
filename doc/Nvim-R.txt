@@ -369,7 +369,7 @@ Start/Close
   . Start R (custom)                                   \rc
   --------------------------------------------------------
   . Close R (no save)                                  \rq
-  . Stop R                                          :RStop
+  . Stop (interrupt) R                                 :RStop
 -----------------------------------------------------------
 
 Send
