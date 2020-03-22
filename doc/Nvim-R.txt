@@ -2343,14 +2343,22 @@ maps for most functions because the way the function is called is different in
 each Vim mode. Thus, key bindings must be made for Normal mode, Insert mode,
 and Visual mode.
 
-To customize a key binding you should put in your |vimrc| something like:
+To customize a key binding you could put something like this in your |vimrc|:
 >
-   nmap <LocalLeader>sr <Plug>RStart
-   imap <LocalLeader>sr <Plug>RStart
-   vmap <LocalLeader>sr <Plug>RStart
+    function! s:customNvimRMappings()
+       nmap <buffer> <Leader>sr <Plug>RStart
+       imap <buffer> <Leader>sr <Plug>RStart
+       vmap <buffer> <Leader>sr <Plug>RStart
+    endfunction
+    augroup myNvimR
+       au!
+       autocmd filetype *.r,*.rmd,*.rnoweb,*.rdoc,*.rrst,*.rhelp,*.rbrowser
+           \ call s:customNvimRMappings()
+    augroup end
+
 <
-The above example shows how to change key binding used to start R from
-<LocalLeader>rf to <LocalLeader>sr. After changing the maps in your |vimrc|,
+The above example shows how to add a key binding to start R for
+<LocalLeader>sr, as well as the default <LocalLeader>rf. After changing the maps in your |vimrc|,
 you have to restart Vim.
 
 Only the custom key bindings for Normal mode are shown in Vim's menu, but
