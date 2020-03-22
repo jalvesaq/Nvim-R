@@ -2357,9 +2357,10 @@ To customize a key binding you could put something like this in your |vimrc|:
     augroup end
 
 <
-The above example shows how to add a key binding to start R for
-<LocalLeader>sr, as well as the default <LocalLeader>rf. After changing the maps in your |vimrc|,
-you have to restart Vim.
+The above example shows how to add a key binding to start R for <Leader>sr
+for just r buffers. The default <LocalLeader>rf still exists. After changing
+the maps in your |vimrc|, you have to restart Vim. If you want to remove the
+default mappings, you can set |R_user_maps_only| .
 
 Only the custom key bindings for Normal mode are shown in Vim's menu, but
 you can type |:map| to see the complete list of current mappings, and below is
