@@ -2726,23 +2726,20 @@ function RCreateMaps(type, plug, combo, target)
         let il = 'a'
     endif
     if a:type =~ "n"
-        if hasmapto('<Plug>' . a:plug, "n")
-            exec 'noremap <buffer><silent> <Plug>' . a:plug . ' ' . tg
-        elseif g:R_user_maps_only == 0
+        exec 'noremap <buffer><silent> <Plug>' . a:plug . ' ' . tg
+        if g:R_user_maps_only == 0
             exec 'noremap <buffer><silent> <LocalLeader>' . a:combo . ' ' . tg
         endif
     endif
     if a:type =~ "v"
-        if hasmapto('<Plug>' . a:plug, "v")
-            exec 'vnoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg
-        elseif g:R_user_maps_only == 0
+        exec 'vnoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg
+        if g:R_user_maps_only == 0
             exec 'vnoremap <buffer><silent> <LocalLeader>' . a:combo . ' <Esc>' . tg
         endif
     endif
     if g:R_insert_mode_cmds == 1 && a:type =~ "i"
-        if hasmapto('<Plug>' . a:plug, "i")
-            exec 'inoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg . il
-        elseif g:R_user_maps_only == 0
+        exec 'inoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg . il
+        if g:R_user_maps_only == 0
             exec 'inoremap <buffer><silent> <LocalLeader>' . a:combo . ' <Esc>' . tg . il
         endif
     endif
