@@ -2352,8 +2352,7 @@ To customize a key binding you could put something like this in your |vimrc|:
     endfunction
     augroup myNvimR
        au!
-       autocmd filetype *.r,*.rmd,*.rnoweb,*.rdoc,*.rrst,*.rhelp,*.rbrowser
-           \ call s:customNvimRMappings()
+       autocmd filetype r call s:customNvimRMappings()
     augroup end
 
 <
