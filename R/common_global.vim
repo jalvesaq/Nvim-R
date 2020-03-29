@@ -3031,10 +3031,16 @@ function RVimLeave()
     if has('nvim')
         for job in keys(g:rplugin.jobs)
             if IsJobRunning(job)
-                if exists('*chanclose')
-                    call chanclose(g:rplugin.jobs[job])
+                if job == 'ClientServer'
+                    " Avoid warning of exit status 141
+                    call JobStdin(g:rplugin.jobs["ClientServer"], "\x08\n")
+                    sleep 20m
                 else
-                    call jobstop(g:rplugin.jobs[job])
+                    if exists('*chanclose')
+                        call chanclose(g:rplugin.jobs[job])
+                    else
+                        call jobstop(g:rplugin.jobs[job])
+                    endif
                 endif
             endif
         endfor

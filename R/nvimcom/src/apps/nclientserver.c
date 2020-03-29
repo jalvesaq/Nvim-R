@@ -549,7 +549,6 @@ int main(int argc, char **argv){
 
     char line[1024];
     char *msg;
-    int keep_running = 1;
     memset(line, 0, 1024);
     strcpy(NvimcomPort, "0");
 
@@ -623,7 +622,7 @@ int main(int argc, char **argv){
     pthread_create(&Tid, NULL, NeovimServer, NULL);
 #endif
 
-    while(fgets(line, 1023, stdin) && keep_running){
+    while(fgets(line, 1023, stdin)){
         if(df){
             msg = line;
             msg++;
@@ -691,7 +690,7 @@ int main(int argc, char **argv){
                 break;
 #endif
             case 8: // Quit now
-                keep_running = 0;
+                exit(0);
                 break;
             default:
                 fprintf(stderr, "Unknown command received: [%d] %s\n", line[0], msg);
