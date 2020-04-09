@@ -109,6 +109,10 @@ function! UpdateOB(what)
 endfunction
 
 function! RBrowserDoubleClick()
+    if line(".") == 2
+        return
+    endif
+
     " Toggle view: Objects in the workspace X List of libraries
     if line(".") == 1
         if g:rplugin.curview == "libraries"
@@ -265,7 +269,7 @@ endfunction
 
 function! RBrowserGetName(cleantail, cleantick)
     let line = getline(".")
-    if line =~ "^$"
+    if line =~ "^$" || line(".") < 3
         return ""
     endif
 
