@@ -3035,18 +3035,10 @@ function RVimLeave()
                     " Avoid warning of exit status 141
                     call JobStdin(g:rplugin.jobs["ClientServer"], "\x08\n")
                     sleep 20m
-                else
-                    if exists('*chanclose')
-                        call chanclose(g:rplugin.jobs[job])
-                    else
-                        call jobstop(g:rplugin.jobs[job])
-                    endif
                 endif
             endif
         endfor
     endif
-    " give some time to get the jobs closed
-    sleep 20m
 
     for fn in s:del_list
         call delete(fn)
