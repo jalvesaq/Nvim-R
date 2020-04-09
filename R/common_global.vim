@@ -719,9 +719,34 @@ function StartNClientServer(w)
     let g:rplugin.jobs["ClientServer"] = StartJob([nvc], g:rplugin.job_handlers)
 endfunction
 
+function UpdatePathForR()
+    if exists("g:R_path")
+        " Add R directory to the $PATH
+        let g:rplugin.R_path = expand(g:R_path)
+        if !isdirectory(g:rplugin.R_path)
+            call RWarningMsg('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
+            return 0
+        endif
+        if $PATH !~ '^' . g:rplugin.R_path
+            if has("win32")
+                let $PATH = g:rplugin.R_path . ';' . substitute($PATH, ';' . g:rplugin.R_path . ';', ';', '')
+            else
+                let $PATH = g:rplugin.R_path . ':' . substitute($PATH, ':' . g:rplugin.R_path . ':', ':', '')
+            endif
+        endif
+        if !executable(g:rplugin.R)
+            call RWarningMsg('"' . g:rplugin.R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
+            return 0
+        endif
+    endif
+    return 1
+endfunction
+
 " Start R
 function StartR(whatr)
     let s:wait_nvimcom = 1
+
+    call UpdatePathForR()
 
     if !g:R_in_buffer
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
@@ -3964,26 +3989,9 @@ else
     let g:rplugin.Rcmd = "R"
 endif
 
-" Add R directory to the $PATH
-if exists("g:R_path")
-    let g:rplugin.R_path = expand(g:R_path)
-    if !isdirectory(g:rplugin.R_path)
-        call RWarningMsg('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
-        let g:rplugin.failed = 1
-        finish
-    endif
-    if $PATH !~ g:rplugin.R_path
-        if has("win32")
-            let $PATH = g:rplugin.R_path . ';' . $PATH
-        else
-            let $PATH = g:rplugin.R_path . ':' . $PATH
-        endif
-    endif
-    if !executable(g:rplugin.R)
-        call RWarningMsg('"' . g:rplugin.R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
-        let g:rplugin.failed = 1
-        finish
-    endif
+if UpdatePathForR() == 0
+    let g:rplugin.failed = 1
+    finish
 endif
 
 if exists("g:RStudio_cmd")
