@@ -300,6 +300,14 @@ https://github.com/gaalcaras/ncm-R
 It will slowdown R if its workspace has too many objects, data.frames with too
 many columns or lists with too many elements (see |R_ls_env_tol|).
 
+To use VOoM as outliner for Rmd documents, you should configure it to use the
+"pandoc" engine for outlining the structure of Rmd documents, and "latex" for
+Rnoweb ones. Example:
+>
+   let voom_ft_modes = {'rmd': 'pandoc', 'rnoweb': 'latex'}
+<
+You can install VOoM from: https://github.com/vim-voom/VOoM
+
 See https://github.com/w0rp/ale if you want a syntax checker.
 
 If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
