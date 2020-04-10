@@ -284,7 +284,7 @@ nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
             if(!grepl("^/", pdff))
                 pdff <- paste0(getwd(), "/", pdff)
             .C("nvimcom_msg_to_nvim",
-               paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
+               paste0("ROpenDoc('", pdff, "', '')"),
                PACKAGE = "nvimcom")
         }
     }
@@ -310,7 +310,7 @@ nvim.interlace.rrst <- function(Rrstfile, rrstdir, compiler = "rst2pdf", ...)
     Sys.sleep(0.2)
     pdff <- sub("\\.Rrst$", ".pdf", Rrstfile, ignore.case = TRUE)
     .C("nvimcom_msg_to_nvim",
-       paste0("ROpenDoc('", pdff, "', '", getOption("browser"), "')"),
+       paste0("ROpenDoc('", pdff, "', '')"),
        PACKAGE = "nvimcom")
 }
 
@@ -325,8 +325,15 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...)
 
     res <- rmarkdown::render(Rmdfile, outform, ...)
 
+    brwsr <- ""
+    if(grepl("\\.html$", res)){
+        brwsr <- getOption("browser")
+        if(!is.character(brwsr))
+            brwsr <- ""
+    }
+
     .C("nvimcom_msg_to_nvim",
-       paste0("ROpenDoc('", res, "', '", getOption("browser"), "')"),
+       paste0("ROpenDoc('", res, "', '", brwsr, "')"),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
