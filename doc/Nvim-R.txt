@@ -308,6 +308,9 @@ Rnoweb ones. Example:
 <
 You can install VOoM from: https://github.com/vim-voom/VOoM
 
+If you use RMarkdown to write academic papers and Zotero for reference
+management, you may want to try zotcite: https://github.com/jalvesaq/zotcite
+
 See https://github.com/w0rp/ale if you want a syntax checker.
 
 If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
