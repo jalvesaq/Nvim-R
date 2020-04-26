@@ -899,9 +899,9 @@ function FinishStartingR()
 endfunction
 
 " Send SIGINT to R
-function StopR()
+function SignalToR(signal)
     if s:R_pid
-        call system("kill -s SIGINT " . s:R_pid)
+        call system('kill -s ' . a:signal . ' ' . s:R_pid)
     endif
 endfunction
 
@@ -3585,7 +3585,8 @@ command -range=% Rformat <line1>,<line2>:call RFormatCode()
 command RBuildTags :call RBuildTags()
 command -nargs=? -complete=customlist,RLisObjs Rhelp :call RAskHelp(<q-args>)
 command -nargs=? -complete=dir RSourceDir :call RSourceDirectory(<q-args>)
-command RStop :call StopR()
+command RStop :call SignalToR('SIGINT')
+command RKill :call SignalToR('SIGKILL')
 command -nargs=? RSend :call g:SendCmdToR(<q-args>)
 command RDebugInfo :call ShowRDebugInfo()
 
