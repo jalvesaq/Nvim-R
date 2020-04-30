@@ -1572,6 +1572,7 @@ You can also set a `R_rconsole_width` relative to current Vim window width.
 For example, if you want to split the available horizontal space evenly
 between Vim and R, put in your |vimrc|:
 >
+   let R_rconsole_width = winwidth(0) / 2
    autocmd VimResized * let R_rconsole_width = winwidth(0) / 2
 <
 If you always prefer a horizontal split, set the value of `R_rconsole_width`
