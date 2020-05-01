@@ -2382,6 +2382,11 @@ function ShowRDoc(rkeyword)
     elseif a:rkeyword =~ '(help)'
         set filetype=rdoc
         call cursor(1, 1)
+    elseif a:rkeyword =~? '\.Rd$'
+        " Called by devtools::load_all().
+        " See https://github.com/jalvesaq/Nvim-R/issues/482
+        set filetype=rhelp
+        call cursor(1, 1)
     else
         set filetype=rout
         setlocal bufhidden=wipe
