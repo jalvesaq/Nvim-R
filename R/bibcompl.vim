@@ -100,7 +100,7 @@ function GetBibAttachment()
                 let fpath = g:rplugin.last_attach
                 let fls = split(fpath, ':')
                 if filereadable(fls[0])
-                    let fpath = [0]
+                    let fpath = fls[0]
                 elseif len(fls) > 1 && filereadable(fls[1])
                     let fpath = fls[1]
                 endif
