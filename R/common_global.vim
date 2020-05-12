@@ -3196,7 +3196,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
         else
             let descr = ""
         endif
-        let ttl = "] " . substitute(descr, "\x05.*", "", "")
+        let ttl = substitute(descr, "\x05.*", "", "")
 
         if g:R_show_args && len(sln) > 4
             if tmp[0] =~ '""'
@@ -3213,36 +3213,38 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             endif
             if descr ==# 'Description: '
                 let descr = ''
+            else
+                let descr = substitute(descr, "\n", " ", "g")
+                if exists('g:float_preview#loaded') && g:float_preview#docked == 0
+                    let descr = FormatTxt(descr, ' ', " \n ", g:float_preview#max_width)
+                else
+                    let descr = FormatTxt(descr, ' ', " \n ", winwidth(0))
+                endif
             endif
             if tmp[0] == "Not a function"
                 let usage =  ""
             else
-                " Format usage paragraph according to the width of the current window
+                " Format usage paragraph according to either the width of the
+                " current window the width of the floating window
                 let xx = split(tmp[0], "\x09")
                 if len(xx) > 0
-                    let usageL = ["Usage: " . a:prefix . sln[0] . "(" . xx[0]]
-                    let ii = 0
-                    let jj = 1
-                    let ll = len(xx)
-                    let wl = winwidth(0) - 1
-                    while(jj < ll)
-                        if(len(usageL[ii] . ", " . xx[jj]) < wl)
-                            let usageL[ii] .= ", " . xx[jj]
-                        elseif jj < ll
-                            let usageL[ii] .= ","
-                            let ii += 1
-                            let usageL += ["           " . xx[jj]]
-                        endif
-                        let jj += 1
-                    endwhile
-                    let usage = join(usageL, "\n") . ")\t"
+                    let usage = a:prefix . sln[0] . "(" . join(xx, ', ') . ')'
+                    if exists('g:float_preview#loaded') && g:float_preview#docked == 0
+                        let usage = "Usage: \n " . FormatTxt(usage, ', ', ", \n   ", g:float_preview#max_width) . "\t"
+                    else
+                        let usage = FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
+                    endif
                 else
                     let usage = "Usage: " . a:prefix . sln[0] . "()\t"
                 endif
             endif
-            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl, 'info': descr . usage})
+            if exists('g:float_preview#loaded')
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ', 'info': ttl . "\n\n" . descr . "\n\n" . usage})
+            else
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ' . ttl, 'info': descr . "\n" . usage})
+            endif
         elseif len(sln) > 3
-            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . ttl})
+            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ' . ttl})
         endif
     endfor
     return resp
@@ -3354,6 +3356,23 @@ function GetRArgs0(base, rkeyword)
     return argls
 endfunction
 
+function FormatTxt(text, splt, jn, maxl)
+    let wlist = split(a:text, a:splt)
+    let txt = ['']
+    let ii = 0
+    let maxlen = a:maxl - len(a:jn)
+    for wrd in wlist
+        if len(txt[ii] . a:splt . wrd) < maxlen
+            let txt[ii] .= a:splt . wrd
+        else
+            let ii += 1
+            let txt += [wrd]
+        endif
+    endfor
+    let txt[0] = substitute(txt[0], '^' . a:splt, '', '')
+    return join(txt, a:jn)
+endfunction
+
 function GetRArgs1(base, rkeyword0, firstobj, pkg)
     let msg = 'nvimcom:::nvim_complete_args("' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
@@ -3393,7 +3412,13 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
         for id in range(len(tmp))
             let tmp1 = split(tmp[id], "\x08")
             if len(tmp1) > 1
-                let info = substitute(tmp1[1], "\\\\N", "\n", "g")
+                let inf = substitute(tmp1[1], "\\\\N", " ", "g")
+                let inf = substitute(inf, "  *", " ", "g")
+                if exists('g:float_preview#loaded') && g:float_preview#docked == 0
+                    let info = FormatTxt(inf, ' ', " \n ", g:float_preview#max_width)
+                else
+                    let info = FormatTxt(inf, ' ', " \n ", winwidth(0))
+                endif
             else
                 let info = " "
             endif
@@ -3874,13 +3899,7 @@ function RCompleteSyntax()
     if &previewwindow && s:is_completing
         let s:is_completing = 0
         set encoding=utf-8
-        syntax clear
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/syntax/rdoc.vim"
-        syn match rdocArg2 "^\s*\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"
-        syn match rdocTitle2 '^Description: '
-        syn region rdocUsage matchgroup=rdocTitle start="^Usage: " matchgroup=NONE end='\t$' contains=@rdocR
-        hi def link rdocArg2 Special
-        hi def link rdocTitle2 Title
+        set syntax=rdocpreview
     endif
 endfunction
 if &completeopt =~ "preview"

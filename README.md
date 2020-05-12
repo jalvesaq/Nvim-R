@@ -5,19 +5,23 @@ R code.
 
 ## Installation
 
-If you use a plugin manager, such as [vim-plug], [Vundle] or [Pathogen],
-follow its instructions on how to install plugins from github.
+If you use a plugin manager, such as [vim-plug], follow its instructions on
+how to install plugins from github.
 
 To install a stable version of the plugin, either download the Vim package from
 [Nvim-R/releases](https://github.com/jalvesaq/Nvim-R/releases)
 or the Vimball from
 [vim.org](http://www.vim.org/scripts/script.php?script_id=2628).
 
-Please, read the section *Installation* from the
-[plugin's documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
+Please, read the section *Installation* from the plugin's
+[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
 for details.
 
-Please, read the plugin's documentation for instructions on usage.
+## Usage
+
+Please, read the plugin's
+[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
+for instructions on usage.
 
 
 ## Screenshots
@@ -87,8 +91,6 @@ shows the three paths of communication between Vim/Neovim and R:
 ![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
 
 [vim-plug]: https://github.com/junegunn/vim-plug
-[Vundle]: https://github.com/gmarik/Vundle.vim
-[Pathogen]: https://github.com/tpope/vim-pathogen
 [Neovim]: https://github.com/neovim/neovim
 [southernlights]: https://github.com/jalvesaq/southernlights
 [colorout]: https://github.com/jalvesaq/colorout

@@ -49,6 +49,7 @@ if !exists("b:objbrtitle")
     unlet s:tnr
 endif
 
+let b:float_syntax = 'rdocpreview'
 let g:rplugin.lastft = &filetype
 
 " Check if b:pdf_is_open already exists because this script is called when
@@ -69,6 +70,8 @@ endif
 if exists("*RCheckLibList") && !exists("*nvim_buf_set_option")
     autocmd BufEnter <buffer> call RCheckLibList()
 endif
+
+autocmd! InsertLeave <buffer> if pumvisible() == 0 | pclose | endif
 
 if g:R_assign == 3
     iabb <buffer> _ <-
