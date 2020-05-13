@@ -3192,7 +3192,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
 
         let tmp = split(sln[4], "\x08")
         if len(tmp) == 2
-            let descr = substitute(tmp[1], '\\N', "\n", "g") . "\n"
+            let descr = substitute(tmp[1], '\\N', " ", "g")
         else
             let descr = ""
         endif
@@ -3205,21 +3205,11 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             endif
             let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
             let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
-            let descr = "Description: " . substitute(descr, ".*\x05", "", "")
+            let descr = substitute(descr, ".*\x05", "", "")
             if has("win32")
                 " curly single quote in UTF-8
                 let descr = substitute(descr, "\x91", "\xe2\x80\x98", "g")
                 let descr = substitute(descr, "\x92", "\xe2\x80\x99", "g")
-            endif
-            if descr ==# 'Description: '
-                let descr = ''
-            else
-                let descr = substitute(descr, "\n", " ", "g")
-                if exists('g:float_preview#loaded') && g:float_preview#docked == 0
-                    let descr = FormatTxt(descr, ' ', " \n ", g:float_preview#max_width)
-                else
-                    let descr = FormatTxt(descr, ' ', " \n ", winwidth(0))
-                endif
             endif
             if tmp[0] == "Not a function"
                 let usage =  ""
@@ -3229,18 +3219,16 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 let xx = split(tmp[0], "\x09")
                 if len(xx) > 0
                     let usage = a:prefix . sln[0] . "(" . join(xx, ', ') . ')'
-                    if exists('g:float_preview#loaded') && g:float_preview#docked == 0
-                        let usage = "Usage: \n " . FormatTxt(usage, ', ', ", \n   ", g:float_preview#max_width) . "\t"
-                    else
-                        let usage = FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
-                    endif
                 else
-                    let usage = "Usage: " . a:prefix . sln[0] . "()\t"
+                    let usage = a:prefix . sln[0] . "()\t"
                 endif
             endif
-            if exists('g:float_preview#loaded')
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ', 'info': ttl . "\n\n" . descr . "\n\n" . usage})
+            if exists('*nvim_open_win')
+                let s:float_info[a:prefix . sln[0]] = {'title': ttl, 'descr': descr, 'usage': usage}
+                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] '})
             else
+                let descr = "Description: " . FormatTxt(descr, ' ', " \n ", winwidth(0))
+                let usage = FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
                 call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ' . ttl, 'info': descr . "\n" . usage})
             endif
         elseif len(sln) > 3
@@ -3249,6 +3237,145 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
     endfor
     return resp
 endfunction
+
+let s:float_win = 0
+let s:float_info = {}
+function CreateNewFloat(...)
+    let flt_win = 0
+    if exists('s:compl_event')
+        if !exists('s:float_buf')
+            let s:float_buf = nvim_create_buf(v:false, v:true)
+            call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+        endif
+        let wrd = s:compl_event['completed_item']['word']
+        if len(s:float_info) && has_key(s:float_info, wrd)
+
+            " Ensure that some variables are integers:
+            exe 'let mc = ' . substitute(string(s:compl_event['col']), '\..*', '', '')
+            exe 'let mr = ' . substitute(string(s:compl_event['row']), '\..*', '', '')
+            exe 'let mw = ' . substitute(string(s:compl_event['width']), '\..*', '', '')
+            exe 'let mh = ' . substitute(string(s:compl_event['height']), '\..*', '', '')
+
+            " Define position and size of float window
+            let needblank = 0
+            let frow = mr
+            let fanchor = 'NW'
+            let flwd = 60
+            let dspwd = &columns - 4
+            let freeright = dspwd - mw - mc - s:compl_event['scrollbar']
+            if freeright > 45
+                " right side
+                let flwd = freeright > 60 ? 60 : freeright
+                let fcol = mc + mw + s:compl_event['scrollbar']
+            elseif mc > 35 && mc > freeright
+                " left side
+                let flwd = mc - 1
+                let fcol = mc - 1
+                let fanchor = 'NE'
+            elseif line('.') == mr && (&lines - mr - mh) > 6
+                let freeright = dspwd - mc
+                if freeright > 45
+                    " below
+                    let flwd = freeright > 60 ? 60 : freeright
+                    let fcol = mc - 1
+                    let frow = mr + mh
+                    let needblank = 1
+                else
+                    let flwd = winwidth(0)
+                    let fcol = 0
+                    let freeabove = mr
+                    let freebelow = &lines - mr - mh
+                    if freeabove > freebelow
+                        " top
+                        let frow = 0
+                    else
+                        " bottom
+                        let frow = &lines
+                        let fanchor = 'SW'
+                    endif
+                endif
+            else
+                let flwd = winwidth(0)
+                let fcol = 0
+                let freeabove = mr
+                let freebelow = &lines - mr - mh
+                if freeabove > freebelow
+                    " top
+                    let frow = 0
+                else
+                    " bottom
+                    let frow = &lines
+                    let fanchor = 'SW'
+                endif
+            endif
+            if frow == &lines
+                let maxh = &lines - mr - mh
+                let needblank = 1
+            elseif frow == 0
+                let maxh = mr - 1
+            else
+                let maxh = &lines - frow
+            endif
+
+            if maxh > 1
+                if has_key(s:float_info[wrd], 'arg')
+                    let info = ' ' . FormatTxt(s:float_info[wrd]['arg'], ' ', "  \n  ", flwd)
+                else
+                    let info = ' ' . FormatTxt(s:float_info[wrd]['title'] . ': ' . s:float_info[wrd]['descr'], ' ', " \n ", flwd - 1) .
+                                \ "\n" . repeat('—', flwd) . "\n" .
+                                \ ' ' . FormatTxt(s:float_info[wrd]['usage'], ', ', ",  \n   ", flwd) . "\t"
+                endif
+                if needblank
+                    let lines = [''] + split(info, "\n") + ['']
+                else
+                    let lines = split(info, "\n") + ['']
+                endif
+                if len(lines) > 0
+                    call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, lines)
+                    let flht = (len(lines) > maxh) ? maxh : len(lines)
+                    let opts = {'relative': 'editor', 'width': flwd, 'height': flht, 'col': fcol,
+                                \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
+                    let g:TheOpts = deepcopy(opts)
+                    let flt_win = nvim_open_win(s:float_buf, 0, opts)
+                endif
+            endif
+        endif
+        let g:TheLastComplEvent = deepcopy(s:compl_event)
+        unlet s:compl_event
+    endif
+    call CloseFloatWin()
+    let s:float_win = flt_win
+endfunction
+
+function CloseFloatWin(...)
+    let id = win_id2win(s:float_win)
+    if id > 0
+        call nvim_win_close(s:float_win, 1)
+        let s:float_win = 0
+    endif
+endfunction
+
+function OnCompleteDone()
+    let s:float_info = {}
+    call CloseFloatWin()
+endfunction
+
+function StartFloatWin()
+    if ! pumvisible()
+        return
+    endif
+    if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word') && len(s:float_info) > 0
+        let s:compl_event = deepcopy(v:event)
+        call timer_start(10, 'CreateNewFloat', {})
+    elseif s:float_win
+        call CloseFloatWin()
+    endif
+endfunction
+
+if exists('*nvim_open_win')
+    autocmd CompleteChanged * call StartFloatWin()
+    autocmd CompleteDone * call OnCompleteDone()
+endif
 
 function RGetNewBase(base)
     if a:base =~ ":::"
@@ -3414,13 +3541,6 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
             if len(tmp1) > 1
                 let inf = substitute(tmp1[1], "\\\\N", " ", "g")
                 let inf = substitute(inf, "  *", " ", "g")
-                if exists('g:float_preview#loaded') && g:float_preview#docked == 0
-                    let info = FormatTxt(inf, ' ', " \n ", g:float_preview#max_width)
-                else
-                    let info = FormatTxt(inf, ' ', " \n ", winwidth(0))
-                endif
-            else
-                let info = " "
             endif
             let tmp2 = split(tmp1[0], "\x07")
             if tmp2[0] == '...'
@@ -3440,9 +3560,13 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
                     let mn = "="
                 endif
             endif
-            if g:R_show_arg_help
+            if len(tmp1) > 1 && !has('nvim')
+                let info = FormatTxt(inf, ' ', " \n ", winwidth(0))
                 call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
             else
+                if wd != ''
+                    let s:float_info[wd] = {'arg': inf}
+                endif
                 call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn})
             endif
         endfor

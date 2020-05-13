@@ -295,19 +295,7 @@ You may be interested in installing additional general plugins to get
 functionality not provided by this file type plugin, such as vim-signature.
 Please read |Nvim-R-tips| for details.
 
-If 'completeopt' includes "preview", Nvim-R will show additional information
-during omni completion. However, the preview window is too annoying because it
-forces text scrolling. If you are running Neovim and want a floating window
-instead of a preview one, please, install the `float-preview.nvim` plugin and
-put in your |init.vim| (adjust the value of `float_preview#max_width`
-according to your needs):
->
-   set completeopt-=preview
-   let g:float_preview#winhl = ''
-   let g:float_preview#docked = 0
-   let g:float_preview#max_width = 60
-<
-You may also consider Gabriel Alcaras's plugin for asynchronous R completion:
+You may consider Gabriel Alcaras's plugin for asynchronous R completion:
 https://github.com/gaalcaras/ncm-R
 However, it will slowdown R if its workspace has too many objects, data.frames
 with too many columns or lists with too many elements (see |R_ls_env_tol|).
