@@ -3240,108 +3240,146 @@ endfunction
 
 let s:float_win = 0
 let s:float_info = {}
+let s:compl_event = {}
+
+function FormatInfo(wrd, width, needblank)
+    if has_key(s:float_info[a:wrd], 'arg')
+        let info = ' ' . FormatTxt(s:float_info[a:wrd]['arg'], ' ', "  \n  ", a:width)
+    else
+        let info = ' ' . FormatTxt(s:float_info[a:wrd]['title'] . ': ' . s:float_info[a:wrd]['descr'], ' ', " \n ", a:width - 1) .
+                    \ "\n" . repeat('—', a:width) . "\n" .
+                    \ ' ' . FormatTxt(s:float_info[a:wrd]['usage'], ', ', ",  \n   ", a:width) . "\t"
+    endif
+    if a:needblank
+        let lines = [''] + split(info, "\n") + ['']
+    else
+        let lines = split(info, "\n") + ['']
+    endif
+    return lines
+endfunction
+
 function CreateNewFloat(...)
+    if len(s:compl_event) == 0
+        return
+    endif
+    if len(s:float_info) == 0
+        return
+    endif
+
     let flt_win = 0
-    if exists('s:compl_event')
-        if !exists('s:float_buf')
-            let s:float_buf = nvim_create_buf(v:false, v:true)
-            call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
-        endif
-        let wrd = s:compl_event['completed_item']['word']
-        if len(s:float_info) && has_key(s:float_info, wrd)
+    let wrd = s:compl_event['completed_item']['word']
+    if has_key(s:float_info, wrd)
 
-            " Ensure that some variables are integers:
-            exe 'let mc = ' . substitute(string(s:compl_event['col']), '\..*', '', '')
-            exe 'let mr = ' . substitute(string(s:compl_event['row']), '\..*', '', '')
-            exe 'let mw = ' . substitute(string(s:compl_event['width']), '\..*', '', '')
-            exe 'let mh = ' . substitute(string(s:compl_event['height']), '\..*', '', '')
+        " Get the required height for a standard float preview window
+        let flines = FormatInfo(wrd, 60, 1)
+        let reqh = len(flines) > 15 ? 15 : len(flines)
 
-            " Define position and size of float window
-            let needblank = 0
-            let frow = mr
-            let fanchor = 'NW'
-            let flwd = 60
-            let dspwd = &columns - 4
-            let freeright = dspwd - mw - mc - s:compl_event['scrollbar']
-            if freeright > 45
+        " Ensure that some variables are integers:
+        exe 'let mc = ' . substitute(string(s:compl_event['col']), '\..*', '', '')
+        exe 'let mr = ' . substitute(string(s:compl_event['row']), '\..*', '', '')
+        exe 'let mw = ' . substitute(string(s:compl_event['width']), '\..*', '', '')
+        exe 'let mh = ' . substitute(string(s:compl_event['height']), '\..*', '', '')
+
+        " Default position and size of float window (at the right side of the popup menu)
+        let has_space = 1
+        let needblank = 0
+        let frow = mr
+        let flwd = 60
+        let fanchor = 'NW'
+        let fcol = mc + mw + s:compl_event['scrollbar']
+
+        " Required to fix the position and size of the float window
+        let dspwd = &columns - &numberwidth
+        let freebelow = (mr == (line('.') - line('w0')) ? &lines - mr - mh : &lines - mr) - 3
+        let freeright = dspwd - mw - mc - s:compl_event['scrollbar']
+        let freeleft = mc - 1
+        let freetop = mr - 1
+
+        " If there is enough vertical space, open the window beside the menu
+        if freebelow > reqh && (freeright > 30 || freeleft > 30)
+            if freeright > 30
                 " right side
                 let flwd = freeright > 60 ? 60 : freeright
-                let fcol = mc + mw + s:compl_event['scrollbar']
-            elseif mc > 35 && mc > freeright
+            else
                 " left side
                 let flwd = mc - 1
                 let fcol = mc - 1
                 let fanchor = 'NE'
-            elseif line('.') == mr && (&lines - mr - mh) > 6
-                let freeright = dspwd - mc
-                if freeright > 45
-                    " below
-                    let flwd = freeright > 60 ? 60 : freeright
-                    let fcol = mc - 1
-                    let frow = mr + mh
-                    let needblank = 1
-                else
-                    let flwd = winwidth(0)
-                    let fcol = 0
-                    let freeabove = mr
-                    let freebelow = &lines - mr - mh
-                    if freeabove > freebelow
-                        " top
-                        let frow = 0
-                    else
-                        " bottom
-                        let frow = &lines
-                        let fanchor = 'SW'
-                    endif
-                endif
+            endif
+        else
+            " If there is enough vertical space and enough right space, then, if the menu
+            "   - is below the current line, open the window below the menu
+            "   - is above the current line, open the window above the menu
+            let freeright = dspwd - mc
+            let freeabove = mr - 1
+            let freebelow = &lines - mr - mh - 3
+
+            if freeright > 45 && (mr == (line('.') - line('w0') + 1)) && freebelow > reqh
+                " below the menu
+                let flwd = freeright > 60 ? 60 : freeright
+                let fcol = mc - 1
+                let frow = mr + mh
+                let needblank = 1
+            elseif freeright > 45 && (line('.') - line('w0') + 1) > mr && freeabove > reqh
+                " above the menu
+                let flwd = freeright > 60 ? 60 : freeright
+                let fcol = mc - 1
+                let frow = mr
+                let fanchor = 'SW'
             else
+                " Finally, check if it's possible to open the window
+                " either on the top or on the bottom of the main window
                 let flwd = winwidth(0)
+                let flines = FormatInfo(wrd, flwd, 0)
+                let reqh = len(flines) > 15 ? 15 : len(flines)
                 let fcol = 0
-                let freeabove = mr
-                let freebelow = &lines - mr - mh
-                if freeabove > freebelow
+
+                if freeabove > reqh || (freeabove > 3 && freeabove > freebelow)
                     " top
                     let frow = 0
-                else
+                elseif freebelow > 3
                     " bottom
                     let frow = &lines
                     let fanchor = 'SW'
+                else
+                    " no space available
+                    let has_space = 0
                 endif
             endif
+        endif
+
+        if has_space
+            " Now that the position is defined, calculate the available height
             if frow == &lines
-                let maxh = &lines - mr - mh
+                if mr == (line('.') - line('w0') + 1)
+                    let maxh = &lines - mr - mh - 2
+                else
+                    let maxh = &lines - line('.') + line('w0') - 2
+                endif
                 let needblank = 1
             elseif frow == 0
-                let maxh = mr - 1
+                let maxh = mr - 3
             else
-                let maxh = &lines - frow
+                let maxh = &lines - frow - 2
             endif
 
+            " Open the window if there is enough available height
             if maxh > 1
-                if has_key(s:float_info[wrd], 'arg')
-                    let info = ' ' . FormatTxt(s:float_info[wrd]['arg'], ' ', "  \n  ", flwd)
-                else
-                    let info = ' ' . FormatTxt(s:float_info[wrd]['title'] . ': ' . s:float_info[wrd]['descr'], ' ', " \n ", flwd - 1) .
-                                \ "\n" . repeat('—', flwd) . "\n" .
-                                \ ' ' . FormatTxt(s:float_info[wrd]['usage'], ', ', ",  \n   ", flwd) . "\t"
-                endif
-                if needblank
-                    let lines = [''] + split(info, "\n") + ['']
-                else
-                    let lines = split(info, "\n") + ['']
-                endif
-                if len(lines) > 0
-                    call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, lines)
-                    let flht = (len(lines) > maxh) ? maxh : len(lines)
+                let flines = FormatInfo(wrd, flwd, needblank)
+                if len(flines) > 0
+                    if !exists('s:float_buf')
+                        let s:float_buf = nvim_create_buf(v:false, v:true)
+                        call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+                    endif
+                    call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, flines)
+
+                    let flht = (len(flines) > maxh) ? maxh : len(flines)
                     let opts = {'relative': 'editor', 'width': flwd, 'height': flht, 'col': fcol,
                                 \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
-                    let g:TheOpts = deepcopy(opts)
                     let flt_win = nvim_open_win(s:float_buf, 0, opts)
                 endif
             endif
         endif
-        let g:TheLastComplEvent = deepcopy(s:compl_event)
-        unlet s:compl_event
     endif
     call CloseFloatWin()
     let s:float_win = flt_win
@@ -3356,7 +3394,6 @@ function CloseFloatWin(...)
 endfunction
 
 function OnCompleteDone()
-    let s:float_info = {}
     call CloseFloatWin()
 endfunction
 
@@ -3366,7 +3403,8 @@ function StartFloatWin()
     endif
     if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word') && len(s:float_info) > 0
         let s:compl_event = deepcopy(v:event)
-        call timer_start(10, 'CreateNewFloat', {})
+        " Neovim doesn't allow to open a float window from here:
+        call timer_start(1, 'CreateNewFloat', {})
     elseif s:float_win
         call CloseFloatWin()
     endif
@@ -3489,7 +3527,7 @@ function FormatTxt(text, splt, jn, maxl)
     let ii = 0
     let maxlen = a:maxl - len(a:jn)
     for wrd in wlist
-        if len(txt[ii] . a:splt . wrd) < maxlen
+        if strdisplaywidth(txt[ii] . a:splt . wrd) < maxlen
             let txt[ii] .= a:splt . wrd
         else
             let ii += 1
