@@ -2532,91 +2532,9 @@ function RAskHelp(...)
     endif
 endfunction
 
-function DisplayArgs()
-    if !exists("s:status_line")
-        let s:sttl_count = 0
-        let s:status_line = [&statusline, "", "", "", "", "", "", ""]
-    endif
-
-    let s:sttl_count += 1
-    if s:sttl_count > 7
-        let s:sttl_count = 7
-        return
-    endif
-
-    if &filetype == "r" || b:IsInRCode(0)
-        let rkeyword = RGetKeyword('@,48-57,_,.,$,@-@')
-        let fargs = "Not a function"
-        for omniL in g:rplugin_omni_lines
-            if omniL =~ '^' . rkeyword . "\x06"
-                let omniL = substitute(omniL, "\x08.*", "", "")
-                let tmp = split(omniL, "\x06")
-                if len(tmp) < 5
-                    break
-                else
-                    let fargs = tmp[4]
-                endif
-            endif
-        endfor
-        if fargs !~ "Not a function"
-            let fargs = substitute(fargs, "NO_ARGS", "", "g")
-            let fargs = substitute(fargs, "\x07", "=", "g")
-            let fargs = substitute(fargs, "\x09", ", ", "g")
-            let fargs = substitute(fargs, "%", "%%", "g")
-            let fargs = substitute(fargs, '\\', '\\\\', "g")
-            let sline = substitute(g:R_sttline_fmt, "%fun", rkeyword, "g")
-            let sline = substitute(sline, "%args", fargs, "g") . '%<'
-            if exists("g:R_set_sttline_cmd")
-                silent exe g:R_set_sttline_cmd
-            endif
-            let s:status_line[s:sttl_count] = sline
-            silent setlocal statusline=%!RArgsStatusLine()
-        endif
-    endif
-endfunction
 
 function RArgsStatusLine()
     return s:status_line[s:sttl_count]
-endfunction
-
-function RestoreStatusLine(backtozero)
-    if !exists("s:status_line")
-        let s:sttl_count = 0
-        let s:status_line = [&statusline, "", "", "", "", "", "", ""]
-    endif
-
-    let s:sttl_count -= 1
-    if s:sttl_count < 0
-        " The status line is already in its original state
-        let s:sttl_count = 0
-        return
-    endif
-
-    if a:backtozero
-        let s:sttl_count = 0
-    endif
-
-    if s:sttl_count == 0
-        if exists("g:R_restore_sttline_cmd")
-            exe g:R_restore_sttline_cmd
-        elseif exists("*airline#update_statusline")
-            call airline#update_statusline()
-        else
-            let &statusline = s:status_line[0]
-        endif
-    else
-        silent setlocal statusline=%!RArgsStatusLine()
-    endif
-endfunction
-
-function RSetStatusLine()
-    if !(&filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp")
-        return
-    elseif v:char == '('
-        call DisplayArgs()
-    elseif v:char == ')'
-        call RestoreStatusLine(0)
-    endif
 endfunction
 
 function PrintRObject(rkeyword)
@@ -2940,14 +2858,6 @@ function RCreateEditMaps()
     if g:R_assign == 1 || g:R_assign == 2
         silent exe 'inoremap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
     endif
-    if g:R_args_in_stline
-        autocmd InsertCharPre * call RSetStatusLine()
-        autocmd InsertLeave * call RestoreStatusLine(1)
-    endif
-
-    if !hasmapto("<Plug>RCompleteArgs", "i")
-        inoremap <buffer><silent> <C-X><C-A> <C-R>=RCompleteArgs()<CR>
-    endif
 endfunction
 
 function RCreateSendMaps()
@@ -3158,23 +3068,31 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
         let line = substitute(line, "\x04.*", "", "")
         " Skip elements of lists unless the user is really looking for them.
         " Skip lists if the user is looking for one of its elements.
-        let obj = substitute(line, "\x06.*", "", "")
-        if (a:base !~ '\$' && obj =~ '\$') || (a:base =~ '\$' && obj !~ '\$')
+        let tmp = split(line, "\x06", 1)
+        if (a:base !~ '\$' && tmp[0] =~ '\$') || (a:base =~ '\$' && tmp[0] !~ '\$')
             continue
         endif
-        " Idem with S4 objects
-        if (a:base !~ '@' && obj =~ '@') || (a:base =~ '@' && obj !~ '@')
+        " Idem with S4 tmp[0]ects
+        if (a:base !~ '@' && tmp[0] =~ '@') || (a:base =~ '@' && tmp[0] !~ '@')
             continue
         endif
-        let sln = split(line, "\x06", 1)
-        if a:pkg != "" && sln[3] != a:pkg
+        if a:pkg != "" && tmp[3] != a:pkg
             continue
+        endif
+        let obj = tmp[0]
+        let cls = tmp[1]
+        let grp = tmp[2]
+        let pkg = tmp[3]
+        if len(tmp) == 5
+            let inf = tmp[4]
+        else
+            let inf = ''
         endif
         if len(a:toplev)
             " Do not show an object from a package if it was masked by a
             " toplevel object in .GlobalEnv
             let masked = 0
-            let pkgobj = substitute(sln[0], "\\$.*", "", "")
+            let pkgobj = substitute(obj, "\\$.*", "", "")
             let pkgobj = substitute(pkgobj, "@.*", "", "")
             for tplv in a:toplev
                 if tplv == pkgobj
@@ -3186,19 +3104,19 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 continue
             endif
         endif
-        if sln[0] =~ "[ '%]"
-            let sln[0] = "`" . sln[0] . "`"
+        if obj =~ "[ '%]"
+            let obj = "`" . obj . "`"
         endif
 
-        let tmp = split(sln[4], "\x08")
+        let tmp = split(inf, "\x08")
         if len(tmp) == 2
-            let descr = substitute(tmp[1], '\\N', " ", "g")
+            let descr = tmp[1]
         else
             let descr = ""
         endif
         let ttl = substitute(descr, "\x05.*", "", "")
 
-        if g:R_show_args && len(sln) > 4
+        if g:R_show_args && inf != ''
             if tmp[0] =~ '""'
                 let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
                 let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
@@ -3218,21 +3136,21 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
                 " current window the width of the floating window
                 let xx = split(tmp[0], "\x09")
                 if len(xx) > 0
-                    let usage = a:prefix . sln[0] . "(" . join(xx, ', ') . ')'
+                    let usage = a:prefix . obj . "(" . join(xx, ', ') . ')'
                 else
-                    let usage = a:prefix . sln[0] . "()\t"
+                    let usage = a:prefix . obj . "()\t"
                 endif
             endif
             if exists('*nvim_open_win')
-                let s:float_info[a:prefix . sln[0]] = {'title': ttl, 'descr': descr, 'usage': usage}
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] '})
+                let s:float_info[a:prefix . obj] = {'title': ttl, 'descr': descr, 'usage': usage}
+                call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']', 'user_data': {'cls': cls, 'grp': grp, 'pkg': pkg, 'inf': inf}})
             else
                 let descr = "Description: " . FormatTxt(descr, ' ', " \n ", winwidth(0))
                 let usage = FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
-                call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ' . ttl, 'info': descr . "\n" . usage})
+                call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . '] ' . ttl, 'info': descr . "\n" . usage})
             endif
         elseif len(sln) > 3
-            call add(resp, {'word': a:prefix . sln[0], 'menu': sln[1] . ' [' . sln[3] . '] ' . ttl})
+            call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . '] ' . ttl})
         endif
     endfor
     return resp
@@ -3577,8 +3495,7 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
         for id in range(len(tmp))
             let tmp1 = split(tmp[id], "\x08")
             if len(tmp1) > 1
-                let inf = substitute(tmp1[1], "\\\\N", " ", "g")
-                let inf = substitute(inf, "  *", " ", "g")
+                let inf = substitute(tmp1[1], "  *", " ", "g")
             endif
             let tmp2 = split(tmp1[0], "\x07")
             if tmp2[0] == '...'
@@ -3886,9 +3803,7 @@ let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_ls_env_tol        = get(g:, "R_ls_env_tol",       500)
-let g:R_args_in_stline    = get(g:, "R_args_in_stline",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
-let g:R_sttline_fmt       = get(g:, "R_sttline_fmt", "%fun(%args)")
 if exists(":terminal") != 2
     let g:R_in_buffer = 0
 endif

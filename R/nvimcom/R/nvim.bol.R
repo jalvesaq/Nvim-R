@@ -154,7 +154,7 @@ CleanOmniLineASCII <- function(x)
     x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item ", "\\\\N  - ", x)
+    x <- gsub("\\\\item ", " - ", x)
     x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
@@ -166,7 +166,7 @@ CleanOmniLineASCII <- function(x)
     x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
-    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
     x
 }
 
@@ -184,7 +184,7 @@ CleanOmniLineUTF8 <- function(x)
     x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item ", "\\\\N  \u2022 ", x)
+    x <- gsub("\\\\item ", " \u2022 ", x)
     x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
@@ -196,7 +196,7 @@ CleanOmniLineUTF8 <- function(x)
     x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
-    x <- gsub("\\\\preformatted\\{(.+?)\\}", "\\\\N\\1\\\\N", x)
+    x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
     x
 }
 
@@ -256,7 +256,7 @@ GetFunDescription <- function(pkg)
         }
 
         x <- sub("^\\s*", "", sub("\\s*$", "", x))
-        x <- gsub("\n\\s*", "\\\\N", x)
+        x <- gsub("\n\\s*", " ", x)
         x <- paste0("\x08", ttl, "\x05", x)
         x
     }

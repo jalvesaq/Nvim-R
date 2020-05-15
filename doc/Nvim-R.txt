@@ -963,7 +963,6 @@ of
 |R_complete|          Include objects in argument completion
 |R_show_args|         Show extra information during omnicompletion
 |R_show_arg_help|     Show extra information during arguments completion
-|R_args_in_stline|    Set 'statusline' to function arguments
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
 |R_nvim_wd|           Start R in Vim's working directory
@@ -2029,7 +2028,6 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 								  *R_complete*
 								 *R_show_args*
 							     *R_show_arg_help*
-							    *R_args_in_stline*
 6.29. Function arguments~
 
 During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
@@ -2053,35 +2051,6 @@ documentation help for the item being completed unless you put in your
 <
 You can also completely disable the preview window by setting 'completeopt'
 without the `preview` string.
-
-If you want that function arguments are displayed in Vim's status line when
-you insert `(`, put in your |vimrc|:
->
-   let R_args_in_stline = 1
-<
-The status line is restored when you either type `)` or leave Insert mode.
-This option is useful only if the window has a status line (see 'laststatus').
-If the string with the list of arguments is longer than the status line width,
-the list is not displayed completely. This argument is incompatible with most
-plugins that changes the status line. It is also incompatible with any plugin
-that automatically closes parentheses. Functions of .GlobalEnv do not have
-their arguments displayed. You can change the appearance of the status line by
-setting the `R_sttline_fmt` (default value = `"%fun(%args)"`, where `%fun` is
-replaced by the function name and `%args` by the list of arguments). See
-'statusline' to know how to format the status line. The example below put some
-colors in the status line (see |highlight-groups|):
->
-   let R_sttline_fmt = '%#Function#%fun%#Delimiter#(%#Normal#%args%#Delimiter#)'
-<
-If you knew Vim Language, you could look at the Nvim-R source code (file
-`R/common_global.vim`) and set the value of `R_set_sttline_cmd`. The example
-below sets the color of individual arguments' names to the highlight group
-`Special`:
->
-   let R_sttline_fmt = '%#Function#%fun%#Normal#(%args)'
-   let R_set_sttline_cmd = "let sline = substitute(sline, " .
-           \ "'\\( \\|(\\)\\(\\w\\.*\\w*\\.*\\w*\\)\\(=*\\)\\(.\\{-}\\)\\([,)]\\)', " .
-           \ "'\\1%#Special#\\2%#Normal#\\3\\4\\5', 'g')"
 
 
 ------------------------------------------------------------------------------
@@ -3150,6 +3119,7 @@ Examples:
  * R_after_start is a list now.
  * Recommend Visidata and delete option R_csv_warn.
  * Delete command triggered by <LocalLeader>tp.
+ * Delete options R_args_in_stline and R_sttline_fmt.
 
 0.9.13 (2019-05-05)
 
