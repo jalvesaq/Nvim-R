@@ -106,15 +106,20 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     info <- ""
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
+                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06NotAFunction", info, "\n", sep="")
                 } else {
-                    cat(x, "\x06", x.class, "\x06", " ", "\x06", printenv, "\x06Not a function", "\n", sep="")
+                    cat(x, "\x06", x.class, "\x06", " ", "\x06", printenv, "\x06NOT A FUNCTION", "\n", sep="")
                 }
             } else {
                 info <- ""
                 try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not a function", info, "\n", sep="")
+                if(!length(info) || info == ""){
+                    xattr <- try(attr(xx, "label"), silent = TRUE)
+                    if(!inherits(xattr, "try-error"))
+                        info <- paste0("\x08\x05", xattr)
+                }
+                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not_a_function", info, "\n", sep="")
             }
         }
     }

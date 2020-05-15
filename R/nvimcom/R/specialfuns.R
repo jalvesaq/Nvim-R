@@ -123,8 +123,8 @@ gbRd.args2txt <- function(rdo, arglist){
         # Omit \\title and sec header
         res <- res[-c(1, 2, 3, 4)]
 
-        res <- paste(res, collapse="\\N")
-        res <- sub("\\\\N$", "", res)
+        res <- paste(res, collapse=" ")
+        res <- sub(" $", "", res)
         res <- paste0("\x08", res)
         argl[[a]] <- res
     }

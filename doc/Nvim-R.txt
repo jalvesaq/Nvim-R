@@ -680,8 +680,9 @@ Vim can automatically complete the names of R objects when CTRL-X CTRL-O is
 pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
-can also show the function arguments in a separate preview window (this
-feature is disabled by default: see |R_show_args|).
+can also show the function arguments in a separate preview window in Vim and a
+float window in Neovim. You should remove "preview" from 'completopt' if you
+do not want the preview window.
 
 If a data.frame is found, while building the list of objects, the columns in
 the data.frame are added to the list. When you try to use omni completion to
@@ -961,7 +962,6 @@ of
 |R_source|            Source additional scripts
 |R_non_r_compl|       Bibliography completion
 |R_complete|          Include objects in argument completion
-|R_show_args|         Show extra information during omnicompletion
 |R_show_arg_help|     Show extra information during arguments completion
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
@@ -2026,16 +2026,9 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 
 ------------------------------------------------------------------------------
 								  *R_complete*
-								 *R_show_args*
 							     *R_show_arg_help*
 6.29. Function arguments~
 
-During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
-functions' description and usage. If you do not want the preview window,
-put in your |vimrc|:
->
-   let R_show_args = 0
-<
 When completing function arguments, objects from both R Workspace and loaded
 libraries are included in the list, but only if there no argument to complete.
 You can change this behavior in your |vimrc| as in the examples below:
@@ -3119,7 +3112,7 @@ Examples:
  * R_after_start is a list now.
  * Recommend Visidata and delete option R_csv_warn.
  * Delete command triggered by <LocalLeader>tp.
- * Delete options R_args_in_stline and R_sttline_fmt.
+ * Delete options R_args_in_stline, R_sttline_fmt and R_show_args.
 
 0.9.13 (2019-05-05)
 
