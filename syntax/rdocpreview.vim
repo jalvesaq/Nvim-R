@@ -2,7 +2,7 @@
 syntax clear
 exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/syntax/rdoc.vim"
 if has('nvim')
-    syn region rdocUsage matchgroup=NONE start="———$" matchgroup=NONE end='\t$' contains=@rdocR
+    syn region rdocUsage matchgroup=NONE start="^ " matchgroup=NONE end=' $' contains=@rdocR
     syn match rdocArg2 "^ \zs\S\{-}\ze:"
 else
     syn match rdocArg2 "^\([A-Z]\|[a-z]\|[0-9]\|\.\|_\)\{-}\ze:"

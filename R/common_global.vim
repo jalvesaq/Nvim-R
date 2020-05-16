@@ -3159,12 +3159,27 @@ let s:compl_event = {}
 
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
-    if ud['cls'] == 'function'
-        let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) .
-                    \ "\n" . repeat('—', a:width) . "\n" .
-                    \ ' ' . FormatTxt(ud['usage'], ', ', ",  \n   ", a:width) . "\t"
+
+    let info = ''
+    if ud['cls'] == 'argument'
+        let info = ' ' . FormatTxt(ud['argument'], ' ', " \n  ", a:width - 1)
     else
-        let info = ' ' . FormatTxt(ud['descr'], ' ', " \n  ", a:width - 1)
+        if ud['descr'] != ''
+            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1)
+        endif
+        if ud['cls'] == 'function'
+            if ud['descr'] != '' && ud['usage'] != ''
+                let info .= "\n————\n"
+            endif
+            if ud['usage'] != ''
+                " Function usage delimited by non separable spaces (digraph NS)
+                let info .= ' ' . FormatTxt(ud['usage'], ', ', ",  \n   ", a:width) . " "
+            endif
+        endif
+    endif
+
+    if info == ''
+        return []
     endif
     if a:needblank
         let lines = [''] + split(info, "\n") + ['']
@@ -3184,6 +3199,10 @@ function CreateNewFloat(...)
 
     " Get the required height for a standard float preview window
     let flines = FormatInfo(60, 1)
+    if len(flines) == 0
+        call CloseFloatWin()
+        return
+    endif
     let reqh = len(flines) > 15 ? 15 : len(flines)
 
     " Ensure that some variables are integers:
@@ -3283,10 +3302,20 @@ function CreateNewFloat(...)
                     let s:float_buf = nvim_create_buf(v:false, v:true)
                     call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
                 endif
+
+                " replace ———— with a complete line
+                let realwidth = 10
+                for lin in flines
+                    if strdisplaywidth(lin) > realwidth
+                        let realwidth = strdisplaywidth(lin)
+                    endif
+                endfor
+                call map(flines, 'substitute(v:val, "^————$", repeat("—", realwidth), "")')
+
                 call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, flines)
 
                 let flht = (len(flines) > maxh) ? maxh : len(flines)
-                let opts = {'relative': 'editor', 'width': flwd, 'height': flht, 'col': fcol,
+                let opts = {'relative': 'editor', 'width': realwidth, 'height': flht, 'col': fcol,
                             \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
                 let flt_win = nvim_open_win(s:float_buf, 0, opts)
             endif
@@ -3312,7 +3341,11 @@ function StartFloatWin()
     if ! pumvisible()
         return
     endif
-    if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
+    " Other plugins (example, ncm-R) fill the 'user_data' dictionary
+    if has_key(v:event, 'completed_item') &&
+                \ has_key(v:event['completed_item'], 'user_data') &&
+                \ type(v:event['completed_item']['user_data']) == v:t_dict &&
+                \ has_key(v:event['completed_item']['user_data'], 'cls')
         let s:compl_event = deepcopy(v:event)
         " Neovim doesn't allow to open a float window from here:
         call timer_start(1, 'CreateNewFloat', {})
@@ -3510,7 +3543,7 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
             endif
             if len(tmp1) > 1
                 if has('nvim')
-                    call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'user_data': {'cls': 'argument', 'descr': inf}})
+                    call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'user_data': {'cls': 'argument', 'argument': inf}})
                 else
                     let info = FormatTxt(inf, ' ', " \n ", winwidth(0))
                     call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
