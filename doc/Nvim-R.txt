@@ -326,6 +326,9 @@ or `coc-omni` for
 An alternative engine for asynchronous completion of R code is Gabriel
 Alcaras's `ncm-R` plugin: https://github.com/gaalcaras/ncm-R
 
+If you are going to try a plugin to get automatic omni completion you will
+want to set the value of |R_hi_fun_globenv| to either `1` or `2`.
+
 
 Other plugins~
 
