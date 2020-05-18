@@ -38,6 +38,10 @@ if exists('&ofu')
     endif
 endif
 
+if g:R_hi_fun_globenv == 0 && ($NCM_R != "" || count(asyncomplete#get_source_names(), 'omni'))
+    let g:R_hi_fun_globenv = 1
+endif
+
 if g:R_hi_fun_globenv == 1
     autocmd InsertEnter <buffer> call UpdateRGlobalEnv(0)
 endif
