@@ -9,6 +9,7 @@ ftplugin/rnoweb_nvimr.vim
 ftplugin/rrst_nvimr.vim
 syntax/rbrowser.vim
 syntax/rdoc.vim
+syntax/rdocpreview.vim
 syntax/rout.vim
 R/bibtex.py
 R/bibcompl.vim

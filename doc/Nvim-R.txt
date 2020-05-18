@@ -193,7 +193,7 @@ Then, open the file with either Vim or Neovim and do:
    :packadd vimball
    :so %
 <
-Finally, press the space bar a few time to ensure the installation of all
+Finally, press the space bar a few times to ensure the installation of all
 files.
 
 
@@ -961,7 +961,6 @@ of
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
 |R_non_r_compl|       Bibliography completion
-|R_complete|          Include objects in argument completion
 |R_show_arg_help|     Show extra information during arguments completion
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
@@ -1468,15 +1467,18 @@ Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
 By default, functions from `.GlobalEnv` and other environments in the
-`search()` path whose names do not start with `"package:"` are not highlighted
-to avoid the need of both nvimcom saving a temporary file with the list
-objects in these environments after each command sent to R and Nvim-R reading
-and parsing this file, which might be slow in some machines, and especially if
-R's workspace has too many objects, data.frames with too many columns or lists
-with too many elements. Anyway, if you prefer these functions highlighted, put
-in your |vimrc|:
+`search()` path whose names do not start with `"package:"` are not immediately
+highlighted to avoid the need of both nvimcom saving a temporary file with the
+list objects in these environments after each command sent to R and Nvim-R
+reading and parsing this file, which might be slow in some machines, and
+especially if R's workspace has too many objects, data.frames with too many
+columns or lists with too many elements. Anyway, if you prefer these functions
+more quickly highlighted, change the value of `R_hi_fun_globenv` to either 1
+or 2 in your |vimrc|:
 >
-   let R_hi_fun_globenv = 1
+   let R_hi_fun_globenv = 0 " Highlight only if starting omni completion
+   let R_hi_fun_globenv = 1 " Highlight after an InsertEnter event
+   let R_hi_fun_globenv = 2 " Highlight immediately
 <
 The functions from `.GlobalEnv` as well as functions from other environments
 in the search path will be highlighted when created, but the highlighting will
@@ -1494,19 +1496,19 @@ command for them in your |vimrc|, as in the example below:
 >
    hi rGlobEnvFun ctermfg=117 guifg=#87d7ff cterm=italic gui=italic
 <
+The value of `R_hi_fun_globenv` will be set to `0` if nvimcom takes more than
+500 milliseconds to create the list of objects that Nvim-R needs to find and,
+then, highlight new functions. Then, the list will be updated only when you
+manually try an omnicompletion. If you want that nvimcom be either more or
+less tolerant to delays, put a different value in your |vimrc|. Valid values
+are between 10 and 10000 milliseconds. Example:
+>
+   let R_ls_env_tol = 700
+<
 If you prefer to completely disable the syntax highlighting of R functions put
 in your |vimrc|:
 >
    let R_hi_fun = 0
-<
-On Unix systems, the highlighting of new functions created in the `.GlobalEnv`
-will be interrupted if nvimcom takes more than 500 milliseconds to create the
-list of objects that Nvim-R needs to find and, then, highlight new functions
-(this also affects `ncm-R` completion). If you want that nvimcom be either more
-or less tolerant to delays, put a different value in your |vimrc|. Valid
-values are between 10 and 10000 milliseconds. Example:
->
-   let R_ls_env_tol = 700
 <
 
 ------------------------------------------------------------------------------
@@ -2029,13 +2031,6 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 							     *R_show_arg_help*
 6.29. Function arguments~
 
-When completing function arguments, objects from both R Workspace and loaded
-libraries are included in the list, but only if there no argument to complete.
-You can change this behavior in your |vimrc| as in the examples below:
->
-   let R_complete = 1 " Include names of objects if there is no argument
-   let R_complete = 2 " Always include names of objects
-<
 During the completion of function arguments, the preview window shows R's
 documentation help for the item being completed unless you put in your
 |vimrc|:
@@ -3103,7 +3098,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-02-25)
+0.9.13.1 (2020-05-17)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
@@ -3112,7 +3107,7 @@ Examples:
  * R_after_start is a list now.
  * Recommend Visidata and delete option R_csv_warn.
  * Delete command triggered by <LocalLeader>tp.
- * Delete options R_args_in_stline, R_sttline_fmt and R_show_args.
+ * Delete options R_args_in_stline, R_sttline_fmt, R_show_args and R_complete.
 
 0.9.13 (2019-05-05)
 

@@ -775,7 +775,9 @@ function FinishStartingR()
     call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
+    call AddForDeletion(g:rplugin.tmpdir . "/toplevel_list")
     call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
     if has("win32")
         call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
     endif
@@ -805,11 +807,6 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.labelerr = FALSE)']
     endif
-    if g:R_hi_fun_globenv
-        let start_options += ['options(nvimcom.higlobfun = TRUE)']
-    else
-        let start_options += ['options(nvimcom.higlobfun = FALSE)']
-    endif
     if exists('g:R_setwidth') && g:R_setwidth == 2
         let start_options += ['options(nvimcom.setwidth = TRUE)']
     else
@@ -828,8 +825,7 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.delim = "\t")']
     endif
-    let start_options += ['options(nvimcom.lsenvtol = ' . g:R_ls_env_tol . ')',
-                \ 'options(nvimcom.source.path = "' . s:Rsource_read . '")']
+    let start_options += ['options(nvimcom.source.path = "' . s:Rsource_read . '")']
 
     let rwd = ""
     if g:R_nvim_wd == 0
@@ -2968,16 +2964,83 @@ function RVimLeave()
     endif
 endfunction
 
+" Did R finished evaluated a command?
+let s:R_task_completed = 0
+
+" Function called by nvimcom
+function RTaskCompleted()
+    let s:R_task_completed = 1
+    if g:R_hi_fun_globenv == 2
+        call UpdateRGlobalEnv(0)
+    endif
+endfunction
+
+let s:updating_globalenvlist = 0
+let s:waiting_glblnv_list = 0
+" Function called by nvimcom
+function GlblEnvUpdated(time)
+    if a:time > g:R_ls_env_tol
+        let g:R_hi_fun_globenv = 0
+    endif
+    let s:updating_globalenvlist = 0
+    if s:waiting_glblnv_list
+        if a:time == -1.0
+            " Nothing to update
+            let s:waiting_glblnv_list = 0
+        else
+            call ReadGlobalEnvList()
+        endif
+    endif
+endfunction
+
 let s:nglobfun = 0
-function CheckRGlobalEnv()
-    if g:R_hi_fun_globenv == 0
+function UpdateRGlobalEnv(block)
+    if ! s:R_task_completed
         return
     endif
-    if !filereadable(g:rplugin.tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
+    let s:R_task_completed = 0
+
+    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
         return
     endif
+
+    " Tell R to create a file listing all currently available objects in its
+    " environment. The file is necessary for omni completion.
+    call delete(g:rplugin.tmpdir . "/toplevel_list")
+
+    let s:updating_globalenvlist = 1
+    call SendToNvimcom("\x03" . $NVIMR_ID)
+
+    if g:rplugin.nvimcom_port == 0
+        sleep 500m
+        return
+    endif
+
+    if a:block
+        " We can't return from this function and wait for a message from
+        " nvimcom because omni completion in Vim/Neovim requires the list of
+        " completions as the return value of the 'omnifunc'.
+        sleep 10m
+        let ii = 0
+        let max_ii = 100 * g:R_wait_reply
+        while s:updating_globalenvlist && ii < max_ii
+            let ii += 1
+            sleep 10m
+        endwhile
+        if ii == max_ii
+            call RWarningMsg("No longer waiting...")
+            return
+        endif
+        call ReadGlobalEnvList()
+    else
+        let s:waiting_glblnv_list = 1
+    endif
+endfunction
+
+function ReadGlobalEnvList()
+    let s:toplev_objs = readfile(g:rplugin_tmpdir . '/toplevel_list')
     let s:globalenv_lines = readfile(g:rplugin.tmpdir . '/GlobalEnvList_' . $NVIMR_ID)
-    let funlist = filter(copy(s:globalenv_lines), 'v:val =~# "\x06function\x06function\x06"')
+    let funlist = filter(copy(s:globalenv_lines), 'v:val =~# "\x06function\x06"')
 
     if g:R_hi_fun_globenv == 2 && (s:nglobfun || len(funlist))
         " Completely redo the syntax highlight of .GlobalEnv functions
@@ -3009,58 +3072,7 @@ function CheckRGlobalEnv()
     endif
 endfunction
 
-function FinishBuildROmniList()
-    let s:NvimbolFinished = 1
-endfunction
-
-" Tell R to create a list of objects file listing all currently available
-" objects in its environment. The file is necessary for omni completion.
-function BuildROmniList(pattern)
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-
-    let omnilistcmd = 'nvimcom:::nvim.bol(".GlobalEnv"'
-
-    if g:R_allnames == 1
-        let omnilistcmd = omnilistcmd . ', allnames = TRUE'
-    endif
-    let omnilistcmd = omnilistcmd . ', pattern = "' . a:pattern . '")'
-
-    let s:NvimbolFinished = 0
-    call delete(g:rplugin.tmpdir . "/nvimbol_finished")
-    call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
-
-    call SendToNvimcom("\x08" . $NVIMR_ID . omnilistcmd)
-
-    if g:rplugin.nvimcom_port == 0
-        sleep 500m
-        return
-    endif
-
-    " We can't return from this function and wait for a message from nvimcom
-    " because omni completion in Vim/Neovim requires the list of completions
-    " as the return value of the 'omnifunc'.
-    sleep 10m
-    let ii = 0
-    let max_ii = 100 * g:R_wait_reply
-    while s:NvimbolFinished == 0 && ii < max_ii
-        let ii += 1
-        sleep 10m
-    endwhile
-    if ii == max_ii
-        call RWarningMsg("No longer waiting...")
-        return
-    endif
-
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        let s:globalenv_lines = []
-    else
-        let s:globalenv_lines = readfile(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
-    endif
-endfunction
-
-function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
+function RFillOmniMenu(base, newbase, prefix, pkg, olines)
     let resp = []
     let newlist = filter(copy(a:olines), 'v:val =~ a:newbase')
     for line in newlist
@@ -3088,13 +3100,13 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
         else
             let inf = ''
         endif
-        if len(a:toplev)
+        if len(s:toplev_objs) && pkg != '.GlobalEnv'
             " Do not show an object from a package if it was masked by a
             " toplevel object in .GlobalEnv
             let masked = 0
             let pkgobj = substitute(obj, "\\$.*", "", "")
             let pkgobj = substitute(pkgobj, "@.*", "", "")
-            for tplv in a:toplev
+            for tplv in s:toplev_objs
                 if tplv == pkgobj
                     let masked = 1
                     continue
@@ -3121,9 +3133,25 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines, toplev)
             let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
             let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
         endif
-        let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
-        let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
         if cls == "function"
+            if tmp[0] == "not_checked"
+                let s:ArgCompletionFinished = 0
+                call delete(g:rplugin.tmpdir . "/args_for_completion")
+                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . a:prefix . obj . '")')
+                let ii = 200
+                while ii > 0 && s:ArgCompletionFinished == 0
+                    let ii = ii - 1
+                    sleep 30m
+                endwhile
+                if filereadable(g:rplugin.tmpdir . "/args_for_completion")
+                    let tmp[0] = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
+                    call delete(g:rplugin.tmpdir . "/args_for_completion")
+                else
+                    let tmp[0] = "COULD NOT GET ARGUMENTS"
+                endif
+            endif
+            let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
+            let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
             let xx = split(tmp[0], "\x09")
             if len(xx) > 0
                 let usage = a:prefix . obj . "(" . join(xx, ', ') . ')'
@@ -3165,7 +3193,7 @@ function FormatInfo(width, needblank)
         let info = ' ' . FormatTxt(ud['argument'], ' ', " \n  ", a:width - 1)
     else
         if ud['descr'] != ''
-            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1)
+            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) . ' '
         endif
         if ud['cls'] == 'function'
             if ud['descr'] != '' && ud['usage'] != ''
@@ -3380,6 +3408,7 @@ function RGetNewBase(base)
     return [newbase, prefix, pkg]
 endfunction
 
+let s:toplev_objs = []
 function GetRCompletion(base)
     let resp = []
 
@@ -3401,14 +3430,9 @@ function GetRCompletion(base)
     endif
 
     if pkg == ""
-        call BuildROmniList(a:base)
-        let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, s:globalenv_lines, [])
-        if filereadable(g:rplugin.tmpdir . "/nvimbol_finished")
-            let toplev = readfile(g:rplugin.tmpdir . "/nvimbol_finished")
-        else
-            let toplev = []
-        endif
-        let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines, toplev)
+        call UpdateRGlobalEnv(1)
+        let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, s:globalenv_lines)
+        let resp += RFillOmniMenu(a:base, newbase, prefix, pkg, g:rplugin_omni_lines)
     else
         let omf = split(globpath(g:rplugin.compldir, 'omnils_' . pkg . '_*'), "\n")
         if len(omf) == 1
@@ -3416,7 +3440,7 @@ function GetRCompletion(base)
             if len(olines) == 0 || (len(olines) == 1 && len(olines[0]) < 3)
                 return resp
             endif
-            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, olines, [])
+            let resp = RFillOmniMenu(a:base, newbase, prefix, pkg, olines)
         else
             call add(resp, {'word': a:base, 'menu': ' [ List is empty. Was "' . pkg . '" library ever loaded? ]'})
         endif
@@ -3494,7 +3518,6 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
     endif
     let msg .= ')'
     let s:ArgCompletionFinished = 0
-    call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
     let ii = 200
@@ -3656,11 +3679,12 @@ function CompleteR(findstart, base)
                     endif
                 endif
 
-                " If R is running, use it
-                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                    let argls = GetRArgs1(a:base, rkeyword0, firstobj, pkg)
-                else
+                " If R is running, use it but not for functions created at
+                " .GlobalEnv because they will not be documented.
+                if string(g:SendCmdToR) == "function('SendCmdToR_fake')" || count(s:toplev_objs, rkeyword0)
                     let argls = GetRArgs0(a:base, rkeyword)
+                else
+                    let argls = GetRArgs1(a:base, rkeyword0, firstobj, pkg)
                 endif
                 break
             endif
@@ -3675,9 +3699,7 @@ function CompleteR(findstart, base)
                 let nl +=1
             endif
         endwhile
-        if g:R_complete == 2 || len(argls) == 0
-            let argls += GetRCompletion(s:argkey)
-        endif
+        let argls += GetRCompletion(s:argkey)
         let s:is_completing = 1
         return argls
     endif
@@ -3783,7 +3805,6 @@ let g:rplugin.is_darwin = system("uname") =~ "Darwin"
 
 " Variables whose default value is fixed
 let g:R_allnames          = get(g:, "R_allnames",           0)
-let g:R_complete          = get(g:, "R_complete",           1)
 let g:R_rmhidden          = get(g:, "R_rmhidden",           0)
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
@@ -3849,6 +3870,10 @@ endif
 let g:R_editing_mode = get(g:, "R_editing_mode", s:editing_mode)
 unlet s:editing_mode
 
+if g:R_ls_env_tol < 10 || g:R_ls_env_tol > 10000
+    let g:R_ls_env_tol = 500
+endif
+
 if has('win32') && !g:R_in_buffer
     " Sending multiple lines at once to Rgui on Windows does not work.
     let g:R_parenblock = get(g:, 'R_parenblock',         0)
@@ -3869,11 +3894,6 @@ let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
 let g:R_indent_commented = get(g:, "R_indent_commented",            1)
-
-if g:R_complete != 1 && g:R_complete != 2
-    let R_complete = 1
-    call RWarningMsg("Valid values for 'R_complete' are 1 and 2. Please, fix your vimrc.")
-endif
 
 if g:rplugin.is_darwin
     let g:R_openpdf = get(g:, "R_openpdf", 1)
@@ -4199,4 +4219,18 @@ endif
 " 2018-03-31
 if exists('g:R_tmux_split')
     call RWarningMsg('The option R_tmux_split no longer exists. Please see https://github.com/jalvesaq/Nvim-R/blob/master/R/tmux_split.md')
+endif
+
+" 2020-05-18
+if exists('g:R_complete')
+    call RWarningMsg("The option 'R_complete' no longer exists.")
+endif
+if exists('R_args_in_stline')
+    call RWarningMsg("The option 'R_args_in_stline' no longer exists.")
+endif
+if exists('R_sttline_fmt')
+    call RWarningMsg("The option 'R_sttline_fmt' no longer exists.")
+endif
+if exists('R_show_args')
+    call RWarningMsg("The option 'R_show_args' no longer exists.")
 endif

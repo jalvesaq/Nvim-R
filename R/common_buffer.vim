@@ -38,6 +38,10 @@ if exists('&ofu')
     endif
 endif
 
+if g:R_hi_fun_globenv == 1
+    autocmd InsertEnter <buffer> call UpdateRGlobalEnv(0)
+endif
+
 " Set the name of the Object Browser caption if not set yet
 let s:tnr = tabpagenr()
 if !exists("b:objbrtitle")

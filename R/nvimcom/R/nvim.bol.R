@@ -88,13 +88,13 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
             if(curlevel == 0){
                 if(nvim.grepl("GlobalEnv", printenv)){
                     cat(x, "\x06function\x06function\x06", printenv, "\x06",
-                        nvim.args(x, txt = "", spath = spath), "\n", sep = "")
+                        nvim.args(x, spath = spath), "\n", sep = "")
                 } else {
                     info <- ""
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
                     cat(x, "\x06function\x06function\x06", printenv, "\x06",
-                        nvim.args(x, txt = "", pkg = printenv, spath = spath), info, "\n", sep = "")
+                        nvim.args(x, pkg = printenv, spath = spath), info, "\n", sep = "")
                 }
             } else {
                 # some libraries have functions as list elements
@@ -276,42 +276,14 @@ CleanOmnils <- function(f)
     writeLines(x, f)
 }
 
-
 # Build Omni List
-nvim.bol <- function(omnilist, packlist, allnames = FALSE, pattern = "", sendmsg = 1) {
+nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     nvim.OutDec <- getOption("OutDec")
     on.exit(options(nvim.OutDec))
     options(OutDec = ".")
 
     if(!missing(packlist) && is.null(NvimcomEnv$pkgdescr[[packlist]]))
         GetFunDescription(packlist)
-
-    if(omnilist == ".GlobalEnv"){
-        sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/GlobalEnvList_", Sys.getenv("NVIMR_ID")), append = FALSE)
-        for(env in search()){
-            if(grepl("^package:", env) == FALSE){
-                obj.list <- objects(env, all.names = allnames)
-                l <- length(obj.list)
-                maxlevel <- nchar(pattern) - nchar(gsub("@", "", gsub("\\$", "", pattern)))
-                pattern <- sub("\\$.*", "", pattern)
-                pattern <- sub("@.*", "", pattern)
-                if(l > 0)
-                    for(obj in obj.list)
-                        if(length(grep(paste0("^", pattern), obj)) > 0)
-                            nvim.omni.line(obj, env, env, 0, maxlevel, spath = TRUE)
-            }
-        }
-        sink()
-        writeLines(text = paste(obj.list, collapse = "\n"),
-                   con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
-        flush(stdout())
-        if(sendmsg == 1){
-            .C("nvimcom_msg_to_nvim", "FinishBuildROmniList()", PACKAGE = "nvimcom")
-        } else if(sendmsg == 2){
-            .C("nvimcom_msg_to_nvim", "CheckRGlobalEnv()", PACKAGE = "nvimcom")
-        }
-        return(invisible(NULL))
-    }
 
     if(getOption("nvimcom.verbose") > 3)
         cat("Building files with lists of objects in loaded packages for",

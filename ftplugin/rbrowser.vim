@@ -39,7 +39,10 @@ endif
 " Current view of the object browser: .GlobalEnv X loaded libraries
 let g:rplugin.curview = "GlobalEnv"
 
-function! UpdateOB(what)
+function! UpdateOB(what, time)
+    if a:time > g:R_ls_env_tol
+        call RWarningMsg(a:time . ' milliseconds to update the Object Browser')
+    endif
     if a:what == "both"
         let wht = g:rplugin.curview
     else
