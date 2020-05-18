@@ -3329,6 +3329,11 @@ function CreateNewFloat(...)
                 if !exists('s:float_buf')
                     let s:float_buf = nvim_create_buf(v:false, v:true)
                     call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+                    call setbufvar(s:float_buf, '&buftype', 'nofile')
+                    call setbufvar(s:float_buf, '&bufhidden', 'hide')
+                    call setbufvar(s:float_buf, '&swapfile', 0)
+                    call setbufvar(s:float_buf, '&tabstop', 2)
+                    call setbufvar(s:float_buf, '&undolevels', -1)
                 endif
 
                 " replace ———— with a complete line
@@ -3346,6 +3351,14 @@ function CreateNewFloat(...)
                 let opts = {'relative': 'editor', 'width': realwidth, 'height': flht, 'col': fcol,
                             \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
                 let flt_win = nvim_open_win(s:float_buf, 0, opts)
+                call setwinvar(flt_win, '&list', 0)
+                call setwinvar(flt_win, '&wrap', 1)
+                call setwinvar(flt_win, '&number', 0)
+                call setwinvar(flt_win, '&relativenumber', 0)
+                call setwinvar(flt_win, '&cursorcolumn', 0)
+                call setwinvar(flt_win, '&cursorline', 0)
+                call setwinvar(flt_win, '&colorcolumn', 0)
+                call setwinvar(flt_win, '&signcolumn', 'no')
             endif
         endif
     endif
