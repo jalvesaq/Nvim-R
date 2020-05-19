@@ -58,17 +58,6 @@ endif
 
 let g:R_R_window_title = "R Console"
 
-function SetRtoolsPath()
-    let s:oldpath = $PATH
-    if exists("g:Rtools_bin_path") && $PATH !~ g:Rtools_bin_path
-        let $PATH = g:Rtools_bin_path . ';' . $PATH
-    endif
-endfunction
-
-function UnSetRtoolsPath()
-    let $PATH = s:oldpath
-endfunction
-
 function CheckRtools()
     if s:rtpath == ""
         call RWarningMsg('Is Rtools installed?')
@@ -164,19 +153,7 @@ function SendCmdToR_Windows(...)
     return 1
 endfunction
 
-if exists("g:Rtools_bin_path")
-    if isdirectory("g:Rtools_bin_path")
-        if !filereadable(g:Rtools_bin_path . "\\gcc.exe")
-            call RWarningMsg('Could not find "gcc.exe" in "' . g:Rtools_bin_path . '"')
-        endif
-    else
-        call RWarningMsg('Check the value of Rtools_bin_path in your vimrc. "' . g:Rtools_bin_path . '" is not a directory.')
-    endif
-else
-    call RWarningMsg("Please, set the value Rtools_bin_path in your vimrc")
-endif
-
 " 2020-05-19
 if exists("g:Rtools_path")
-    call RWarningMsg('The variable "Rtools_path" is no longer used. Please, see the help on "Rtools_bin_path".')
+    call RWarningMsg('The variable "Rtools_path" is no longer used.')
 endif

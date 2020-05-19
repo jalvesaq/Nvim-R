@@ -131,6 +131,8 @@ Main dependencies:~
 
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
+       You may also have to set the `PATH` environment variable in your
+       |vimrc| (see |Rtools-path|).
 
 
 Additional dependencies for editing Rnoweb documents:~
@@ -906,7 +908,6 @@ of
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
 |R_set_home_env|      Set the value of $HOME for R (Windows only)
-|Rtools_path|         Path to Rtools
 |R_save_win_pos|      Save positions of R and GVim windows (Windows only)
 |R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
 |R_assign|            Convert '_' into ' <- '
@@ -1169,17 +1170,16 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							         *Rtools_path*
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 							      *R_set_home_env*
 6.3. Windows specific options~
-
-Nvim-R will try to find the path to Rtools installation and add it to the
-beginning of the `PATH` environment variable. If it cannot find the path, or
-if it takes too long to find it, you can put in your |vimrc|:
+								 *Rtools-path*
+If R cannot find either `make` or `gcc` while trying to compile nvimcom, you
+should add their directories to the beginning of the `PATH` environment
+variable in your |vimrc|:
 >
-   let Rtools_path = "C:\\Rtools"
+   let $PATH = "c:\\rtools40\\usr\\bin;c:\\rtools40\\mingw64\\bin;" . $PATH
 <
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
@@ -3101,7 +3101,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-05-17)
+0.9.13.1 (2020-05-19)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
@@ -3110,7 +3110,8 @@ Examples:
  * R_after_start is a list now.
  * Recommend Visidata and delete option R_csv_warn.
  * Delete command triggered by <LocalLeader>tp.
- * Delete options R_args_in_stline, R_sttline_fmt, R_show_args and R_complete.
+ * Delete options R_args_in_stline, R_sttline_fmt, R_show_args, R_complete and
+   Rtools_path.
 
 0.9.13 (2019-05-05)
 

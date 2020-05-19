@@ -583,9 +583,7 @@ function CheckNvimcomVersion()
             return 0
         else
             if has("win32")
-                call SetRtoolsPath()
                 let g:rplugin.debug_info['CMD_INSTALL'] = system(g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz")
-                call UnSetRtoolsPath()
             else
                 let g:rplugin.debug_info['CMD_INSTALL'] = system(g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . s:required_nvimcom . ".tar.gz")
             endif
@@ -3170,7 +3168,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
                 let descr = substitute(descr, "\x91", "\xe2\x80\x98", "g")
                 let descr = substitute(descr, "\x92", "\xe2\x80\x99", "g")
             endif
-            if cls = 'function'
+            if cls == 'function'
                 let info = FormatTxt("Description: " . descr, ' ', " \n ", winwidth(0)) . "\n"
                             \ FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
             else
