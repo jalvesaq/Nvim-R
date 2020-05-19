@@ -39,7 +39,10 @@ endif
 " Current view of the object browser: .GlobalEnv X loaded libraries
 let g:rplugin.curview = "GlobalEnv"
 
-function! UpdateOB(what)
+function! UpdateOB(what, time)
+    if a:time > g:R_ls_env_tol
+        call RWarningMsg(a:time . ' milliseconds to update the Object Browser')
+    endif
     if a:what == "both"
         let wht = g:rplugin.curview
     else
@@ -65,6 +68,19 @@ function! UpdateOB(what)
         let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     else
         let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
+        if filereadable(g:rplugin.compldir . "/pack_descriptions")
+            let pd = readfile(g:rplugin.compldir . "/pack_descriptions")
+            for idx in range(len(fcntt))
+                for line in pd
+                    let pkgnm = substitute(fcntt[idx], '.*##\(\S*\)\t', '\1', '')
+                    let tmp = split(line, "\x09")
+                    if pkgnm == tmp[0]
+                        let fcntt[idx] .= tmp[1]
+                        break
+                    endif
+                endfor
+            endfor
+        endif
     endif
     if exists("*nvim_buf_set_lines")
         let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)

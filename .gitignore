@@ -3,6 +3,7 @@ R/nvimcom/src/*.o
 R/nvimcom/src/apps/*.o
 R/nvimcom/src/*.so
 R/nvimcom/src/*.dll
+R/nvimcom/src/compile_flags.txt
 R/nvimcom/src/apps/*.o
 R/nvimcom/src/apps/*.so
 R/nvimcom/src/apps/*.dll

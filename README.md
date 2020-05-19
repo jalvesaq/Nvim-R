@@ -5,19 +5,23 @@ R code.
 
 ## Installation
 
-If you use a plugin manager, such as [vim-plug], [Vundle] or [Pathogen],
-follow its instructions on how to install plugins from github.
+If you use a plugin manager, such as [vim-plug], follow its instructions on
+how to install plugins from github.
 
 To install a stable version of the plugin, either download the Vim package from
 [Nvim-R/releases](https://github.com/jalvesaq/Nvim-R/releases)
 or the Vimball from
 [vim.org](http://www.vim.org/scripts/script.php?script_id=2628).
 
-Please, read the section *Installation* from the
-[plugin's documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
+Please, read the section *Installation* from the plugin's
+[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
 for details.
 
-Please, read the plugin's documentation for instructions on usage.
+## Usage
+
+Please, read the plugin's
+[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
+for instructions on usage.
 
 
 ## Screenshots
@@ -27,7 +31,7 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
    1. The editor has some code to load Afrobarometer data on Mozambique, R is
       running below the editor and the Object Browser is on the right side. On
       the R Console, we can see messages inform some packages were loaded. The
-      messages are in blue because they were colorized by the package
+      messages are in magenta because they were colorized by the package
       [colorout].
 
    2. When the command `library("foreign")` is sent to R, the string *read.spss*
@@ -35,15 +39,16 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
       (the Vim color scheme used is [southernlights]).
 
    3. When Mozambique's data.frame is created, it is automatically displayed
-      in the Object Browser. Messages about unrecognized types are in blue
+      in the Object Browser. Messages about unrecognized types are in magenta
       because they were sent to *stderr*, and the line *Warning messages* is in
       red because colorout recognized it as a warning.
 
    4. When the "label" attributes are applied to the data.frame elements, the
       labels show up in the Object Browser.
 
-   5. The last slide shows the output of `summary`. It also features omni
-      completion in action: we can see the elements of *m* that start with "D".
+   5. The next images show results of omni completion.
+
+   6. The last slide shows the output of `summary`.
 
 ![Nvim-R screenshots](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/Nvim-R.gif "Nvim-R screenshots")
 
@@ -87,8 +92,6 @@ shows the three paths of communication between Vim/Neovim and R:
 ![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
 
 [vim-plug]: https://github.com/junegunn/vim-plug
-[Vundle]: https://github.com/gmarik/Vundle.vim
-[Pathogen]: https://github.com/tpope/vim-pathogen
 [Neovim]: https://github.com/neovim/neovim
 [southernlights]: https://github.com/jalvesaq/southernlights
 [colorout]: https://github.com/jalvesaq/colorout

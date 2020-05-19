@@ -28,10 +28,8 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.allnames = FALSE)
         options(nvimcom.texerrs = TRUE)
         options(nvimcom.labelerr = TRUE)
-        options(nvimcom.higlobfun = TRUE)
         options(nvimcom.setwidth = TRUE)
         options(nvimcom.nvimpager = TRUE)
-        options(nvimcom.lsenvtol = 500)
         options(nvimcom.delim = "\t")
     }
     if(getOption("nvimcom.nvimpager"))
@@ -48,17 +46,12 @@ NvimcomEnv$pkgdescr <- list()
 
     if(interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != ""){
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
-        if(as.integer(getOption("nvimcom.lsenvtol")) < 10)
-            options(nvimcom.lsenvtol = 10)
-        if(as.integer(getOption("nvimcom.lsenvtol")) > 10000)
-            options(nvimcom.lsenvtol = 10000)
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.opendf")),
            as.integer(getOption("nvimcom.openlist")),
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.labelerr")),
-           as.integer(getOption("nvimcom.higlobfun")),
            as.integer(getOption("nvimcom.setwidth")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),
@@ -68,7 +61,6 @@ NvimcomEnv$pkgdescr <- list()
                   getOption("continue"),
                   paste(.packages(), collapse = " "),
                   sep = "\x02"),
-           as.integer(getOption("nvimcom.lsenvtol")),
            PACKAGE="nvimcom")
     }
 }

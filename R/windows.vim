@@ -58,58 +58,6 @@ endif
 
 let g:R_R_window_title = "R Console"
 
-function SetRtoolsPath()
-    let s:oldpath = $PATH
-    " Ensure that the first gcc in the PATH will be capable of building both 32
-    " and 64 bit binaries
-    if exists("g:Rtools_path")
-        let s:rtpath = g:Rtools_path
-    else
-        let s:rtpath = ""
-        let wgcc = split(system("where gcc"), "\n")
-        if len(wgcc) > 0 && wgcc[0] !~ "Rtools"
-            let path = split($PATH, ";")
-            for pth in path
-                if pth =~ "Rtools"
-                    let s:rtpath = substitute(pth, "Rtools.*", "Rtools", "")
-                    break
-                endif
-            endfor
-        endif
-        let g:rplugin.debug_info["Rtools where gcc"] = s:rtpath
-        if s:rtpath != "" && !isdirectory(s:rtpath)
-            let s:rtpath = ""
-        endif
-        if s:rtpath == "" && executable("wmic")
-            let dstr = system("wmic logicaldisk get name")
-            let dstr = substitute(dstr, "\001", "", "g")
-            let dstr = substitute(dstr, " ", "", "g")
-            let dlst = split(dstr, "\r\n")
-            for lttr in dlst
-                if lttr =~ ":" && isdirectory(lttr . "\\Rtools")
-                    let s:rtpath = lttr . "\\Rtools"
-                    break
-                endif
-            endfor
-            let g:rplugin.debug_info["Rtools wmic"] = s:rtpath
-        endif
-    endif
-    if s:rtpath != ""
-        let gccpath = globpath(s:rtpath, "gcc*")
-        if gccpath == ""
-            let $PATH = s:rtpath . "\\bin;" .s:rtpath . "\\mingw_64\\bin;" .  s:rtpath . "\\mingw_32\\bin;" . $PATH
-        else
-            let $PATH = s:rtpath . "\\bin;" . gccpath . "\\bin;" . $PATH
-        endif
-        let g:rplugin.debug_info["Rtools new PATH"] = $PATH
-    endif
-    let s:rtpath = substitute(s:rtpath, "\\", "/", "g")
-endfunction
-
-function UnSetRtoolsPath()
-    let $PATH = s:oldpath
-endfunction
-
 function CheckRtools()
     if s:rtpath == ""
         call RWarningMsg('Is Rtools installed?')
@@ -204,3 +152,8 @@ function SendCmdToR_Windows(...)
     call JobStdin(g:rplugin.jobs["ClientServer"], "\003" . cmd)
     return 1
 endfunction
+
+" 2020-05-19
+if exists("g:Rtools_path")
+    call RWarningMsg('The variable "Rtools_path" is no longer used.')
+endif

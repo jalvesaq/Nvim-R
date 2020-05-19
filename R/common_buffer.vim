@@ -38,6 +38,18 @@ if exists('&ofu')
     endif
 endif
 
+" Plugins that automatically run omni completion will work better if they
+" don't have to wait for the omni list to be built.
+if g:R_hi_fun_globenv == 0 &&
+            \ ($NCM_R != "" ||
+            \ (exists('*asyncomplete#get_source_names') && count(asyncomplete#get_source_names(), 'omni')))
+    let g:R_hi_fun_globenv = 1
+endif
+
+if g:R_hi_fun_globenv == 1
+    autocmd InsertEnter <buffer> call UpdateRGlobalEnv(0)
+endif
+
 " Set the name of the Object Browser caption if not set yet
 let s:tnr = tabpagenr()
 if !exists("b:objbrtitle")
@@ -69,6 +81,8 @@ endif
 if exists("*RCheckLibList") && !exists("*nvim_buf_set_option")
     autocmd BufEnter <buffer> call RCheckLibList()
 endif
+
+autocmd! InsertLeave <buffer> if pumvisible() == 0 | pclose | endif
 
 if g:R_assign == 3
     iabb <buffer> _ <-

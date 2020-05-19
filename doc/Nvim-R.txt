@@ -131,6 +131,8 @@ Main dependencies:~
 
      - On Windows, you have to install Rtools to be able to build the package:
        https://cran.r-project.org/bin/windows/Rtools/
+       You may also have to set the `PATH` environment variable in your
+       |vimrc| (see |Rtools-path|).
 
 
 Additional dependencies for editing Rnoweb documents:~
@@ -193,7 +195,7 @@ Then, open the file with either Vim or Neovim and do:
    :packadd vimball
    :so %
 <
-Finally, press the space bar a few time to ensure the installation of all
+Finally, press the space bar a few times to ensure the installation of all
 files.
 
 
@@ -283,22 +285,16 @@ during R Startup.
 ------------------------------------------------------------------------------
 3.4. Optional steps~
 
-Customize the plugin~
+The plugin should work without the need of any configuration right after
+installed, but if you do not like how the plugin works, you could look at the
+section  |Nvim-R-options| to see if there is an option that could make you
+happier.
 
-Please read the section |Nvim-R-options|. Emacs/ESS users should also read
-|ft-r-indent|.
+You can also install additional plugins to get more useful functionality to
+edit R code. Below are some suggestions.
 
 
-Install additional plugins~
-
-You may be interested in installing additional general plugins to get
-functionality not provided by this file type plugin, such as vim-signature.
-Please read |Nvim-R-tips| for details.
-
-Gabriel Alcaras's plugin for asynchronous R completion:
-https://github.com/gaalcaras/ncm-R
-It will slowdown R if its workspace has too many objects, data.frames with too
-many columns or lists with too many elements (see |R_ls_env_tol|).
+VOoM - Outliner~
 
 To use VOoM as outliner for Rmd documents, you should configure it to use the
 "pandoc" engine for outlining the structure of Rmd documents, and "latex" for
@@ -308,15 +304,39 @@ Rnoweb ones. Example:
 <
 You can install VOoM from: https://github.com/vim-voom/VOoM
 
+
+Zotero - zotcite~
+
 If you use RMarkdown to write academic papers and Zotero for reference
 management, you may want to try zotcite: https://github.com/jalvesaq/zotcite
 
-See https://github.com/w0rp/ale if you want a syntax checker.
 
-If you edit Rnoweb files, you may want to try LaTeX-Box for omnicompletion of
-LaTeX code (see |Nvim-R-latex-box| for details).
+Auto omni completion~
 
-Note: Some of vim-latex keybindings might clash with Nvim-R ones.
+Nvim-R provides omni completion for R code, but it does not offer suggestions
+of completion while you type. Auto completion might slowdown R if its
+workspace has too many objects, data.frames with too many columns or lists
+with too many elements (see |R_ls_env_tol|). Anyway, if you want to try auto
+completion, you should install an additional plugin for this, for example:
+
+   https://github.com/yami-beta/asyncomplete-omni.vim
+
+or `coc-omni` for
+
+   https://github.com/neoclide/coc.nvim
+
+An alternative engine for asynchronous completion of R code is Gabriel
+Alcaras's `ncm-R` plugin: https://github.com/gaalcaras/ncm-R
+
+If you are going to try a plugin to get automatic omni completion you will
+want to set the value of |R_hi_fun_globenv| to either `1` or `2`.
+
+
+Other plugins~
+
+You may be interested in installing additional general plugins such as
+vim-signature. Please read |Nvim-R-tips| for more suggestions of further
+customization.
 
 
 ==============================================================================
@@ -665,8 +685,9 @@ Vim can automatically complete the names of R objects when CTRL-X CTRL-O is
 pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
-can also show the function arguments in a separate preview window (this
-feature is disabled by default: see |R_show_args|).
+can also show the function arguments in a separate preview window in Vim and a
+float window in Neovim. You should remove "preview" from 'completopt' if you
+do not want the preview window.
 
 If a data.frame is found, while building the list of objects, the columns in
 the data.frame are added to the list. When you try to use omni completion to
@@ -887,7 +908,6 @@ of
 |R_term_cmd|          Complete command to open an external terminal
 |R_silent_term|       Do not show terminal errors
 |R_set_home_env|      Set the value of $HOME for R (Windows only)
-|Rtools_path|         Path to Rtools
 |R_save_win_pos|      Save positions of R and GVim windows (Windows only)
 |R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
 |R_assign|            Convert '_' into ' <- '
@@ -945,10 +965,7 @@ of
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
 |R_non_r_compl|       Bibliography completion
-|R_complete|          Include objects in argument completion
-|R_show_args|         Show extra information during omnicompletion
 |R_show_arg_help|     Show extra information during arguments completion
-|R_args_in_stline|    Set 'statusline' to function arguments
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
 |R_nvim_wd|           Start R in Vim's working directory
@@ -1153,17 +1170,16 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							         *Rtools_path*
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 							      *R_set_home_env*
 6.3. Windows specific options~
-
-Nvim-R will try to find the path to Rtools installation and add it to the
-beginning of the `PATH` environment variable. If it cannot find the path, or
-if it takes too long to find it, you can put in your |vimrc|:
+								 *Rtools-path*
+If R cannot find either `make` or `gcc` while trying to compile nvimcom, you
+should add their directories to the beginning of the `PATH` environment
+variable in your |vimrc|:
 >
-   let Rtools_path = "C:\\Rtools"
+   let $PATH = "c:\\rtools40\\usr\\bin;c:\\rtools40\\mingw64\\bin;" . $PATH
 <
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
@@ -1454,15 +1470,18 @@ Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
 By default, functions from `.GlobalEnv` and other environments in the
-`search()` path whose names do not start with `"package:"` are not highlighted
-to avoid the need of both nvimcom saving a temporary file with the list
-objects in these environments after each command sent to R and Nvim-R reading
-and parsing this file, which might be slow in some machines, and especially if
-R's workspace has too many objects, data.frames with too many columns or lists
-with too many elements. Anyway, if you prefer these functions highlighted, put
-in your |vimrc|:
+`search()` path whose names do not start with `"package:"` are not immediately
+highlighted to avoid the need of both nvimcom saving a temporary file with the
+list objects in these environments after each command sent to R and Nvim-R
+reading and parsing this file, which might be slow in some machines, and
+especially if R's workspace has too many objects, data.frames with too many
+columns or lists with too many elements. Anyway, if you prefer these functions
+more quickly highlighted, change the value of `R_hi_fun_globenv` to either 1
+or 2 in your |vimrc|:
 >
-   let R_hi_fun_globenv = 1
+   let R_hi_fun_globenv = 0 " Highlight only if starting omni completion
+   let R_hi_fun_globenv = 1 " Highlight after an InsertEnter event
+   let R_hi_fun_globenv = 2 " Highlight immediately
 <
 The functions from `.GlobalEnv` as well as functions from other environments
 in the search path will be highlighted when created, but the highlighting will
@@ -1480,19 +1499,19 @@ command for them in your |vimrc|, as in the example below:
 >
    hi rGlobEnvFun ctermfg=117 guifg=#87d7ff cterm=italic gui=italic
 <
+The value of `R_hi_fun_globenv` will be set to `0` if nvimcom takes more than
+500 milliseconds to create the list of objects that Nvim-R needs to find and,
+then, highlight new functions. Then, the list will be updated only when you
+manually try an omnicompletion. If you want that nvimcom be either more or
+less tolerant to delays, put a different value in your |vimrc|. Valid values
+are between 10 and 10000 milliseconds. Example:
+>
+   let R_ls_env_tol = 700
+<
 If you prefer to completely disable the syntax highlighting of R functions put
 in your |vimrc|:
 >
    let R_hi_fun = 0
-<
-On Unix systems, the highlighting of new functions created in the `.GlobalEnv`
-will be interrupted if nvimcom takes more than 500 milliseconds to create the
-list of objects that Nvim-R needs to find and, then, highlight new functions
-(this also affects `ncm-R` completion). If you want that nvimcom be either more
-or less tolerant to delays, put a different value in your |vimrc|. Valid
-values are between 10 and 10000 milliseconds. Example:
->
-   let R_ls_env_tol = 700
 <
 
 ------------------------------------------------------------------------------
@@ -2012,24 +2031,9 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 
 ------------------------------------------------------------------------------
 								  *R_complete*
-								 *R_show_args*
 							     *R_show_arg_help*
-							    *R_args_in_stline*
 6.29. Function arguments~
 
-During omni completion, triggered by CTRL-X CTRL-O, a preview window shows
-functions' description and usage. If you do not want the preview window,
-put in your |vimrc|:
->
-   let R_show_args = 0
-<
-When completing function arguments, objects from both R Workspace and loaded
-libraries are included in the list, but only if there no argument to complete.
-You can change this behavior in your |vimrc| as in the examples below:
->
-   let R_complete = 1 " Include names of objects if there is no argument
-   let R_complete = 2 " Always include names of objects
-<
 During the completion of function arguments, the preview window shows R's
 documentation help for the item being completed unless you put in your
 |vimrc|:
@@ -2038,35 +2042,6 @@ documentation help for the item being completed unless you put in your
 <
 You can also completely disable the preview window by setting 'completeopt'
 without the `preview` string.
-
-If you want that function arguments are displayed in Vim's status line when
-you insert `(`, put in your |vimrc|:
->
-   let R_args_in_stline = 1
-<
-The status line is restored when you either type `)` or leave Insert mode.
-This option is useful only if the window has a status line (see 'laststatus').
-If the string with the list of arguments is longer than the status line width,
-the list is not displayed completely. This argument is incompatible with most
-plugins that changes the status line. It is also incompatible with any plugin
-that automatically closes parentheses. Functions of .GlobalEnv do not have
-their arguments displayed. You can change the appearance of the status line by
-setting the `R_sttline_fmt` (default value = `"%fun(%args)"`, where `%fun` is
-replaced by the function name and `%args` by the list of arguments). See
-'statusline' to know how to format the status line. The example below put some
-colors in the status line (see |highlight-groups|):
->
-   let R_sttline_fmt = '%#Function#%fun%#Delimiter#(%#Normal#%args%#Delimiter#)'
-<
-If you knew Vim Language, you could look at the Nvim-R source code (file
-`R/common_global.vim`) and set the value of `R_set_sttline_cmd`. The example
-below sets the color of individual arguments' names to the highlight group
-`Special`:
->
-   let R_sttline_fmt = '%#Function#%fun%#Normal#(%args)'
-   let R_set_sttline_cmd = "let sline = substitute(sline, " .
-           \ "'\\( \\|(\\)\\(\\w\\.*\\w*\\.*\\w*\\)\\(=*\\)\\(.\\{-}\\)\\([,)]\\)', " .
-           \ "'\\1%#Special#\\2%#Normal#\\3\\4\\5', 'g')"
 
 
 ------------------------------------------------------------------------------
@@ -2562,6 +2537,8 @@ And if you want to quit automatically when quiting Vim, put in your |vimrc|
 Yes. In Normal mode do `:RStop` and Vim will send SIGINT to R which is the
 same signal sent when you press CTRL-C into R's Console.
 
+If R does not quit, you can kill it with the `:RKill` command.
+
 
 ------------------------------------------------------------------------------
 9.3. Html help and custom pager~
@@ -2769,10 +2746,9 @@ lines in your `~/.Rprofile` if you are using Linux:
 <
 The `X11.options()` is used to choose the position and dimensions of the X11
 graphical device. You can also install the application wmctrl and create
-shortcuts in your desktop environment to the commands
+shortcuts in your desktop environment to the command:
 >
-   wmctrl -r "R Graphics" -b add,above
-   wmctrl -r "R Graphics" -b remove,above
+   wmctrl -r "R Graphics" -b toggle,above
 <
 which will toggle the "always on top" state of the X11 device window.
 Alternatively, you can right click on the X11 device window title bar and
@@ -3125,7 +3101,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-02-25)
+0.9.13.1 (2020-05-19)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
@@ -3134,6 +3110,8 @@ Examples:
  * R_after_start is a list now.
  * Recommend Visidata and delete option R_csv_warn.
  * Delete command triggered by <LocalLeader>tp.
+ * Delete options R_args_in_stline, R_sttline_fmt, R_show_args, R_complete and
+   Rtools_path.
 
 0.9.13 (2019-05-05)
 

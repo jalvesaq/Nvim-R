@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -26,7 +27,6 @@
 #include <netdb.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sys/time.h>
 #endif
 
 static char nvimcom_version[32];
@@ -46,22 +46,27 @@ static int needsfillmsg = 0;
 static int openclosel = 0;
 static char edsrvr[128];
 static char nvimsecr[128];
+
 static char liblist[576];
 static char globenv[576];
+static char glbnvls[576];
+
+static char *glbnvbuf1;
+static char *glbnvbuf2;
+static int glbnvbufzise = 4096;
+
 static char *obbrbuf1;
 static char *obbrbuf2;
 static int obbrbufzise = 4096;
+
 static char strL[16];
 static char strT[16];
 static char tmpdir[512];
 static char nvimcom_home[1024];
 static char r_info[1024];
 static int objbr_auto = 0; // 0 = Nothing; 1 = .GlobalEnv; 2 = Libraries
-static int envls_auto = 0; // Continuously update $NVIMR_TMPDIR/GlobalEnvList_ for the ncm-R plugin
-static int hifun = 0;      // Send message to Nvim-R to highlight GlobalEnv functions
 static int setwidth = 0;   // Set the option width after each command is executed
 static int oldcolwd = 0;   // Last set width
-static long int lsenv_tol = 500000; // Tolerance to delay caused by building GlobalEnvList_
 
 #ifdef WIN32
 static int r_is_busy = 1;
@@ -100,25 +105,25 @@ static int sfd = -1;
 static pthread_t tid;
 #endif
 
-char *nvimcom_strcat(char* dest, const char* src)
+static char *nvimcom_strcat(char* dest, const char* src)
 {
     while(*dest) dest++;
     while((*dest++ = *src++));
     return --dest;
 }
 
-char *nvimcom_grow_obbrbuf()
+static char *nvimcom_grow_buffers(char **b1, char **b2, int *bsize)
 {
-    obbrbufzise += 4096;
-    char *tmp = (char*)calloc(obbrbufzise, sizeof(char));
-    strcpy(tmp, obbrbuf1);
-    free(obbrbuf1);
-    obbrbuf1 = tmp;
-    tmp = (char*)calloc(obbrbufzise, sizeof(char));
-    strcpy(tmp, obbrbuf2);
-    free(obbrbuf2);
-    obbrbuf2 = tmp;
-    return(obbrbuf2 + strlen(obbrbuf2));
+    *bsize += 4096;
+    char *tmp = (char*)calloc(*bsize, sizeof(char));
+    strcpy(tmp, *b1);
+    free(*b1);
+    *b1 = tmp;
+    tmp = (char*)calloc(*bsize, sizeof(char));
+    strcpy(tmp, *b2);
+    free(*b2);
+    *b2 = tmp;
+    return(*b2 + strlen(*b2));
 }
 
 static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
@@ -322,7 +327,7 @@ static int nvimcom_get_list_status(const char *x, const char *xclass)
     }
 }
 
-char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const char *prefix, char *p)
+static char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const char *prefix, char *p)
 {
     char xclass[64];
     char newenv[576];
@@ -342,7 +347,7 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
         return p;
 
     if(obbrbufzise < strlen(obbrbuf2) + 1024)
-        p = nvimcom_grow_obbrbuf();
+        p = nvimcom_grow_buffers(&obbrbuf1, &obbrbuf2, &obbrbufzise);
 
     p = nvimcom_strcat(p, prefix);
     if(Rf_isLogical(*x)){
@@ -544,59 +549,31 @@ char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv, const
     return p;
 }
 
-static void nvimcom_write_obbr()
+static void nvimcom_write_file(char *b1, char *b2, const char *fn)
 {
-    strcpy(obbrbuf1, obbrbuf2);
-    FILE *f = fopen(globenv, "w");
+    strcpy(b1, b2);
+    FILE *f = fopen(fn, "w");
     if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", globenv);
+        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
         return;
     }
-    fprintf(f, "%s", obbrbuf1);
+    fprintf(f, "%s", b1);
     fclose(f);
-    nvimcom_nvimclient("UpdateOB('GlobalEnv')", edsrvr);
 }
 
 static void nvimcom_list_env()
 {
     const char *varName;
     SEXP envVarsSEXP, varSEXP;
-#ifndef WIN32
-    struct timeval begin, middle, end, tdiff1, tdiff2;
-#endif
 
     if(tmpdir[0] == 0)
         return;
 
-    if(envls_auto){
-#ifndef WIN32
-        gettimeofday(&begin, NULL);
-#endif
-        if(hifun)
-            nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 2)");
-        else
-            nvimcom_eval_expr("nvimcom:::nvim.bol(\".GlobalEnv\", sendmsg = 0)");
-#ifndef WIN32
-        gettimeofday(&end, NULL);
-        timersub(&end, &begin, &tdiff1);
-        long int tdiff = 1000000 * (long int)tdiff1.tv_sec + (long int)tdiff1.tv_usec;
-        if(verbose > 2)
-            Rprintf("Time listing .GlobalEnv objects (in milliseconds): %ld\n", tdiff / 1000);
-        if(tdiff > lsenv_tol){
-            envls_auto = 0;
-            nvimcom_nvimclient("RWarningMsg('Listing objects of .GlobalEnv is too slow: highlighting of new local functions was disabled.')", edsrvr);
-            if(verbose)
-                REprintf("Warning: nvimcom took %ld milliseconds to list the .GlobalEnv.\n", tdiff / 1000);
-        }
-#endif
-    }
     if(objbr_auto != 1)
         return;
 
-#ifndef WIN32
-    if(verbose > 1)
-        gettimeofday(&begin, NULL);
-#endif
+    clock_t tm;
+    tm = clock();
 
     memset(obbrbuf2, 0, obbrbufzise);
     char *p = nvimcom_strcat(obbrbuf2, ".GlobalEnv | Libraries\n\n");
@@ -615,61 +592,260 @@ static void nvimcom_list_env()
     }
     UNPROTECT(1);
 
-#ifndef WIN32
-    if(verbose > 1)
-        gettimeofday(&middle, NULL);
-#endif
-
     int len1 = strlen(obbrbuf1);
     int len2 = strlen(obbrbuf2);
-    if(len1 != len2){
-        nvimcom_write_obbr();
-    } else {
+    int changed = len1 != len2;
+    if(!changed){
         for(int i = 0; i < len1; i++){
             if(obbrbuf1[i] != obbrbuf2[i]){
-                nvimcom_write_obbr();
+                changed = 1;
                 break;
             }
         }
     }
-#ifndef WIN32
-    if(verbose > 1){
-        gettimeofday(&end, NULL);
-        timersub(&middle, &begin, &tdiff1);
-        timersub(&end, &middle, &tdiff2);
-        Rprintf("Time to Update the Object Browser: %ld.%06ld + %ld.%06ld\n",
-                (long int)tdiff1.tv_sec, (long int)tdiff1.tv_usec,
-                (long int)tdiff2.tv_sec, (long int)tdiff2.tv_usec);
+
+    if(changed){
+        nvimcom_write_file(obbrbuf1, obbrbuf2, globenv);
+        char b[128];
+        snprintf(b, 127, "UpdateOB('GlobalEnv', %f)", 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC);
+        nvimcom_nvimclient(b, edsrvr);
     }
-#endif
 }
 
-static void nvimcom_char_eval_char(const char *buf, char *rep, int size)
+static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, char *p)
 {
-    SEXP cmdSexp, cmdexpr, ans;
-    ParseStatus status;
+    int xclass = 0; // 1 = function, 2 = data.frame, 3 = list, 4 = s4
+    char newenv[576];
+    char curenvB[512];
+    char ebuf[64];
+    int len;
+    const char *ename;
+    SEXP listNames, label, lablab, eexp, elmt = R_NilValue;
+    SEXP cmdSexp, cmdexpr, ans, cmdSexp2, cmdexpr2;
+    ParseStatus status, status2;
     int er = 0;
+    char buf[576];
 
-    strcpy(rep, "Error");
+    if(strlen(xname) > 64)
+        return p;
 
-    PROTECT(cmdSexp = allocVector(STRSXP, 1));
-    SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
-    PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+    if(glbnvbufzise < strlen(glbnvbuf2) + 1024)
+        p = nvimcom_grow_buffers(&glbnvbuf1, &glbnvbuf2, &glbnvbufzise);
 
-    if (status != PARSE_OK) {
-        strcpy(rep, "INVALID");
+    p = nvimcom_strcat(p, curenv);
+    p = nvimcom_strcat(p, xname);
+    p = nvimcom_strcat(p, "\x06");
+
+    if(Rf_isLogical(*x)){
+        p = nvimcom_strcat(p, "logical");
+    } else if(Rf_isNumeric(*x)){
+        p = nvimcom_strcat(p, "numeric");
+    } else if(Rf_isFactor(*x)){
+        p = nvimcom_strcat(p, "factor");
+    } else if(Rf_isValidString(*x)){
+        p = nvimcom_strcat(p, "character");
+    } else if(Rf_isFunction(*x)){
+        p = nvimcom_strcat(p, "function");
+        xclass = 1;
+    } else if(Rf_isFrame(*x)){
+        p = nvimcom_strcat(p, "data.frame");
+        xclass = 2;
+    } else if(Rf_isNewList(*x)){
+        p = nvimcom_strcat(p, "list");
+        xclass = 3;
+    } else if(Rf_isS4(*x)){
+        p = nvimcom_strcat(p, "s4");
+        xclass = 4;
+    } else if(Rf_isEnvironment(*x)){
+        p = nvimcom_strcat(p, "env");
+    } else if(TYPEOF(*x) == PROMSXP){
+        p = nvimcom_strcat(p, "lazy");
     } else {
-        /* Only the first command will be executed if the expression includes
-         * a semicolon. */
-        PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
-        if(er){
-            strcpy(rep, "ERROR");
+        p = nvimcom_strcat(p, "unknow");
+    }
+
+    p = nvimcom_strcat(p, "\x06");
+    p = nvimcom_strcat(p, "Not checked"); // TODO: either should be the same of nvim.bol() or nvim.bol() should not get this information
+    p = nvimcom_strcat(p, "\x06.GlobalEnv\x06");
+
+    if(xclass == 1){
+        // Can't call nvimcom:::nvim.args() here because it would be a top
+        // level call inside this top level call which would cause the error:
+        // "C stack usage  212057258932 is too close to the limit".
+        p = nvimcom_strcat(p, "not_checked");
+    } else {
+        p = nvimcom_strcat(p, "not_a_func");
+    }
+
+    p = nvimcom_strcat(p, "\x08\x05");
+
+    PROTECT(lablab = allocVector(STRSXP, 1));
+    SET_STRING_ELT(lablab, 0, mkChar("label"));
+    PROTECT(label = getAttrib(*x, lablab));
+    if(length(label) > 0){
+        if(Rf_isValidString(label)){
+            snprintf(buf, 127, "%s", CHAR(STRING_ELT(label, 0)));
+            p = nvimcom_strcat(p, buf);
         } else {
-            snprintf(rep, size, "%s", CHAR(STRING_ELT(ans, 0)));
+            p = nvimcom_strcat(p, "Error: label is not of a valid string.");
+        }
+    }
+    UNPROTECT(2);
+
+    p = nvimcom_strcat(p, "\n");
+
+    if(xclass > 1){
+        strncpy(curenvB, curenv, 500);
+        if(xname[0] == '[' && xname[1] == '['){
+            curenvB[strlen(curenvB) - 1] = 0;
+        }
+        if(xclass == 4) // S4 object
+            snprintf(newenv, 575, "%s%s@", curenvB, xname);
+        else
+            snprintf(newenv, 575, "%s%s$", curenvB, xname);
+
+        if(xclass == 4){
+            snprintf(buf, 575, "slotNames(%s%s)", curenvB, xname);
+            PROTECT(cmdSexp = allocVector(STRSXP, 1));
+            SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
+            PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+
+            if (status != PARSE_OK) {
+                p = nvimcom_strcat(p, "nvimcom error: invalid value in slotNames(");
+                p = nvimcom_strcat(p, xname);
+                p = nvimcom_strcat(p, ")\n");
+            } else {
+                PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
+                if(er){
+                    p = nvimcom_strcat(p, "nvimcom error: ");
+                    p = nvimcom_strcat(p, xname);
+                    p = nvimcom_strcat(p, "\n");
+                } else {
+                    len = length(ans);
+                    if(len > 0){
+                        for(int i = 0; i < len; i++){
+                            ename = CHAR(STRING_ELT(ans, i));
+                            snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
+                            PROTECT(cmdSexp2 = allocVector(STRSXP, 1));
+                            SET_STRING_ELT(cmdSexp2, 0, mkChar(buf));
+                            PROTECT(cmdexpr2 = R_ParseVector(cmdSexp2, -1, &status2, R_NilValue));
+                            if (status2 != PARSE_OK) {
+                                p = nvimcom_strcat(p, "nvimcom error: invalid code \"");
+                                p = nvimcom_strcat(p, xname);
+                                p = nvimcom_strcat(p, "@");
+                                p = nvimcom_strcat(p, ename);
+                                p = nvimcom_strcat(p, "\"\n");
+                            } else {
+                                PROTECT(elmt = R_tryEval(VECTOR_ELT(cmdexpr2, 0), R_GlobalEnv, &er));
+                                p = nvimcom_glbnv_line(&elmt, ename, newenv, p);
+                                UNPROTECT(1);
+                            }
+                            UNPROTECT(2);
+                        }
+                    }
+                }
+                UNPROTECT(1);
+            }
+            UNPROTECT(2);
+        } else {
+            PROTECT(listNames = getAttrib(*x, R_NamesSymbol));
+            len = length(listNames);
+            if(len == 0){ /* Empty list? */
+                int len1 = length(*x);
+                if(len1 > 0){ /* List without names */
+                    len1 -= 1;
+                    for(int i = 0; i < len1; i++){
+                        sprintf(ebuf, "[[%d]]", i + 1);
+                        elmt = VECTOR_ELT(*x, i);
+                        p = nvimcom_glbnv_line(&elmt, ebuf, newenv, p);
+                    }
+                    sprintf(ebuf, "[[%d]]", len1 + 1);
+                    PROTECT(elmt = VECTOR_ELT(*x, len));
+                    p = nvimcom_glbnv_line(&elmt, ebuf, newenv, p);
+                    UNPROTECT(1);
+                }
+            } else { /* Named list */
+                len -= 1;
+                for(int i = 0; i < len; i++){
+                    PROTECT(eexp = STRING_ELT(listNames, i));
+                    ename = CHAR(eexp);
+                    UNPROTECT(1);
+                    if(ename[0] == 0){
+                        sprintf(ebuf, "[[%d]]", i + 1);
+                        ename = ebuf;
+                    }
+                    PROTECT(elmt = VECTOR_ELT(*x, i));
+                    p = nvimcom_glbnv_line(&elmt, ename, newenv, p);
+                    UNPROTECT(1);
+                }
+                ename = CHAR(STRING_ELT(listNames, len));
+                if(ename[0] == 0){
+                    sprintf(ebuf, "[[%d]]", len + 1);
+                    ename = ebuf;
+                }
+                PROTECT(elmt = VECTOR_ELT(*x, len));
+                p = nvimcom_glbnv_line(&elmt, ename, newenv, p);
+                UNPROTECT(1);
+            }
+            UNPROTECT(1); /* listNames */
+        }
+    }
+    return p;
+}
+
+static void nvimcom_globalenv_list()
+{
+    const char *varName;
+    SEXP envVarsSEXP, varSEXP;
+
+    if(tmpdir[0] == 0)
+        return;
+
+    clock_t tm;
+    tm = clock();
+
+    memset(glbnvbuf2, 0, glbnvbufzise);
+    char *p = glbnvbuf2;
+
+    char b[576];
+    snprintf(b, 575, "%s/toplevel_list", tmpdir);
+    FILE *tl = fopen(b, "w");
+
+    PROTECT(envVarsSEXP = R_lsInternal(R_GlobalEnv, allnames));
+    for(int i = 0; i < Rf_length(envVarsSEXP); i++){
+        varName = CHAR(STRING_ELT(envVarsSEXP, i));
+        PROTECT(varSEXP = Rf_findVar(Rf_install(varName), R_GlobalEnv));
+        if (varSEXP != R_UnboundValue) // should never be unbound
+        {
+            p = nvimcom_glbnv_line(&varSEXP, varName, "", p);
+            fprintf(tl, "%s\n", varName);
+        } else {
+            REprintf("nvimcom_globalenv_list: Unexpected R_UnboundValue returned from R_lsInternal.\n");
         }
         UNPROTECT(1);
     }
-    UNPROTECT(2);
+    UNPROTECT(1);
+    fclose(tl);
+
+    int len1 = strlen(glbnvbuf1);
+    int len2 = strlen(glbnvbuf2);
+    int changed = len1 != len2;
+    if(!changed){
+        for(int i = 0; i < len1; i++){
+            if(glbnvbuf1[i] != glbnvbuf2[i]){
+                changed = 1;
+                break;
+            }
+        }
+    }
+
+    if(changed){
+        nvimcom_write_file(glbnvbuf1, glbnvbuf2, glbnvls);
+        snprintf(b, 127, "GlblEnvUpdated(%f)", 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC);
+    } else {
+        snprintf(b, 127, "GlblEnvUpdated(-1.0)");
+    }
+    nvimcom_nvimclient(b, edsrvr);
 }
 
 static void nvimcom_eval_expr(const char *buf)
@@ -822,6 +998,9 @@ static void nvimcom_list_libs()
     memset(obbrbuf2, 0, obbrbufzise);
     char *p = nvimcom_strcat(obbrbuf2, "Libraries | .GlobalEnv\n\n");
 
+    clock_t tm;
+    tm = clock();
+
     strcpy(prefixT, "   ");
     strcpy(prefixL, "   ");
     strcat(prefixT, strT);
@@ -838,17 +1017,7 @@ static void nvimcom_list_libs()
         libn = loadedlibs[i] + 8;
         p = nvimcom_strcat(p, "   ##");
         p = nvimcom_strcat(p, libn);
-        p = nvimcom_strcat(p, "\t");
-        snprintf(rcmd, 127, "packageDescription('%s', fields='Title')", libn);
-        nvimcom_char_eval_char(rcmd, pkgtitle, 127);
-        for(int j = 0; j < 128; j++){
-            if(pkgtitle[j] == 0)
-                break;
-            if(pkgtitle[j] == '\n')
-                pkgtitle[j] = ' ';
-        }
-        p = nvimcom_strcat(p, pkgtitle);
-        p = nvimcom_strcat(p, "\n");
+        p = nvimcom_strcat(p, "\t\n");
         if(nvimcom_get_list_status(loadedlibs[i], "library") == 1){
 #ifdef WIN32
             if(tcltkerr){
@@ -885,10 +1054,12 @@ static void nvimcom_list_libs()
     fclose(f);
     opendf = save_opendf;
     openls = save_openls;
-    nvimcom_nvimclient("UpdateOB('libraries')", edsrvr);
+    char b[128];
+    snprintf(b, 127, "UpdateOB('libraries', %f)", 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC);
+    nvimcom_nvimclient(b, edsrvr);
 }
 
-Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
+static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
         Rboolean visible, void *userData)
 {
     nvimcom_list_libs();
@@ -920,6 +1091,7 @@ Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
                 Rprintf("nvimcom: width = %d columns\n", columns);
         }
     }
+    nvimcom_nvimclient("RTaskCompleted()", edsrvr);
     return(TRUE);
 }
 
@@ -1008,6 +1180,8 @@ static void nvimcom_parse_received_msg(char *buf)
             nvimcom_fire();
 #endif
             break;
+        case 3: // Write GlobalEnvList_
+            nvimcom_globalenv_list();
         case 4: // Change value of objbr_auto
             if(buf[1] == 'G'){
                 objbr_auto = 1;
@@ -1329,16 +1503,14 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
-void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, int *swd, char **pth, char **vcv, char **rinfo, int *lstol)
+void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *swd, char **pth, char **vcv, char **rinfo, int *lstol)
 {
     verbose = *vrb;
     opendf = *odf;
     openls = *ols;
     allnames = *anm;
     labelerr = *lbe;
-    hifun = *hif;
     setwidth = *swd;
-    lsenv_tol = 1000 * (long int)*lstol;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);
@@ -1363,11 +1535,9 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, i
     if(verbose > 1)
         REprintf("nclientserver port: %s\n", edsrvr);
 
-    if(getenv("NCM_R") || hifun)
-        envls_auto = 1;
-
     snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
     char envstr[1024];
     envstr[0] = 0;
@@ -1427,7 +1597,9 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *hif, i
 
         obbrbuf1 = (char*)calloc(obbrbufzise, sizeof(char));
         obbrbuf2 = (char*)calloc(obbrbufzise, sizeof(char));
-        if(!obbrbuf1 || !obbrbuf2)
+        glbnvbuf1 = (char*)calloc(glbnvbufzise, sizeof(char));
+        glbnvbuf2 = (char*)calloc(glbnvbufzise, sizeof(char));
+        if(!obbrbuf1 || !obbrbuf2 || !glbnvbuf1 || !glbnvbuf2)
             REprintf("nvimcom: Error allocating memory.\n");
 
         Rf_addTaskCallback(nvimcom_task, NULL, free, "NVimComHandler", NULL);
@@ -1483,6 +1655,10 @@ void nvimcom_Stop()
             free(obbrbuf1);
         if(obbrbuf2)
             free(obbrbuf2);
+        if(glbnvbuf1)
+            free(glbnvbuf1);
+        if(glbnvbuf2)
+            free(glbnvbuf2);
         if(verbose)
             REprintf("nvimcom stopped\n");
     }
