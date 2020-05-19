@@ -3169,7 +3169,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
                 let descr = substitute(descr, "\x92", "\xe2\x80\x99", "g")
             endif
             if cls == 'function'
-                let info = FormatTxt("Description: " . descr, ' ', " \n ", winwidth(0)) . "\n"
+                let info = FormatTxt("Description: " . descr, ' ', " \n ", winwidth(0)) . "\n" .
                             \ FormatTxt("Usage: " . usage, ', ', ", \n   ", winwidth(0)) . "\t"
             else
                 let info = FormatTxt(descr, ' ', " \n ", winwidth(0))
