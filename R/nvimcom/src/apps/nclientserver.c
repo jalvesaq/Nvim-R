@@ -591,8 +591,11 @@ int main(int argc, char **argv){
         // FIXME: Delete this code when $WINDOWID is implemented in NeovimQt
         NvimHwnd = FindWindow(NULL, "Neovim");
         if(!NvimHwnd){
-            fprintf(stderr, "\"Neovim\" window not found\n");
-            fflush(stderr);
+            NvimHwnd = FindWindow(NULL, "nvim");
+            if(!NvimHwnd){
+                fprintf(stderr, "\"Neovim\" window not found\n");
+                fflush(stderr);
+            }
         }
     }
 #endif
