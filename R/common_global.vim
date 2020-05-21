@@ -3127,26 +3127,18 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             let descr = tmp2[1]
         endif
 
-        if tmp[0] =~ '""'
-            let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
-            let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
-        endif
         if cls == "function"
-            if tmp[0] == "not_checked"
-                let s:ArgCompletionFinished = 0
-                call delete(g:rplugin.tmpdir . "/args_for_completion")
-                call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . a:prefix . obj . '")')
-                let ii = 200
-                while ii > 0 && s:ArgCompletionFinished == 0
-                    let ii = ii - 1
-                    sleep 30m
-                endwhile
-                if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-                    let tmp[0] = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
-                    call delete(g:rplugin.tmpdir . "/args_for_completion")
-                else
-                    let tmp[0] = "COULD NOT GET ARGUMENTS"
-                endif
+            let usage = tmp[0]
+        else
+            let usage = ''
+        endif
+        if exists('*nvim_open_win')
+            call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
+                        \ 'user_data': {'cls': cls, 'grp': grp, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
+        else
+            if tmp[0] =~ '""'
+                let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
+                let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
             endif
             let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
             let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
@@ -3156,13 +3148,6 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             else
                 let usage = a:prefix . obj . "()\t"
             endif
-        else
-            let usage = ''
-        endif
-        if exists('*nvim_open_win')
-            call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
-                        \ 'user_data': {'cls': cls, 'grp': grp, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
-        else
             if has("win32")
                 " curly single quote in UTF-8
                 let descr = substitute(descr, "\x91", "\xe2\x80\x98", "g")
@@ -3182,16 +3167,18 @@ endfunction
 
 let s:float_win = 0
 let s:compl_event = {}
+let g:rplugin.compl_cls = ''
 
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
+    let g:rplugin.compl_cls = ud['cls']
 
     let info = ''
     if ud['cls'] == 'argument'
-        let info = ' ' . FormatTxt(ud['argument'], ' ', " \n  ", a:width - 1)
+        let info = ' ' . FormatTxt(ud['argument'], ' ', " \n  ", a:width - 1)
     else
         if ud['descr'] != ''
-            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) . ' '
+            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) . ' '
         endif
         if ud['cls'] == 'function'
             if ud['descr'] != '' && ud['usage'] != ''
@@ -3199,8 +3186,14 @@ function FormatInfo(width, needblank)
             endif
             if ud['usage'] != ''
                 " Function usage delimited by non separable spaces (digraph NS)
-                let info .= ' ' . FormatTxt(ud['usage'], ', ', ",  \n   ", a:width) . " "
+                let info .= ' ' . FormatTxt(ud['usage'], ', ', ",  \n   ", a:width) . ' '
             endif
+        endif
+        if a:width > 59 && has_key(ud, 'summary')
+            if ud['descr'] != ''
+                let info .= "\n————\n"
+            endif
+            let info .= " " . join(ud['summary'], "\n ") . " "
         endif
     endif
 
@@ -3212,6 +3205,7 @@ function FormatInfo(width, needblank)
     else
         let lines = split(info, "\n") + ['']
     endif
+    call writefile(lines, '/tmp/floattext')
     return lines
 endfunction
 
@@ -3222,6 +3216,51 @@ function CreateNewFloat(...)
 
     let flt_win = 0
     let wrd = s:compl_event['completed_item']['word']
+
+    if s:compl_event['completed_item']['user_data']['cls'] == 'function'
+        let usage = s:compl_event['completed_item']['user_data']['usage']
+        if usage == 'not_checked'
+            " Function at the .GlobalEnv
+            let s:ArgCompletionFinished = 0
+            call delete(g:rplugin.tmpdir . "/args_for_completion")
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . wrd . '")')
+            let ii = 200
+            while ii > 0 && s:ArgCompletionFinished == 0
+                let ii = ii - 1
+                sleep 30m
+            endwhile
+            if filereadable(g:rplugin.tmpdir . "/args_for_completion")
+                let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
+            else
+                let usage = "COULD NOT GET ARGUMENTS"
+            endif
+        endif
+        if usage =~ '""'
+            let usage = substitute(usage, '"""', '"\\""', 'g')
+            let usage = substitute(usage, "\"\"'\"", "\"\\\\\"'\"", 'g')
+        endif
+        let usage = substitute(usage, "NO_ARGS", "", "")
+        let usage = substitute(usage, "\x07", " = ", "g")
+        let xx = split(usage, "\x09")
+        if len(xx) > 0
+            let usage = wrd . "(" . join(xx, ', ') . ')'
+        else
+            let usage = wrd . "()\t"
+        endif
+        let s:compl_event['completed_item']['user_data']['usage'] = usage
+    elseif wrd =~ '\k\{-}\$\k\{-}'
+        let s:ArgCompletionFinished = 0
+        call delete(g:rplugin.tmpdir . "/args_for_completion")
+        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.get.summary(' . wrd . ', 59)')
+        let ii = 200
+        while ii > 0 && s:ArgCompletionFinished == 0
+            let ii = ii - 1
+            sleep 30m
+        endwhile
+        if filereadable(g:rplugin.tmpdir . "/args_for_completion")
+            let s:compl_event['completed_item']['user_data']['summary'] = readfile(g:rplugin.tmpdir . "/args_for_completion")
+        endif
+    endif
 
     " Get the required height for a standard float preview window
     let flines = FormatInfo(60, 1)
@@ -3326,13 +3365,13 @@ function CreateNewFloat(...)
             if len(flines) > 0
                 if !exists('s:float_buf')
                     let s:float_buf = nvim_create_buf(v:false, v:true)
-                    call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
                     call setbufvar(s:float_buf, '&buftype', 'nofile')
                     call setbufvar(s:float_buf, '&bufhidden', 'hide')
                     call setbufvar(s:float_buf, '&swapfile', 0)
                     call setbufvar(s:float_buf, '&tabstop', 2)
                     call setbufvar(s:float_buf, '&undolevels', -1)
                 endif
+                call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
 
                 " replace ———— with a complete line
                 let realwidth = 10

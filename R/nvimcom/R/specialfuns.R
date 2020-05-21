@@ -154,6 +154,18 @@ nvim.GlobalEnv.fun.args <- function(funcname)
     return(invisible(NULL))
 }
 
+nvim.get.summary <- function(obj, wdth)
+{
+    owd <- getOption("width")
+    options(width = wdth)
+    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
+    print(summary(obj))
+    sink()
+    options(width = owd)
+    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    return(invisible(NULL))
+}
+
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
 nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, spath = FALSE)
 {

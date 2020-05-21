@@ -62,8 +62,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send commands with the object under cursor as argument: help, args,
         plot, print, str, summary, example, names.
       - Send to R the Sweave, knit and pdflatex commands.
-  * Omni completion (auto-completion) for R objects (.GlobalEnv and loaded
-    packages).
+  * Omni completion for R objects (.GlobalEnv and loaded packages).
   * Omni completion of function arguments.
   * Omni completion of knitr chunk options.
   * Omni completion of bibliographic entries (Rmd and Rnoweb).
@@ -671,7 +670,7 @@ In any case, the pdf viewer must be started by the Nvim-R plugin. See
 
 
 ------------------------------------------------------------------------------
-4.3. Omni completion and the highlighting of functions~
+4.3. Omni completion and syntax highlighting~
 
 The plugin adds some features to the default syntax highlight of R code. One
 such feature is the highlight of R functions. However, functions are
@@ -1441,7 +1440,7 @@ value of R_start_libs:
 							    *R_hi_fun_globenv*
 							    *R_hi_fun_paren*
 							    *R_hi_fun*
-6.10. Syntax highlight: functions and .Rout files~
+6.10. Syntax highlight: functions, .Rout files and float windows~
 
 By default, the R commands in .Rout files are highlighted with the color of
 comments, and only the output of commands has some of its elements highlighted
@@ -1513,6 +1512,20 @@ in your |vimrc|:
 >
    let R_hi_fun = 0
 <
+In Neovim, a float window with addtional information is shown during omni
+completion. If you want to change the highlighting of the text describing the
+object whose name is being completed, the line separating the description from
+either the function arguments or the object summary, and, when completing a
+function argument, the name of the argument, choose what highlighting groups
+you want to use (see |highlight-groups| )and put in your |vimrc| lines as in
+the example:
+>
+   hi def link previewDescr Title
+   hi def link previewSep   PreProc
+   hi def link previewArg Statement
+<
+The default values are, respectively, NormalFloat, NormalFloat and Special.
+
 
 ------------------------------------------------------------------------------
 								 *R_routnotab*
