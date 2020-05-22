@@ -664,8 +664,15 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
         p = nvimcom_strcat(p, "unknow");
     }
 
-    p = nvimcom_strcat(p, "\x06");
-    p = nvimcom_strcat(p, "Not checked"); // TODO: either should be the same of nvim.bol() or nvim.bol() should not get this information
+    PROTECT(label = getAttrib(*x, R_ClassSymbol));
+    if(isNull(label)){
+        p = nvimcom_strcat(p, "\x06 ");
+    } else {
+        p = nvimcom_strcat(p, "\x06");
+        p = nvimcom_strcat(p, CHAR(STRING_ELT(label, 0)));
+    }
+    UNPROTECT(1);
+
     p = nvimcom_strcat(p, "\x06.GlobalEnv\x06");
 
     if(xclass == 1){

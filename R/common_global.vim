@@ -3090,8 +3090,11 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             continue
         endif
         let obj = tmp[0]
-        let cls = tmp[1]
-        let grp = tmp[2]
+        if tmp[2] == ' '
+            let cls = tmp[1]
+        else
+            let cls = tmp[2]
+        endif
         let pkg = tmp[3]
         if len(tmp) == 5
             let inf = tmp[4]
@@ -3134,7 +3137,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
         endif
         if exists('*nvim_open_win')
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
-                        \ 'user_data': {'cls': cls, 'grp': grp, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
+                        \ 'user_data': {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
         else
             if tmp[0] =~ '""'
                 let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
