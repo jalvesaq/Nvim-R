@@ -3217,7 +3217,6 @@ function CreateNewFloat(...)
         return
     endif
 
-    let flt_win = 0
     let wrd = s:compl_event['completed_item']['word']
 
     if s:compl_event['completed_item']['user_data']['cls'] == 'function'
@@ -3288,7 +3287,7 @@ function CreateNewFloat(...)
     let fcol = mc + mw + s:compl_event['scrollbar']
 
     " Required to fix the position and size of the float window
-    let dspwd = &columns - &numberwidth
+    let dspwd = &columns
     let freebelow = (mr == (line('.') - line('w0')) ? &lines - mr - mh : &lines - mr) - 3
     let freeright = dspwd - mw - mc - s:compl_event['scrollbar']
     let freeleft = mc - 1
@@ -3301,7 +3300,7 @@ function CreateNewFloat(...)
             let flwd = freeright > 60 ? 60 : freeright
         else
             " left side
-            let flwd = mc - 1
+            let flwd = (mc - 1) > 60 ? 60 : (mc - 1)
             let fcol = mc - 1
             let fanchor = 'NE'
         endif
@@ -3327,8 +3326,8 @@ function CreateNewFloat(...)
             let fanchor = 'SW'
         else
             " Finally, check if it's possible to open the window
-            " either on the top or on the bottom of the main window
-            let flwd = winwidth(0)
+            " either on the top or on the bottom of the display
+            let flwd = dspwd
             let flines = FormatInfo(flwd, 0)
             let reqh = len(flines) > 15 ? 15 : len(flines)
             let fcol = 0
@@ -3390,20 +3389,17 @@ function CreateNewFloat(...)
                 let flht = (len(flines) > maxh) ? maxh : len(flines)
                 let opts = {'relative': 'editor', 'width': realwidth, 'height': flht, 'col': fcol,
                             \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
-                let flt_win = nvim_open_win(s:float_buf, 0, opts)
-                call setwinvar(flt_win, '&list', 0)
-                call setwinvar(flt_win, '&wrap', 1)
-                call setwinvar(flt_win, '&number', 0)
-                call setwinvar(flt_win, '&relativenumber', 0)
-                call setwinvar(flt_win, '&cursorcolumn', 0)
-                call setwinvar(flt_win, '&cursorline', 0)
-                call setwinvar(flt_win, '&colorcolumn', 0)
-                call setwinvar(flt_win, '&signcolumn', 'no')
+                if s:float_win
+                    call nvim_win_set_config(s:float_win, opts)
+                else
+                    let s:float_win = nvim_open_win(s:float_buf, 0, opts)
+                    call setwinvar(s:float_win, '&wrap', 1)
+                    call setwinvar(s:float_win, '&colorcolumn', 0)
+                    call setwinvar(s:float_win, '&signcolumn', 'no')
+                endif
             endif
         endif
     endif
-    call CloseFloatWin()
-    let s:float_win = flt_win
 endfunction
 
 function CloseFloatWin(...)
