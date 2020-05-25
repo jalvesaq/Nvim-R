@@ -679,7 +679,31 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
         // Can't call nvimcom:::nvim.args() here because it would be a top
         // level call inside this top level call which would cause the error:
         // "C stack usage  212057258932 is too close to the limit".
-        p = nvimcom_strcat(p, "not_checked");
+        SEXP fmls = FORMALS(*x);
+        if(TYPEOF(fmls) == LISTSXP){
+            p = nvimcom_strcat(p, "not_checked");
+            /*
+            SEXP arg;
+            SEXP argnm;
+            Rprintf("%s(N arguments: %d)\n", xname, length(fmls));
+            for(; fmls != R_NilValue; fmls = CDR(fmls)){
+                arg = CAR(fmls);
+                argnm = TAG(fmls);
+                if(argnm == R_NilValue)
+                    REprintf("argnm = R_NilValue\n");
+                else
+                    REprintf("    {%s}: type = %d,  length: %d\n",
+                            CHAR(PRINTNAME(argnm)), TYPEOF(arg), length(arg));
+
+                // It would be necessary to port args2buff() from
+                // src/main/deparse.c to here
+                if(Rf_isReal(arg))
+                    REprintf("      %g\n", *REAL(arg));
+            }
+            */
+        } else {
+            p = nvimcom_strcat(p, "NO_ARGS");
+        }
     } else {
         p = nvimcom_strcat(p, "not_a_func");
     }
@@ -1018,8 +1042,6 @@ static void nvimcom_list_libs()
     opendf = 0;
     openls = 0;
     int i = 0;
-    char pkgtitle[128];
-    char rcmd[128];
     while(loadedlibs[i][0] != 0){
         libn = loadedlibs[i] + 8;
         p = nvimcom_strcat(p, "   ##");
@@ -1613,7 +1635,6 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *swd, c
 
         nvimcom_initialized = 1;
         if(verbose > 0)
-            // TODO: use packageStartupMessage()
             REprintf("nvimcom %s loaded\n", nvimcom_version);
         if(verbose > 1){
             REprintf("    NVIMR_TMPDIR = %s\n    NVIMR_ID = %s\n",
