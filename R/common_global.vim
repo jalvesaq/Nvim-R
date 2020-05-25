@@ -2727,19 +2727,19 @@ function RCreateMaps(type, plug, combo, target)
     endif
     if a:type =~ "n"
         exec 'noremap <buffer><silent> <Plug>' . a:plug . ' ' . tg
-        if g:R_user_maps_only != 1
+        if g:R_user_maps_only != 1 && !hasmapto('<Plug>' . a:plug, "n")
             exec 'noremap <buffer><silent> <LocalLeader>' . a:combo . ' ' . tg
         endif
     endif
     if a:type =~ "v"
         exec 'vnoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg
-        if g:R_user_maps_only != 1
+        if g:R_user_maps_only != 1 && !hasmapto('<Plug>' . a:plug, "v")
             exec 'vnoremap <buffer><silent> <LocalLeader>' . a:combo . ' <Esc>' . tg
         endif
     endif
     if g:R_insert_mode_cmds == 1 && a:type =~ "i"
         exec 'inoremap <buffer><silent> <Plug>' . a:plug . ' <Esc>' . tg . il
-        if g:R_user_maps_only != 1
+        if g:R_user_maps_only != 1 && !hasmapto('<Plug>' . a:plug, "i")
             exec 'inoremap <buffer><silent> <LocalLeader>' . a:combo . ' <Esc>' . tg . il
         endif
     endif
