@@ -1175,6 +1175,125 @@ function RSetMyPort(p)
     endif
 endfunction
 
+" No support for break points
+"if synIDattr(synIDtrans(hlID("SignColumn")), "bg") =~ '^#'
+"    exe 'hi def StopSign guifg=red guibg=' . synIDattr(synIDtrans(hlID("SignColumn")), "bg")
+"else
+"    exe 'hi def StopSign ctermfg=red ctermbg=' . synIDattr(synIDtrans(hlID("SignColumn")), "bg")
+"endif
+"call sign_define('stpline', {'text': '●', 'texthl': 'StopSign', 'linehl': 'None', 'numhl': 'None'})
+call sign_define('dbgline', {'text': '▬▶', 'texthl': 'SignColumn', 'linehl': 'QuickFixLine', 'numhl': 'Normal'})
+
+let s:func_offset = -2
+function StopRDebugging()
+    call sign_unplace('rdebugcurline')
+    let s:func_offset = -2 " Did not seek yet
+endfunction
+
+function FindDebugFunc(srcref)
+    if g:R_in_buffer
+        let s:func_offset = -1 " Not found
+        let sbopt = &switchbuf
+        set switchbuf=useopen,usetab
+        let curtab = tabpagenr()
+        let isnormal = mode() ==# 'n'
+        let curwin = winnr()
+        exe 'sb ' . g:rplugin.R_bufname
+        sleep 30m " Time to fill the buffer lines
+        let rlines = getline(1, "$")
+        exe 'sb ' . g:rplugin.rscript_name
+    elseif string(g:SendCmdToR) == "function('SendCmdToR_Term')"
+        let tout = system('tmux -L NvimR capture-pane -p -t ' . g:rplugin.tmuxsname)
+        let rlines = split(tout, "\n")
+    elseif string(g:SendCmdToR) == "function('SendCmdToR_TmuxSplit')"
+        let tout = system('tmux capture-pane -p -t ' . g:rplugin.rconsole_pane)
+        let rlines = split(tout, "\n")
+    else
+        let rlines = []
+    endif
+
+    let idx = len(rlines) - 1
+    while idx > 0
+        if rlines[idx] =~# '^debugging in: '
+            let funcnm = substitute(rlines[idx], '^debugging in: \(.\{-}\)(.*', '\1', '')
+            let s:func_offset = search('.*\<' . funcnm . '\s*<-\s*function\s*(', 'b')
+            if s:func_offset > 0
+                let s:func_offset -= 1
+            endif
+            if a:srcref == '<text>'
+                if &filetype == 'rmd'
+                    let s:func_offset = search('^\s*```\s*{\s*r', 'nb')
+                elseif &filetype == 'rnoweb'
+                    let s:func_offset = search('^<<', 'nb')
+                endif
+            endif
+            break
+        endif
+        let idx -= 1
+    endwhile
+
+    if g:R_in_buffer
+        if tabpagenr() != curtab
+            exe 'normal! ' . curtab . 'gt'
+        endif
+        exe curwin . 'wincmd w'
+        if isnormal
+            stopinsert
+        endif
+        exe 'set switchbuf=' . sbopt
+    endif
+endfunction
+
+function RDebugJump(fnm, lnum)
+    if a:fnm == '' || a:fnm == '<text>'
+        " Functions sent directly to R Console have no associated source file
+        " and functions sourced by knitr have '<text>' as source reference.
+        if s:func_offset == -2
+            call FindDebugFunc(a:fnm)
+        endif
+        if s:func_offset <= 0
+            return
+        endif
+    endif
+
+    if s:func_offset > 0
+        let flnum = a:lnum + s:func_offset
+        let fname = g:rplugin.rscript_name
+    else
+        let flnum = a:lnum
+        let fname = expand(a:fnm)
+    endif
+
+
+    if fname != g:rplugin.rscript_name && fname != expand("%") && fname != expand("%:p")
+        if filereadable(fname)
+            exe 'sb ' . g:rplugin.rscript_name
+            if &modified
+                split
+            endif
+            exe 'edit ' . fname
+        elseif glob("*") =~ fname
+            exe 'sb ' . g:rplugin.rscript_name
+            if &modified
+                split
+            endif
+            exe 'edit ' . fname
+        else
+            return
+        endif
+    endif
+
+    exe ':' . flnum
+    "normal! zz
+
+    call sign_unplace('rdebugcurline')
+    call sign_place(1, 'rdebugcurline', 'dbgline', fname, {'lnum': flnum})
+    if g:R_in_buffer
+        exe 'sb ' . g:rplugin.R_bufname
+        startinsert
+    endif
+endfunction
+
 function RFormatCode() range
     if g:rplugin.nvimcom_port == 0
         return
@@ -2908,6 +3027,10 @@ function RCreateSendMaps()
     if &filetype == "r"
         call RCreateMaps('n', 'RSendAboveLines',  'su', ':call SendAboveLinesToR()')
     endif
+
+    " Debug
+    call RCreateMaps('n',   'RDebug', 'db', ':call RAction("debug")')
+    call RCreateMaps('n',   'RUndebug', 'ud', ':call RAction("undebug")')
 endfunction
 
 function RBufEnter()
@@ -3135,7 +3258,9 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
         else
             let usage = ''
         endif
-        if exists('*nvim_open_win')
+        if has('nvim-0.5.0')
+            " Only on 2020-04-28 Neovim started accepting any kind of variable as user_data.
+            " Before that, it should be a string: https://github.com/jalvesaq/Nvim-R/issues/495
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
                         \ 'user_data': {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
         else
@@ -3208,7 +3333,6 @@ function FormatInfo(width, needblank)
     else
         let lines = split(info, "\n") + ['']
     endif
-    call writefile(lines, '/tmp/floattext')
     return lines
 endfunction
 
@@ -3431,7 +3555,7 @@ function StartFloatWin()
     endif
 endfunction
 
-if exists('*nvim_open_win')
+if has('nvim-0.5.0')
     autocmd CompleteChanged * call StartFloatWin()
     autocmd CompleteDone * call OnCompleteDone()
 endif

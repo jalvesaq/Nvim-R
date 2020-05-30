@@ -29,6 +29,17 @@
 #include <signal.h>
 #endif
 
+#ifndef WIN32
+// Needed to know what is the prompt
+#include <Rinterface.h>
+#define R_INTERFACE_PTRS 1
+extern int (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
+static int (*save_ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
+static int debugging;
+LibExtern SEXP  R_SrcfileSymbol; // Defn.h
+static void SrcrefInfo();
+#endif
+
 static char nvimcom_version[32];
 
 static pid_t R_PID;
@@ -76,6 +87,7 @@ static int fired = 0;
 static char flag_eval[512];
 static int flag_lsenv = 0;
 static int flag_lslibs = 0;
+static int flag_debug = 0;
 static int ifd, ofd;
 static InputHandler *ih;
 static char myport[128];
@@ -403,7 +415,7 @@ static char *nvimcom_browser_line(SEXP *x, const char *xname, const char *curenv
     UNPROTECT(2);
 
     if(strcmp(xclass, "data.frame") == 0){
-        // FIXME: nrows(*x) does not work (R bug?)
+        // nrows(*x) does not work (R bug?)
         snprintf(ebuf, 63, " [%d, %d]", length(Rf_GetRowNames(*x)), length(*x));
         p = nvimcom_strcat(p, ebuf);
     } else if(strcmp(xclass, "list") == 0){
@@ -1134,8 +1146,11 @@ static void nvimcom_exec(){
         nvimcom_list_env();
     if(flag_lslibs)
         nvimcom_list_libs();
+    if(flag_debug)
+        SrcrefInfo();
     flag_lsenv = 0;
     flag_lslibs = 0;
+    flag_debug = 0;
 }
 
 /* Code adapted from CarbonEL.
@@ -1157,6 +1172,48 @@ static void nvimcom_fire()
     *buf = 0;
     if(write(ofd, buf, 1) <= 0)
         REprintf("nvimcom error: write <= 0\n");
+}
+
+// Adapted from SrcrefPrompt(), at src/main/eval.c
+static void SrcrefInfo()
+{
+    if(debugging == 0){
+        nvimcom_nvimclient("StopRDebugging()", edsrvr);
+        return;
+    }
+    /* If we have a valid R_Srcref, use it */
+    if (R_Srcref && R_Srcref != R_NilValue) {
+        if (TYPEOF(R_Srcref) == VECSXP) R_Srcref = VECTOR_ELT(R_Srcref, 0);
+        SEXP srcfile = getAttrib(R_Srcref, R_SrcfileSymbol);
+        if (TYPEOF(srcfile) == ENVSXP) {
+            SEXP filename = findVar(install("filename"), srcfile);
+            if (isString(filename) && length(filename)) {
+                char buf[128];
+                snprintf(buf, 127, "RDebugJump('%s', %d)",
+                        CHAR(STRING_ELT(filename, 0)), asInteger(R_Srcref));
+                nvimcom_nvimclient(buf, edsrvr);
+            }
+        }
+    }
+}
+
+static int nvimcom_read_console(const char *prompt,
+        unsigned char *buf, int len, int addtohistory)
+{
+    if(debugging == 1){
+        if(prompt[0] != 'B')
+            debugging = 0;
+        flag_debug = 1;
+        nvimcom_fire();
+    } else {
+        if(prompt[0] == 'B' && prompt[1] == 'r' && prompt[2] == 'o' && prompt[3] == 'w' &&
+                prompt[4] == 's' && prompt[5] == 'e' && prompt[6] == '['){
+            debugging = 1;
+            flag_debug = 1;
+            nvimcom_fire();
+        }
+    }
+    return save_ptr_R_ReadConsole(prompt, buf, len, addtohistory);
 }
 #endif
 
@@ -1532,6 +1589,7 @@ static void nvimcom_server_thread(void *arg)
 }
 #endif
 
+
 void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *swd, char **pth, char **vcv, char **rinfo, int *lstol)
 {
     verbose = *vrb;
@@ -1644,7 +1702,11 @@ void nvimcom_Start(int *vrb, int *odf, int *ols, int *anm, int *lbe, int *swd, c
         }
 #ifdef WIN32
         r_is_busy = 0;
+#else
+        save_ptr_R_ReadConsole = ptr_R_ReadConsole;
+        ptr_R_ReadConsole = nvimcom_read_console;
 #endif
+
     }
 }
 
@@ -1664,6 +1726,7 @@ void nvimcom_Stop()
         closesocket(sfd);
         WSACleanup();
 #else
+        ptr_R_ReadConsole = save_ptr_R_ReadConsole;
         close(sfd);
         nvimcom_nvimclient("STOP >>> Now <<< !!!", myport);
         pthread_join(tid, NULL);

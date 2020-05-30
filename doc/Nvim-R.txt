@@ -458,6 +458,9 @@ Command
   . Search forward (SyncTeX)                           \gp
   . Go to LaTeX (SyncTeX)                              \gt
   --------------------------------------------------------
+  . Debug (function)                                   \db
+  . Undebug (function)                                 \ud
+  --------------------------------------------------------
   . Build tags file (cur dir)                  :RBuildTags
 -----------------------------------------------------------
 
@@ -685,8 +688,8 @@ pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
 can also show the function arguments in a separate preview window in Vim and a
-float window in Neovim. You should remove "preview" from 'completopt' if you
-do not want the preview window.
+float window in Neovim >= 0.5.0. You should remove "preview" from 'completopt'
+if you do not want the preview window.
 
 If a data.frame is found, while building the list of objects, the columns in
 the data.frame are added to the list. When you try to use omni completion to
@@ -813,6 +816,82 @@ in the current directory. Please read |Nvim-R-tagsfile| to learn how to create
 a tags file referencing source code located in other directories, including
 the entire R source code.
 
+
+------------------------------------------------------------------------------
+							   *debug-R-functions*
+4.7. Debugging R functions (Unix only)~
+
+The Nvim-R-Plugin has limited debugging facilities available on Unix systems
+(not available on Windows). To debug a function with Nvim-R you have to do the
+following:
+
+   1. Source the R script where the function is with the `source()` function
+      of the `base` package.
+
+   2. In the R Console, run the command `debug(funcname)` where `funcname` is
+      the name of the function (not quoted). Nvim-R will send this command to
+      R Console if you press <LocalLeader>db in Normal mode with the cursor
+      over the function name.
+
+   3. Call the function.
+
+See `:Rh browser` for available commands in debugging mode.
+
+For example, if you have a file named `my_function.R` with the following
+contents:
+>
+   add.one <- function(x){
+       y <- x + 1
+       print(y)
+       return(invisible(NULL))
+   }
+<
+You could debug the `add.one()` function from another script such as:
+>
+   source("path/to/my_function.R")
+   debug(add.one)
+   add.one(7)
+<
+If you do not want to start debugging the function from its first line,
+instead of calling `debug(funcname)` before calling the function, you should
+add the line `browser()` to the function at the line where the debugging
+session should start. Example:
+>
+   add.one <- function(x){
+       y <- x + 1
+       browser()
+       print(y)
+       return(invisible(NULL))
+   }
+<
+If you want a conditional breakpoint, you should call the `browser()` command
+only if a condition is satisfied. Example:
+>
+   add.one <- function(x){
+       y <- x + 1
+       if(x > 9)
+	   browser()
+       print(y)
+       return(invisible(NULL))
+   }
+<
+One limitation is that Nvim-R also does not help you setting breakpoints.
+You have to set them manually as explained above.
+
+Another limitation of Nvim-R is that it might be unable to jump to the line in
+the source code that is being evaluated if either you have sent the function
+directly to the R Console or the function has been sent by the `knitr`
+package, without calling the function `source()`. In either case, Nvim-R will
+try to find the pattern `funcname <- function(` in the buffer being edited. If
+the pattern is found, the cursor will jump to its position.
+
+The highlighting group used to highlight the line being debuged is the
+QuickFixLine (see |hl-QuickFixLine|). Its foreground and background colors are
+defined by your colorscheme, but you can change them in your |vimrc| (see
+|cterm-colors| and |gui-colors|). Example:
+>
+   hi QuickFixLine ctermfg=231 ctermbg=23 guifg=white guibg=#005f5f
+<
 
 ==============================================================================
 							   *Nvim-R-known-bugs*
@@ -1512,11 +1591,11 @@ in your |vimrc|:
 >
    let R_hi_fun = 0
 <
-In Neovim, a float window with addtional information is shown during omni
-completion. If you want to change the highlighting of the text describing the
-object whose name is being completed, the line separating the description from
-either the function arguments or the object summary, and, when completing a
-function argument, the name of the argument, choose what highlighting groups
+In Neovim >= 0.5.0, a float window with addtional information is shown during
+omni completion. If you want to change the highlighting of the text describing
+the object whose name is being completed, the line separating the description
+from either the function arguments or the object summary, and, when completing
+a function argument, the name of the argument, choose what highlighting groups
 you want to use (see |highlight-groups| )and put in your |vimrc| lines as in
 the example:
 >
@@ -2456,6 +2535,10 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    Open attachment of bib item~
    ROpenRefFile
 
+   Debugging functions~
+   RDebug
+   RUndebug
+
    Object browser~
    RUpdateObjBrowser
    ROpenLists
@@ -2784,34 +2867,8 @@ graphical web browser (e.g. when you are in the Linux console):
 <
 
 ------------------------------------------------------------------------------
-9.15. Debugging R functions~
-
-The Nvim-R-Plugin does not have debugging facilities, but you may want to use
-the R package "debug":
->
-   install.packages("debug")
-   library(debug)
-   mtrace(function_name)
-<
-If you receive a message about the package not being available on CRAN, you
-could try:
->
-   install.packages("https://cran.r-project.org/src/contrib/Archive/debug/debug_1.3.1.tar.gz",
-   repos = NULL, type = "source")
-
-Once the library is installed and loaded, you should use
-`mtrace(function_name)` to enable the debugging of a function. Then, the next
-time that the function is called it will enter in debugging mode. Once
-debugging a function, you can hit <Enter> to evaluate the current line,
-`go(n)` to go to line `n` in the function and `qqq()` to quit the function
-(See debug's help for details). A useful tip is to click on the title bar of
-the debug window and choose "Always on top" or a similar option provided by
-your desktop manager.
-
-
-------------------------------------------------------------------------------
 							    *Nvim-R-latex-box*
-9.16. Integration with LaTeX-Box~
+9.15. Integration with LaTeX-Box~
 
 LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
 You have to tell LaTeX-Box that the .tex file compiled by either `knitr()` or
@@ -2841,7 +2898,7 @@ See also: |R_latexcmd|.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-quick-setup*
-9.17. Suggested setup for Nvim-R~
+9.16. Suggested setup for Nvim-R~
 
 Please, look at section |Nvim-R-options| if you want information about the
 Nvim-R customization.
@@ -2870,7 +2927,7 @@ document from the beginning.
 
 ------------------------------------------------------------------------------
 								 *rout_colors*
-9.18. Syntax highlight of .Rout files~
+9.17. Syntax highlight of .Rout files~
 
 You can set the both foreground background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
@@ -2925,7 +2982,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-global*
-9.19 Enable the plugin when editing any file type~
+9.18 Enable the plugin when editing any file type~
 
 Nvim-R is a file-type plugin. This means that its functionalities will be
 available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
@@ -2949,7 +3006,7 @@ run will:
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-reload-html*
-9.20 Auto refresh HTML page~
+9.19 Auto refresh HTML page~
 
 Nvim-R gets the value of R's "browser" option (as returned by
 `getOption("browser")` to open an HTML document. The problem is that most
@@ -3005,7 +3062,7 @@ and
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-remote*
-9.21 Remote access~
+9.20 Remote access~
 
 The easiest way of running R in a remote machine is logging into the remote
 machine through ssh, starting Neovim and running R in a Neovim's terminal (the
@@ -3093,7 +3150,7 @@ goal (tested on April, 2017).
 ------------------------------------------------------------------------------
 						     *Nvim-R-df-view-mappings*
                                                       
-9.22 Create custom mappings for viewing data.frames or matrices~
+9.21 Create custom mappings for viewing data.frames or matrices~
 
 Using the method described in |Nvim-R-key-bindings|, you can customize how
 data.frames or matrices are viewed by passing a string of optional arguments
@@ -3114,7 +3171,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-05-19)
+0.9.13.1 (2020-05-28)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
@@ -3125,6 +3182,7 @@ Examples:
  * Delete command triggered by <LocalLeader>tp.
  * Delete options R_args_in_stline, R_sttline_fmt, R_show_args, R_complete and
    Rtools_path.
+ * Limited support for debugging R functions.
 
 0.9.13 (2019-05-05)
 

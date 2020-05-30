@@ -262,8 +262,12 @@ function MakeRMenu()
         call RCreateMenuItem('nvi', 'Command.Go\ to\ LaTeX\ (SyncTeX)', 'RSyncTex', 'gt', ':call SyncTeX_forward(1)')
     endif
     "-------------------------------
+    menu R.Command.-Sep72- <nul>
+    call RCreateMenuItem('n', 'Command.Debug\ (function)', 'RDebug', 'db', ':call RAction("debug")')
+    call RCreateMenuItem('n', 'Command.Undebug\ (function)', 'RUndebug', 'ud', ':call RAction("undebug")')
+    "-------------------------------
     if &filetype == "r" || &filetype == "rnoweb" || g:R_never_unmake_menu
-        menu R.Command.-Sep72- <nul>
+        menu R.Command.-Sep73- <nul>
         nmenu <silent> R.Command.Build\ tags\ file\ (cur\ dir)<Tab>:RBuildTags :call RBuildTags()<CR>
         imenu <silent> R.Command.Build\ tags\ file\ (cur\ dir)<Tab>:RBuildTags <Esc>:call RBuildTags()<CR>a
     endif

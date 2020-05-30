@@ -1,7 +1,7 @@
 
 syntax clear
 
-if exists('*nvim_open_win')
+if has('nvim-0.5.0')
     if g:rplugin.compl_cls == 'function'
         runtime syntax/r.vim
         syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'
