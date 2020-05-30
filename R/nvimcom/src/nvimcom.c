@@ -85,6 +85,7 @@ static int tcltkerr = 0;
 #else
 static int fired = 0;
 static char flag_eval[512];
+static int flag_glbenv = 0;
 static int flag_lsenv = 0;
 static int flag_lslibs = 0;
 static int flag_debug = 0;
@@ -1146,8 +1147,11 @@ static void nvimcom_exec(){
         nvimcom_list_env();
     if(flag_lslibs)
         nvimcom_list_libs();
+    if(flag_glbenv)
+        nvimcom_globalenv_list();
     if(flag_debug)
         SrcrefInfo();
+    flag_glbenv = 0;
     flag_lsenv = 0;
     flag_lslibs = 0;
     flag_debug = 0;
@@ -1267,7 +1271,13 @@ static void nvimcom_parse_received_msg(char *buf)
 #endif
             break;
         case 3: // Write GlobalEnvList_
-            nvimcom_globalenv_list();
+#ifdef WIN32
+            if(!r_is_busy)
+                nvimcom_globalenv_list();
+#else
+            flag_glbenv = 1;
+            nvimcom_fire();
+#endif
         case 4: // Change value of objbr_auto
             if(buf[1] == 'G'){
                 objbr_auto = 1;
