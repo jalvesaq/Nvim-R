@@ -689,9 +689,6 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     p = nvimcom_strcat(p, "\x06.GlobalEnv\x06");
 
     if(xclass == 1){
-        // Can't call nvimcom:::nvim.args() here because it would be a top
-        // level call inside this top level call which would cause the error:
-        // "C stack usage  212057258932 is too close to the limit".
         SEXP fmls = FORMALS(*x);
         if(TYPEOF(fmls) == LISTSXP){
             p = nvimcom_strcat(p, "not_checked");
@@ -709,9 +706,9 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
                             CHAR(PRINTNAME(argnm)), TYPEOF(arg), length(arg));
 
                 // It would be necessary to port args2buff() from
-                // src/main/deparse.c to here
-                if(Rf_isReal(arg))
-                    REprintf("      %g\n", *REAL(arg));
+                // src/main/deparse.c to here but it's too big.
+                // So, it's better to call nvimcom:::nvim.args() during omni
+                // completion.
             }
             */
         } else {

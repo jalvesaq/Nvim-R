@@ -48,14 +48,54 @@ let g:rplugin.debug_info = {}
 " Functions that are common to r, rnoweb, rhelp and rdoc
 "==========================================================================
 
+function CloseRWarn(timer)
+    let id = win_id2win(s:float_warn)
+    if id > 0
+        call nvim_win_close(s:float_warn, 1)
+        let s:float_warn = 0
+    endif
+endfunction
+
+function RFloatWarn(wmsg)
+    let fmsg = ' ' . FormatTxt(a:wmsg, ' ', " \n ", 60)
+    let fmsgl = split(fmsg, "\n")
+    let realwidth = 10
+    for lin in fmsgl
+        if strdisplaywidth(lin) > realwidth
+            let realwidth = strdisplaywidth(lin)
+        endif
+    endfor
+    if !exists('s:warn_buf')
+        let s:warn_buf = nvim_create_buf(v:false, v:true)
+        call setbufvar(s:warn_buf, '&buftype', 'nofile')
+        call setbufvar(s:warn_buf, '&bufhidden', 'hide')
+        call setbufvar(s:warn_buf, '&swapfile', 0)
+        call setbufvar(s:warn_buf, '&tabstop', 2)
+        call setbufvar(s:warn_buf, '&undolevels', -1)
+    endif
+    call nvim_buf_set_option(s:warn_buf, 'syntax', 'off')
+    call nvim_buf_set_lines(s:warn_buf, 0, -1, v:true, fmsgl)
+    let wh = len(fmsgl) > 3 ? 3 : len(fmsgl)
+    let opts = {'relative': 'editor', 'width': realwidth, 'height': wh,
+                \ 'col': winwidth(0) - realwidth,
+                \ 'row': &lines - 2 - wh, 'anchor': 'NW', 'style': 'minimal'}
+    let s:float_warn = nvim_open_win(s:warn_buf, 0, opts)
+    call nvim_win_set_option(s:float_warn, 'winhl', 'Normal:WarningMsg')
+    call timer_start(2000, 'CloseRWarn')
+endfunction
+
 function RWarningMsg(wmsg)
     if v:vim_did_enter == 0
         exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
         return
     endif
-    echohl WarningMsg
-    echomsg a:wmsg
-    echohl None
+    if has('nvim-0.5.0') && mode() == 'i'
+        call RFloatWarn(a:wmsg)
+    else
+        echohl WarningMsg
+        echomsg a:wmsg
+        echohl None
+    endif
 endfunction
 
 if has("nvim")
