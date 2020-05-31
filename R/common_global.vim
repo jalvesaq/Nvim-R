@@ -99,17 +99,17 @@ function RWarningMsg(wmsg)
 endfunction
 
 if has("nvim")
-    if !has("nvim-0.2.1")
-        call RWarningMsg("Nvim-R requires Neovim >= 0.2.1.")
+    if !has("nvim-0.3.4")
+        call RWarningMsg("Nvim-R requires Neovim >= 0.3.4.")
         let g:rplugin.failed = 1
         finish
     endif
 elseif v:version < "801"
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.2.1 or Vim >= 8.1.")
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.3.4 or Vim >= 8.1.")
     let g:rplugin.failed = 1
     finish
 elseif !has("channel") || !has("job")
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.2.1 or Vim >= 8.1.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.3.4 or Vim >= 8.1.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin.failed = 1
     finish
 endif
@@ -1222,11 +1222,17 @@ endfunction
 "    exe 'hi def StopSign ctermfg=red ctermbg=' . synIDattr(synIDtrans(hlID("SignColumn")), "bg")
 "endif
 "call sign_define('stpline', {'text': '●', 'texthl': 'StopSign', 'linehl': 'None', 'numhl': 'None'})
-call sign_define('dbgline', {'text': '▬▶', 'texthl': 'SignColumn', 'linehl': 'QuickFixLine', 'numhl': 'Normal'})
+
+" Functions sign_define(), sign_place() and sign_unplace() require Neovim >= 0.4.3
+"call sign_define('dbgline', {'text': '▬▶', 'texthl': 'SignColumn', 'linehl': 'QuickFixLine', 'numhl': 'Normal'})
+
+sign define dbgline text=▬▶ texthl=SignColumn linehl=QuickFixLine
 
 let s:func_offset = -2
 function StopRDebugging()
-    call sign_unplace('rdebugcurline')
+    "call sign_unplace('rdebugcurline')
+    "sign unplace rdebugcurline
+    sign unplace 1
     let s:func_offset = -2 " Did not seek yet
 endfunction
 
@@ -1326,8 +1332,10 @@ function RDebugJump(fnm, lnum)
     exe ':' . flnum
     "normal! zz
 
-    call sign_unplace('rdebugcurline')
-    call sign_place(1, 'rdebugcurline', 'dbgline', fname, {'lnum': flnum})
+    "call sign_unplace('rdebugcurline')
+    "call sign_place(1, 'rdebugcurline', 'dbgline', fname, {'lnum': flnum})
+    sign unplace 1
+    exe 'sign place 1 line=' . flnum . ' name=dbgline file=' . fname
     if g:R_in_buffer
         exe 'sb ' . g:rplugin.R_bufname
         startinsert
@@ -3778,7 +3786,7 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
                 endif
             endif
             if len(tmp1) > 1
-                if has('nvim')
+                if has('nvim-0.5.0')
                     call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'user_data': {'cls': 'argument', 'argument': inf}})
                 else
                     let info = FormatTxt(inf, ' ', " \n ", winwidth(0))

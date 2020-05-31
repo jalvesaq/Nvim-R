@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.13.1
-For Neovim >= 0.2.1 and Vim >= 8.1
+For Neovim >= 0.3.4 and Vim >= 8.1
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -68,6 +68,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
   * Omni completion of bibliographic entries (Rmd and Rnoweb).
   * Omni completion of python code in knitr chunks if the jedi-vim plugin is
     installed (Rmd).
+  * Limited support for debugging R functions.
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
         (split the window either horizontally or vertically according to the
@@ -3171,7 +3172,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.13.1 (2020-05-28)
+0.9.13.1 (2020-05-31)
 
  * New command \su (send all lines above the current one).
  * New command \m (send lines from motion command).
