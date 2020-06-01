@@ -1,7 +1,7 @@
 
 syntax clear
 
-if has('nvim-0.5.0')
+if has('nvim-0.4.3') || has('patch-8.1.1705')
     if g:rplugin.compl_cls == 'function'
         runtime syntax/r.vim
         syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'

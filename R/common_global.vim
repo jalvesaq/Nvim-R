@@ -99,7 +99,7 @@ function RWarningMsg(wmsg)
         exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
         return
     endif
-    if mode() == 'i' && (has('nvim-0.5.0') || has('patch-8.1.1705'))
+    if mode() == 'i' && (has('nvim-0.4.3') || has('patch-8.1.1705'))
         call RFloatWarn(a:wmsg)
     else
         echohl WarningMsg
@@ -3327,6 +3327,9 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             " Before that, it should be a string: https://github.com/jalvesaq/Nvim-R/issues/495
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
                         \ 'user_data': {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
+        elseif has('nvim-0.4.3') || has('patch-8.1.1705')
+            call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']'})
+            let s:user_data[a:prefix . obj] = {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}
         else
             if tmp[0] =~ '""'
                 let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
@@ -3632,19 +3635,26 @@ function StartFloatWin()
         return
     endif
     " Other plugins (example, ncm-R) fill the 'user_data' dictionary
-    if has_key(v:event, 'completed_item') &&
-                \ has_key(v:event['completed_item'], 'user_data') &&
-                \ type(v:event['completed_item']['user_data']) == v:t_dict &&
-                \ has_key(v:event['completed_item']['user_data'], 'cls')
-        let s:compl_event = deepcopy(v:event)
-        " Neovim doesn't allow to open a float window from here:
-        call timer_start(1, 'CreateNewFloat', {})
+    if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
+        if s:user_data != {}
+            let s:compl_event = deepcopy(v:event)
+            let s:compl_event['completed_item']['user_data'] = deepcopy(s:user_data[v:event['completed_item']['word']])
+            call timer_start(1, 'CreateNewFloat', {})
+        elseif has_key(v:event['completed_item'], 'user_data') &&
+                    \ type(v:event['completed_item']['user_data']) == v:t_dict &&
+                    \ has_key(v:event['completed_item']['user_data'], 'cls')
+            let s:compl_event = deepcopy(v:event)
+            " Neovim doesn't allow to open a float window from here:
+            call timer_start(1, 'CreateNewFloat', {})
+        endif
     elseif s:float_win
         call CloseFloatWin()
     endif
 endfunction
 
-if has('nvim-0.5.0') || has('patch-8.2.84')
+" Delete the variable s:user_data, update syntax/rdocpreview.vim and change the condition below to
+" has('nvim-0.5.0') || has('patch-8.2.84') when it evaluates to TRUE in Ubuntu (perhaps, 20.10)
+if has('nvim-0.4.3') || has('patch-8.1.1705')
     autocmd CompleteChanged * call StartFloatWin()
     autocmd CompleteDone * call OnCompleteDone()
 endif
@@ -3827,8 +3837,11 @@ function GetRArgs1(base, rkeyword0, firstobj, pkg)
                 endif
             endif
             if len(tmp1) > 1
-                if has('nvim-0.5.0')
+                if has('nvim-0.5.0') || has('patch-8.2.84')
                     call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'user_data': {'cls': 'argument', 'argument': inf}})
+                elseif has('nvim-0.4.3') || has('patch-8.1.1705')
+                    call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn})
+                    let s:user_data[wd] = {'cls': 'argument', 'argument': inf}
                 else
                     let info = FormatTxt(inf, ' ', " \n ", winwidth(0))
                     call add(argls,  {'word': wd, 'abbr': bv, 'menu': mn, 'info': info})
@@ -3881,6 +3894,7 @@ endfunction
 
 function CompleteR(findstart, base)
     if a:findstart
+        let s:user_data = {}
         let line = getline(".")
         if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
             let s:compl_type = 3
