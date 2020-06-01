@@ -1512,7 +1512,9 @@ function RViewDF(oname, ...)
 
         normal! :<Esc>
         call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
-        if has("win32")
+        if has("nvim")
+            call jobstart([g:R_csv_app, tsvnm], {'detach': v:true})
+        elseif has("win32")
             silent exe '!start "' . g:R_csv_app . '" "' . tsvnm . '"'
         else
             call system(g:R_csv_app . ' "' . tsvnm . '" >/dev/null 2>/dev/null &')
