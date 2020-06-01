@@ -26,6 +26,9 @@
 " used.
 "==========================================================================
 
+set encoding=utf-8
+scriptencoding utf-8
+
 " Check if Vim-R-plugin is installed
 if exists("*WaitVimComStart")
     echohl WarningMsg
@@ -1236,7 +1239,7 @@ endfunction
 " Functions sign_define(), sign_place() and sign_unplace() require Neovim >= 0.4.3
 "call sign_define('dbgline', {'text': '▬▶', 'texthl': 'SignColumn', 'linehl': 'QuickFixLine', 'numhl': 'Normal'})
 
-if has("win32")
+if has("win32") && !has("nvim")
     sign define dbgline text==> texthl=SignColumn linehl=QuickFixLine
 else
     sign define dbgline text=▬▶ texthl=SignColumn linehl=QuickFixLine
@@ -3568,7 +3571,12 @@ function CreateNewFloat(...)
             let realwidth = strdisplaywidth(lin)
         endif
     endfor
-    call map(flines, 'substitute(v:val, "^————$", repeat("—", realwidth), "")')
+
+    if has("win32") && !has("nvim")
+        call map(flines, 'substitute(v:val, "^————$", repeat("-", realwidth), "")')
+    else
+        call map(flines, 'substitute(v:val, "^————$", repeat("—", realwidth), "")')
+    endif
 
     let flht = (len(flines) > maxh) ? maxh : len(flines)
 
