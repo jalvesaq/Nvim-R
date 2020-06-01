@@ -8,10 +8,15 @@ R code.
 If you use a plugin manager, such as [vim-plug], follow its instructions on
 how to install plugins from github.
 
-To install a stable version of the plugin, either download the Vim package from
-[Nvim-R/releases](https://github.com/jalvesaq/Nvim-R/releases)
-or the Vimball from
-[vim.org](http://www.vim.org/scripts/script.php?script_id=2628).
+To install the stable version of the plugin, if using [vim-plug], put this in
+your `vimrc`/`init.vim`:
+
+```
+Plug 'jalvesaq/Nvim-R', {'branch': 'stable'}
+```
+
+The `stable` branch is a copy of the last released version plus minor bug
+fixes eventually found after the release.
 
 Please, read the section *Installation* from the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
