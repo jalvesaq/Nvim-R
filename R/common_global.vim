@@ -52,7 +52,6 @@ function CloseRWarn(timer)
     let id = win_id2win(s:float_warn)
     if id > 0
         call nvim_win_close(s:float_warn, 1)
-        let s:float_warn = 0
     endif
 endfunction
 
@@ -65,23 +64,34 @@ function RFloatWarn(wmsg)
             let realwidth = strdisplaywidth(lin)
         endif
     endfor
-    if !exists('s:warn_buf')
-        let s:warn_buf = nvim_create_buf(v:false, v:true)
-        call setbufvar(s:warn_buf, '&buftype', 'nofile')
-        call setbufvar(s:warn_buf, '&bufhidden', 'hide')
-        call setbufvar(s:warn_buf, '&swapfile', 0)
-        call setbufvar(s:warn_buf, '&tabstop', 2)
-        call setbufvar(s:warn_buf, '&undolevels', -1)
+    let wht = len(fmsgl) > 3 ? 3 : len(fmsgl)
+    if has('nvim')
+        if !exists('s:warn_buf')
+            let s:warn_buf = nvim_create_buf(v:false, v:true)
+            call setbufvar(s:warn_buf, '&buftype', 'nofile')
+            call setbufvar(s:warn_buf, '&bufhidden', 'hide')
+            call setbufvar(s:warn_buf, '&swapfile', 0)
+            call setbufvar(s:warn_buf, '&tabstop', 2)
+            call setbufvar(s:warn_buf, '&undolevels', -1)
+        endif
+        call nvim_buf_set_option(s:warn_buf, 'syntax', 'off')
+        call nvim_buf_set_lines(s:warn_buf, 0, -1, v:true, fmsgl)
+        let opts = {'relative': 'editor', 'width': realwidth, 'height': wht,
+                    \ 'col': winwidth(0) - realwidth,
+                    \ 'row': &lines - 3 - wht, 'anchor': 'NW', 'style': 'minimal'}
+        let s:float_warn = nvim_open_win(s:warn_buf, 0, opts)
+        call nvim_win_set_option(s:float_warn, 'winhl', 'Normal:WarningMsg')
+        call timer_start(2000 * len(fmsgl), 'CloseRWarn')
+    else
+        let fline = &lines - 2 - wht
+        let fcol = winwidth(0) - realwidth
+        let s:float_warn = popup_create(fmsgl, #{
+                    \ line: fline,
+                    \ col: fcol,
+                    \ highlight: 'WarningMsg',
+                    \ time: 2000 * len(fmsgl),
+                    \ })
     endif
-    call nvim_buf_set_option(s:warn_buf, 'syntax', 'off')
-    call nvim_buf_set_lines(s:warn_buf, 0, -1, v:true, fmsgl)
-    let wh = len(fmsgl) > 3 ? 3 : len(fmsgl)
-    let opts = {'relative': 'editor', 'width': realwidth, 'height': wh,
-                \ 'col': winwidth(0) - realwidth,
-                \ 'row': &lines - 2 - wh, 'anchor': 'NW', 'style': 'minimal'}
-    let s:float_warn = nvim_open_win(s:warn_buf, 0, opts)
-    call nvim_win_set_option(s:float_warn, 'winhl', 'Normal:WarningMsg')
-    call timer_start(2000, 'CloseRWarn')
 endfunction
 
 function RWarningMsg(wmsg)
@@ -89,7 +99,7 @@ function RWarningMsg(wmsg)
         exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
         return
     endif
-    if has('nvim-0.5.0') && mode() == 'i'
+    if mode() == 'i' && (has('nvim-0.5.0') || has('patch-8.1.1705'))
         call RFloatWarn(a:wmsg)
     else
         echohl WarningMsg
@@ -3306,7 +3316,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
         else
             let usage = ''
         endif
-        if has('nvim-0.5.0')
+        if has('nvim-0.5.0') || has('patch-8.2.84')
             " Only on 2020-04-28 Neovim started accepting any kind of variable as user_data.
             " Before that, it should be a string: https://github.com/jalvesaq/Nvim-R/issues/495
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
@@ -3518,66 +3528,91 @@ function CreateNewFloat(...)
         endif
     endif
 
-    if has_space
-        " Now that the position is defined, calculate the available height
-        if frow == &lines
-            if mr == (line('.') - line('w0') + 1)
-                let maxh = &lines - mr - mh - 2
-            else
-                let maxh = &lines - line('.') + line('w0') - 2
-            endif
-            let needblank = 1
-        elseif frow == 0
-            let maxh = mr - 3
+    if len(flines) == 0 || has_space == 0
+        return
+    endif
+
+    " Now that the position is defined, calculate the available height
+    if frow == &lines
+        if mr == (line('.') - line('w0') + 1)
+            let maxh = &lines - mr - mh - 2
         else
-            let maxh = &lines - frow - 2
+            let maxh = &lines - line('.') + line('w0') - 2
         endif
+        let needblank = 1
+    elseif frow == 0
+        let maxh = mr - 3
+    else
+        let maxh = &lines - frow - 2
+    endif
 
-        " Open the window if there is enough available height
-        if maxh > 1
-            let flines = FormatInfo(flwd, needblank)
-            if len(flines) > 0
-                if !exists('s:float_buf')
-                    let s:float_buf = nvim_create_buf(v:false, v:true)
-                    call setbufvar(s:float_buf, '&buftype', 'nofile')
-                    call setbufvar(s:float_buf, '&bufhidden', 'hide')
-                    call setbufvar(s:float_buf, '&swapfile', 0)
-                    call setbufvar(s:float_buf, '&tabstop', 2)
-                    call setbufvar(s:float_buf, '&undolevels', -1)
-                endif
-                call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+    " Open the window if there is enough available height
+    if maxh < 2
+        return
+    endif
 
-                " replace ———— with a complete line
-                let realwidth = 10
-                for lin in flines
-                    if strdisplaywidth(lin) > realwidth
-                        let realwidth = strdisplaywidth(lin)
-                    endif
-                endfor
-                call map(flines, 'substitute(v:val, "^————$", repeat("—", realwidth), "")')
-
-                call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, flines)
-
-                let flht = (len(flines) > maxh) ? maxh : len(flines)
-                let opts = {'relative': 'editor', 'width': realwidth, 'height': flht, 'col': fcol,
-                            \ 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
-                if s:float_win
-                    call nvim_win_set_config(s:float_win, opts)
-                else
-                    let s:float_win = nvim_open_win(s:float_buf, 0, opts)
-                    call setwinvar(s:float_win, '&wrap', 1)
-                    call setwinvar(s:float_win, '&colorcolumn', 0)
-                    call setwinvar(s:float_win, '&signcolumn', 'no')
-                endif
-            endif
+    let flines = FormatInfo(flwd, needblank)
+    " replace ———— with a complete line
+    let realwidth = 10
+    for lin in flines
+        if strdisplaywidth(lin) > realwidth
+            let realwidth = strdisplaywidth(lin)
         endif
+    endfor
+    call map(flines, 'substitute(v:val, "^————$", repeat("—", realwidth), "")')
+
+    let flht = (len(flines) > maxh) ? maxh : len(flines)
+
+    if has('nvim')
+        if !exists('s:float_buf')
+            let s:float_buf = nvim_create_buf(v:false, v:true)
+            call setbufvar(s:float_buf, '&buftype', 'nofile')
+            call setbufvar(s:float_buf, '&bufhidden', 'hide')
+            call setbufvar(s:float_buf, '&swapfile', 0)
+            call setbufvar(s:float_buf, '&tabstop', 2)
+            call setbufvar(s:float_buf, '&undolevels', -1)
+        endif
+        call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+
+        call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, flines)
+
+        let opts = {'relative': 'editor', 'width': realwidth, 'height': flht,
+                    \ 'col': fcol, 'row': frow, 'anchor': fanchor, 'style': 'minimal'}
+        if s:float_win
+            call nvim_win_set_config(s:float_win, opts)
+        else
+            let s:float_win = nvim_open_win(s:float_buf, 0, opts)
+            call setwinvar(s:float_win, '&wrap', 1)
+            call setwinvar(s:float_win, '&colorcolumn', 0)
+            call setwinvar(s:float_win, '&signcolumn', 'no')
+        endif
+    else
+        if fanchor == 'NE'
+            let fpos = 'topright'
+        elseif fanchor == 'SW'
+            let fpos = 'botleft'
+            let frow -= 1
+        else
+            let fpos = 'topleft'
+        endif
+        if s:float_win
+            call popup_close(s:float_win)
+        endif
+        let s:float_win = popup_create(flines, #{
+                    \ line: frow + 1, col: fcol, pos: fpos,
+                    \ maxheight: flht})
     endif
 endfunction
 
 function CloseFloatWin(...)
-    let id = win_id2win(s:float_win)
-    if id > 0
-        call nvim_win_close(s:float_win, 1)
+    if has('nvim')
+        let id = win_id2win(s:float_win)
+        if id > 0
+            call nvim_win_close(s:float_win, 1)
+            let s:float_win = 0
+        endif
+    else
+        call popup_close(s:float_win)
         let s:float_win = 0
     endif
 endfunction
@@ -3603,7 +3638,7 @@ function StartFloatWin()
     endif
 endfunction
 
-if has('nvim-0.5.0')
+if has('nvim-0.5.0') || has('patch-8.2.84')
     autocmd CompleteChanged * call StartFloatWin()
     autocmd CompleteDone * call OnCompleteDone()
 endif
