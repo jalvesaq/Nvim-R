@@ -3638,6 +3638,9 @@ function OnCompleteDone()
     call CloseFloatWin()
 endfunction
 
+if $NCM_R == 'TRUE'
+    let s:user_data = {}
+endif
 function StartFloatWin()
     if ! pumvisible()
         return
