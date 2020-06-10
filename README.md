@@ -16,7 +16,9 @@ Plug 'jalvesaq/Nvim-R', {'branch': 'stable'}
 ```
 
 The `stable` branch is a copy of the last released version plus minor bug
-fixes eventually found after the release.
+fixes eventually found after the release. I plan to keep the stable branch
+compatible with Ubuntu LTS releases, and the master branch compatible with
+Ubuntu normal releases.
 
 Please, read the section *Installation* from the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
