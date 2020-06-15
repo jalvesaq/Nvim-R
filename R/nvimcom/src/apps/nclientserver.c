@@ -638,9 +638,10 @@ void add_pkg_descr(const char *nm, const char *dscr)
 
 void read_pkg_descr()
 {
-    char b[128];
+    char b[256];
     char *s, *nm, *dscr;
-    FILE *f = fopen("/home/aquino/.cache/Nvim-R/pack_descriptions", "r");
+    snprintf(b, 255, "%s/pack_descriptions", getenv("NVIMR_COMPLDIR"));
+    FILE *f = fopen(b, "r");
     if(!f)
         return;
 
