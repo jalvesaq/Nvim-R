@@ -45,6 +45,14 @@ typedef struct liststatus_ {
 
 static ListStatus *listTree = NULL;
 
+typedef struct pkg_descr_ {
+    char *name;
+    char *descr;
+    struct pkg_descr_ *next;
+} PkgDescr;
+
+PkgDescr *pkgList;
+
 static char NvimcomPort[16];
 static char VimSecret[128];
 static int VimSecretLen;
@@ -591,6 +599,72 @@ void start_server()
 #endif
 }
 
+PkgDescr *new_pkg_descr(const char *nm, const char *dscr)
+{
+    PkgDescr *pd = calloc(1, sizeof(PkgDescr));
+    pd->name = malloc((strlen(nm)+1) * sizeof(char));
+    pd->descr = malloc((strlen(dscr)+1) * sizeof(char));
+    strcpy(pd->name, nm);
+    strcpy(pd->descr, dscr);
+    return pd;
+}
+
+char *get_pkg_descr(const char *nm)
+{
+    if(!pkgList)
+        return NULL;
+
+    PkgDescr *pd = pkgList;
+    do{
+        if(strcmp(pd->name, nm) == 0)
+            return pd->descr;
+        pd = pd->next;
+    } while(pd);
+
+    return NULL;
+}
+
+void add_pkg_descr(const char *nm, const char *dscr)
+{
+    if(pkgList){
+        PkgDescr *pd = pkgList;
+        while(pd->next)
+            pd = pd->next;
+        pd->next = new_pkg_descr(nm, dscr);
+    } else {
+        pkgList = new_pkg_descr(nm, dscr);
+    }
+}
+
+void read_pkg_descr()
+{
+    char b[128];
+    char *s, *nm, *dscr;
+    FILE *f = fopen("/home/aquino/.cache/Nvim-R/pack_descriptions", "r");
+    if(!f)
+        return;
+
+    while((s = fgets(b, 127, f))){
+        nm = b;
+        while(*s != '\t' && *s != 0)
+            s++;
+        if(*s == '\t'){
+            *s = 0;
+            s++;
+            dscr = s;
+            while(*s != '\t' && *s != 0){
+                s++;
+                if(*s == '\t'){
+                    *s = 0;
+                    if(!get_pkg_descr(nm))
+                        add_pkg_descr(nm, dscr);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 ListStatus* search(const char *s)
 {
     ListStatus *node = listTree; 
@@ -925,6 +999,7 @@ void lib2ob()
     char buf[512];
     char *buffer;
     char *s;
+    char *d;
     char *p;
     //FILE *of;
 
@@ -940,7 +1015,16 @@ void lib2ob()
         while(*s != '\n')
             s++;
         *s = 0;
-        fprintf(F2, "   :#%s\t\n", lbnm);
+        d = get_pkg_descr(lbnm);
+        if(!d){
+            // Perhaps the library was installed in this R session
+            read_pkg_descr();
+            d = get_pkg_descr(lbnm);
+        }
+        if(d)
+            fprintf(F2, "   :#%s\t%s\n", lbnm, d);
+        else
+            fprintf(F2, "   :#%s\t\n", lbnm);
         snprintf(lbnmc, 511, "%s:", lbnm);
         if(get_list_status(lbnmc, 0) == 1){
             if(find_in_cache(buf, lbnm)){
@@ -1041,6 +1125,8 @@ int main(int argc, char **argv){
         printf("%d%d %d%d", rand(), rand(), rand(), rand());
         return 0;
     }
+
+    read_pkg_descr();
 
     objbr_setup();
 
