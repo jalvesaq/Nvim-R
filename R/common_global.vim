@@ -3157,6 +3157,7 @@ let s:R_task_completed = 0
 function RTaskCompleted()
     let s:R_task_completed = 1
     if g:R_hi_fun_globenv == 2
+        call SendToNvimcom("\002" . $NVIMR_ID)
         call UpdateRGlobalEnv(0)
     endif
 endfunction

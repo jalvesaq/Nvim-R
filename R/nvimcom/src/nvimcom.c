@@ -50,7 +50,6 @@ static int allnames = 0;
 static int nvimcom_failure = 0;
 static int nlibs = 0;
 static int needsfillmsg = 0;
-static int openclosel = 0;
 static char edsrvr[128];
 static char nvimsecr[128];
 
@@ -397,8 +396,9 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
         PROTECT(label = getAttrib(*x, lablab));
         if(length(label) > 0){
             if(Rf_isValidString(label)){
-                snprintf(buf, 512, "\006\006%s\n", CHAR(STRING_ELT(label, 0)));
+                snprintf(buf, 168, "\006\006%s", CHAR(STRING_ELT(label, 0)));
                 p = nvimcom_strcat(p, buf);
+                p = nvimcom_strcat(p, "\n"); // The new line must be added here because the label will be truncated if too long.
             } else {
                 p = nvimcom_strcat(p, "\006\006Error: label is not a valid string.\n");
             }
@@ -839,7 +839,6 @@ static void nvimcom_send_running_info(int bindportn)
 
 static void nvimcom_parse_received_msg(char *buf)
 {
-    int status;
     char *bbuf;
 
     if(verbose > 2){
@@ -888,7 +887,6 @@ static void nvimcom_parse_received_msg(char *buf)
             snprintf(flag_eval, 510, "%s <- %s", bbuf, bbuf);
             nvimcom_eval_expr(flag_eval);
             *flag_eval = 0;
-            nvimcom_list_env();
 #else
             snprintf(flag_eval, 510, "%s <- %s", bbuf, bbuf);
             nvimcom_fire();
