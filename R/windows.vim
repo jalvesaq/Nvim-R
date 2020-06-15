@@ -116,7 +116,7 @@ endfunction
 
 function StartR_Windows()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        call JobStdin(g:rplugin.jobs["ClientServer"], "\x0bCheck if R is running\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "71Check if R is running\n")
         return
     endif
 
@@ -149,7 +149,7 @@ function SendCmdToR_Windows(...)
     else
         let cmd = a:1 . "\n"
     endif
-    call JobStdin(g:rplugin.jobs["ClientServer"], "\003" . cmd)
+    call JobStdin(g:rplugin.jobs["ClientServer"], "73" . cmd)
     return 1
 endfunction
 

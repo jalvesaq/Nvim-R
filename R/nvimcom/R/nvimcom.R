@@ -23,11 +23,8 @@ NvimcomEnv$pkgdescr <- list()
     if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))){
         source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))
     } else {
-        options(nvimcom.opendf = TRUE)
-        options(nvimcom.openlist = FALSE)
         options(nvimcom.allnames = FALSE)
         options(nvimcom.texerrs = TRUE)
-        options(nvimcom.labelerr = TRUE)
         options(nvimcom.setwidth = TRUE)
         options(nvimcom.nvimpager = TRUE)
         options(nvimcom.delim = "\t")
@@ -48,10 +45,7 @@ NvimcomEnv$pkgdescr <- list()
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
-           as.integer(getOption("nvimcom.opendf")),
-           as.integer(getOption("nvimcom.openlist")),
            as.integer(getOption("nvimcom.allnames")),
-           as.integer(getOption("nvimcom.labelerr")),
            as.integer(getOption("nvimcom.setwidth")),
            path.package("nvimcom"),
            as.character(utils::packageVersion("nvimcom")),

@@ -36,13 +36,7 @@ if !exists("s:hasbrowsermenu")
     let s:hasbrowsermenu = 0
 endif
 
-" Current view of the object browser: .GlobalEnv X loaded libraries
-let g:rplugin.curview = "GlobalEnv"
-
-function! UpdateOB(what, time)
-    if a:time > g:R_ls_env_tol
-        call RWarningMsg(a:time . ' milliseconds to update the Object Browser')
-    endif
+function! UpdateOB(what)
     if a:what == "both"
         let wht = g:rplugin.curview
     else
@@ -133,22 +127,22 @@ function! RBrowserDoubleClick()
     if line(".") == 1
         if g:rplugin.curview == "libraries"
             let g:rplugin.curview = "GlobalEnv"
-            call SendToNvimcom("\004G RBrowserDoubleClick")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
         else
             let g:rplugin.curview = "libraries"
-            call SendToNvimcom("\004L RBrowserDoubleClick")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "32\n")
         endif
         return
     endif
 
     " Toggle state of list or data.frame: open X closed
-    let key = RBrowserGetName(0, 1)
+    let key = RBrowserGetName(1, 1)
     let curline = getline(".")
     if g:rplugin.curview == "GlobalEnv"
         if curline =~ "&#.*\t"
-            call SendToNvimcom("\006&" . key)
+            " FIXME: lazy objects must be evaluated before being opened.
         elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
-            call SendToNvimcom("\006" . key)
+            call JobStdin(g:rplugin.jobs["ClientServer"], "33G" . key . "\n")
         else
             let key = RBrowserGetName(0, 0)
             call g:SendCmdToR("str(" . key . ")")
@@ -157,12 +151,8 @@ function! RBrowserDoubleClick()
         if curline =~ "(#.*\t"
             call AskRDoc(key, RBGetPkgName(), 0)
         else
-            let key = substitute(key, '`', '', "g")
-            if key =~ "^package:"
-                call SendToNvimcom("\006" . key)
-            elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
-                let key = "package:" . RBGetPkgName() . '-' . key
-                call SendToNvimcom("\006" . key)
+            if key =~ ":$" || curline =~ "\[#.*\t" || curline =~ "<#.*\t"
+                call JobStdin(g:rplugin.jobs["ClientServer"], "33L" . key . "\n")
             else
                 let key = RBrowserGetName(0, 0)
                 call g:SendCmdToR("str(" . key . ")")
@@ -229,7 +219,7 @@ function! RBrowserFindParent(word, curline, curpos)
     let curpos = a:curpos
     while curline > 1 && curpos >= a:curpos
         let curline -= 1
-        let line = substitute(getline(curline), "	.*", "", "")
+        let line = substitute(getline(curline), "\x09.*", "", "")
         let curpos = stridx(line, '[#')
         if curpos == -1
             let curpos = stridx(line, '<#')
@@ -299,12 +289,12 @@ function! RBrowserGetName(cleantail, cleantick)
         let word = '`' . word . '`'
     endif
 
-    if (g:rplugin.curview == "GlobalEnv" && curpos == 4) || (g:rplugin.curview == "libraries" && curpos == 3)
+    if curpos == 4
         " top level object
         let word = substitute(word, '\$\[\[', '[[', "g")
         let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
         if g:rplugin.curview == "libraries"
-            return "package:" . substitute(word, "#", "", "")
+            return word . ':'
         else
             return word
         endif
@@ -338,7 +328,13 @@ function! RBrowserGetName(cleantail, cleantick)
 endfunction
 
 function! OnOBBufUnload()
-    call SendToNvimcom("\004Stop updating info [OB BufUnload].")
+    if g:R_hi_fun_globenv < 2
+        call SendToNvimcom("\003" . $NVIMR_ID)
+    endif
+endfunction
+
+function! PrintListTree()
+    call JobStdin(g:rplugin.jobs["ClientServer"], "37\n")
 endfunction
 
 nnoremap <buffer><silent> <CR> :call RBrowserDoubleClick()<CR>

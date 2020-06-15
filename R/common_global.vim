@@ -104,11 +104,10 @@ function RWarningMsg(wmsg)
     endif
     if mode() == 'i' && (has('nvim-0.4.3') || has('patch-8.1.1705'))
         call RFloatWarn(a:wmsg)
-    else
-        echohl WarningMsg
-        echomsg a:wmsg
-        echohl None
     endif
+    echohl WarningMsg
+    echomsg a:wmsg
+    echohl None
 endfunction
 
 if has("nvim")
@@ -747,7 +746,16 @@ function StartNClientServer(w)
             let $NVIMR_SECRET = randlst[1]
         endif
     endif
+    if g:R_objbr_opendf
+        let $NVIMR_OPENDF = "TRUE"
+    endif
+    if g:R_objbr_openlist
+        let $NVIMR_OPENLS = "TRUE"
+    endif
     let g:rplugin.jobs["ClientServer"] = StartJob([nvc], g:rplugin.job_handlers)
+    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/valllog_nclientserver', '/home/aquino/software/R-4.0.1/library/nvimcom/bin/nclientserver'], g:rplugin.job_handlers)
+    unlet $NVIMR_OPENDF
+    unlet $NVIMR_OPENLS
 endfunction
 
 function UpdatePathForR()
@@ -819,7 +827,7 @@ function FinishStartingR()
     call writefile([], g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call writefile([], g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+    call writefile([], g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
 
     call AddForDeletion(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
@@ -833,16 +841,7 @@ function FinishStartingR()
         call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
     endif
 
-    if g:R_objbr_opendf
-        let start_options = ['options(nvimcom.opendf = TRUE)']
-    else
-        let start_options = ['options(nvimcom.opendf = FALSE)']
-    endif
-    if g:R_objbr_openlist
-        let start_options += ['options(nvimcom.openlist = TRUE)']
-    else
-        let start_options += ['options(nvimcom.openlist = FALSE)']
-    endif
+    let start_options = []
     if g:R_objbr_allnames
         let start_options += ['options(nvimcom.allnames = TRUE)']
     else
@@ -852,11 +851,6 @@ function FinishStartingR()
         let start_options += ['options(nvimcom.texerrs = TRUE)']
     else
         let start_options += ['options(nvimcom.texerrs = FALSE)']
-    endif
-    if g:R_objbr_labelerr
-        let start_options += ['options(nvimcom.labelerr = TRUE)']
-    else
-        let start_options += ['options(nvimcom.labelerr = FALSE)']
     endif
     if exists('g:R_setwidth') && g:R_setwidth == 2
         let start_options += ['options(nvimcom.setwidth = TRUE)']
@@ -1065,9 +1059,9 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         endif
         " Set nvimcom port in nvimclient
         if has("win32")
-            call JobStdin(g:rplugin.jobs["ClientServer"], "\001" . g:rplugin.nvimcom_port . " " . $RCONSOLE . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . " " . $RCONSOLE . "\n")
         else
-            call JobStdin(g:rplugin.jobs["ClientServer"], "\001" . g:rplugin.nvimcom_port . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . "\n")
         endif
     else
         call RWarningMsg("nvimcom is not running")
@@ -1077,12 +1071,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     if exists("g:RStudio_cmd")
         if has("win32") && g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "\005" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "75" . g:rplugin.compldir . "\n")
         endif
     elseif has("win32")
         if g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "\005" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "75" . g:rplugin.compldir . "\n")
         endif
     elseif g:R_applescript
         call foreground()
@@ -1156,6 +1150,7 @@ function StartObjBrowser()
             sil exe 'resize ' . g:R_objbr_h
         endif
         sil set filetype=rbrowser
+        let g:rplugin.curview = "GlobalEnv"
         let g:rplugin.ob_winnr = win_getid()
         if exists("*nvim_win_get_buf")
             let g:rplugin.ob_buf = nvim_win_get_buf(g:rplugin.ob_winnr)
@@ -1164,7 +1159,6 @@ function StartObjBrowser()
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle
         unlet g:tmp_objbrtitle
-        call SendToNvimcom("\002" . g:rplugin.myport)
     endif
     exe "set switchbuf=" . savesb
 endfunction
@@ -1184,6 +1178,10 @@ function RObjBrowser()
 
     let s:running_objbr = 1
 
+    call UpdateRGlobalEnv(1)
+    call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
+    call SendToNvimcom("\002" . $NVIMR_ID)
+
     call StartObjBrowser()
     let s:running_objbr = 0
 
@@ -1198,7 +1196,7 @@ function RObjBrowser()
 endfunction
 
 function RBrOpenCloseLs(stt)
-    call SendToNvimcom("\007" . a:stt)
+    call JobStdin(g:rplugin.jobs["ClientServer"], "34" . a:stt . g:rplugin.curview . "\n")
 endfunction
 
 let s:wait_nvimcom = 0
@@ -1216,7 +1214,7 @@ function SendToNvimcom(cmd)
         call RWarningMsg("ClientServer not running.")
         return
     endif
-    call JobStdin(g:rplugin.jobs["ClientServer"], "\002" . a:cmd . "\n")
+    call JobStdin(g:rplugin.jobs["ClientServer"], "2" . a:cmd . "\n")
 endfunction
 
 " This function is called by nclientserver
@@ -2134,9 +2132,9 @@ endfunction
 " Clear the console screen
 function RClearConsole()
     if has("win32") && !g:R_in_buffer
-        call JobStdin(g:rplugin.jobs["ClientServer"], "\006\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "76\n")
         sleep 50m
-        call JobStdin(g:rplugin.jobs["ClientServer"], "\007\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "77\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -2199,9 +2197,9 @@ function RQuit(how)
         endif
     endif
 
-    if g:R_save_win_pos
+    if has("win32") && g:R_in_buffer == 0 && g:R_save_win_pos
         " SaveWinPos
-        call JobStdin(g:rplugin.jobs["ClientServer"], "\004" . $NVIMR_COMPLDIR . "\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "74" . $NVIMR_COMPLDIR . "\n")
     endif
 
     " In Neovim, the cursor must be in the term buffer to get TermClose event
@@ -2980,8 +2978,8 @@ function RControlMaps()
     " Build list of objects for omni completion
     "-------------------------------------
     call RCreateMaps('nvi', 'RUpdateObjBrowser', 'ro', ':call RObjBrowser()')
-    call RCreateMaps('nvi', 'ROpenLists',        'r=', ':call RBrOpenCloseLs(1)')
-    call RCreateMaps('nvi', 'RCloseLists',       'r-', ':call RBrOpenCloseLs(0)')
+    call RCreateMaps('nvi', 'ROpenLists',        'r=', ':call RBrOpenCloseLs("O")')
+    call RCreateMaps('nvi', 'RCloseLists',       'r-', ':call RBrOpenCloseLs("C")')
 
     " Render script with rmarkdown
     "-------------------------------------
@@ -3137,7 +3135,7 @@ function RVimLeave()
             if IsJobRunning(job)
                 if job == 'ClientServer'
                     " Avoid warning of exit status 141
-                    call JobStdin(g:rplugin.jobs["ClientServer"], "\x08\n")
+                    call JobStdin(g:rplugin.jobs["ClientServer"], "8\n")
                     sleep 20m
                 endif
             endif
@@ -3167,9 +3165,6 @@ let s:updating_globalenvlist = 0
 let s:waiting_glblnv_list = 0
 " Function called by nvimcom
 function GlblEnvUpdated(time)
-    if a:time > g:R_ls_env_tol
-        let g:R_hi_fun_globenv = 0
-    endif
     let s:updating_globalenvlist = 0
     if s:waiting_glblnv_list
         if a:time == -1.0
@@ -3178,6 +3173,10 @@ function GlblEnvUpdated(time)
         else
             call ReadGlobalEnvList()
         endif
+    endif
+
+    if a:time != -1.0 && g:rplugin.curview == "GlobalEnv"
+        call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
     endif
 endfunction
 
@@ -3197,7 +3196,7 @@ function UpdateRGlobalEnv(block)
     call delete(g:rplugin.tmpdir . "/toplevel_list")
 
     let s:updating_globalenvlist = 1
-    call SendToNvimcom("\x03" . $NVIMR_ID)
+    call SendToNvimcom("\004" . $NVIMR_ID)
 
     if g:rplugin.nvimcom_port == 0
         sleep 500m
@@ -3206,8 +3205,8 @@ function UpdateRGlobalEnv(block)
 
     if a:block
         " We can't return from this function and wait for a message from
-        " nvimcom because omni completion in Vim/Neovim requires the list of
-        " completions as the return value of the 'omnifunc'.
+        " nvimcom because both omni completion and the Object Browser require
+        " the list of completions immediately.
         sleep 10m
         let ii = 0
         let max_ii = 100 * g:R_wait_reply
@@ -3272,7 +3271,10 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
         if (a:base !~ '\$' && tmp[0] =~ '\$') || (a:base =~ '\$' && tmp[0] !~ '\$')
             continue
         endif
-        " Idem with S4 tmp[0]ects
+        if (a:base !~ '\[\[' && tmp[0] =~ '\[\[') || (a:base =~ '\[\[' && tmp[0] !~ '\[\[')
+            continue
+        endif
+        " Idem with S4 objects
         if (a:base !~ '@' && tmp[0] =~ '@') || (a:base =~ '@' && tmp[0] !~ '@')
             continue
         endif
@@ -3286,11 +3288,7 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             let cls = tmp[2]
         endif
         let pkg = tmp[3]
-        if len(tmp) == 5
-            let inf = tmp[4]
-        else
-            let inf = ''
-        endif
+        let args = tmp[4]
         if len(s:toplev_objs) && pkg != '.GlobalEnv'
             " Do not show an object from a package if it was masked by a
             " toplevel object in .GlobalEnv
@@ -3311,36 +3309,25 @@ function RFillOmniMenu(base, newbase, prefix, pkg, olines)
             let obj = "`" . obj . "`"
         endif
 
-        let tmp = split(inf, "\x08")
-        let ttl = ''
-        let descr = ''
-        if len(tmp) == 2
-            let tmp2 = split(tmp[1], "\x05", 1)
-            let ttl = tmp2[0]
-            let descr = tmp2[1]
-        endif
+        let descr = tmp[5]
+        let ttl = tmp[6]
 
-        if cls == "function"
-            let usage = tmp[0]
-        else
-            let usage = ''
-        endif
         if has('nvim-0.5.0') || has('patch-8.2.84')
             " Only on 2020-04-28 Neovim started accepting any kind of variable as user_data.
             " Before that, it should be a string: https://github.com/jalvesaq/Nvim-R/issues/495
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']',
-                        \ 'user_data': {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}})
+                        \ 'user_data': {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': args}})
         elseif has('nvim-0.4.3') || has('patch-8.1.1705')
             call add(resp, {'word': a:prefix . obj, 'menu': cls . ' [' . pkg . ']'})
-            let s:user_data[a:prefix . obj] = {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': usage}
+            let s:user_data[a:prefix . obj] = {'cls': cls, 'pkg': pkg, 'ttl': ttl, 'descr': descr, 'usage': args}
         else
-            if tmp[0] =~ '""'
-                let tmp[0] = substitute(tmp[0], '"""', '"\\""', 'g')
-                let tmp[0] = substitute(tmp[0], "\"\"'\"", "\"\\\\\"'\"", 'g')
+            if args =~ '""'
+                let args = substitute(args, '"""', '"\\""', 'g')
+                let args = substitute(args, "\"\"'\"", "\"\\\\\"'\"", 'g')
             endif
-            let tmp[0] = substitute(tmp[0], "NO_ARGS", "", "")
-            let tmp[0] = substitute(tmp[0], "\x07", " = ", "g")
-            let xx = split(tmp[0], "\x09")
+            let args = substitute(args, "NO_ARGS", "", "")
+            let args = substitute(args, "\x07", " = ", "g")
+            let xx = split(args, "\x09")
             if len(xx) > 0
                 let usage = a:prefix . obj . "(" . join(xx, ', ') . ')'
             else
@@ -4115,7 +4102,6 @@ let g:R_objbr_h           = get(g:, "R_objbr_h",           10)
 let g:R_objbr_opendf      = get(g:, "R_objbr_opendf",       1)
 let g:R_objbr_openlist    = get(g:, "R_objbr_openlist",     0)
 let g:R_objbr_allnames    = get(g:, "R_objbr_allnames",     0)
-let g:R_objbr_labelerr    = get(g:, "R_objbr_labelerr",     1)
 let g:R_applescript       = get(g:, "R_applescript",        0)
 let g:R_esc_term          = get(g:, "R_esc_term",           1)
 let g:R_close_term        = get(g:, "R_close_term",         1)
@@ -4132,7 +4118,6 @@ let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
-let g:R_ls_env_tol        = get(g:, "R_ls_env_tol",       500)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 if exists(":terminal") != 2
     let g:R_in_buffer = 0
@@ -4154,10 +4139,6 @@ if filereadable(expand("~/.inputrc"))
 endif
 let g:R_editing_mode = get(g:, "R_editing_mode", s:editing_mode)
 unlet s:editing_mode
-
-if g:R_ls_env_tol < 10 || g:R_ls_env_tol > 10000
-    let g:R_ls_env_tol = 500
-endif
 
 if has('win32') && !g:R_in_buffer
     " Sending multiple lines at once to Rgui on Windows does not work.
@@ -4322,6 +4303,9 @@ let s:running_rhelp = 0
 let s:R_pid = 0
 let g:rplugin.myport = 0
 let g:rplugin.nvimcom_port = 0
+
+" Current view of the object browser: .GlobalEnv X loaded libraries
+let g:rplugin.curview = "None"
 
 let s:filelines = readfile(g:rplugin.home . "/R/nvimcom/DESCRIPTION")
 let s:required_nvimcom = substitute(s:filelines[1], "Version: ", "", "")

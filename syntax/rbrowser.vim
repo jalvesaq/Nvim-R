@@ -50,11 +50,12 @@ if &encoding != "utf-8"
 endif
 
 syn match rbrowserTab contained "\t"
-syn match rbrowserLen " \[[0-9]\+, [0-9]\+\]$"
-syn match rbrowserLen " \[[0-9]\+\]$"
+syn match rbrowserLen " \[[0-9]\+, [0-9]\+\]$" contains=rbrowserEspSpc
+syn match rbrowserLen " \[[0-9]\+\]$" contains=rbrowserEspSpc
 syn match rbrowserErr /Error: label isn't "character"./
 if has("conceal")
     syn match rbrowserDelim contained /'#\|"#\|(#\|\[#\|{#\|%#\|##\|<#\|:#\|&#\|=#/ conceal
+    syn match rbrowserEspSpc contained " " conceal
 else
     syn match rbrowserDelim contained /'\|"\|(\|\[\|{\|%\|#\|<\|:\|&\|=/
 endif

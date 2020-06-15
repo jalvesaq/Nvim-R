@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <dirent.h>
 #ifdef WIN32
 #include <winsock2.h>
 #include <process.h>
@@ -21,10 +22,32 @@ HWND RConsole = NULL;
 #include <sys/time.h>
 #endif
 
+static FILE *F2;
+static char strL[8];
+static char strT[8];
+static int OpenDF;
+static int OpenLS;
+static int nvimcom_is_utf8;
+
+static char tmpdir[256];
+static char liblist[576];
+static char globenv[576];
+static char glbnvls[576];
+void omni2ob();
+void lib2ob();
+
+typedef struct liststatus_ {
+    char *key;
+    int status;
+    struct liststatus_ *left;
+    struct liststatus_ *right;
+} ListStatus;
+
+static ListStatus *listTree = NULL;
+
 static char NvimcomPort[16];
 static char VimSecret[128];
 static int VimSecretLen;
-FILE *df = NULL;
 
 #ifdef WIN32
 static SOCKET Sfd;
@@ -37,10 +60,6 @@ static char myport[128];
 
 static void HandleSigTerm(int s)
 {
-    if(df){
-        fprintf(df, "HandleSigTerm called\n");
-        fflush(df);
-    }
     exit(0);
 }
 
@@ -54,11 +73,6 @@ static void RegisterPort(int bindportn)
 static void ParseMsg(char *buf)
 {
     char *bbuf = buf;
-    if(df){
-        fprintf(df, "tcp: %s\n", bbuf);
-        fflush(df);
-    }
-
     if(strstr(bbuf, VimSecret) == bbuf){
         bbuf += VimSecretLen;
         printf("%s\n", bbuf);
@@ -156,10 +170,6 @@ static void *NeovimServer(void *arg)
 
         ParseMsg(buf);
     }
-    if(df){
-        fclose(df);
-        df = NULL;
-    }
     return NULL;
 }
 #endif
@@ -231,10 +241,6 @@ static void NeovimServer(void *arg)
 
         ParseMsg(buf);
     }
-    if(df){
-        fprintf(df, "Neovim server: Finished receiving. Closing socket.\n");
-        fflush(df);
-    }
     result = closesocket(Sfd);
     if (result == SOCKET_ERROR) {
         fprintf(stderr, "closesocket failed with error %d\n", WSAGetLastError());
@@ -242,10 +248,6 @@ static void NeovimServer(void *arg)
         return;
     }
     WSACleanup();
-    if(df){
-        fclose(df);
-        df = NULL;
-    }
     return;
 }
 #endif
@@ -536,48 +538,9 @@ static void ArrangeWindows(char *cachedir){
     SetForegroundWindow(NvimHwnd);
     fclose(f);
 }
-#endif
 
-int main(int argc, char **argv){
-
-    if(argc == 2 && strcmp(argv[1], "random") == 0){
-        time_t t;
-        srand((unsigned) time(&t));
-        printf("%d%d %d%d", rand(), rand(), rand(), rand());
-        return 0;
-    }
-
-    char line[1024];
-    char *msg;
-    memset(line, 0, 1024);
-    strcpy(NvimcomPort, "0");
-
-    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
-        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)", getenv("NVIMR_SECRET"), argv[1], argv[2]);
-        SendToServer(getenv("NVIMR_PORT"), line);
-
-        if(getenv("DEBUG_NVIMR")){
-            FILE *df1 = fopen("/tmp/nclientserver_1_debug", "a");
-            if(df1 != NULL){
-                fprintf(df1, "%s %s %s %s\n", getenv("NVIMR_PORT"), getenv("NVIMR_SECRET"), argv[1], argv[2]);
-                fclose(df1);
-            }
-        }
-        return 0;
-    }
-
-    if(getenv("DEBUG_NVIMR")){
-        df = fopen("/tmp/nclientserver_debug", "w");
-        if(df){
-            fprintf(df, "NVIMR_SECRET=%s\n", getenv("NVIMR_SECRET"));
-            fflush(df);
-        } else {
-            fprintf(stderr, "Error opening \"nclientserver_debug\" for writing\n");
-            fflush(stderr);
-        }
-    }
-
-#ifdef WIN32
+void Windows_setup()
+{
     // Set the value of NvimHwnd
     if(getenv("WINDOWID")){
 #ifdef _WIN64
@@ -598,9 +561,11 @@ int main(int argc, char **argv){
             }
         }
     }
+}
 #endif
 
-    // Start the server
+void start_server()
+{
     if(!getenv("NVIMR_SECRET")){
         fprintf(stderr, "NVIMR_SECRET not found\n");
         fflush(stderr);
@@ -624,21 +589,500 @@ int main(int argc, char **argv){
     strcpy(myport, "0");
     pthread_create(&Tid, NULL, NeovimServer, NULL);
 #endif
+}
+
+ListStatus* search(const char *s)
+{
+    ListStatus *node = listTree; 
+    int cmp = strcmp(node->key, s);
+    while(node && cmp != 0){
+        if(cmp > 0)
+            node = node->right;
+        else
+            node = node->left;
+        if(node)
+            cmp = strcmp(node->key, s);
+    }
+    if(cmp == 0)
+        return node;
+    else
+        return NULL;
+}
+
+ListStatus* new_ListStatus(const char *s, int stt)
+{
+    ListStatus *p;
+    p = calloc(1, sizeof(ListStatus));
+    p->key = malloc((strlen(s)+1)*sizeof(char));
+    strcpy(p->key, s);
+    p->status = stt;
+    return p;
+}
+
+ListStatus* insert(ListStatus *root, const char *s, int stt)
+{
+    if(!root)
+        return new_ListStatus(s, stt);
+    int cmp = strcmp(root->key, s);
+    if(cmp > 0)
+        root->right = insert(root->right, s, stt);
+    else
+        root->left = insert(root->left, s, stt);
+    return root;
+}
+
+int get_list_status(const char *s, int stt)
+{
+    if(listTree){
+        ListStatus *p = search(s);
+        if(p)
+            return p->status;
+        insert(listTree, s, stt);
+        return stt;
+    }
+    listTree = new_ListStatus(s, stt);
+    return stt;
+}
+
+void toggle_list_status(ListStatus *root, const char *s)
+{
+    fprintf(stderr, ">>%s<<\n", s);
+    fflush(stderr);
+
+    ListStatus *p = search(s);
+    if(p)
+        p->status = !p->status;
+}
+
+static char *write_line(char *p, const char *bs, char *prfx, int closeddf)
+{
+    char base[64];
+    char prefix[127];
+    char newprfx[96];
+    //char *s;    // Diagnostic pointer
+    char *nm;   // Name of object
+    char *bsnm; // Name of object including its parent list, data.frame or S4 object
+    char *ne;   // Number of elements in lists, data.frames and S4 objects
+    char *nr;   // Number of rows in data.frames
+    char *dc;   // Description
+    char tp;    // Type of object
+    int df;     // Is data.frame? If yes, start open unless closeddf = 1
+    int i, e;
+
+    bsnm = p;
+    p += strlen(bs);
+    nm = p;
+    while(*p != '\006'){
+        if(*p == 0){
+            // FIXME: Delete this verification code after fixing the bug in nvimcom.c
+            fprintf(stderr, "error\n");
+            fflush(stderr);
+            prfx[0] = 0;
+            prfx[1] = 0;
+            return prfx;
+        }
+        p++;
+    }
+    *p = 0;
+    p++;
+    if(closeddf)
+        df = 0;
+    else if(*p == 'd')
+        df = OpenDF;
+    else
+        df = OpenLS;
+    if(p[0] == 'n')
+        tp = '{';
+    else if(p[0] == 'c')
+        tp = '"';
+    else if(p[0] == 'f' && p[1] == 'a')
+        tp = '\'';
+    else if(p[0] == 'd')
+        tp = '[';
+    else if(p[0] == 'l' && p[1] == 'i')
+        tp = '[';
+    else if(p[0] == 'l' && p[1] == 'o')
+        tp = '%';
+    else if(p[0] == 'f' && p[1] == 'u')
+        tp = '(';
+    else if(p[0] == 's')
+        tp = '<';
+    else if(p[0] == 'l' && p[1] == 'a')
+        tp = '&';
+    else if(p[0] == 'e')
+        tp = ':';
+    else
+        tp = '=';
+
+    i = 0;
+    while(i < 3){
+        p++;
+        if(*p == '\006'){
+            *p = 0;
+            i++;
+        }
+    }
+    p++;
+
+    ne = p;
+    while(*p != '\006' && *p != '\001')
+        p++;
+    if(*p == '\001'){
+        *p = 0;
+        p++;
+        nr = p;
+        while(*p != '\006')
+            p++;
+        *p = 0;
+    } else {
+        *p = 0;
+        nr = p;
+    }
+    e = atoi(ne);
+    p++;
+
+    while(*p != '\006')
+        p++;
+    *p = 0;
+    p++;
+    dc = p;
+
+    while(*p != '\n')
+        p++;
+    *p = 0;
+    p++;
+
+    if(tp == '[' || tp == '<')
+        if(*nr)
+            fprintf(F2, "   %s%c#%s\t [%s, %d]\n", prfx, tp, nm, nr, e);
+        else
+            fprintf(F2, "   %s%c#%s\t [%d]\n", prfx, tp, nm, e);
+    else
+        fprintf(F2, "   %s%c#%s\t%s\n", prfx, tp, nm, dc);
+
+    if(tp == '[' || tp == '<'){
+        strncpy(base, bsnm, 63);
+        if(tp == '['){
+            if(p[strlen(base)] == '$') // Named list
+                strncat(base, "$", 63);
+        } else
+            strncat(base, "@", 63);
+
+
+        if(e > 0){
+            if(get_list_status(bsnm, df) == 0){
+                while(strstr(p, base) == p){
+                    while(*p != '\n')
+                        p++;
+                    p++;
+                }
+                return p;
+            }
+
+            int len = strlen(prfx);
+            if(nvimcom_is_utf8){
+                int j = 0, i = 0;
+                while(i < len){
+                    if(prfx[i] == '\xe2'){
+                        i += 3;
+                        if(prfx[i-1] == '\x80' || prfx[i-1] == '\x94'){
+                            newprfx[j] = ' '; j++;
+                        } else {
+                            newprfx[j] = '\xe2'; j++;
+                            newprfx[j] = '\x94'; j++;
+                            newprfx[j] = '\x82'; j++;
+                        }
+                    } else {
+                        newprfx[j] = prfx[i];
+                        i++, j++;
+                    }
+                }
+                newprfx[j] = 0;
+            } else {
+                for(int i = 0; i < len; i++){
+                    if(prfx[i] == '-' || prfx[i] == '`')
+                        newprfx[i] = ' ';
+                    else
+                        newprfx[i] = prfx[i];
+                }
+                newprfx[len] = 0;
+            }
+
+            for(i = 0; i < (e - 1); i++){
+                snprintf(prefix, 112, "%s%s", newprfx, strT);
+                if(*p == 0){
+                    // FIXME: Delete this verification code after fixing the bug in nvimcom.c
+                    fprintf(stderr, "Error: %s\n", base);
+                    fflush(stderr);
+                    prfx[0] = 0;
+                    prfx[1] = 0;
+                    return prfx;
+                }
+
+                // Check if the next element really is there
+                if(strstr(p, base) != p)
+                    break;
+
+                p = write_line(p, base, prefix, 0);
+            }
+            snprintf(prefix, 112, "%s%s", newprfx, strL);
+            p = write_line(p, base, prefix, 0);
+        }
+    }
+    return p;
+}
+
+char *read_file(const char *fn)
+{
+    FILE *f = fopen(fn, "rb");
+    if(!f){
+        fprintf(stderr, "Error opening '%s'", fn);
+        fflush(stderr);
+        return NULL;
+    }
+    fseek(f, 0L, SEEK_END);
+    long sz = ftell(f);
+    rewind(f);
+    if(sz == 0){
+        // List of objects is empty. Perhaps no object was created yet.
+        return NULL;
+    }
+
+    char *buffer = calloc(1, sz + 1);
+    if(!buffer){
+        fclose(f);
+        fputs("Error allocating memory\n", stderr);
+        fflush(stderr);
+    }
+
+    if(1 != fread(buffer, sz, 1 , f)){
+        fclose(f);
+        free(buffer);
+        fprintf(stderr, "Error reading '%s'\n", fn);
+        fflush(stderr);
+        return NULL;
+    }
+    fclose(f);
+
+    return buffer;
+}
+
+void omni2ob()
+{
+    char *buffer = read_file(glbnvls);
+
+    if(!buffer)
+        return;
+
+    F2 = fopen(globenv, "w");
+    if(!F2){
+        fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
+        fflush(stderr);
+        free(buffer);
+        return;
+    }
+    
+    fprintf(F2, ".GlobalEnv | Libraries\n\n");
+
+    char *s;
+
+    s = buffer;
+    while(*s)
+        s = write_line(s, "", "", 0);
+
+    free(buffer);
+    fclose(F2);
+    fputs("call UpdateOB('GlobalEnv')\n", stdout);
+    fflush(stdout);
+}
+
+int find_in_cache(char buf[512], const char *onm)
+{
+    DIR *d;
+    struct dirent *e;
+    char b[512];
+
+    d = opendir(getenv("NVIMR_COMPLDIR"));
+    if(d != NULL){
+        snprintf(b, 511, "omnils_%s_", onm);
+        while((e = readdir (d))){
+            if(strstr(e->d_name, b)){
+                snprintf(buf, 511, "%s/%s", getenv("NVIMR_COMPLDIR"), e->d_name);
+                closedir(d);
+                return 1;
+            }
+        }
+        closedir(d);
+        fprintf(stderr, "Couldn't find omni file for \"%s\"\n", onm);
+    } else {
+        fprintf(stderr, "Couldn't open the cache directory (%s)\n",
+                getenv("NVIMR_COMPLDIR"));
+    }
+    fflush(stderr);
+    return 0;
+}
+
+void lib2ob()
+{
+    F2 = fopen(liblist, "w");
+    if(!F2){
+        fprintf(stderr, "Failed to open \"%s\"\n", liblist);
+        fflush(stderr);
+        return;
+    }
+    fprintf(F2, "Libraries | .GlobalEnv\n\n");
+
+    char lbnm[128];
+    char lbnmc[512];
+    char buf[512];
+    char *buffer;
+    char *s;
+    char *p;
+    //FILE *of;
+
+    snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    FILE *flib = fopen(buf, "r");
+    if(!flib){
+        fprintf(stderr, "Failed to open \"%s\"\n", buf);
+        fflush(stderr);
+        return;
+    }
+
+    while((s = fgets(lbnm, 511, flib))){
+        while(*s != '\n')
+            s++;
+        *s = 0;
+        fprintf(F2, "   :#%s\t\n", lbnm);
+        snprintf(lbnmc, 511, "%s:", lbnm);
+        if(get_list_status(lbnmc, 0) == 1){
+            if(find_in_cache(buf, lbnm)){
+                buffer = read_file(buf);
+                if(!buffer){
+                    fclose(F2);
+                    fclose(flib);
+                    return;
+                }
+                p = buffer;
+                while(*p){
+                    s = p;
+                    while(*s != '\n') // Check if this is the last line
+                        s++;
+                    s++;
+                    if(*s == 0)
+                        p = write_line(p, "", strL, 1);
+                    else
+                        p = write_line(p, "", strT, 1);
+                }
+                free(buffer);
+            }
+        }
+    }
+
+    fclose(F2);
+    fclose(flib);
+    fputs("call UpdateOB('libraries')\n", stdout);
+    fflush(stdout);
+}
+
+void change_all(ListStatus *root, int stt)
+{
+    if(root != NULL){
+        // Open all but libraries
+        if(!(stt == 1 && root->key[strlen(root->key) - 1] == ':'))
+            root->status = stt;
+        change_all(root->left, stt);
+        change_all(root->right, stt);
+    }
+}
+
+void print_listTree(ListStatus *root, FILE *f)
+{
+    if(root != NULL){
+        fprintf(f, "%d :: %s\n", root->status, root->key);
+        print_listTree(root->left, f);
+        print_listTree(root->right, f);
+    }
+}
+
+void objbr_setup()
+{
+    char envstr[1024];
+    envstr[0] = 0;
+    if(getenv("LC_MESSAGES"))
+        strcat(envstr, getenv("LC_MESSAGES"));
+    if(getenv("LC_ALL"))
+        strcat(envstr, getenv("LC_ALL"));
+    if(getenv("LANG"))
+        strcat(envstr, getenv("LANG"));
+    int len = strlen(envstr);
+    for(int i = 0; i < len; i++)
+        envstr[i] = toupper(envstr[i]);
+    if(strstr(envstr, "UTF-8") != NULL || strstr(envstr, "UTF8") != NULL){
+        nvimcom_is_utf8 = 1;
+        strcpy(strL, "\xe2\x94\x94\xe2\x94\x80 ");
+        strcpy(strT, "\xe2\x94\x9c\xe2\x94\x80 ");
+    } else {
+        nvimcom_is_utf8 = 0;
+        strcpy(strL, "`- ");
+        strcpy(strT, "|- ");
+    }
+
+    strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
+    snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
+
+    if(getenv("NVIMR_OPENDF"))
+        OpenDF = 1;
+    else
+        OpenDF = 0;
+    if(getenv("NVIMR_OPENLS"))
+        OpenLS = 1;
+    else
+        OpenLS = 0;
+
+    // List tree sentinel
+    listTree = new_ListStatus("base:", 0);
+}
+
+int main(int argc, char **argv){
+
+    if(argc == 2 && strcmp(argv[1], "random") == 0){
+        time_t t;
+        srand((unsigned) time(&t));
+        printf("%d%d %d%d", rand(), rand(), rand(), rand());
+        return 0;
+    }
+
+    objbr_setup();
+
+    FILE *f;
+
+    char line[1024];
+    char *msg;
+    char t;
+    memset(line, 0, 1024);
+    strcpy(NvimcomPort, "0");
+
+    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
+        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)", getenv("NVIMR_SECRET"), argv[1], argv[2]);
+        SendToServer(getenv("NVIMR_PORT"), line);
+        return 0;
+    }
+
+#ifdef WIN32
+    Windows_setup();
+#endif
+
+    start_server();
 
     while(fgets(line, 1023, stdin)){
-        if(df){
-            msg = line;
-            msg++;
-            fprintf(df, "stdin: [%d] %s", (unsigned int)*line, msg);
-            fflush(df);
-        }
-
         for(unsigned int i = 0; i < strlen(line); i++)
             if(line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
         msg = line;
         switch(*msg){
-            case 1: // SetPort
+            case '1': // SetPort
                 msg++;
 #ifdef WIN32
                 char *p = msg;
@@ -658,41 +1102,85 @@ int main(int argc, char **argv){
                 strncpy(NvimcomPort, msg, 15);
 #endif
                 break;
-            case 2: // Send message
+            case '2': // Send message
                 msg++;
                 SendToServer(NvimcomPort, msg);
                 break;
+            case '3':
+                msg++;
+                switch(*msg){
+                    case '1': // Update GlobalEnv
+                        omni2ob();
+                        break;
+                    case '2': // Update Libraries
+                        lib2ob();
+                        break;
+                    case '3': // Open/Close list
+                        msg++;
+                        t = *msg;
+                        msg++;
+                        toggle_list_status(listTree, msg);
+                        if(t == 'G')
+                            omni2ob();
+                        else
+                            lib2ob();
+                        break;
+                    case '4': // Close/Open all
+                        msg++;
+                        if(*msg == 'O')
+                            change_all(listTree, 1);
+                        else
+                            change_all(listTree, 0);
+                        msg++;
+                        if(*msg == 'G')
+                            omni2ob();
+                        else
+                            lib2ob();
+                        break;
+                    case '7':
+                        f = fopen("/tmp/listTree", "w");
+                        print_listTree(listTree, f);
+                        fclose(f);
+                        break;
+                }
+                break;
 #ifdef WIN32
-            case 3: // SendToRConsole
+            case '7':
+                // Messages related with the Rgui on Windows
                 msg++;
-                SendToRConsole(msg);
-                break;
-            case 4: // SaveWinPos
-                msg++;
-                SaveWinPos(msg);
-                break;
-            case 5: // ArrangeWindows
-                msg++;
-                ArrangeWindows(msg);
-                break;
-            case 6:
-                RClearConsole();
-                break;
-            case 7: // RaiseNvimWindow
-                if(NvimHwnd)
-                    SetForegroundWindow(NvimHwnd);
-                break;
-            case 11: // Check if R is running
-                if(PostMessage(RConsole, WM_NULL, 0, 0)){
-                    printf("call RWarningMsg('R was already started')\n");
-                    fflush(stdout);
-                } else {
-                    printf("call CleanNvimAndStartR()\n");
-                    fflush(stdout);
+                switch(*msg){
+                    case '1': // Check if R is running
+                        if(PostMessage(RConsole, WM_NULL, 0, 0)){
+                            printf("call RWarningMsg('R was already started')\n");
+                            fflush(stdout);
+                        } else {
+                            printf("call CleanNvimAndStartR()\n");
+                            fflush(stdout);
+                        }
+                        break;
+                    case '3': // SendToRConsole
+                        msg++;
+                        SendToRConsole(msg);
+                        break;
+                    case '4': // SaveWinPos
+                        msg++;
+                        SaveWinPos(msg);
+                        break;
+                    case '5': // ArrangeWindows
+                        msg++;
+                        ArrangeWindows(msg);
+                        break;
+                    case '6':
+                        RClearConsole();
+                        break;
+                    case '7': // RaiseNvimWindow
+                        if(NvimHwnd)
+                            SetForegroundWindow(NvimHwnd);
+                        break;
                 }
                 break;
 #endif
-            case 8: // Quit now
+            case '8': // Quit now
                 exit(0);
                 break;
             default:
@@ -710,7 +1198,5 @@ int main(int argc, char **argv){
     SendToServer(myport, ">>> STOP Now <<< !!!");
     pthread_join(Tid, NULL);
 #endif
-    if(df)
-        fclose(df);
     return 0;
 }

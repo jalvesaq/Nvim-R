@@ -175,7 +175,6 @@ function FillRLibList()
                 call AddToRLibList(lib)
             endif
         endfor
-        call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     endif
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
         if exists("*nvim_buf_set_option")
@@ -189,6 +188,9 @@ function FillRLibList()
         endif
     endif
     let b:rplugin_new_libs = s:new_libs
+    if g:rplugin.curview == "libraries"
+        call JobStdin(g:rplugin.jobs["ClientServer"], "32\n")
+    endif
 endfunction
 
 

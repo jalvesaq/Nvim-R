@@ -87,28 +87,33 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
         if(x.group == "function"){
             if(curlevel == 0){
                 if(nvim.grepl("GlobalEnv", printenv)){
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06",
+                    cat(x, "\006function\006function\006", printenv, "\006",
                         nvim.args(x, spath = spath), "\n", sep = "")
                 } else {
-                    info <- ""
+                    info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    cat(x, "\x06function\x06function\x06", printenv, "\x06",
+                    cat(x, "\006function\006function\006", printenv, "\006",
                         nvim.args(x, pkg = printenv, spath = spath), info, "\n", sep = "")
                 }
             } else {
                 # some libraries have functions as list elements
-                cat(x, "\x06function\x06function\x06", printenv, "\x06Unknown arguments", "\n", sep="")
+                cat(x, "\006function\006function\006", printenv, "\006Unknown arguments\006\006\n", sep="")
             }
         } else {
             if(is.list(xx) || is.environment(xx)){
                 if(curlevel == 0){
-                    info <- ""
+                    info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06NotAFunction", info, "\n", sep="")
+                    if(is.data.frame(xx))
+                        cat(x, "\006", x.class, "\006", x.group, "\006", printenv, "\006", ncol(xx), "\001", nrow(xx), info, "\n", sep="")
+                    else if(is.list(xx))
+                        cat(x, "\006", x.class, "\006", x.group, "\006", printenv, "\006", length(xx), info, "\n", sep="")
+                    else
+                        cat(x, "\006", x.class, "\006", x.group, "\006", printenv, "\006NotAFunction", info, "\n", sep="")
                 } else {
-                    cat(x, "\x06", x.class, "\x06", " ", "\x06", printenv, "\x06NOT A FUNCTION", "\n", sep="")
+                    cat(x, "\006", x.class, "\006", " ", "\006", printenv, "\006NOT A FUNCTION\006\006\n", sep="")
                 }
             } else {
                 info <- ""
@@ -117,9 +122,9 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                 if(!length(info) || info == ""){
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if(!inherits(xattr, "try-error"))
-                        info <- paste0("\x08\x05", xattr)
+                        info <- paste0("\006\006", xattr)
                 }
-                cat(x, "\x06", x.class, "\x06", x.group, "\x06", printenv, "\x06Not_a_function", info, "\n", sep="")
+                cat(x, "\006", x.class, "\006", x.group, "\006", printenv, "\006Not_a_function", info, "\n", sep="")
             }
         }
     }
@@ -262,7 +267,7 @@ GetFunDescription <- function(pkg)
 
         x <- sub("^\\s*", "", sub("\\s*$", "", x))
         x <- gsub("\n\\s*", " ", x)
-        x <- paste0("\x08", ttl, "\x05", x)
+        x <- paste0("\006", x, "\006", ttl)
         x
     }
     NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
@@ -335,8 +340,8 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             CleanOmnils(omnilist)
             # Build list of functions for syntax highlight
             fl <- readLines(omnilist)
-            fl <- fl[grep("\x06function\x06function", fl)]
-            fl <- sub("\x06.*", "", fl)
+            fl <- fl[grep("\006function\006function", fl)]
+            fl <- sub("\006.*", "", fl)
             fl <- fl[!grepl("[<%\\[\\+\\*&=\\$:{|@\\(\\^>/~!]", fl)]
             fl <- fl[!grepl("-", fl)]
             if(curlib == "base"){
