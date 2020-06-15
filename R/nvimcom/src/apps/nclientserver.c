@@ -646,9 +646,6 @@ int get_list_status(const char *s, int stt)
 
 void toggle_list_status(ListStatus *root, const char *s)
 {
-    fprintf(stderr, ">>%s<<\n", s);
-    fflush(stderr);
-
     ListStatus *p = search(s);
     if(p)
         p->status = !p->status;
