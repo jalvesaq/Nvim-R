@@ -656,7 +656,7 @@ static char *write_line(char *p, const char *bs, char *prfx, int closeddf)
     char base[64];
     char prefix[127];
     char newprfx[96];
-    //char *s;    // Diagnostic pointer
+    char *s;    // Diagnostic pointer
     char *nm;   // Name of object
     char *bsnm; // Name of object including its parent list, data.frame or S4 object
     char *ne;   // Number of elements in lists, data.frames and S4 objects
@@ -670,14 +670,8 @@ static char *write_line(char *p, const char *bs, char *prfx, int closeddf)
     p += strlen(bs);
     nm = p;
     while(*p != '\006'){
-        if(*p == 0){
-            // FIXME: Delete this verification code after fixing the bug in nvimcom.c
-            fprintf(stderr, "error\n");
-            fflush(stderr);
-            prfx[0] = 0;
-            prfx[1] = 0;
-            return prfx;
-        }
+        if(*p == 0)
+            return p;
         p++;
     }
     *p = 0;
@@ -805,25 +799,22 @@ static char *write_line(char *p, const char *bs, char *prfx, int closeddf)
                 newprfx[len] = 0;
             }
 
-            for(i = 0; i < (e - 1); i++){
-                snprintf(prefix, 112, "%s%s", newprfx, strT);
-                if(*p == 0){
-                    // FIXME: Delete this verification code after fixing the bug in nvimcom.c
-                    fprintf(stderr, "Error: %s\n", base);
-                    fflush(stderr);
-                    prfx[0] = 0;
-                    prfx[1] = 0;
-                    return prfx;
-                }
+            // Check if the next list element really is there
+            while(strstr(p, base) == p){
+                // Check if this is the last element in the list
+                s = p;
+                while(*s && *s != '\n')
+                    s++;
+                if(*s == '\n')
+                    s++;
+                if(strstr(s, base) == s)
+                    snprintf(prefix, 112, "%s%s", newprfx, strT);
+                else
+                    snprintf(prefix, 112, "%s%s", newprfx, strL);
 
-                // Check if the next element really is there
-                if(strstr(p, base) != p)
-                    break;
-
-                p = write_line(p, base, prefix, 0);
+                if(*p)
+                    p = write_line(p, base, prefix, 0);
             }
-            snprintf(prefix, 112, "%s%s", newprfx, strL);
-            p = write_line(p, base, prefix, 0);
         }
     }
     return p;
