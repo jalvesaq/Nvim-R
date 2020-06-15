@@ -753,7 +753,6 @@ function StartNClientServer(w)
         let $NVIMR_OPENLS = "TRUE"
     endif
     let g:rplugin.jobs["ClientServer"] = StartJob([nvc], g:rplugin.job_handlers)
-    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/valllog_nclientserver', '/home/aquino/software/R-4.0.1/library/nvimcom/bin/nclientserver'], g:rplugin.job_handlers)
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
 endfunction
@@ -2178,11 +2177,6 @@ function ClearRInfo()
                 \ && g:R_tmux_title != 'automatic' && g:R_tmux_title != ''
         call system("tmux set automatic-rename on")
     endif
-
-    if bufloaded(b:objbrtitle)
-        exe "bunload! " . b:objbrtitle
-        sleep 30m
-    endif
 endfunction
 
 " Quit R
@@ -2215,6 +2209,7 @@ function RQuit(how)
     endif
 
     call g:SendCmdToR(qcmd)
+    call JobStdin(g:rplugin.jobs["ClientServer"], "8\n")
 
     if exists('g:rplugin.tmux_split') || a:how == 'save'
         sleep 200m
@@ -4049,6 +4044,8 @@ else
             else
                 let g:rplugin.tmpdir = $TMPDIR . "/Nvim-R-" . g:rplugin.userlogin
             endif
+        elseif isdirectory("/dev/shm")
+            let g:rplugin.tmpdir = "/dev/shm/Nvim-R-" . g:rplugin.userlogin
         elseif isdirectory("/tmp")
             let g:rplugin.tmpdir = "/tmp/Nvim-R-" . g:rplugin.userlogin
         else
