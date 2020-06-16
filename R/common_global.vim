@@ -2135,6 +2135,9 @@ endfunction
 
 " Clear the console screen
 function RClearConsole()
+    if g:R_clear_console == 0
+        return
+    endif
     if has("win32") && !g:R_in_buffer
         call JobStdin(g:rplugin.jobs["ClientServer"], "76\n")
         sleep 50m
@@ -4122,6 +4125,7 @@ let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
+let g:R_clear_console     = get(g:, "R_clear_console",      1)
 if exists(":terminal") != 2
     let g:R_in_buffer = 0
 endif

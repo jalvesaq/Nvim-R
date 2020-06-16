@@ -1020,6 +1020,7 @@ of
 |R_paragraph_begin|   Send paragraph from its beginning
 |R_parenblock|        Send lines until closing parenthesis
 |R_bracketed_paste|   Bracket R code in special escape sequences
+|R_clear_console|     Send <C-L> to clear R's console
 |R_source_args|       Arguments to R `source()` function
 |R_commented_lines|   Include commented lines in code sent to `source()`
 |R_latexcmd|          Command to run on .tex files
@@ -1732,6 +1733,7 @@ the plugin after <LocalLeader>rg if you put the following line in your
 							   *R_paragraph_begin*
 							   *R_parenblock*
 							   *R_bracketed_paste*
+							   *R_clear_console*
 6.17. Control how paragraphs and lines are sent~
 
 By default, when you press <LocalLeader>pp Nvim-R sends all contiguous lines to
@@ -1754,6 +1756,13 @@ useful when you are using a version of R which is compiled against readline
 7.0+ or when rice console is used. To enable it, put in your |vimrc|:
 >
    let R_bracketed_paste = 1
+<
+Some versions of R's console interpret <C-L> as a command to clear the console
+while others have no command to clear the console. You should set the value of
+`R_clear_console`  as `0` if you see `^L` printed in the R's console after
+<LocalLeader>rm:
+>
+   let R_clear_console = 0
 <
 
 ------------------------------------------------------------------------------
@@ -3154,6 +3163,7 @@ Examples:
 0.9.14.1 (2020-06-10)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr.
+ * New option: R_clear_console.
 
 0.9.14 (2020-06-01)
 
