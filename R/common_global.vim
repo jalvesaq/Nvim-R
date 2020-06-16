@@ -2054,6 +2054,7 @@ function SendLineToR(godown, ...)
             let chunkend = ".. .."
         endif
         let rpd = RParenDiff(line)
+        let has_op = line =~ '%>%'
         if rpd < 0
             let line1 = line(".")
             let cline = line1 + 1
@@ -2063,16 +2064,16 @@ function SendLineToR(godown, ...)
                     break
                 endif
                 let rpd += RParenDiff(txt)
-                let cline += 1
                 if rpd == 0
-                    for lnum in range(line1, cline - 1)
+                    let has_op = getline(cline) =~ '%>%'
+                    for lnum in range(line1, cline)
                         if g:R_bracketed_paste
-                            if lnum == line1 && lnum == cline - 1
-                                let ok = g:SendCmdToR("\x1b[200~" . getline(lnum) . "\n\x1b[201~", 0)
+                            if lnum == line1 && lnum == cline
+                                let ok = g:SendCmdToR("\x1b[200~" . getline(lnum) . "\x1b[201~\n", 0)
                             elseif lnum == line1
                                 let ok = g:SendCmdToR("\x1b[200~" . getline(lnum))
-                            elseif lnum == cline - 1
-                                let ok = g:SendCmdToR(getline(lnum) . "\n\x1b[201~", 0)
+                            elseif lnum == cline
+                                let ok = g:SendCmdToR(getline(lnum) . "\x1b[201~\n", 0)
                             else
                                 let ok = g:SendCmdToR(getline(lnum))
                             endif
@@ -2082,22 +2083,23 @@ function SendLineToR(godown, ...)
                         if !ok
                             " always close bracketed mode upon failure
                             if g:R_bracketed_paste
-                                call g:SendCmdToR("\x1b[201~", 0)
+                                call g:SendCmdToR("\x1b[201~\n", 0)
                             end
                             return
                         endif
                     endfor
-                    call cursor(cline - 1, 1)
+                    call cursor(cline, 1)
                     let block = 1
                     break
                 endif
+                let cline += 1
             endwhile
         endif
     endif
 
     if !block
         if g:R_bracketed_paste
-            let ok = g:SendCmdToR("\x1b[200~" . line . "\n\x1b[201~", 0)
+            let ok = g:SendCmdToR("\x1b[200~" . line . "\x1b[201~\n", 0)
         else
             let ok = g:SendCmdToR(line)
         end
@@ -2106,6 +2108,9 @@ function SendLineToR(godown, ...)
     if ok
         if a:godown =~ "down"
             call GoDown()
+            if has_op
+                call SendLineToR(a:godown)
+            endif
         else
             if a:godown == "newline"
                 normal! o
