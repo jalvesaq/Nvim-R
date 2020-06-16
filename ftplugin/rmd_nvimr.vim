@@ -52,7 +52,7 @@ function! s:GetYamlField(field)
             elseif bstr =~ '^\[.*\]$'
                 try
                     let l:bbl = eval(bstr)
-                catch *
+                catch /.*/
                     call RWarningMsg('YAML line invalid for Vim: ' . line)
                     let bibl = []
                 endtry

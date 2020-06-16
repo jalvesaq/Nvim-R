@@ -46,7 +46,7 @@ endfunction
 function IsJobRunning(key)
     try
         let chstt =  ch_status(g:rplugin.jobs[a:key])
-    catch
+    catch /.*/
         let chstt = "no"
     endtry
     if chstt == "open"
