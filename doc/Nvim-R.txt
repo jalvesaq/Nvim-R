@@ -166,12 +166,13 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 
    Tmux >= 2.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
-		 terminal emulator (see |R_in_buffer|).
+		 terminal emulator (see |R_external_term|).
 
    colorout:     https://github.com/jalvesaq/colorout/releases
                  Colorizes the R output in terminal emulators.
-		 (Not necessary if using Neovim with |R_in_buffer| = 1)
-		 You should put in your Rprofile: `library(colorout)`
+		 (Mostly useful if running R in an external terminal emulator.
+		 See |R_external_term|). You should put in your Rprofile:
+		 `library(colorout)`
 
 You may want to improve the configuration of your |vimrc| for a better use of
 the plugin. Please, see |Nvim-R-quick-setup| for some suggestions of
@@ -339,7 +340,7 @@ customization.
 4. Use~
 
 By default, Nvim-R will run R in a built-in terminal emulator, but you can
-change this behavior (see |R_in_buffer|).
+change this behavior (see |R_external_term|).
 
 
 4.1. Key bindings~
@@ -972,14 +973,8 @@ of
 							      *Nvim-R-options*
 6. Options~
 
-|R_in_buffer|         Run R in Vim/Neovim built in terminal emulator
-|R_esc_term|          Map <Esc> to go to Normal mode in the terminal buffer
-|R_close_term|        Close terminal buffer after R quited
-|R_hl_term|           Syntax highlight terminal as rout file type
-|R_OutDec|            Set comma as decimal separator in rout files
-|R_buffer_opts|       Options to be set in R buffer
-|R_term|              External terminal to be used
-|R_term_cmd|          Complete command to open an external terminal
+|R-built-in-terminal| Options to control Vim/Neovim's built-in terminal
+|R_external_term|     Command to run R in an external terminal emulator
 |R_silent_term|       Do not show terminal errors
 |R_set_home_env|      Set the value of $HOME for R (Windows only)
 |R_save_win_pos|      Save positions of R and GVim windows (Windows only)
@@ -1056,15 +1051,9 @@ of
 
 
 ------------------------------------------------------------------------------
+							 *R-built-in-terminal*
+6.1. R in Vim/Neovim built-in terminal~
 							       *R_esc_term*
-							       *R_close_term*
-							       *R_hl_term*
-							       *R_OutDec*
-							       *R_setwidth*
-							       *R_buffer_opts*
-							       *R_in_buffer*
-6.1. R in Vim/Neovim buffer~
-
 By default, R runs in a Vim/Neovim buffer created with the command |:term|,
 and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
 In Terminal mode, What you type is passed directly to R while in Normal mode
@@ -1081,6 +1070,7 @@ Normal mode.
 Nvim-R sets the option "editor" to a function that makes the object to be
 edited in a new tab when `R_esc_term` = 1 (the default value).
 
+							       *R_close_term*
 Neovim does not close its built-in terminal emulator when the application
 running in it quits, but Nvim-R does close it for you. If you rather prefer
 that the terminal remains open after R quits, put in your |vimrc|:
@@ -1094,6 +1084,7 @@ send a command to it, and (2) when we send a command to R, we want to see its
 output, Nvim-R will move the cursor to the last line of R Console before
 sending a command to it, forcing the auto scrolling of the terminal.
 
+								   *R_hl_term*
 If you are using Neovim < 0.4.0, Nvim-R will enter the R Console to be able to
 move the cursor to its last line. This will trigger an auto command that
 relies on the cursor moving to the terminal window. If you have defined such
@@ -1113,6 +1104,7 @@ should set the value of R_hl_term in your |vimrc|. Example:
 >
    let R_hl_term = 0
 <
+								    *R_OutDec*
 Right after starting R, Nvim-R will try to detect if either the value of R's
 `OutDec` option is `","` or the current R script sets the `OutDec` option. If
 you are using Neovim to syntax highlight R's output and it is not correctly
@@ -1121,6 +1113,7 @@ should put in your |vimrc|:
 >
    let R_OutDec = ','
 <
+								  *R_setwidth*
 On Unix systems, BEFORE sending a command to R Console, if the terminal width
 has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
 where X is the new terminal width. You can set the value of R_setwidth to 0 to
@@ -1146,6 +1139,7 @@ it has the disadvantage of setting it only after the command is executed. That
 is, the width will be outdated for the first command executed after a change
 in the number of columns of the R Console window.
 
+							       *R_buffer_opts*
 Nvim-R sets the option 'winfixwidth' in the window where R runs. This prevents
 the window of being automatically resized in some circumstances. It also sets
 the option 'nobuflisted'. You can set the value of `R_buffer_opts` to define
@@ -1188,7 +1182,7 @@ Tips:
 If you do not want to run R in Vim/Neovim's built in terminal emulator, you
 have to install Tmux >= 2.0, and then put in your |vimrc|:
 >
-   let R_in_buffer = 0
+   let R_external_term = 1
 <
 Then, R will start in an external terminal emulator (useful if you use two
 monitors and want Vim/Neovim and R separate from each other), and Tmux will be
@@ -1196,17 +1190,21 @@ used to send commands from Vim/Neovim to R.
 
 
 ------------------------------------------------------------------------------
-								      *R_term*
-								  *R_term_cmd*
+							     *R_external_term*
 							       *R_silent_term*
 6.2. Terminal emulator (Linux/Unix only)~
 
 Note: The options of this section are ignored on Mac OS X, where the command
 `open` is called to run the default application used to run shell scripts.
 
-If |R_in_buffer| = 0 and the X Window System is running and Tmux is installed,
-then R will run in an external terminal emulator. The plugin uses the first
-terminal emulator that it finds in the following list:
+R will run in Vim/Neovim's built-in terminal emulator, unless you set the
+value of `R_external_term`, which can be a numeric value (either `0` or `1`),
+the name of the terminal emulator (see list below) or the complete command to
+run the terminal emulator. On Windows, the only valid value is `1`, which will
+make Nvim-R to run `Rgui.exe`, and not really a terminal emulator.
+
+On Linux, the complete command for running the terminal is predefined for the
+following options:
 
     1. gnome-terminal,
     2. konsole,
@@ -1218,18 +1216,22 @@ terminal emulator that it finds in the following list:
     8. lxterminal
     9. xterm.
 
-If Vim does not select your favorite terminal emulator, you may define it in
-your |vimrc| by setting the variable R_term, as shown below:
+The plugin runs the first terminal emulator that it finds from the above
+list. If your favorite terminal emulator is not selected, you may define it in
+your |vimrc|. Below are some examples of how to set the value of
+`R_external_term`:
 >
-   let R_term = 'xterm'
+   let R_external_term = 1 " Run R in an external terminal (or Rgui.exe)
+   let R_external_term = 'xterm' " Run R in in xterm
 <
 If your terminal emulator is not listed above, or if you are not satisfied
 with the way your terminal emulator is called by the plugin, you may define in
-your |vimrc| the variable R_term_cmd, as in the examples below:
+your |vimrc| the variable `R_external_term` as the complete command to run the
+terminal. Examples:
 >
-   let R_term_cmd = 'xterm -title R -e'
-   let R_term_cmd = 'tilix -a session-add-right -e'
-   let R_term_cmd = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
+   let R_external_term = 'xterm -title R -e'
+   let R_external_term = 'tilix -a session-add-right -e'
+   let R_external_term = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
@@ -1412,13 +1414,13 @@ document.
 
 The valid values of `R_nvimpager` are:
 
-   "tab"       : Show the help document in a new tab. If there is already a
-                 tab with an R help document tab, use it.
-                 This is the default if R_in_buffer = 0.
    "vertical"  : Split the window vertically if the editor width is large
                  enough; otherwise, split the window horizontally and attempt
                  to set the window height to at least 20 lines.
-                 This is the default if R_in_buffer = 1.
+                 This is the default.
+   "tab"       : Show the help document in a new tab. If there is already a
+                 tab with an R help document tab, use it.
+                 This is the default if `R_external_term` = 1.
    "horizontal": Split the window horizontally.
    "tabnew"    : Show the help document in a new tab.
    "no"        : Do not show R documentation in Vim.
@@ -1696,13 +1698,13 @@ window.
 If you are on Mac OS X and want to use the R.app graphical application, put in
 your |vimrc|:
 >
-   let R_in_buffer = 0
+   let R_external_term = 1
    let R_applescript = 1
 <
 If you want to run RStudio instead of R set in your |vimrc| the value of
 `RStudio_cmd` to the complete path of the RStudio_cmd binary. Example:
 >
-   let R_in_buffer = 0
+   let R_external_term = 1
    let RStudio_cmd = 'C:\Program Files\RStudio\bin\rstudio'
 <
 Note: You must manually run a successful comand in RStudio Console before
@@ -2195,7 +2197,7 @@ script `~/bin/after_R_start` similar to the following:
 <
 Then, make the script executable, and put in your |vimrc|:
 >
-   let R_in_buffer = 0
+   let R_external_term = 1
    let R_after_start = ['!after_R_start']
 <
 Similarly, on Mac OS X, the script below (developed by songcai) will bring the
@@ -3160,10 +3162,12 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.14.1 (2020-06-10)
+0.9.14.1 (2020-06-16)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr.
  * New option: R_clear_console.
+ * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
+   R_external_term.
 
 0.9.14 (2020-06-01)
 

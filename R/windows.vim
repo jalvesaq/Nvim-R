@@ -49,7 +49,7 @@ if !exists("g:rplugin.R_path")
 endif
 
 if !exists("g:R_args")
-    if g:R_in_buffer
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
         let g:R_args = ["--no-save"]
     else
         let g:R_args = ["--sdi", "--no-save"]

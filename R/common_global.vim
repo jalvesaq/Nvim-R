@@ -786,7 +786,7 @@ function StartR(whatr)
 
     call UpdatePathForR()
 
-    if !g:R_in_buffer
+    if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
     endif
 
@@ -861,7 +861,7 @@ function FinishStartingR()
     else
         let start_options += ['options(nvimcom.nvimpager = TRUE)']
     endif
-    if g:R_in_buffer && g:R_esc_term
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && g:R_esc_term
         let start_options += ['options(editor = nvimcom:::nvim.edit)']
     endif
     if exists("g:R_csv_delim") && (g:R_csv_delim == "," || g:R_csv_delim == ";")
@@ -909,7 +909,7 @@ function FinishStartingR()
         return
     endif
 
-    if g:R_in_buffer
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
         call StartR_InBuffer()
         return
     endif
@@ -948,7 +948,7 @@ endfunction
 function SetSendCmdToR(...)
     if exists("g:RStudio_cmd")
         let g:SendCmdToR = function('SendCmdToRStudio')
-    elseif g:R_in_buffer
+    elseif type(g:R_external_term) == v:t_number && g:R_external_term == 0
         let g:SendCmdToR = function('SendCmdToR_Buffer')
     elseif has("win32")
         let g:SendCmdToR = function('SendCmdToR_Windows')
@@ -1015,7 +1015,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     let g:Rout_prompt_str = substitute(g:Rout_prompt_str, '.*#N#', '', '')
     let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
 
-    if has('nvim') && g:R_in_buffer
+    if has('nvim') && type(g:R_external_term) == v:t_number && g:R_external_term == 0
         " Put the cursor and the end of the buffer to ensure automatic scrolling
         " See: https://github.com/neovim/neovim/issues/2636
         let isnormal = mode() ==# 'n'
@@ -1251,7 +1251,7 @@ function StopRDebugging()
 endfunction
 
 function FindDebugFunc(srcref)
-    if g:R_in_buffer
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
         let s:func_offset = -1 " Not found
         let sbopt = &switchbuf
         set switchbuf=useopen,usetab
@@ -1292,7 +1292,7 @@ function FindDebugFunc(srcref)
         let idx -= 1
     endwhile
 
-    if g:R_in_buffer
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
         if tabpagenr() != curtab
             exe 'normal! ' . curtab . 'gt'
         endif
@@ -1350,7 +1350,7 @@ function RDebugJump(fnm, lnum)
     "call sign_place(1, 'rdebugcurline', 'dbgline', fname, {'lnum': flnum})
     sign unplace 1
     exe 'sign place 1 line=' . flnum . ' name=dbgline file=' . fname
-    if g:R_in_buffer
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
         exe 'sb ' . g:rplugin.R_bufname
         startinsert
     endif
@@ -2138,7 +2138,7 @@ function RClearConsole()
     if g:R_clear_console == 0
         return
     endif
-    if has("win32") && !g:R_in_buffer
+    if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         call JobStdin(g:rplugin.jobs["ClientServer"], "76\n")
         sleep 50m
         call JobStdin(g:rplugin.jobs["ClientServer"], "77\n")
@@ -2199,14 +2199,14 @@ function RQuit(how)
         endif
     endif
 
-    if has("win32") && g:R_in_buffer == 0 && g:R_save_win_pos
+    if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         " SaveWinPos
         call JobStdin(g:rplugin.jobs["ClientServer"], "74" . $NVIMR_COMPLDIR . "\n")
     endif
 
     " In Neovim, the cursor must be in the term buffer to get TermClose event
     " triggered
-    if g:R_in_buffer && exists("g:rplugin.R_bufname") && has("nvim")
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && exists("g:rplugin.R_bufname") && has("nvim")
         exe "sbuffer " . g:rplugin.R_bufname
         startinsert
     endif
@@ -2521,7 +2521,7 @@ function ShowRDoc(rkeyword)
             " The only way of ShowRDoc() being called when R_nvimpager=="no"
             " is the user setting the value of R_nvimpager to 'no' after
             " Neovim startup. It should be set in the vimrc.
-            if g:R_in_buffer
+            if type(g:R_external_term) == v:t_number && g:R_external_term == 0
                 let g:R_nvimpager = "vertical"
             else
                 let g:R_nvimpager = "tab"
@@ -4118,7 +4118,6 @@ let g:R_show_arg_help     = get(g:, "R_show_arg_help",      1)
 let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)
 let g:R_insert_mode_cmds  = get(g:, "R_insert_mode_cmds",   0)
 let g:R_disable_cmds      = get(g:, "R_disable_cmds",    [''])
-let g:R_in_buffer         = get(g:, "R_in_buffer",          1)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
@@ -4126,13 +4125,15 @@ let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_clear_console     = get(g:, "R_clear_console",      1)
+
 if exists(":terminal") != 2
-    let g:R_in_buffer = 0
+    let g:R_external_term = get(g:, "R_external_term", 1)
 endif
 if !has("nvim") && !exists("*term_start")
     " exists(':terminal') return 2 even when Vim does not have the +terminal feature
-    let g:R_in_buffer = 0
+    let g:R_external_term = get(g:, "R_external_term", 1)
 endif
+let g:R_external_term = get(g:, "R_external_term", 0)
 
 let s:editing_mode = "emacs"
 if filereadable(expand("~/.inputrc"))
@@ -4147,14 +4148,14 @@ endif
 let g:R_editing_mode = get(g:, "R_editing_mode", s:editing_mode)
 unlet s:editing_mode
 
-if has('win32') && !g:R_in_buffer
+if has('win32') && !(type(g:R_external_term) == v:t_number && g:R_external_term == 0)
     " Sending multiple lines at once to Rgui on Windows does not work.
     let g:R_parenblock = get(g:, 'R_parenblock',         0)
 else
     let g:R_parenblock = get(g:, 'R_parenblock',         1)
 endif
 
-if g:R_in_buffer
+if type(g:R_external_term) == v:t_number && g:R_external_term == 0
     let g:R_nvimpager = get(g:, 'R_nvimpager', 'vertical')
 else
     let g:R_nvimpager = get(g:, 'R_nvimpager', 'tab')
@@ -4193,7 +4194,7 @@ else
     let g:R_rcomment_string = get(g:, "R_rcomment_string", "# ")
 endif
 
-if g:R_in_buffer
+if type(g:R_external_term) == v:t_number && g:R_external_term == 0
     let g:R_save_win_pos = 0
     let g:R_arrange_windows  = 0
 endif
@@ -4374,7 +4375,7 @@ if exists("g:R_app")
     endif
 else
     if has("win32")
-        if g:R_in_buffer
+        if type(g:R_external_term) == v:t_number && g:R_external_term == 0
             let g:rplugin.R = "Rterm.exe"
         else
             let g:rplugin.R = "Rgui.exe"
@@ -4408,11 +4409,15 @@ if g:R_applescript
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/osx.vim"
 endif
 
-if (exists('g:R_source') && g:R_source =~# 'tmux_split.vim') || (!has("win32") && !g:R_applescript && !g:R_in_buffer)
-    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/tmux.vim"
+if !has("win32")
+    if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) ||
+                \ type(g:R_external_term) == v:t_string ||
+                \ (exists('g:R_source') && g:R_source =~# 'tmux_split.vim')
+        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/tmux.vim"
+    endif
 endif
 
-if g:R_in_buffer
+if type(g:R_external_term) == v:t_number && g:R_external_term == 0
     if has("nvim")
         exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/nvimbuffer.vim"
     else
@@ -4468,11 +4473,6 @@ endif
 " 2017-11-15
 if len(g:R_latexcmd[0]) == 1
     call RWarningMsg("The option R_latexcmd should be a list. Please update your vimrc.")
-endif
-
-" 2017-12-06
-if exists("g:R_term") && g:R_term == "terminator"
-    call RWarningMsg('"terminator" is no longer supported. Please, choose another value for R_term.')
 endif
 
 " 2017-12-14

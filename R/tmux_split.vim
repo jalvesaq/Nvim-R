@@ -6,7 +6,7 @@ if exists("*TmuxActivePane")
     finish
 endif
 
-let g:R_in_buffer = 0
+let g:R_external_term = 1
 let g:R_applescript = 0
 let g:rplugin.tmux_split = 1
 let g:R_tmux_title = get(g:, 'R_tmux_title', 'NvimR')

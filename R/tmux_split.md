@@ -7,7 +7,7 @@ Tmux split pane, you could try the Tilix terminal emulator, and put in your
 
 ```vim
 let R_in_buffer = 0
-let R_term_cmd = 'tilix -a session-add-right -e'
+let R_external_term = 'tilix -a session-add-right -e'
 ```
 
 Anyway, it is still possible to run R in a Tmux split pane, as explained in

@@ -1,7 +1,7 @@
 " Check whether Tmux is OK
 if !executable('tmux')
     if exists("*termopen")
-        let g:R_in_buffer = 1
+        let g:R_external_term = 0
     else
         call RWarningMsg("tmux executable not found")
     endif
