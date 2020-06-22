@@ -3168,6 +3168,8 @@ Examples:
  * New option: R_clear_console.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.
+ * Change default key binding for calling debug() from \db to \bg to avoid
+   conflict with \d (send line).
 
 0.9.14 (2020-06-01)
 

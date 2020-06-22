@@ -263,7 +263,7 @@ function MakeRMenu()
     endif
     "-------------------------------
     menu R.Command.-Sep72- <nul>
-    call RCreateMenuItem('n', 'Command.Debug\ (function)', 'RDebug', 'db', ':call RAction("debug")')
+    call RCreateMenuItem('n', 'Command.Debug\ (function)', 'RDebug', 'bg', ':call RAction("debug")')
     call RCreateMenuItem('n', 'Command.Undebug\ (function)', 'RUndebug', 'ud', ':call RAction("undebug")')
     "-------------------------------
     if &filetype == "r" || &filetype == "rnoweb" || g:R_never_unmake_menu

@@ -3097,7 +3097,7 @@ function RCreateSendMaps()
     endif
 
     " Debug
-    call RCreateMaps('n',   'RDebug', 'db', ':call RAction("debug")')
+    call RCreateMaps('n',   'RDebug', 'bg', ':call RAction("debug")')
     call RCreateMaps('n',   'RUndebug', 'ud', ':call RAction("undebug")')
 endfunction
 
