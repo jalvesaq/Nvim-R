@@ -1108,7 +1108,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
 
     if(f[1][0] == '[' || f[1][0] == '$' || f[1][0] == '<' || f[1][0] == ':'){
         s = f[6];
-        s++; s++; // Number of elements (list)
+        s++; s++; s++; // Number of elements (list)
         if(f[1][0] == '$'){
             while(*s && *s != ' ')
                 s++;
