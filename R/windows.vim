@@ -58,39 +58,6 @@ endif
 
 let g:R_R_window_title = "R Console"
 
-function CheckRtools()
-    if s:rtpath == ""
-        call RWarningMsg('Is Rtools installed?')
-        return
-    else
-        if !isdirectory(s:rtpath)
-            call RWarningMsg('Is Rtools installed? "' . s:rtpath . '" is not a directory.')
-            return
-        endif
-    endif
-
-    if s:rtpath != ""
-        let Rtvf = s:rtpath . "/VERSION.txt"
-        let g:rplugin.debug_info["Rtools version file"] = Rtvf
-        if !filereadable(s:rtpath . "/mingw_32/bin/gcc.exe")
-            call RWarningMsg('Did you install Rtools with 32 bit support? "' .
-                        \ s:rtpath . "/mingw_32/bin/gcc.exe" . '" not found.')
-            return
-        endif
-        if !filereadable(s:rtpath . "/mingw_64/bin/gcc.exe")
-            call RWarningMsg('Did you install Rtools with 64 bit support? "' .
-                        \ s:rtpath . "/mingw_64/bin/gcc.exe" . '" not found.')
-            return
-        endif
-        if filereadable(Rtvf)
-            let Rtvrsn = readfile(Rtvf)
-            if Rtvrsn[0] =~ "version 3.4"
-                call RWarningMsg("Nvim-R is incompatible with Rtools 3.4 (August 2016). Please, try Rtools 3.3.")
-            endif
-        endif
-    endif
-endfunction
-
 function SetRHome()
     " R and Vim use different values for the $HOME variable.
     if g:R_set_home_env
