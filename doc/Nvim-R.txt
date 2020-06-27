@@ -324,9 +324,6 @@ or `coc-omni` for
 
    https://github.com/neoclide/coc.nvim
 
-If you are going to try a plugin to get automatic omni completion you will
-want to set the value of |R_hi_fun_globenv| to either `1` or `2`.
-
 
 Other plugins~
 
@@ -591,26 +588,23 @@ operations are created in Nvim-R's temporary directory and deleted when R
 quits.
 
 When completing object names (CTRL-X CTRL-O) you have to press CTRL-N to go
-forward in the list and CTRL-P to go backward (see |popupmenu-completion|). If
-R is running and 'completeopt' includes the `preview` string, the preview
-window will display help for the argument selected in the pop up menu (see
-|R_show_arg_help|). For rnoweb, rmd and rrst file types, CTRL-X CTRL-O can
-also be used to complete knitr chunk options if the cursor is inside the chunk
-header.
+forward in the list and CTRL-P to go backward (see |popupmenu-completion|).
+For rnoweb, rmd and rrst file types, CTRL-X CTRL-O can also be used to
+complete knitr chunk options if the cursor is inside the chunk header.
 
-If R is not running or if it is running but is busy the completion will be
-based on information from the packages listed by |R_start_libs| (provided that
-the libraries were loaded at least once during a session of Nvim-R usage).
-Otherwise, the pop up menu for completion of function arguments will include
-an additional line with the name of the library where the function is (if the
-function name can be found in more than one library) and the function method
-(if what is being shown are the arguments of a method and not of the function
-itself). For both `library()` and `require()`, when completing the first
-argument, the popup list shows the names of installed packages, but only if R
-is running.
+If R is not running the completion will be based on information from the
+packages listed by |R_start_libs| (provided that the libraries were loaded at
+least once during a session of Nvim-R usage). Otherwise, the pop up menu for
+completion of function arguments will include an additional line with the name
+of the library where the function is (if the function name can be found in
+more than one library) and the function method (if what is being shown are the
+arguments of a method and not of the function itself). For both `library()`
+and `require()`, when completing the first argument, the popup list shows the
+names of installed packages, but only if R is running.
 
 You can source all .R files in a directory with the Normal mode command
-:RSourceDir, which accepts an optional argument (the directory to be sourced).
+`:RSourceDir`, which accepts an optional argument (the directory to be sourced).
+
 
 ------------------------------------------------------------------------------
 								     *Rinsert*
@@ -684,27 +678,21 @@ Vim can automatically complete the names of R objects when CTRL-X CTRL-O is
 pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
-can also show the function arguments in a separate preview window in Vim and a
-float window in Neovim >= 0.5.0. You should remove "preview" from 'completopt'
-if you do not want the preview window.
+also shows the function arguments in a attached float  window.
 
 If a data.frame is found, while building the list of objects, the columns in
-the data.frame are added to the list. When you try to use omni completion to
-complete the name of a data.frame, the columns are not shown. But when the
-data.frame name is already complete, and you have inserted the '$' symbol,
-omni completion will show the column names.
+the data.frame are added to the list but they are shown in the menu only after
+you have inserted the '$' symbol after the data.frame name.
 
 Only the names of objects in .GlobalEnv and in loaded libraries are completed.
 If R is not running, only objects of libraries listed in |R_start_libs| will
-have their names completed. When you load a new library in R, only the current
-buffer has the highlighting of function names immediately updated. If you have
-other buffers open, they will be updated when you enter them.
+have their names completed.
 
-Vim uses one file to store the names of .GlobalEnv objects and a list of
-files for all other objects. The .GlobalEnv list is stored in the
-`$NVIMR_TMPDIR` directory and is deleted when you quit Vim. The other files
-are stored in the `$NVIMR_COMPLDIR` directory and remain available until you
-manually delete them.
+Vim uses one file to store the names of .GlobalEnv objects and a list of files
+for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
+directory and is deleted when you quit Vim. The other files are stored in the
+`$NVIMR_COMPLDIR` directory, are automatically updated and remain available
+until you manually delete them.
 
 
 ------------------------------------------------------------------------------
@@ -715,9 +703,9 @@ The Object Browser has two views: .GlobalEnv and Libraries. If you press
 <Enter> on the first line of the Object Browser it will toggle the view
 between the objects in .GlobalEnv and the currently loaded libraries.
 
-In the .GlobalEnv view, if an object has the attribute "label", it will also
-be displayed. For instance, the code below would make the Object Browser
-display the variable labels of an imported SPSS dataset:
+In the .GlobalEnv view, if a data.frame column has the attribute "label", it
+will also be displayed. For instance, the code below would make the Object
+Browser display the variable labels of an imported SPSS dataset:
 >
    library(foreign)
    d <- read.spss("/path/to/spss/dataset.sav", to.data.frame = TRUE)
@@ -739,13 +727,16 @@ their colors defined by the return value of some R functions. Each line in the
 table below shows a highlighting group and the corresponding type of R object:
 
 	 PreProc	libraries
+	 Include	environment
 	 Number		numeric
 	 String		character
 	 Special	factor
 	 Boolean	logical
-	 Type		list
+	 Type		data.frame
+	 StorageClass	list
+	 Structure	s4
 	 Function	function
-	 Statement	s4
+	 Statement	control flow (for, while, break, etc)
 	 Comment	promise (lazy load object)
 
 One limitation of the Object Browser is that objects made available by the
@@ -758,8 +749,15 @@ background):
 >
    obj <- obj
 <
-Note: The Object Browser may slowdown R if its workspace has too many
-objects, data.frames with too many columns or lists with too many elements.
+Notes:
+
+  - The Object Browser enables the automatic update of the data for the omni
+    completion of .GlobalEnv objects, and this may slowdown R if its workspace
+    has too many objects, data.frames with too many columns or lists with too
+    many elements (see |R_hi_fun_globenv|).
+
+  - Names of objects are stupidly truncated if they occupy more than 62 bytes.
+    This means that Unicode sequences might be split and become invalid.
 
 
 ------------------------------------------------------------------------------
@@ -1034,7 +1032,6 @@ of
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
 |R_non_r_compl|       Bibliography completion
-|R_show_arg_help|     Show extra information during arguments completion
 |R_wait|              Time to wait for nvimcom loading
 |R_wait_reply|        Time to wait for R reply
 |R_nvim_wd|           Start R in Vim's working directory
@@ -1541,28 +1538,20 @@ depending on your system configuration, the slowness might be noticeable.
 
 By default, functions from `.GlobalEnv` and other environments in the
 `search()` path whose names do not start with `"package:"` are not immediately
-highlighted to avoid the need of both nvimcom saving a temporary file with the
-list objects in these environments after each command sent to R and Nvim-R
-reading and parsing this file, which might be slow in some machines, and
-especially if R's workspace has too many objects, data.frames with too many
-columns or lists with too many elements. Anyway, if you prefer these functions
-more quickly highlighted, change the value of `R_hi_fun_globenv` to either 1
-or 2 in your |vimrc|:
+highlighted to avoid the need of nvimcom saving a temporary file with the list
+objects in these environments after each command sent to R, which might be
+slow in some machines, and especially if R's workspace has too many objects,
+data.frames with too many columns or lists with too many elements. Anyway, if
+you prefer these functions more quickly highlighted, change the value of
+`R_hi_fun_globenv` to either 1 or 2 in your |vimrc|:
 >
    let R_hi_fun_globenv = 0 " Highlight only if starting omni completion
    let R_hi_fun_globenv = 1 " Highlight after an InsertEnter event
    let R_hi_fun_globenv = 2 " Highlight immediately
 <
-The functions from `.GlobalEnv` as well as functions from other environments
-in the search path will be highlighted when created, but the highlighting will
-not be cleared when the functions are deleted because sending commands to R
-could become noticeably slow when editing files with complex syntax highlight
-such as large RMarkdown scripts. Anyway, if you want the syntax highlighting
-of these functions cleared and redone after each command sent to R, put in
-your |vimrc|:
->
-   let R_hi_fun_globenv = 2
-<
+If the value of `R_hi_fun_globenv` is 0, it is automatically increased to 1 if
+you either trigger omnicompletion or open the Object Browser.
+
 Functions from environments in the search path are highlighted as functions
 from packages, but in Neovim (not in Vim) you can set a different highlight
 command for them in your |vimrc|, as in the example below:
@@ -1574,13 +1563,13 @@ in your |vimrc|:
 >
    let R_hi_fun = 0
 <
-In Neovim >= 0.5.0, a float window with addtional information is shown during
-omni completion. If you want to change the highlighting of the text describing
-the object whose name is being completed, the line separating the description
-from either the function arguments or the object summary, and, when completing
-a function argument, the name of the argument, choose what highlighting groups
-you want to use (see |highlight-groups| )and put in your |vimrc| lines as in
-the example:
+In either Neovim >= 0.4.3 or Vim >= 8.1.1705, a float window with addtional
+information is shown during omni completion. In Neovim only, if you want to
+change the highlighting of the text describing the object whose name is being
+completed, the line separating the description from either the function
+arguments or the object summary, and, when completing a function argument, the
+name of the argument, choose what highlighting groups you want to use (see
+|highlight-groups| )and put in your |init.vim| lines as in the example:
 >
    hi def link previewDescr Title
    hi def link previewSep   PreProc
@@ -2113,23 +2102,8 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 
 
 ------------------------------------------------------------------------------
-								  *R_complete*
-							     *R_show_arg_help*
-6.29. Function arguments~
-
-During the completion of function arguments, the preview window shows R's
-documentation help for the item being completed unless you put in your
-|vimrc|:
->
-   let R_show_arg_help = 0
-<
-You can also completely disable the preview window by setting 'completeopt'
-without the `preview` string.
-
-
-------------------------------------------------------------------------------
 								      *R_wait*
-6.30. Time to wait for nvimcom loading~
+6.29. Time to wait for nvimcom loading~
 
 Nvim-R asynchronously waits 60 seconds for the nvimcom package to be loaded
 during R startup. If 60 seconds are not enough to your R startup, then set a
@@ -2140,7 +2114,7 @@ higher value for the variable in your |vimrc|. Example:
 
 ------------------------------------------------------------------------------
 								*R_wait_reply*
-6.31. Time to wait for R reply~
+6.30. Time to wait for R reply~
 
 By default Nvim-R waits 2 seconds for R to reply after a request for omni
 completion is issued. You can set the amount of time Nvim-R waits (in seconds)
@@ -2151,7 +2125,7 @@ in your |vimrc|.  Example:
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
-6.32 Start R in working directory of Vim~
+6.31 Start R in working directory of Vim~
 
 When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
 package nvimcom runs the command `setwd()` with the directory of the file
@@ -2172,7 +2146,7 @@ in |vimrc|:
 ------------------------------------------------------------------------------
 							       *R_after_start*
 							     *R_after_ob_open*
-6.33 Commands to be executed after either R startup or Object Browser opening~
+6.32 Commands to be executed after either R startup or Object Browser opening~
 
 If you want that Vim executes either Vim or external commands right after R
 startup, set the value of R_after_start in your |vimrc|. The `R_after_start`
@@ -2228,7 +2202,7 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
 							    *R_disable_cmds*
-6.34 Disable Nvim-R commands~
+6.33 Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
@@ -2248,7 +2222,7 @@ Below is an example on how to disable the commands that sends `setwd()` and
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.35 Temporary files directories~
+6.34 Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of R_tmpdir and
@@ -2267,7 +2241,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
 							      *R_nvimcom_home*
-6.36 Options for accessing Remote R from local Vim~
+6.35 Options for accessing Remote R from local Vim~
 
 See |Nvim-R-remote|.
 
@@ -2275,7 +2249,7 @@ See |Nvim-R-remote|.
 							      *Nvim-R-df-view*
 							      *R_csv_app*
 							      *R_csv_delim*
-6.37 View a data.frame or matrix~
+6.36 View a data.frame or matrix~
 
 
 You can see data.frames and matrices in external applications. You should
@@ -2313,7 +2287,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.38 SyncTeX support~
+6.37 SyncTeX support~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -2361,7 +2335,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.38.1 Okular configuration~
+6.37.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -2378,7 +2352,7 @@ of Okular will be started.
 
 
 ------------------------------------------------------------------------------
-6.38.2 Skim configuration~
+6.37.2 Skim configuration~
 
 In Skim, click in the drop down menu and fill the fields:
 >
@@ -2391,7 +2365,7 @@ In Skim, click in the drop down menu and fill the fields:
 <
 
 ------------------------------------------------------------------------------
-6.38.3 Qpdfview configuration~
+6.37.3 Qpdfview configuration~
 
 Qpdfview is only partially supported: SyncTeX backward does not work with file
 paths containing spaces, and the qpdfview window is not automatically raised
@@ -3162,9 +3136,9 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.14.1 (2020-06-16)
+0.9.14.1 (2020-06-27)
 
- * Delete options R_ls_env_tol, R_objbr_labelerr.
+ * Delete options R_ls_env_tol, R_objbr_labelerr, R_show_arg_help.
  * New option: R_clear_console.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.

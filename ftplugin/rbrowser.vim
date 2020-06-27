@@ -26,6 +26,11 @@ setlocal buftype=nofile
 setlocal nowrap
 setlocal iskeyword=@,48-57,_,.
 setlocal nolist
+setlocal nonumber
+setlocal norelativenumber
+setlocal nocursorline
+setlocal nocursorcolumn
+setlocal nospell
 
 if !exists("g:rplugin.hasmenu")
     let g:rplugin.hasmenu = 0
@@ -62,19 +67,6 @@ function! UpdateOB(what)
         let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     else
         let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-        if filereadable(g:rplugin.compldir . "/pack_descriptions")
-            let pd = readfile(g:rplugin.compldir . "/pack_descriptions")
-            for idx in range(len(fcntt))
-                for line in pd
-                    let pkgnm = substitute(fcntt[idx], '.*##\(\S*\)\t', '\1', '')
-                    let tmp = split(line, "\x09")
-                    if pkgnm == tmp[0]
-                        let fcntt[idx] .= tmp[1]
-                        break
-                    endif
-                endfor
-            endfor
-        endif
     endif
     if exists("*nvim_buf_set_lines")
         let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
@@ -130,7 +122,7 @@ function! RBrowserDoubleClick()
             call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
         else
             let g:rplugin.curview = "libraries"
-            call JobStdin(g:rplugin.jobs["ClientServer"], "32\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "321\n")
         endif
         return
     endif
@@ -141,7 +133,7 @@ function! RBrowserDoubleClick()
     if g:rplugin.curview == "GlobalEnv"
         if curline =~ "&#.*\t"
             " FIXME: lazy objects must be evaluated before being opened.
-        elseif curline =~ "\[#.*\t" || curline =~ "<#.*\t"
+        elseif curline =~ "\[#.*\t" || curline =~ "\$#.*\t" || curline =~ "<#.*\t" || curline =~ ":#.*\t"
             call JobStdin(g:rplugin.jobs["ClientServer"], "33G" . key . "\n")
         else
             let key = RBrowserGetName(0, 0)
@@ -151,7 +143,7 @@ function! RBrowserDoubleClick()
         if curline =~ "(#.*\t"
             call AskRDoc(key, RBGetPkgName(), 0)
         else
-            if key =~ ":$" || curline =~ "\[#.*\t" || curline =~ "<#.*\t"
+            if key =~ ":$" || curline =~ "\[#.*\t" || curline =~ "\$#.*\t" || curline =~ "<#.*\t" || curline =~ ":#.*\t"
                 call JobStdin(g:rplugin.jobs["ClientServer"], "33L" . key . "\n")
             else
                 let key = RBrowserGetName(0, 0)
@@ -222,9 +214,12 @@ function! RBrowserFindParent(word, curline, curpos)
         let line = substitute(getline(curline), "\x09.*", "", "")
         let curpos = stridx(line, '[#')
         if curpos == -1
-            let curpos = stridx(line, '<#')
+            let curpos = stridx(line, '$#')
             if curpos == -1
-                let curpos = a:curpos
+                let curpos = stridx(line, '<#')
+                if curpos == -1
+                    let curpos = a:curpos
+                endif
             endif
         endif
     endwhile
@@ -246,8 +241,10 @@ function! RBrowserFindParent(word, curline, curpos)
         endif
         if line =~ '<#'
             let word = substitute(line, '.*<#', "", "") . '@' . a:word
-        else
+        elseif line =~ '\[#'
             let word = substitute(line, '.*\[#', "", "") . '$' . a:word
+        else
+            let word = substitute(line, '.*\$#', "", "") . '$' . a:word
         endif
         if curpos != spacelimit
             let word = RBrowserFindParent(word, line("."), curpos)
@@ -282,6 +279,7 @@ function! RBrowserGetName(cleantail, cleantick)
     let curpos = stridx(line, "#")
     let word = substitute(line, '.\{-}\(.#\)\(.\{-}\)\t.*', '\2\1', '')
     let word = substitute(word, '\[#$', '$', '')
+    let word = substitute(word, '\$#$', '$', '')
     let word = substitute(word, '<#$', '@', '')
     let word = substitute(word, '.#$', '', '')
 

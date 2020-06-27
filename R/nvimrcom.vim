@@ -34,6 +34,9 @@ function ROnJobStdout(job_id, data, etype)
         if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
             exe cmd
         else
+            if len(cmd) > 128
+                let cmd = substitute(cmd, '^\(.\{128}\).*', '\1', '') . ' [...]'
+            endif
             call RWarningMsg("[" . GetJobTitle(a:job_id) . "] Unknown command: " . cmd)
         endif
     endfor

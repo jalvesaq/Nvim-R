@@ -124,8 +124,9 @@ gbRd.args2txt <- function(rdo, arglist){
         res <- res[-c(1, 2, 3, 4)]
 
         res <- paste(res, collapse=" ")
+        res <- gsub("  *", " ", res)
         res <- sub(" $", "", res)
-        res <- paste0("\x08", res)
+        res <- sub(" *", "", res)
         argl[[a]] <- res
     }
     argl
@@ -141,8 +142,8 @@ nvim.primitive.args <- function(x)
     f <- sub(") $", "", sub("^function \\(", "", f[1]))
     f <- strsplit(f, ",")[[1]]
     f <- sub("^ ", "", f)
-    f <- sub(" = ", "\x07", f)
-    paste(f, collapse = "\x09")
+    f <- sub(" = ", "\002], [\002", f)
+    paste(f, collapse = "\002]], [[\002")
 }
 
 nvim.GlobalEnv.fun.args <- function(funcname)
@@ -164,6 +165,15 @@ nvim.get.summary <- function(obj, wdth)
     options(width = owd)
     .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
     return(invisible(NULL))
+}
+
+# For building omnls files
+nvim.fix.string <- function(x){
+    x <- gsub("\n", "\\\\n", x)
+    x <- gsub("\r", "\\\\r", x)
+    x <- gsub("\t", "\\\\t", x)
+    x <- gsub('"', '\\\\"', x)
+    x
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
@@ -225,39 +235,56 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     if(pkgname[1] == ".GlobalEnv" || spath)
         extrainfo <- FALSE
 
-    if(extrainfo && length(frm) > 0)
+    if(extrainfo && length(frm) > 0){
         arglist <- gbRd.args2txt(funcname, names(frm))
+        arglist <- lapply(arglist, nvim.fix.string)
+    }
 
     res <- NULL
     for(field in names(frm)){
         type <- typeof(frm[[field]])
-        info <- ""
-        if(extrainfo)
-            info <- arglist[[field]]
-        if (type == 'symbol') {
-            res <- append(res, paste('\x09', field, info, sep = ''))
-        } else if (type == 'character') {
-            frm[[field]] <- gsub("\n", "\\\\n", frm[[field]])
-            frm[[field]] <- gsub("\t", "\\\\t", frm[[field]])
-            frm[[field]] <- gsub('"', '\\\\"', frm[[field]])
-            res <- append(res, paste('\x09', field, '\x07"', frm[[field]], '"', info, sep = ''))
-        } else if (type == 'logical' || type == 'double' || type == 'integer') {
-            res <- append(res, paste('\x09', field, '\x07', as.character(frm[[field]]), info, sep = ''))
-        } else if (type == 'NULL') {
-            res <- append(res, paste('\x09', field, '\x07', 'NULL', info, sep = ''))
-        } else if (type == 'language') {
-            res <- append(res, paste('\x09', field, '\x07', deparse(frm[[field]]), info, sep = ''))
+        if(extrainfo){
+            str1 <- paste0("{\002word\002: \002", field)
+            if (type == 'symbol') {
+                str2 <- paste0("\002, \002menu\002: \002 \002")
+            } else if (type == 'character') {
+                str2 <- paste0(" = \002, \002menu\002: \002\"", nvim.fix.string(frm[[field]]), "\"\002")
+            } else if (type == 'logical' || type == 'double' || type == 'integer') {
+                str2 <- paste0(" = \002, \002menu\002: \002", as.character(frm[[field]]), "\002")
+            } else if (type == 'NULL') {
+                str2 <- paste0(" = \002, \002menu\002: \002NULL\002")
+            } else if (type == 'language') {
+                str2 <- paste0(" = \002, \002menu\002: \002", deparse(frm[[field]]), "\002")
+            } else {
+                str2 <- paste0("\002, \002menu\002: \002 \002")
+            }
+            res <- append(res, paste0(str1, str2,
+                                      ", \002user_data\002: {\002cls\002: \002a\002, \002argument\002: \002",
+                                      arglist[[field]], "\002}}, "))
         } else {
-            warning(paste0("nvim.args: typeof = ", type))
+            if (type == 'symbol') {
+                res <- append(res, paste0("[\002", field, "\002], "))
+            } else if (type == 'character') {
+                res <- append(res, paste0("[\002", field, "\002, \002\"", nvim.fix.string(frm[[field]]), "\"\002], "))
+            } else if (type == 'logical' || type == 'double' || type == 'integer') {
+                res <- append(res, paste0("[\002", field, "\002, \002", as.character(frm[[field]]), "\002], "))
+            } else if (type == 'NULL') {
+                res <- append(res, paste0("[\002", field, "\002, \002", 'NULL', "\002], "))
+            } else if (type == 'language') {
+                res <- append(res, paste0("[\002", field, "\002, \002", deparse(frm[[field]]), "\002], "))
+            } else {
+                warning(paste0("nvim.args: typeof = ", type))
+            }
         }
     }
-    idx <- grep(paste("^\x09", txt, sep = ""), res)
-    res <- res[idx]
-    res <- paste(res, sep = '', collapse='')
-    res <- sub("^\x09", "", res)
+
+
+    if(!extrainfo)
+        res <- paste0(res, collapse='')
+
 
     if(length(res) == 0 || res == ""){
-        res <- "NO_ARGS"
+        res <- "[]"
     } else {
         if(is.null(pkg)){
             info <- ""
@@ -356,6 +383,16 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, ext
             res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = extrainfo)
     }
     writeLines(text = res,
+               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
+    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    return(invisible(NULL))
+}
+
+nvim.args.descr <- function(funcname)
+{
+    frm <- formals(get(funcname))
+    arglist <- gbRd.args2txt(funcname, names(frm))
+    writeLines(arglist,
                con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
     .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
     return(invisible(NULL))

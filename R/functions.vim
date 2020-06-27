@@ -37,7 +37,6 @@ endif
 let g:rplugin.debug_lists = []
 let g:rplugin.loaded_libs = []
 let s:Rhelp_list = []
-let g:rplugin_omni_lines = []
 
 " For compatibility with ncm-R:
 let g:rplugin_loaded_libs = g:rplugin.loaded_libs
@@ -122,15 +121,13 @@ function AddToRLibList(lib)
         if len(omf) == 1
             let g:rplugin.loaded_libs += [a:lib]
 
-            " List of objects for omni completion
+            " List of objects
             let olist = readfile(omf[0])
 
             " Library setwidth has no functions
             if len(olist) == 0 || (len(olist) == 1 && len(olist[0]) < 3)
                 return
             endif
-
-            let g:rplugin_omni_lines += olist
 
             " List of objects for :Rhelp completion
             for xx in olist
@@ -188,9 +185,6 @@ function FillRLibList()
         endif
     endif
     let b:rplugin_new_libs = s:new_libs
-    if g:rplugin.curview == "libraries"
-        call JobStdin(g:rplugin.jobs["ClientServer"], "32\n")
-    endif
 endfunction
 
 

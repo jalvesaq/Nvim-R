@@ -13,28 +13,32 @@ if has("conceal")
     setlocal conceallevel=2
     setlocal concealcursor=nvc
     syn match rbrowserNumeric	"{#.*\t" contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserCharacter	/"#.*\t/ contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserFactor	"'#.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserCharacter	/\~#.*\t/ contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserFactor	"!#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserFunction	"(#.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserControl 	";#.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserDF  	"\$#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserList	"\[#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLogical	"%#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLibrary	"##.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserS4	"<#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserEnv	":#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLazy	"&#.*\t" contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserUnknown	"=#.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserUnknown	"\*#.*\t" contains=rbrowserDelim,rbrowserTab
 else
     syn match rbrowserNumeric	"{.*\t" contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserCharacter	/".*\t/ contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserFactor	"'.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserCharacter	/\~.*\t/ contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserFactor	"!.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserFunction	"(.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserControl 	";.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserDF  	"\$.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserList	"\[.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLogical	"%.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLibrary	"#.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserS4	"<.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserEnv	":.*\t" contains=rbrowserDelim,rbrowserTab
     syn match rbrowserLazy	"&.*\t" contains=rbrowserDelim,rbrowserTab
-    syn match rbrowserUnknown	"=.*\t" contains=rbrowserDelim,rbrowserTab
+    syn match rbrowserUnknown	"\*.*\t" contains=rbrowserDelim,rbrowserTab
 endif
 syn match rbrowserNmSpace	"^.GlobalEnv "
 syn match rbrowserNmSpace	"^Libraries "
@@ -54,22 +58,24 @@ syn match rbrowserLen " \[[0-9]\+, [0-9]\+\]$" contains=rbrowserEspSpc
 syn match rbrowserLen " \[[0-9]\+\]$" contains=rbrowserEspSpc
 syn match rbrowserErr /Error: label isn't "character"./
 if has("conceal")
-    syn match rbrowserDelim contained /'#\|"#\|(#\|\[#\|{#\|%#\|##\|<#\|:#\|&#\|=#/ conceal
+    syn match rbrowserDelim contained /!#\|\~#\|(#\|\$#\|\[#\|{#\|%#\|##\|<#\|:#\|;#\|&#\|\*#/ conceal
     syn match rbrowserEspSpc contained " " conceal
 else
-    syn match rbrowserDelim contained /'\|"\|(\|\[\|{\|%\|#\|<\|:\|&\|=/
+    syn match rbrowserDelim contained /!\|\~\|(\|\$\|\[\|{\|%\|#\|<\|:\|;\|&\|\*/
 endif
 
-hi def link rbrowserNmSpace	Statement
+hi def link rbrowserNmSpace	Title
 hi def link rbrowserNumeric	Number
 hi def link rbrowserCharacter	String
 hi def link rbrowserFactor	Special
-hi def link rbrowserList	Type
+hi def link rbrowserDF  	Type
+hi def link rbrowserList	StorageClass
 hi def link rbrowserLibrary	PreProc
 hi def link rbrowserLink	Comment
 hi def link rbrowserLogical	Boolean
 hi def link rbrowserFunction	Function
-hi def link rbrowserS4		Statement
+hi def link rbrowserControl 	Statement
+hi def link rbrowserS4		Structure
 hi def link rbrowserEnv		Include
 hi def link rbrowserLazy	Comment
 hi def link rbrowserUnknown	Normal

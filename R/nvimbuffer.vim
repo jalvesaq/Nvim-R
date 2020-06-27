@@ -89,15 +89,6 @@ function OnTermClose()
         endif
         unlet g:rplugin.R_bufname
     endif
-
-    " Set nvimcom port to 0 in nclientserver
-    if g:rplugin.jobs["ClientServer"]
-        if exists('*chansend')
-            call chansend(g:rplugin.jobs["ClientServer"], "\001R0\n")
-        else
-            call jobsend(g:rplugin.jobs["ClientServer"], "\001R0\n")
-        endif
-    endif
 endfunction
 
 function StartR_InBuffer()

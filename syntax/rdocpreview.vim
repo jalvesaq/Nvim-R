@@ -2,10 +2,10 @@
 syntax clear
 
 if has('nvim-0.4.3') || has('patch-8.1.1705')
-    if g:rplugin.compl_cls == 'function'
+    if g:rplugin.compl_cls == 'f'
         runtime syntax/r.vim
         syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'
-    elseif g:rplugin.compl_cls == 'argument'
+    elseif g:rplugin.compl_cls == 'a'
         runtime syntax/rdoc.vim
         syn match previewArg "^ \zs\S\{-}\ze:"
     else
