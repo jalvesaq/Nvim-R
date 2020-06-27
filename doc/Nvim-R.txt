@@ -1037,6 +1037,7 @@ of
 |R_nvim_wd|           Start R in Vim's working directory
 |R_after_start|       Commands to be executed after R startup
 |R_after_ob_open|     Commands to be executed after the Object Browser opening
+|R_debug|             Support for debugging functions
 |R_user_maps_only|    Only user specified key bindings
 |R_disable_cmds|      List of commands to be disabled
 |R_tmpdir|            Where temporary files are created
@@ -2200,9 +2201,20 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 <
 
 ------------------------------------------------------------------------------
+								     *R_debug*
+6.33 Support for debugging functions~
+
+Put the line below in your |vimrc| if do not want that the cursor jumps to the
+line being debugged when by `browser()`. Highlighting of the line being
+debugged will also be disabled.
+>
+   let R_debug = 0
+<
+
+------------------------------------------------------------------------------
 							    *R_user_maps_only*
 							    *R_disable_cmds*
-6.33 Disable Nvim-R commands~
+6.34 Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
@@ -2222,7 +2234,7 @@ Below is an example on how to disable the commands that sends `setwd()` and
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.34 Temporary files directories~
+6.35 Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of R_tmpdir and
@@ -2241,7 +2253,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
 							      *R_nvimcom_home*
-6.35 Options for accessing Remote R from local Vim~
+6.36 Options for accessing Remote R from local Vim~
 
 See |Nvim-R-remote|.
 
@@ -2249,7 +2261,7 @@ See |Nvim-R-remote|.
 							      *Nvim-R-df-view*
 							      *R_csv_app*
 							      *R_csv_delim*
-6.36 View a data.frame or matrix~
+6.37 View a data.frame or matrix~
 
 
 You can see data.frames and matrices in external applications. You should
@@ -2287,7 +2299,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.37 SyncTeX support~
+6.38 SyncTeX support~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -2335,7 +2347,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.37.1 Okular configuration~
+6.38.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -2352,7 +2364,7 @@ of Okular will be started.
 
 
 ------------------------------------------------------------------------------
-6.37.2 Skim configuration~
+6.38.2 Skim configuration~
 
 In Skim, click in the drop down menu and fill the fields:
 >
@@ -2365,7 +2377,7 @@ In Skim, click in the drop down menu and fill the fields:
 <
 
 ------------------------------------------------------------------------------
-6.37.3 Qpdfview configuration~
+6.39.3 Qpdfview configuration~
 
 Qpdfview is only partially supported: SyncTeX backward does not work with file
 paths containing spaces, and the qpdfview window is not automatically raised
@@ -3139,7 +3151,7 @@ Examples:
 0.9.14.1 (2020-06-27)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr, R_show_arg_help.
- * New option: R_clear_console.
+ * New options: R_clear_console, R_debug.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.
  * Change default key binding for calling debug() from \db to \bg to avoid
