@@ -2090,7 +2090,7 @@ function SendLineToR(godown, ...)
             let chunkend = ".. .."
         endif
         let rpd = RParenDiff(line)
-        let has_op = line =~ '%>%'
+        let has_op = line =~ '%>%\s*$'
         if rpd < 0
             let line1 = line(".")
             let cline = line1 + 1
@@ -2101,7 +2101,7 @@ function SendLineToR(godown, ...)
                 endif
                 let rpd += RParenDiff(txt)
                 if rpd == 0
-                    let has_op = getline(cline) =~ '%>%'
+                    let has_op = getline(cline) =~ '%>%\s*$'
                     for lnum in range(line1, cline)
                         if g:R_bracketed_paste
                             if lnum == line1 && lnum == cline
