@@ -295,8 +295,9 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                     info <- paste(info, ", ", sep = "")
                 info <- paste(info, "function:", funcmeth, "()", sep = "")
             }
-            if(info != "")
-                res <- paste(res, "\x04", info, sep = "")
+            # TODO: Add the method name to the completion menu
+            # if(info != "")
+            #    res <- paste(res, "\x04", info, sep = "")
         }
     }
 

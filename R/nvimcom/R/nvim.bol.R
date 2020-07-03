@@ -228,7 +228,7 @@ GetFunDescription <- function(pkg)
     if(!file.exists(idx) || !file.info(idx)$size)
         return(NULL)
 
-    tab <- read.table(idx, sep = "\t", quote = "", stringsAsFactors = FALSE)
+    tab <- read.table(idx, sep = "\t", comment.char = "", quote = "", stringsAsFactors = FALSE)
     als <- tab$V2
     names(als) <- tab$V1
 
