@@ -122,8 +122,6 @@ if has("gui_running")
     call MakeRMenu()
 endif
 
-call RSourceOtherScripts()
-
 function! RDocExSection()
     let ii = search("^Examples:$", "nW")
     if ii == 0

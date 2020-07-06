@@ -2221,6 +2221,11 @@ function ClearRInfo()
                 \ && g:R_tmux_title != 'automatic' && g:R_tmux_title != ''
         call system("tmux set automatic-rename on")
     endif
+
+    if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && has("nvim")
+        call CloseRTerm()
+    endif
+
 endfunction
 
 " Quit R
@@ -2238,13 +2243,6 @@ function RQuit(how)
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         " SaveWinPos
         call JobStdin(g:rplugin.jobs["ClientServer"], "74" . $NVIMR_COMPLDIR . "\n")
-    endif
-
-    " In Neovim, the cursor must be in the term buffer to get TermClose event
-    " triggered
-    if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && exists("g:rplugin.R_bufname") && has("nvim")
-        exe "sbuffer " . g:rplugin.R_bufname
-        startinsert
     endif
 
     if bufloaded(b:objbrtitle)
@@ -3832,6 +3830,10 @@ function RSourceOtherScripts()
             endif
         endfor
     endif
+
+    if (g:R_auto_start == 1 && v:vim_did_enter == 0) || g:R_auto_start == 2
+        call timer_start(200, 'AutoStartR')
+    endif
 endfunction
 
 function RBuildTags()
@@ -3850,6 +3852,21 @@ function ShowRDebugInfo()
         echo g:rplugin.debug_info[key]
         echo ""
     endfor
+endfunction
+
+function AutoStartR(...)
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        return
+    endif
+    if v:vim_did_enter == 0
+        call timer_start(100, 'AutoStartR')
+        return
+    endif
+    if exists('s:starting_ncs') && s:starting_ncs == 1
+        call timer_start(200, 'AutoStartR')
+        return
+    endif
+    call StartR("R")
 endfunction
 
 command -nargs=1 -complete=customlist,RLisObjs Rinsert :call RInsert(<q-args>, "here")
@@ -3932,6 +3949,7 @@ let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
 let g:R_commented_lines   = get(g:, "R_commented_lines",    0)
+let g:R_auto_start        = get(g:, "R_auto_start",         0)
 let g:R_after_start       = get(g:, "R_after_start",       [])
 let g:R_after_ob_open     = get(g:, "R_after_ob_open",     [])
 let g:R_min_editor_width  = get(g:, "R_min_editor_width",  80)

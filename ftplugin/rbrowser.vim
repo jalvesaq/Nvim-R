@@ -363,8 +363,6 @@ unlet s:envstring
 
 call setline(1, ".GlobalEnv | Libraries")
 
-call RSourceOtherScripts()
-
 let &cpo = s:cpo_save
 unlet s:cpo_save
 

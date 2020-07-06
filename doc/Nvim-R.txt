@@ -971,6 +971,7 @@ of
 							      *Nvim-R-options*
 6. Options~
 
+|R_auto_start|        Start R automatically
 |R-built-in-terminal| Options to control Vim/Neovim's built-in terminal
 |R_external_term|     Command to run R in an external terminal emulator
 |R_silent_term|       Do not show terminal errors
@@ -1049,8 +1050,24 @@ of
 
 
 ------------------------------------------------------------------------------
+								*R_auto_start*
+6.1. Start R automatically~
+
+By default, you have to start R manually with the command <LocalLeader>rf.
+If you want that R starts automatically when you load an R script while
+starting Vim, put in your |vimrc|:
+>
+   let R_auto_start = 1
+<
+If you want that R starts automatically when you start editing an R script
+even if Vim is already started, put in your |vimrc|:
+>
+   let R_auto_start = 2
+<
+
+------------------------------------------------------------------------------
 							 *R-built-in-terminal*
-6.1. R in Vim/Neovim built-in terminal~
+6.2. R in Vim/Neovim built-in terminal~
 							       *R_esc_term*
 By default, R runs in a Vim/Neovim buffer created with the command |:term|,
 and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
@@ -1190,7 +1207,7 @@ used to send commands from Vim/Neovim to R.
 ------------------------------------------------------------------------------
 							     *R_external_term*
 							       *R_silent_term*
-6.2. Terminal emulator (Linux/Unix only)~
+6.3. Terminal emulator (Linux/Unix only)~
 
 Note: The options of this section are ignored on Mac OS X, where the command
 `open` is called to run the default application used to run shell scripts.
@@ -1247,7 +1264,7 @@ put in your |vimrc|:
 							      *R_save_win_pos*
 							   *R_arrange_windows*
 							      *R_set_home_env*
-6.3. Windows specific options~
+6.4. Windows specific options~
 								 *Rtools-path*
 If R cannot find either `make` or `gcc` while trying to compile nvimcom, you
 should add their directories to the beginning of the `PATH` environment
@@ -1281,7 +1298,7 @@ by R, you will want to put in your |vimrc|:
 							       *R_rmdchunk*
 							       *R_assign_map*
 							       *R_assign*
-6.4. Assignment operator and Rnoweb completion of code block~
+6.5. Assignment operator and Rnoweb completion of code block~
 
 In Rnoweb files, a `<` is replaced with `<<>>=\n@`. To disable this feature,
 put in your |vimrc|:
@@ -1333,7 +1350,7 @@ is preceded by a space and followed by a non-word character.
 							    *R_objbr_opendf*
 							    *R_objbr_openlist*
 							    *R_objbr_allnames*
-6.5. Object Browser options~
+6.6. Object Browser options~
 
 By default, the Object Browser will be created at the right of the script
 window, and with 40 columns. Valid values for the Object Browser placement are
@@ -1383,9 +1400,9 @@ respectively, `data.frames` and `lists`. The options are ignored for
 							      *R_nvimpager*
 							      *R_editor_w*
 							      *R_help_w*
-6.6. Vim as pager for R~
+6.7. Vim as pager for R~
 
-6.6.1. Quick setup~
+6.7.1. Quick setup~
 
 If you do not want to see R examples in a Vim buffer, put in your |vimrc|:
 >
@@ -1403,7 +1420,7 @@ If you want to see R documentation in Vim, but are not satisfied with the
 way it works, please, read the subsection 6.6.2 below.
 
 ------------------------------------------------------------------------------
-6.6.2. Details and other options:~
+6.7.2. Details and other options:~
 
 The plugin key bindings will remain active in the documentation buffer, and,
 thus, you will be able to send commands to R as you do while editing an R
@@ -1442,7 +1459,7 @@ another.
 								      *R_path*
 								      *R_app*
 								      *R_cmd*
-6.7. R path and application names~
+6.8. R path and application names~
 
 Vim will run the first R executable in the path. You can set an alternative
 path to R in your |vimrc| as in the examples:
@@ -1477,7 +1494,7 @@ in your system, you should set the value of `R_cmd` in your |vimrc|.
 
 ------------------------------------------------------------------------------
 								      *R_args*
-6.8. Arguments to R~
+6.9. Arguments to R~
 
 Set this option in your |vimrc| if you want to pass command line arguments to
 R at the startup. The value of this variable must be a |List|. Example:
@@ -1491,7 +1508,7 @@ the SDI style of the graphical user interface.
 
 ------------------------------------------------------------------------------
 								*R_start_libs*
-6.9. Omnicompletion and syntax highlight of R functions~
+6.10. Omnicompletion and syntax highlighting~
 
 The list of functions to be highlighted and the list of objects for
 omnicompletion are built dynamically as the libraries are loaded by R.
@@ -1504,13 +1521,7 @@ value of R_start_libs:
    let R_start_libs = 'base,stats,graphics,grDevices,utils,methods'
 <
 
-------------------------------------------------------------------------------
 							    *Rout_more_colors*
-							    *R_hi_fun_globenv*
-							    *R_hi_fun_paren*
-							    *R_hi_fun*
-6.10. Syntax highlight: functions, .Rout files and float windows~
-
 By default, the R commands in .Rout files are highlighted with the color of
 comments, and only the output of commands has some of its elements highlighted
 (numbers, strings, index of vectors, warnings and errors).
@@ -1528,6 +1539,7 @@ in your |vimrc|. Example:
    let g:Rout_prompt_str = '» '
    let g:Rout_continue_str = '… '
 <
+							    *R_hi_fun_paren*
 By default, Nvim-R highlights the names of R functions even if they are not
 followed by a parenthesis. If you prefer to highlight R functions only if
 the `(` is typed, put in your |vimrc|:
@@ -1537,6 +1549,7 @@ the `(` is typed, put in your |vimrc|:
 Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
+							    *R_hi_fun_globenv*
 By default, functions from `.GlobalEnv` and other environments in the
 `search()` path whose names do not start with `"package:"` are not immediately
 highlighted to avoid the need of nvimcom saving a temporary file with the list
@@ -1559,6 +1572,7 @@ command for them in your |vimrc|, as in the example below:
 >
    hi rGlobEnvFun ctermfg=117 guifg=#87d7ff cterm=italic gui=italic
 <
+								    *R_hi_fun*
 If you prefer to completely disable the syntax highlighting of R functions put
 in your |vimrc|:
 >
@@ -3148,10 +3162,10 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.14.1 (2020-06-27)
+0.9.14.1 (2020-07-04)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr, R_show_arg_help.
- * New options: R_clear_console, R_debug.
+ * New options: R_clear_console, R_debug, R_auto_start.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.
  * Change default key binding for calling debug() from \db to \bg to avoid

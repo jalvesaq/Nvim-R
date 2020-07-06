@@ -76,15 +76,19 @@ function SendCmdToR_Buffer(...)
     endif
 endfunction
 
-function OnTermClose()
+function CloseRTerm()
     if exists("g:rplugin.R_bufname")
-        if g:rplugin.R_bufname == bufname("%")
-            if g:R_close_term
-                if g:R_clear_line
-                    call feedkeys('a ')
-                else
-                    call feedkeys(' ')
-                endif
+        try
+            " R migh have been killed by closing the terminal buffer with the :q command
+            exe "sbuffer " . g:rplugin.R_bufname
+        catch /E94/
+        endtry
+        if g:R_close_term && g:rplugin.R_bufname == bufname("%")
+            startinsert
+            if g:R_clear_line
+                call feedkeys('a ')
+            else
+                call feedkeys(' ')
             endif
         endif
         unlet g:rplugin.R_bufname
@@ -142,7 +146,6 @@ function StartR_InBuffer()
     if g:R_esc_term
         tnoremap <buffer> <Esc> <C-\><C-n>
     endif
-    autocmd TermClose <buffer> call OnTermClose()
     for optn in split(g:R_buffer_opts)
         exe 'setlocal ' . optn
     endfor
