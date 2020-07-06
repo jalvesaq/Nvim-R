@@ -731,7 +731,9 @@ static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
 }
 
 #ifndef WIN32
-static void nvimcom_exec(){
+static void nvimcom_exec(void *nothing){
+    if(nothing)
+        REprintf("nvimcom_exec received non NULL data\n");
     if(*flag_eval){
         nvimcom_eval_expr(flag_eval);
         *flag_eval = 0;
