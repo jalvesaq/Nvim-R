@@ -1266,7 +1266,7 @@ endfunction
 " Functions sign_define(), sign_place() and sign_unplace() require Neovim >= 0.4.3
 "call sign_define('dbgline', {'text': '▬▶', 'texthl': 'SignColumn', 'linehl': 'QuickFixLine', 'numhl': 'Normal'})
 
-if &ambiwidth == "double" || has("win32") && !has("nvim")
+if &ambiwidth == "double" || (has("win32") && !has("nvim"))
     sign define dbgline text==> texthl=SignColumn linehl=QuickFixLine
 else
     sign define dbgline text=▬▶ texthl=SignColumn linehl=QuickFixLine
