@@ -2593,7 +2593,7 @@ function ShowRDoc(rkeyword)
         exe 'nnoremap <buffer><silent> <CR> :call AskRDoc("' . rkeyw . '", expand("<cword>"), 0)<CR>'
         redraw
         call cursor(5, 4)
-    elseif a:rkeyword =~ '(help)'
+    elseif a:rkeyword =~ '(help)' || search("\x08", "nw") > 0
         set filetype=rdoc
         call cursor(1, 1)
     elseif a:rkeyword =~? '\.Rd$'
