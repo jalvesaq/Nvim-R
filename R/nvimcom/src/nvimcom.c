@@ -61,6 +61,7 @@ static unsigned long glbnvbufzise = 32768;
 static int maxdepth = 6;
 static int curdepth = 0;
 static int autoglbenv = 0;
+static clock_t tm;
 
 static char tmpdir[512];
 static char nvimcom_home[1024];
@@ -424,6 +425,11 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     }
 
     if(xgroup > 1){
+        if(1000 * ((double)clock() - tm) / CLOCKS_PER_SEC > 300.0){
+            maxdepth = curdepth;
+            return p;
+        }
+
         strncpy(curenvB, curenv, 500);
         if(xgroup == 4) // S4 object
             snprintf(newenv, 575, "%s%s@", curenvB, xname);
@@ -527,7 +533,6 @@ static void nvimcom_globalenv_list()
     if(tmpdir[0] == 0)
         return;
 
-    clock_t tm;
     tm = clock();
 
     memset(glbnvbuf2, 0, glbnvbufzise);
