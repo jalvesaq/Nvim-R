@@ -240,7 +240,7 @@ GetFunDescription <- function(pkg)
     {
         x <- paste0(x, collapse = "")
         ttl <- sub(".*\\\\title\\{\\s*", "", x)
-        ttl <- sub("\n", " ", ttl)
+        ttl <- gsub("\n", " ", ttl)
         ttl <- gsub("  +", " ", ttl)
         ttl <- CleanOmniLine(ttl)
         ttl <- sub("\\s*\\}.*", "", ttl)
