@@ -84,10 +84,37 @@ if s:need_readme
                 \ 'Files corresponding to uninstalled libraries are not automatically deleted.',
                 \ 'You should manually delete them if you want to save disc space.',
                 \ '',
-                \ 'If you delete this README file, all omnils_ and fun_ files will be regenerated.']
+                \ 'If you delete this README file, all omnils_ and fun_ files will be regenerated.',
+                \ '',
+                \ 'All lines in the omnils_ files have 7 fields with information on the object',
+                \ 'separated by the byte \x06:',
+                \ '',
+                \ '  1. Name.',
+                \ '',
+                \ '  2. Single character representing the Type (look at the function',
+                \ '     nvimcom_glbnv_line at R/nvimcom/src/nvimcom.c to know the meaning of the',
+                \ '     characters).',
+                \ '',
+                \ '  3. Class.',
+                \ '',
+                \ '  4. Either package or environment of the object.',
+                \ '',
+                \ '  5. If the object is a function, the list of arguments using Vim syntax for',
+                \ '     lists (which is the same as Python syntax).',
+                \ '',
+                \ '  6. Short description.',
+                \ '',
+                \ '  7. Long description.',
+                \ '',
+                \ 'Notes:',
+                \ '',
+                \ '  - There is a final \x06 at the end of the line.',
+                \ '',
+                \ '  - All single quotes are replaced with the byte \x02.']
+
     call writefile(s:readme, g:rplugin.compldir . "/README")
     " Useful to force update of omnils_ files after a change in its format.
-    call delete(g:rplugin.compldir . "nvimcom_info")
+    call delete(g:rplugin.compldir . "/nvimcom_info")
     unlet s:readme
 endif
 unlet s:need_readme
