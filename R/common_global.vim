@@ -3333,7 +3333,7 @@ function CreateNewFloat(...)
             let s:ArgCompletionFinished = 0
             call delete(g:rplugin.tmpdir . "/args_for_completion")
             call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . wrd . '")')
-            let ii = 200
+            let ii = 20
             while ii > 0 && s:ArgCompletionFinished == 0
                 let ii = ii - 1
                 sleep 30m
@@ -3353,7 +3353,7 @@ function CreateNewFloat(...)
         let s:ArgCompletionFinished = 0
         call delete(g:rplugin.tmpdir . "/args_for_completion")
         call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.get.summary(' . wrd . ', 59)')
-        let ii = 200
+        let ii = 20
         while ii > 0 && s:ArgCompletionFinished == 0
             let ii = ii - 1
             sleep 30m
@@ -3629,7 +3629,7 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
     let s:ArgCompletionFinished = 0
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
-    let ii = 200
+    let ii = 20
     while ii > 0 && s:ArgCompletionFinished == 0
         let ii = ii - 1
         sleep 30m
