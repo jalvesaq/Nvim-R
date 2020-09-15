@@ -30,6 +30,9 @@ Please, read the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
 for instructions on usage.
 
+There is also an [online version](https://github.com/jamespeapen/Nvim-R/wiki)
+of the documentation maintained by James Eapen.
+
 
 ## Screenshots
 
