@@ -247,6 +247,7 @@ static void *NeovimServer(void *arg)
 
         ParseMsg(buf);
     }
+    close(Sfd);
     return NULL;
 }
 #endif
@@ -386,6 +387,7 @@ static void SendToServer(const char *port, const char *msg)
         fflush(stderr);
         return;
     }
+    close(s);
 }
 #endif
 
@@ -821,12 +823,14 @@ char *read_pkg_descr(const char *pkgnm)
                         *s = 0;
                         char *pkgdscr = malloc(sizeof(char) * (1 + strlen(dscr)));
                         strcpy(pkgdscr, dscr);
+                        fclose(f);
                         return pkgdscr;
                     }
                 }
             }
         }
     }
+    fclose(f);
     return NULL;
 }
 

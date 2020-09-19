@@ -208,6 +208,7 @@ static void nvimcom_nvimclient(const char *msg, char *port)
         REprintf("Error: partial/failed write\n");
         return;
     }
+    close(s);
 }
 #endif
 
