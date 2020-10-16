@@ -21,6 +21,8 @@ let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 if g:R_rmdchunk == 1
     " Write code chunk in rnoweb files
     inoremap <buffer><silent> ` <Esc>:call RWriteRmdChunk()<CR>a
+elseif type(g:R_rmdchunk) == v:t_string
+    exe 'inoremap <buffer><silent> ' . g:R_rmdchunk . ' <Esc>:call RWriteRmdChunk()<CR>a'
 endif
 
 function! RWriteRmdChunk()

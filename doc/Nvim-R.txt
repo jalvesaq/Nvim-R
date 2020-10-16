@@ -1305,10 +1305,16 @@ put in your |vimrc|:
 >
    let R_rnowebchunk = 0
 <
-Similarly, in Rmd files the grave accent is replaced with chunk delimiters
-unless you put in your |vimrc|:
+Similarly, in Rmd files the grave accent (backtick) is replaced with chunk
+delimiters unless you put in your |vimrc|:
 >
    let R_rmdchunk = 0
+<
+You can also define a different shortcut for `R_rmdchunk`. For example, to use
+two backticks instead of one to trigger the completion of the chunk delimiter,
+put in your |vimrc|:
+>
+   let R_rmdchunk = '``'
 <
 While editing R code, `_` is replaced with `<-`. If you want to bind other
 keys to be replaced by `<-`, set the value of |R_assign_map| in your
@@ -3168,6 +3174,7 @@ Examples:
  * New options: R_clear_console, R_debug, R_auto_start.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.
+ * Make R_rmdchunk more flexible.
  * Change default key binding for calling debug() from \db to \bg to avoid
    conflict with \d (send line).
 
