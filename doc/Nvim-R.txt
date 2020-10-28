@@ -363,7 +363,7 @@ Start/Close
   . Start R (custom)                                   \rc
   --------------------------------------------------------
   . Close R (no save)                                  \rq
-  . Stop R                                          :RStop
+  . Stop (interrupt) R                                 :RStop
 -----------------------------------------------------------
 
 Send
@@ -2419,15 +2419,23 @@ maps for most functions because the way the function is called is different in
 each Vim mode. Thus, key bindings must be made for Normal mode, Insert mode,
 and Visual mode.
 
-To customize a key binding you should put in your |vimrc| something like:
+To customize a key binding you could put something like this in your |vimrc|:
 >
-   nmap <LocalLeader>sr <Plug>RStart
-   imap <LocalLeader>sr <Plug>RStart
-   vmap <LocalLeader>sr <Plug>RStart
+    function! s:customNvimRMappings()
+       nmap <buffer> <Leader>sr <Plug>RStart
+       imap <buffer> <Leader>sr <Plug>RStart
+       vmap <buffer> <Leader>sr <Plug>RStart
+    endfunction
+    augroup myNvimR
+       au!
+       autocmd filetype r call s:customNvimRMappings()
+    augroup end
+
 <
-The above example shows how to change key binding used to start R from
-<LocalLeader>rf to <LocalLeader>sr. After changing the maps in your |vimrc|,
-you have to restart Vim.
+The above example shows how to add a key binding to start R for <Leader>sr
+for just r buffers. The default <LocalLeader>rf still exists. After changing
+the maps in your |vimrc|, you have to restart Vim. If you want to remove the
+default mappings, you can set |R_user_maps_only| .
 
 Only the custom key bindings for Normal mode are shown in Vim's menu, but
 you can type |:map| to see the complete list of current mappings, and below is
