@@ -3538,6 +3538,7 @@ endfunction
 
 function OnCompleteDone()
     call CloseFloatWin()
+    let s:user_data = {}
 endfunction
 
 let s:user_data = {}
