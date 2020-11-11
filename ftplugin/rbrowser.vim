@@ -236,7 +236,7 @@ function! RBrowserFindParent(word, curline, curpos)
     if curline > 1
         let line = substitute(line, '^.\{-}\(.\)#', '\1#', "")
         let line = substitute(line, '^ *', '', "")
-        if line =~ " " || line =~ '^.#[0-9]' || line =~ '-'
+        if line =~ " " || line =~ '^.#[0-9]' || line =~ '-' || line =~ '^.#' . s:reserved
             let line = substitute(line, '\(.\)#\(.*\)$', '\1#`\2`', "")
         endif
         if line =~ '<#'
@@ -283,7 +283,7 @@ function! RBrowserGetName(cleantail, cleantick)
     let word = substitute(word, '<#$', '@', '')
     let word = substitute(word, '.#$', '', '')
 
-    if word =~ ' ' || word =~ '^[0-9]' || word =~ '-'
+    if word =~ ' ' || word =~ '^[0-9]' || word =~ '-' || word =~ '^' . s:reserved . '$'
         let word = '`' . word . '`'
     endif
 
@@ -352,6 +352,8 @@ endif
 
 au BufEnter <buffer> stopinsert
 au BufUnload <buffer> call OnOBBufUnload()
+
+let s:reserved = '\(if\|else\|repeat\|while\|function\|for\|in\|next\|break\|TRUE\|FALSE\|NULL\|Inf\|NaN\|NA\|NA_integer_\|NA_real_\|NA_complex_\|NA_character_\)'
 
 let s:envstring = tolower($LC_MESSAGES . $LC_ALL . $LANG)
 if s:envstring =~ "utf-8" || s:envstring =~ "utf8"
