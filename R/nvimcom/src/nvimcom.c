@@ -438,7 +438,10 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
             snprintf(newenv, 575, "%s%s$", curenvB, xname);
 
         if(xgroup == 4){
-            snprintf(buf, 575, "slotNames(%s%s)", curenvB, xname);
+            if(xname[0] >= '0' && xname[0] <= '9')
+                snprintf(buf, 575, "slotNames(%s`%s`)", curenvB, xname);
+            else
+                snprintf(buf, 575, "slotNames(%s%s)", curenvB, xname);
             PROTECT(cmdSexp = allocVector(STRSXP, 1));
             SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
             PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
@@ -459,7 +462,10 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
                     if(len > 0){
                         for(int i = 0; i < len; i++){
                             ename = CHAR(STRING_ELT(ans, i));
-                            snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
+                            if(ename[0] >= '0' && ename[0] <= '9')
+                                snprintf(buf, 575, "%s%s@`%s`", curenvB, xname, ename);
+                            else
+                                snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
                             PROTECT(cmdSexp2 = allocVector(STRSXP, 1));
                             SET_STRING_ELT(cmdSexp2, 0, mkChar(buf));
                             PROTECT(cmdexpr2 = R_ParseVector(cmdSexp2, -1, &status2, R_NilValue));
