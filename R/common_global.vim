@@ -3166,9 +3166,9 @@ function RVimLeave()
     if has('nvim')
         for job in keys(g:rplugin.jobs)
             if IsJobRunning(job)
-                if job == 'ClientServer'
+                if job == 'ClientServer' || job == 'BibComplete'
                     " Avoid warning of exit status 141
-                    call JobStdin(g:rplugin.jobs["ClientServer"], "8\n")
+                    call JobStdin(g:rplugin.jobs[job], "8\n")
                     sleep 20m
                 endif
             endif

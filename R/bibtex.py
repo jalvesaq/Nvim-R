@@ -30,7 +30,7 @@ class BibEntries:
             isetal = True
 
         for p in persons:
-            lname = ' '.join(p.last())
+            lname = ' '.join(p.last_names)
             if lname == 'others':
                 cit += ' et al.'
                 break
@@ -152,3 +152,5 @@ if __name__ == "__main__":
             S = S.replace("\x02", "")
             L = S.split('\x05')
             B.GetAttachment(L[0], L[1])
+        elif S[0] == "8":
+            break
