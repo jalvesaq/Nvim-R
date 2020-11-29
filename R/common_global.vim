@@ -1802,7 +1802,9 @@ function SendSelectionToR(...)
         let j = col("'>") - i
         let l = getline("'<")
         let line = strpart(l, i, j)
-        let line = CleanOxygenLine(line)
+        if &filetype == "r"
+            let line = CleanOxygenLine(line)
+        endif
         let ok = g:SendCmdToR(line)
         if ok && a:2 =~ "down"
             call GoDown()
@@ -1845,7 +1847,9 @@ function SendSelectionToR(...)
     let curline = line("'<")
     for idx in range(0, len(lines) - 1)
         call setpos(".", [0, curline, 1, 0])
-        let lines[idx] = CleanOxygenLine(lines[idx])
+        if &filetype == "r"
+            let lines[idx] = CleanOxygenLine(lines[idx])
+        endif
         let curline += 1
     endfor
     call setpos(".", curpos)
