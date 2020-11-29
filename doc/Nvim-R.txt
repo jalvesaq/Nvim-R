@@ -686,7 +686,7 @@ you have inserted the '$' symbol after the data.frame name.
 
 Only the names of objects in .GlobalEnv and in loaded libraries are completed.
 If R is not running, only objects of libraries listed in |R_start_libs| will
-have their names completed.
+have their names completed. The omnicompletion menu is limited to 2000 items.
 
 Vim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`

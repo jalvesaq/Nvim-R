@@ -318,15 +318,14 @@ PkgInfo *nvimcom_get_pkg(const char *nm)
     return NULL;
 }
 
-static void nvimcom_write_file(char *b1, char *b2, const char *fn)
+static void nvimcom_write_file(char *b, const char *fn)
 {
-    strcpy(b1, b2);
     FILE *f = fopen(fn, "w");
     if(f == NULL){
         REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
         return;
     }
-    fprintf(f, "%s", b1);
+    fprintf(f, "%s", b);
     fclose(f);
 }
 
@@ -576,7 +575,8 @@ static void nvimcom_globalenv_list()
     }
 
     if(changed){
-        nvimcom_write_file(glbnvbuf1, glbnvbuf2, glbnvls);
+        nvimcom_write_file(glbnvbuf2, glbnvls);
+        strcpy(glbnvbuf1, glbnvbuf2);
         double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
         if(verbose && tmdiff > 1000.0)
             REprintf("Time to build GlobalEnv omnils [%lu bytes]: %f ms\n", strlen(glbnvbuf2), tmdiff);

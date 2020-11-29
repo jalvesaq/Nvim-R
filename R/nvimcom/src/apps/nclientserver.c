@@ -96,6 +96,7 @@ static char *grow_compl_buffer()
     if(compl_buffer){
         compl_buffer_size += 32768;
         char *tmp = calloc(compl_buffer_size, sizeof(char));
+        strcpy(tmp, compl_buffer);
         free(compl_buffer);
         compl_buffer = tmp;
     } else {
@@ -1422,7 +1423,7 @@ int count_twice(const char *b1, const char *b2, const char ch)
 
 char *parse_omnls(const char *s, const char *base, char *p)
 {
-    int i, nsz;
+    int i, nsz, n = 0;
     const char *f[7];
 
     while(*s != 0){
@@ -1527,6 +1528,11 @@ char *parse_omnls(const char *s, const char *base, char *p)
             p = str_cat(p, "', 'descr': '");
             p = str_cat(p, f[6]);
             p = str_cat(p, "'}},");
+            n++;
+            if(n > 1999){
+                // Truncate completion list if it's becoming too big.
+                break;
+            }
         } else {
             while(*s != '\n')
                 s++;
@@ -1540,8 +1546,6 @@ void complete(const char *base, const char *funcnm)
 {
     char *p, *s, *t;
     int sz;
-
-    // double tm = clock();
 
     memset(compl_buffer, 0, compl_buffer_size);
 
@@ -1584,10 +1588,6 @@ void complete(const char *base, const char *funcnm)
             p = parse_omnls(pd->omnils, base, p);
         pd = pd->next;
     }
-
-    //fprintf(stderr, "TIME %s = %f\n", base,
-    //        1000 * ((double)clock() - tm) / CLOCKS_PER_SEC);
-    //fflush(stderr);
 
     printf("call SetComplMenu([%s])\n", compl_buffer);
     fflush(stdout);
