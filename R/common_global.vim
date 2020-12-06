@@ -534,6 +534,9 @@ function ShowRSysLog(slog, fname, msg)
 endfunction
 
 function RSetDefaultPkg()
+    if !exists('s:r_default_pkgs')
+        let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
+    endif
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
     elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
@@ -869,7 +872,9 @@ function FinishStartingR()
         call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
     endif
 
-    let start_options = []
+    " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
+    let start_options = ['Sys.setenv("R_DEFAULT_PACKAGES" = "' . s:r_default_pkgs . '")']
+
     if g:R_objbr_allnames
         let start_options += ['options(nvimcom.allnames = TRUE)']
     else
