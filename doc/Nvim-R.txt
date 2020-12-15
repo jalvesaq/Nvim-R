@@ -3161,15 +3161,15 @@ Using the method described in |Nvim-R-key-bindings|, you can customize how
 data.frames or matrices are viewed by passing a string of optional arguments
 to `RAction`, starting with a comma. The accepted arguments are:
 
-   - `location` which should be a string like `"vsplit"` or `"above 10split"`,
+   - `howto` which should be a string like `"vsplit"` or `"above 10split"`,
      and determines where the data is opened (see |opening-window|).
 
    - `nrows` which is the number of rows of the data to open.
 
 Examples:
 >
-   nmap <silent> <LocalLeader>vl :call RAction("viewdf", ", location='aboveleft vsp'")<CR>
-   nmap <silent> <LocalLeader>vt :call RAction("viewdf", ", location='topleft 11sp', nrows=10")<CR>
+   nmap <silent> <LocalLeader>vl :call RAction("viewobj", ", howto='aboveleft vsp'")<CR>
+   nmap <silent> <LocalLeader>vt :call RAction("viewobj", ", howto='topleft 11sp', nrows=10")<CR>
 <
 
 ==============================================================================
