@@ -400,14 +400,11 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
         snprintf(buf, 127, "\006\006 [%d]\006\n", length(*x));
         p = nvimcom_strcat(p, buf);
     } else if(xgroup == 1){
-        SEXP fmls = FORMALS(*x);
-        if(TYPEOF(fmls) == LISTSXP){
-            /* It would be necessary to port args2buff() from src/main/deparse.c to here but it's too big.
-               So, it's better to call nvimcom:::nvim.args() during omni completion. */
-            p = nvimcom_strcat(p, "[\002not_checked\002]\006\006\006\n");
-        } else {
-            p = nvimcom_strcat(p, "\006\006\006\n");
-        }
+        /* It would be necessary to port args2buff() from src/main/deparse.c to here but it's too big.
+           So, it's better to call nvimcom:::nvim.args() during omni completion.
+           FORMALS() may return an object that will later crash R:
+           https://github.com/jalvesaq/Nvim-R/issues/543#issuecomment-748981771 */
+        p = nvimcom_strcat(p, "[\002not_checked\002]\006\006\006\n");
     } else {
         PROTECT(lablab = allocVector(STRSXP, 1));
         SET_STRING_ELT(lablab, 0, mkChar("label"));
