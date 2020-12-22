@@ -3536,8 +3536,18 @@ function CloseFloatWin(...)
     if has('nvim')
         let id = win_id2win(s:float_win)
         if id > 0
-            call nvim_win_close(s:float_win, 1)
-            let s:float_win = 0
+            let ok = 1
+            try
+                call nvim_win_close(s:float_win, 1)
+            catch /E5/
+                " Cannot close the float window after cycling through all the
+                " items and going back to the original uncompleted pattern
+                let ok = 0
+            finally
+                if ok
+                    let s:float_win = 0
+                endif
+            endtry
         endif
     else
         call popup_close(s:float_win)
