@@ -3730,6 +3730,9 @@ function CompleteR(findstart, base)
             return Ofun(a:findstart, a:base)
         endif
 
+        " The base might have changed because the user has hit the backspace key
+        call CloseFloatWin()
+
         if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
             " Check if we need function arguments
             let line = getline(".")
@@ -3785,6 +3788,11 @@ function CompleteR(findstart, base)
                     let nl +=1
                 endif
             endwhile
+        endif
+
+        if a:base == ''
+            " Require at least one character to try omni completion
+            return []
         endif
 
         if exists('s:compl_menu')
