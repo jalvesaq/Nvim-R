@@ -1558,7 +1558,8 @@ function RViewDF(oname, ...)
         normal! :<Esc>
         call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
         if has("nvim")
-            call jobstart([g:R_csv_app, tsvnm], {'detach': v:true})
+            let appcmd = split(g:R_csv_app) + [tsvnm]
+            call jobstart(appcmd, {'detach': v:true})
         elseif has("win32")
             silent exe '!start "' . g:R_csv_app . '" "' . tsvnm . '"'
         else
