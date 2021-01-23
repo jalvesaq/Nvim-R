@@ -288,7 +288,7 @@ during R Startup.
 
 The plugin should work without the need of any configuration right after
 installed, but if you do not like how the plugin works, you could look at the
-section  |Nvim-R-options| to see if there is an option that could make you
+section |Nvim-R-options| to see if there is an option that could make you
 happier.
 
 You can also install additional plugins to get more useful functionality to
@@ -452,7 +452,7 @@ Command
   . Search forward (SyncTeX)                           \gp
   . Go to LaTeX (SyncTeX)                              \gt
   --------------------------------------------------------
-  . Debug (function)                                   \db
+  . Debug (function)                                   \bg
   . Undebug (function)                                 \ud
   --------------------------------------------------------
   . Build tags file (cur dir)                  :RBuildTags
@@ -609,7 +609,7 @@ You can source all .R files in a directory with the Normal mode command
 ------------------------------------------------------------------------------
 								     *Rinsert*
 								     *Rformat*
-The command  `:Rinsert` <cmd>  inserts one or more lines with the output of the
+The command `:Rinsert` <cmd> inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
 and pasting the output R from its console to Vim. For example, to insert
 the output of `dput(levels(var))`, where `var` is a factor vector, we could do
@@ -678,7 +678,7 @@ Vim can automatically complete the names of R objects when CTRL-X CTRL-O is
 pressed in insert mode (see |omni-completion| for details). Omni completion
 shows in a pop up menu the name of the object, its class and its environment
 (most frequently, its package name). If the object is a function, the plugin
-also shows the function arguments in a attached float  window.
+also shows the function arguments in a attached float window.
 
 If a data.frame is found, while building the list of objects, the columns in
 the data.frame are added to the list but they are shown in the menu only after
@@ -1857,7 +1857,7 @@ You do not need to set `R_cite_pattern` if you have already set the value of
 When rendering an Rmd file, the code can be evaluated (and saved) in a
 specified environment.  The default value is `.GlobalEnv` which makes the
 objects stored in the Rmd file available on the R console.  If you do not want
-the  objects stored in the Rmd file to be available in the global environment,
+the objects stored in the Rmd file to be available in the global environment,
 you can set
 >
     let R_rmd_environment = 'new.env()'
@@ -2225,7 +2225,7 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 6.33 Support for debugging functions~
 
 Put the line below in your |vimrc| if do not want that the cursor jumps to the
-line being debugged when by `browser()`. Highlighting of the line being
+line being debugged (when `browser()` is run). Highlighting of the line being
 debugged will also be disabled.
 >
    let R_debug = 0
@@ -2309,7 +2309,7 @@ in your |vimrc|. Valid values are `"\t"`, `";"` and `","`. Example:
    let R_csv_delim = ','
 <
 There is also the option of configuring Nvim-R to run an R command to
-display the data. Example:
+display the data. Examples:
 >
    let R_df_viewer = "relimp::showData(%s, font = 'Courier 14')"
 <
