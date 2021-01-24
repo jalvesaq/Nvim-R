@@ -28,6 +28,7 @@ static char strT[8];
 static int OpenDF;
 static int OpenLS;
 static int nvimcom_is_utf8;
+static int allnames;
 
 static char tmpdir[256];
 static char liblist[576];
@@ -1103,10 +1104,12 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
         descr[j] = 0;
     }
 
-    if(f[1][0] == '\003')
-        fprintf(F2, "   %s(#%s\t%s\n", prfx, f[0], descr);
-    else
-        fprintf(F2, "   %s%c#%s\t%s\n", prfx, f[1][0], f[0], descr);
+    if(!(bsnm[0] == '.' && allnames == 0)){
+        if(f[1][0] == '\003')
+            fprintf(F2, "   %s(#%s\t%s\n", prfx, f[0], descr);
+        else
+            fprintf(F2, "   %s%c#%s\t%s\n", prfx, f[1][0], f[0], descr);
+    }
 
     if(*p == 0)
         return p;
@@ -1383,6 +1386,10 @@ void objbr_setup()
         OpenLS = 1;
     else
         OpenLS = 0;
+    if(getenv("NVIMR_OBJBR_ALLNAMES"))
+        allnames = 1;
+    else
+        allnames = 0;
 
     // List tree sentinel
     listTree = new_ListStatus("base:", 0);

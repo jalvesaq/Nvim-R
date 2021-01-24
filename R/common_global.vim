@@ -770,10 +770,14 @@ function StartNClientServer(w)
     if g:R_objbr_openlist
         let $NVIMR_OPENLS = "TRUE"
     endif
+    if g:R_objbr_allnames
+        let $NVIMR_OBJBR_ALLNAMES = "TRUE"
+    endif
     let g:rplugin.jobs["ClientServer"] = StartJob([nvc], g:rplugin.job_handlers)
     "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', nvc], g:rplugin.job_handlers)
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
+    unlet $NVIMR_OBJBR_ALLNAMES
 endfunction
 
 function UpdatePathForR()
