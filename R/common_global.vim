@@ -1282,6 +1282,7 @@ else
 endif
 
 let s:func_offset = -2
+let s:rdebugging = 0
 function StopRDebugging()
     if !g:R_debug
         return
@@ -1290,6 +1291,7 @@ function StopRDebugging()
     "sign unplace rdebugcurline
     sign unplace 1
     let s:func_offset = -2 " Did not seek yet
+    let s:rdebugging = 0
 endfunction
 
 function FindDebugFunc(srcref)
@@ -1369,8 +1371,9 @@ function RDebugJump(fnm, lnum)
         let fname = expand(a:fnm)
     endif
 
+    let bname = bufname("%")
 
-    if fname != g:rplugin.rscript_name && fname != expand("%") && fname != expand("%:p")
+    if !bufloaded(fname) && fname != g:rplugin.rscript_name && fname != expand("%") && fname != expand("%:p")
         if filereadable(fname)
             exe 'sb ' . g:rplugin.rscript_name
             if &modified
@@ -1388,17 +1391,23 @@ function RDebugJump(fnm, lnum)
         endif
     endif
 
-    exe ':' . flnum
-    "normal! zz
+    if bufloaded(fname)
+        exe 'sb ' . fname
+        exe ':' . flnum
+    endif
 
+    " Call sign_place() and sign_unplace() when requiring Vim 8.2 and Neovim 0.5
     "call sign_unplace('rdebugcurline')
     "call sign_place(1, 'rdebugcurline', 'dbgline', fname, {'lnum': flnum})
     sign unplace 1
     exe 'sign place 1 line=' . flnum . ' name=dbgline file=' . fname
-    if type(g:R_external_term) == v:t_number && g:R_external_term == 0
+    if g:R_dbg_jump && !s:rdebugging && type(g:R_external_term) == v:t_number && g:R_external_term == 0
         exe 'sb ' . g:rplugin.R_bufname
         startinsert
+    else
+        exe 'sb ' . bname
     endif
+    let s:rdebugging = 1
 endfunction
 
 function RFormatCode() range
@@ -4001,6 +4010,7 @@ let g:R_esc_term          = get(g:, "R_esc_term",           1)
 let g:R_close_term        = get(g:, "R_close_term",         1)
 let g:R_buffer_opts       = get(g:, "R_buffer_opts", "winfixwidth nobuflisted")
 let g:R_debug             = get(g:, "R_debug",              1)
+let g:R_dbg_jump          = get(g:, "R_dbg_jump",           1)
 let g:R_wait              = get(g:, "R_wait",              60)
 let g:R_wait_reply        = get(g:, "R_wait_reply",         2)
 let g:R_never_unmake_menu = get(g:, "R_never_unmake_menu",  0)

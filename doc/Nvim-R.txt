@@ -1387,7 +1387,7 @@ control the behavior of the Object Browser:
 >
    let R_objbr_opendf = 1    " Show data.frames elements
    let R_objbr_openlist = 0  " Show lists elements
-   let R_objbr_allnames = 0  " Show .GlobalEnv hidden objects
+   let R_objbr_allnames = 0  " Show hidden objects
 <
 Objects whose names start with a "." are hidden by default. If you want them
 displayed in the Object Browser, set the value of `R_objbr_allnames` to `1`.
@@ -2229,6 +2229,11 @@ line being debugged (when `browser()` is run). Highlighting of the line being
 debugged will also be disabled.
 >
    let R_debug = 0
+<
+Nvim-R puts the cursor in the R Console when the debugging starts. If you do
+not want this, put in your |vimrc|:
+>
+   let R_dbg_jump = 0
 <
 
 ------------------------------------------------------------------------------
@@ -3179,7 +3184,7 @@ Examples:
 0.9.14.1 (2020-07-04)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr, R_show_arg_help.
- * New options: R_clear_console, R_debug, R_auto_start.
+ * New options: R_clear_console, R_debug, R_auto_start, R_dbg_jump.
  * Replace options R_in_buffer, R_term and R_term_cmd with a single option:
    R_external_term.
  * Make R_rmdchunk more flexible.
