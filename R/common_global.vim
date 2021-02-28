@@ -1542,16 +1542,16 @@ function GetROutput(outf)
 endfunction
 
 function RViewDF(oname, ...)
-    let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
-    call AddForDeletion(tsvnm)
-
     if exists('g:R_csv_app')
+        let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
+        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
+        call AddForDeletion(tsvnm)
+
         if g:R_csv_app =~# '^terminal:'
             let csv_app = split(g:R_csv_app, ':')[1]
             if executable(csv_app)
-                call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . a:oname . '.tsv"')
                 tabnew
-                exe 'terminal ' . csv_app . ' ' . a:oname . '.tsv'
+                exe 'terminal ' . csv_app . ' ' . substitute(tsvnm, ' ', '\\ ', 'g')
                 startinsert
             else
                 call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
@@ -1569,7 +1569,6 @@ function RViewDF(oname, ...)
         endif
 
         normal! :<Esc>
-        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
         if has("nvim")
             let appcmd = split(g:R_csv_app) + [tsvnm]
             call jobstart(appcmd, {'detach': v:true})
@@ -1582,12 +1581,15 @@ function RViewDF(oname, ...)
     endif
 
     let location = get(a:, 1, "tabnew")
-    silent exe location . ' ' . substitute(tsvnm, ' ', '\\ ', 'g')
+    silent exe location . ' ' . a:oname
     silent 1,$d
     silent exe 'read ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
     silent 1d
-    set filetype=csv
-    set nomodified
+    setlocal filetype=csv
+    setlocal nomodified
+    setlocal bufhidden=wipe
+    setlocal noswapfile
+    set buftype=nofile
     redraw
 endfunction
 
