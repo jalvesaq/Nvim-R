@@ -1841,7 +1841,7 @@ in the same directory as the Rnoweb, you should set the value of
 >
    let R_latex_build_dir = 'build'
 <
-If you are no using LaTeX-Box omni completion, you can set the value of
+If you are not using LaTeX-Box omni completion, you can set the value of
 `R_cite_pattern` to control when completion of citation keys is activated.
 Example:
 >
