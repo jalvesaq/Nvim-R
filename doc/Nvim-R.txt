@@ -1423,7 +1423,7 @@ This option can only be set to "no" in the |vimrc|. It will be automatically
 changed to a suitable value if it is set to "no" after Vim startup.
 
 If you want to see R documentation in Vim, but are not satisfied with the
-way it works, please, read the subsection 6.6.2 below.
+way it works, please, read the subsection 6.7.2 below.
 
 ------------------------------------------------------------------------------
 6.7.2. Details and other options:~
