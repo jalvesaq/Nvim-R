@@ -1789,7 +1789,7 @@ run the commands from the temporary file.
 
 By default, R's `source()` is called with the arguments `print.eval=TRUE` and
 `spaced=FALSE`. The argument `local=parent.frame()` is passed to `source()`
-too because it is run inside another function the. But you can either add or
+too because it is run inside another function. But you can either add or
 change the arguments passed to it. Examples:
  >
    let R_source_args = 'echo = TRUE'
