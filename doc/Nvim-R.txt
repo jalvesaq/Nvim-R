@@ -1423,7 +1423,7 @@ This option can only be set to "no" in the |vimrc|. It will be automatically
 changed to a suitable value if it is set to "no" after Vim startup.
 
 If you want to see R documentation in Vim, but are not satisfied with the
-way it works, please, read the subsection 6.6.2 below.
+way it works, please, read the subsection 6.7.2 below.
 
 ------------------------------------------------------------------------------
 6.7.2. Details and other options:~
@@ -1789,7 +1789,7 @@ run the commands from the temporary file.
 
 By default, R's `source()` is called with the arguments `print.eval=TRUE` and
 `spaced=FALSE`. The argument `local=parent.frame()` is passed to `source()`
-too because it is run inside another function the. But you can either add or
+too because it is run inside another function. But you can either add or
 change the arguments passed to it. Examples:
  >
    let R_source_args = 'echo = TRUE'
@@ -1841,7 +1841,7 @@ in the same directory as the Rnoweb, you should set the value of
 >
    let R_latex_build_dir = 'build'
 <
-If you are no using LaTeX-Box omni completion, you can set the value of
+If you are not using LaTeX-Box omni completion, you can set the value of
 `R_cite_pattern` to control when completion of citation keys is activated.
 Example:
 >
