@@ -788,7 +788,7 @@ function UpdatePathForR()
             call RWarningMsg('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
             return 0
         endif
-        if $PATH !~ '^' . g:rplugin.R_path
+        if substitute($PATH, '\\', '/', 'g') !~ '^' . g:rplugin.R_path
             if has("win32")
                 let $PATH = g:rplugin.R_path . ';' . substitute($PATH, ';' . g:rplugin.R_path . ';', ';', '')
             else
