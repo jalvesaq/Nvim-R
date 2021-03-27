@@ -15,7 +15,7 @@ endif
 " Windows logins can include domain, e.g: 'DOMAIN\Username', need to remove
 " the backslash from this as otherwise cause file path problems.
 if executable("whoami")
-    let g:rplugin.userlogin = substitute(system('whoami'), '\W', '-', 'g')
+    let g:rplugin.userlogin = system('whoami')
 elseif $USERNAME != ""
     let g:rplugin.userlogin = $USERNAME
 elseif $USER != ""
@@ -35,9 +35,6 @@ endif
 if has("win32")
     let g:rplugin.home = substitute(g:rplugin.home, "\\", "/", "g")
     let g:rplugin.uservimfiles = substitute(g:rplugin.uservimfiles, "\\", "/", "g")
-    if $USERNAME != ""
-        let g:rplugin.userlogin = substitute($USERNAME, '\W', '', 'g')
-    endif
 endif
 
 if exists("g:R_compldir")
