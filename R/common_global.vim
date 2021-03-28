@@ -1429,7 +1429,7 @@ function RFormatCode() range
         let wco = 180
     endif
 
-    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_format(' . a:firstline . ', ' . a:lastline . ', ' . wco . ')')
+    call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim_format(' . a:firstline . ', ' . a:lastline . ', ' . wco . ', ' . &shiftwidth. ')')
 endfunction
 
 function FinishRFormatCode(lnum1, lnum2)

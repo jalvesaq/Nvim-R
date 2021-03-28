@@ -619,11 +619,16 @@ in Vim:
 <
 The output inserted by `:Rinsert` is limited to 5012 characters.
 
-The command `:Rformat` calls the function `tidy_source()` of formatR package
-to format either the entire buffer or the selected lines. The value of the
-`width.cutoff` argument is set to the buffer's 'textwidth' if it is not
-outside the range 20-180. Se R help on `tidy_source` for details on how to
-control the function behavior.
+The command `:Rformat` calls the function `style_text()` (if the package
+`styler` is installed) or the function `tidy_source()` (if the package
+`formatR` is installed) to format either the entire buffer or the selected
+lines. The command only works if R is running. If `style_text()` is used the
+value of 'shiftwidth' is passed as `indent_by`, and if `tidy_source()` is
+used, the value of the `width.cutoff` argument is set to the buffer's
+'textwidth' if it is not outside the range 20-180.
+
+Se R help on `tidy_source` for details on how to control the function
+behavior.
 
 
 ------------------------------------------------------------------------------

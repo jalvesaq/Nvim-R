@@ -200,20 +200,48 @@ source.and.clean <- function(f, ...)
     source(f, ...)
 }
 
-nvim_format <- function(l1, l2, wco)
+nvim_format <- function(l1, l2, wco, sw)
 {
-    ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
-                                   file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
-                                   width.cutoff = wco))
-    if(inherits(ok, "try-error")){
-        .C("nvimcom_msg_to_nvim",
-           "RWarningMsg('Error trying to execute the function formatR::tyde_source()')",
-           PACKAGE="nvimcom")
-    } else {
-        .C("nvimcom_msg_to_nvim",
-           paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
-           PACKAGE="nvimcom")
+    if(is.null(getOption("nvimcom.formatfun"))){
+        if("styler" %in% rownames(installed.packages())){
+           options(nvimcom.formatfun = "style_text")
+        } else {
+            if("formatR" %in% rownames(installed.packages())){
+                options(nvimcom.formatfun = "tidy_source")
+            } else {
+                .C("nvimcom_msg_to_nvim",
+                   "RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
+                   PACKAGE="nvimcom")
+                return(invisible(NULL))
+            }
+        }
     }
+
+    if(getOption("nvimcom.formatfun") == "tidy_source"){
+        ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
+                                       file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
+                                       width.cutoff = wco))
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               "RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+    } else if(getOption("nvimcom.formatfun") == "style_text"){
+        txt <- readLines(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"))
+        ok <- try(styler::style_text(txt, indent_by = sw))
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               "RWarningMsg('Error trying to execute the function styler::style_text()')",
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+        writeLines(ok, paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"))
+    }
+
+    .C("nvimcom_msg_to_nvim",
+       paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+       PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
