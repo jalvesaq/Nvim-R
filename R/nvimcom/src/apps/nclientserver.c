@@ -672,8 +672,12 @@ void start_server()
 #endif
 }
 
-char *count_sep(char *b1)
+char *count_sep(char *b1, int *size)
 {
+    *size = strlen(b1);
+    if(*size == 1)
+        return b1;
+
     char *s = b1;
     int n = 0;
     while(*s){
@@ -738,12 +742,10 @@ char *read_omnils_file(const char *fn, int *size)
         return NULL;
 
     // Ensure that there are exactly 7 \006 between new line characters
-    buffer = count_sep(buffer);
+    buffer = count_sep(buffer, size);
 
     if(!buffer)
         return NULL;
-
-    *size = strlen(buffer);
 
     if(buffer){
         char *p = buffer;
@@ -849,9 +851,10 @@ PkgData *new_pkg_data(const char *nm, int verbose)
     pd->nobjs = 0;
     if(pd->omnils){
         pd->loaded = 1;
-        for(int i = 0; i < size; i++)
-            if(pd->omnils[i] == '\n')
-                pd->nobjs++;
+        if(size > 2)
+            for(int i = 0; i < size; i++)
+                if(pd->omnils[i] == '\n')
+                    pd->nobjs++;
     }
     return pd;
 }
@@ -1267,7 +1270,7 @@ void lib2ob()
                 fprintf(F2, "   :#%s\t\n", pkg->name);
             snprintf(lbnmc, 511, "%s:", pkg->name);
             stt = get_list_status(lbnmc, 0);
-            if(pkg->omnils && stt == 1){
+            if(pkg->omnils && pkg->nobjs > 0 && stt == 1){
                 p = pkg->omnils;
                 nLibObjs = pkg->nobjs - 1;
                 while(*p){
