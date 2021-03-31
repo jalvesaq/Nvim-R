@@ -29,6 +29,31 @@ nvim.grepl <- function(pattern, x) {
     }
 }
 
+nvim.FixInfo <- function(x){
+    x <- gsub("'", "\004", x)
+    x <- gsub("\\\\verb\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\acronym\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\option\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\env\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\var\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\strong\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\special\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\href\\{(.*?)\\}\\{(.*?)\\}", "\004\\2\004", x)
+    x <- gsub("\\\\deqn\\{(.*?)\\}\\{(.*?)\\}", "\004\\2\004", x)
+    x <- gsub("\\\\figure\\{.*?\\}\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\figure\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\tabular\\{.*?\\}\\{(.*?)\\}", "\\1\\\\cr", x)
+    x <- gsub("\\\\tab ", "\t", x)
+    x <- gsub("\\\\out\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
+    if(grepl("\\\\describe\\{", x)){
+        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
+        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
+    }
+    x
+}
+
 nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = FALSE) {
     if(curlevel == 0){
         xx <- try(get(x, envir), silent = TRUE)
@@ -93,6 +118,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
+                    info <- nvim.FixInfo(info)
                     cat(x, "\006\003\006\006", printenv, "\006",
                         nvim.args(x, pkg = printenv, spath = spath), info, "\006\n", sep = "")
                 }
@@ -106,6 +132,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
+                    info <- nvim.FixInfo(info)
                     if(is.data.frame(xx))
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv, "\006[", nrow(xx), ", ", ncol(xx), "]", info, "\006\n", sep="")
                     else if(is.list(xx))
@@ -119,6 +146,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                 info <- ""
                 try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
+                info <- nvim.FixInfo(info)
                 if(!length(info) || info == ""){
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if(!inherits(xattr, "try-error"))

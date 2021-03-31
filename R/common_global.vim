@@ -3628,7 +3628,9 @@ function RGetNewBase(base)
 endfunction
 
 function FormatTxt(text, splt, jn, maxl)
-    let wlist = split(a:text, a:splt)
+    let atext = substitute(a:text, "\004", "'", "g")
+    let atext = substitute(atext, '\\cr', "\n", "g")
+    let wlist = split(atext, a:splt)
     let txt = ['']
     let ii = 0
     let maxlen = a:maxl - len(a:jn)

@@ -142,8 +142,8 @@ nvim.primitive.args <- function(x)
     f <- sub(") $", "", sub("^function \\(", "", f[1]))
     f <- strsplit(f, ",")[[1]]
     f <- sub("^ ", "", f)
-    f <- sub(" = ", "\002], [\002", f)
-    paste(f, collapse = "\002]], [[\002")
+    f <- sub(" = ", "'], ['", f)
+    paste(f, collapse = "']], [['")
 }
 
 nvim.GlobalEnv.fun.args <- function(funcname)
@@ -168,11 +168,18 @@ nvim.get.summary <- function(obj, wdth)
 }
 
 # For building omnls files
-nvim.fix.string <- function(x){
+nvim.fix.string <- function(x, sdq = TRUE)
+{
     x <- gsub("\n", "\\\\n", x)
     x <- gsub("\r", "\\\\r", x)
     x <- gsub("\t", "\\\\t", x)
-    x <- gsub('"', '\\\\"', x)
+    x <- gsub("'", "\004", x)
+    if(sdq){
+        x <- gsub('"', '\\\\"', x)
+    } else {
+        x <- sub("^\\s*", "", x)
+        x <- paste(x, collapse = "")
+    }
     x
 }
 
@@ -244,36 +251,37 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     for(field in names(frm)){
         type <- typeof(frm[[field]])
         if(extrainfo){
-            str1 <- paste0("{\002word\002: \002", field)
+            str1 <- paste0("{'word': '", field)
             if (type == 'symbol') {
-                str2 <- paste0("\002, \002menu\002: \002 \002")
+                str2 <- paste0("', 'menu': ' '")
             } else if (type == 'character') {
-                str2 <- paste0(" = \002, \002menu\002: \002\"", nvim.fix.string(frm[[field]]), "\"\002")
+                str2 <- paste0(" = ', 'menu': '\"", nvim.fix.string(frm[[field]]), "\"'")
             } else if (type == 'logical' || type == 'double' || type == 'integer') {
-                str2 <- paste0(" = \002, \002menu\002: \002", as.character(frm[[field]]), "\002")
+                str2 <- paste0(" = ', 'menu': '", as.character(frm[[field]]), "'")
             } else if (type == 'NULL') {
-                str2 <- paste0(" = \002, \002menu\002: \002NULL\002")
+                str2 <- paste0(" = ', 'menu': 'NULL'")
             } else if (type == 'language') {
-                str2 <- paste0(" = \002, \002menu\002: \002", deparse(frm[[field]]), "\002")
+                str2 <- paste0(" = ', 'menu': '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'")
             } else {
-                str2 <- paste0("\002, \002menu\002: \002 \002")
+                str2 <- paste0("', 'menu': ' '")
             }
             res <- append(res, paste0(str1, str2,
-                                      ", \002user_data\002: {\002cls\002: \002a\002, \002argument\002: \002",
-                                      arglist[[field]], "\002}}, "))
+                                      ", 'user_data': {'cls': 'a', 'argument': '",
+                                      arglist[[field]], "'}}, "))
         } else {
             if (type == 'symbol') {
-                res <- append(res, paste0("[\002", field, "\002], "))
+                res <- append(res, paste0("['", field, "'], "))
             } else if (type == 'character') {
-                res <- append(res, paste0("[\002", field, "\002, \002\"", nvim.fix.string(frm[[field]]), "\"\002], "))
+                res <- append(res, paste0("['", field, "', '\"", nvim.fix.string(frm[[field]]), "\"'], "))
             } else if (type == 'logical' || type == 'double' || type == 'integer') {
-                res <- append(res, paste0("[\002", field, "\002, \002", as.character(frm[[field]]), "\002], "))
+                res <- append(res, paste0("['", field, "', '", as.character(frm[[field]]), "'], "))
             } else if (type == 'NULL') {
-                res <- append(res, paste0("[\002", field, "\002, \002", 'NULL', "\002], "))
+                res <- append(res, paste0("['", field, "', '", 'NULL', "'], "))
             } else if (type == 'language') {
-                res <- append(res, paste0("[\002", field, "\002, \002", deparse(frm[[field]]), "\002], "))
+                res <- append(res, paste0("['", field, "', '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'], "))
             } else {
-                warning(paste0("nvim.args: typeof = ", type))
+                res <- append(res, paste0("['", field, "'], "))
+                warning(paste0("nvim.args: ", funcname, " [", field, "]", " (typeof = ", type, ")"))
             }
         }
     }

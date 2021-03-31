@@ -697,47 +697,6 @@ char *count_sep(char *b1)
     return b1;
 }
 
-char *fix_string(char *b1)
-{
-    char *p1 = b1;
-    int n1 = 0;
-    int n2 = 0;
-    while(*p1){
-        if(*p1 == '\002')
-            n1++;
-        if(*p1 == '\'')
-            n2++;
-        p1++;
-    }
-    if(n1 == 0 && n2 == 0)
-        return b1;
-
-    char *b2 = calloc(strlen(b1) + 1 + n2, sizeof(char));
-    p1 = b1;
-    char *p2 = b2;
-    while(*p1){
-        if(*p1 == '\''){
-            *p2 = '\'';
-            p2++;
-            *p2 = *p1;
-            p1++;
-            p2++;
-            continue;
-        }
-        if(*p1 == '\002'){
-            *p2 = '\'';
-            p2++;
-            p1++;
-            continue;
-        }
-        *p2 = *p1;
-        p1++;
-        p2++;
-    }
-    free(b1);
-    return b2;
-}
-
 char *read_file(const char *fn)
 {
     FILE *f = fopen(fn, "rb");
@@ -777,9 +736,6 @@ char *read_omnils_file(const char *fn, int *size)
     char * buffer = read_file(fn);
     if(!buffer)
         return NULL;
-
-    // Fix single quotes and backslashes
-    buffer = fix_string(buffer);
 
     // Ensure that there are exactly 7 \006 between new line characters
     buffer = count_sep(buffer);
@@ -1565,7 +1521,6 @@ void complete(const char *base, const char *funcnm)
         snprintf(buf, 511, "%s/args_for_completion", tmpdir);
         s = read_file(buf);
         if(s){
-            s = fix_string(s);
             sz = strlen(s) + 4;
             while(sz > compl_buffer_size)
                 p = grow_compl_buffer();
