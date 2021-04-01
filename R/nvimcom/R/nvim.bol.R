@@ -29,31 +29,6 @@ nvim.grepl <- function(pattern, x) {
     }
 }
 
-nvim.FixInfo <- function(x){
-    x <- gsub("'", "\004", x)
-    x <- gsub("\\\\verb\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\acronym\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\option\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\env\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\var\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\strong\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\special\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\href\\{(.*?)\\}\\{(.*?)\\}", "\004\\2\004", x)
-    x <- gsub("\\\\deqn\\{(.*?)\\}\\{(.*?)\\}", "\004\\2\004", x)
-    x <- gsub("\\\\figure\\{.*?\\}\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\figure\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\tabular\\{.*?\\}\\{(.*?)\\}", "\\1\\\\cr", x)
-    x <- gsub("\\\\tab ", "\t", x)
-    x <- gsub("\\\\out\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
-    if(grepl("\\\\describe\\{", x)){
-        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
-        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
-    }
-    x
-}
-
 nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = FALSE) {
     if(curlevel == 0){
         xx <- try(get(x, envir), silent = TRUE)
@@ -118,7 +93,6 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    info <- nvim.FixInfo(info)
                     cat(x, "\006\003\006\006", printenv, "\006",
                         nvim.args(x, pkg = printenv, spath = spath), info, "\006\n", sep = "")
                 }
@@ -132,7 +106,6 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     info <- "\006\006"
                     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                    info <- nvim.FixInfo(info)
                     if(is.data.frame(xx))
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv, "\006[", nrow(xx), ", ", ncol(xx), "]", info, "\006\n", sep="")
                     else if(is.list(xx))
@@ -146,7 +119,6 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                 info <- ""
                 try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
                         silent = TRUE)
-                info <- nvim.FixInfo(info)
                 if(!length(info) || info == ""){
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if(!inherits(xattr, "try-error"))
@@ -178,71 +150,85 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
     }
 }
 
-CleanOmniLineASCII <- function(x)
+# TODO: Transfer this code C: write quickly a dirty omnls_ file and then use a
+# C function or application to clean it. This would fix a bug affecting nested
+# commands such as \strong{aaa \href{www}{www}} because the current code finds
+# the next brace and not the matching brace.
+CleanOmniLine <- function(x)
 {
-    x <- gsub("\\\\R", "R", x)
+    if(length(x) == 0)
+        return(x)
+    x <- gsub("\n", " ", x)
+    if(!NvimcomEnv$isAscii){
+        # Only the symbols found in a sample of omnls_ files
+        x <- gsub("\\\\alpha\\b", "α", x)
+        x <- gsub("\\\\beta\\b", "β", x)
+        x <- gsub("\\\\eta\\b", "η", x)
+        x <- gsub("\\\\phi\\b", "φ", x)
+        x <- gsub("\\\\mu\\b", "μ", x)
+        x <- gsub("\\\\gamma\\b", "γ", x)
+        x <- gsub("\\\\Sigma\\b", "Σ", x)
+        x <- gsub("\\\\omega\\b", "ο", x)
+        x <- gsub("\\\\le\\b", "≤", x)
+        x <- gsub("\\\\ge\\b", "≥", x)
+        x <- gsub("\\\\sqrt\\{(.*?)\\}", "√\\1", x)
+    }
+    x <- gsub("\\\\R\\b", "R", x)
     x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\code\\{(.+?)\\}", "'\\1'", x)
-    x <- gsub("\\\\samp\\{(.+?)\\}", "'\\1'", x)
-    x <- gsub("\\\\file\\{(.+?)\\}", "'\\1'", x)
-    x <- gsub("\\\\sQuote\\{(.+?)\\}", "'\\1'", x)
-    x <- gsub("\\\\dQuote\\{(.+?)\\}", '"\\1"', x)
-    x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item ", " - ", x)
-    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "'\\1'", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
-    x <- gsub("\\\\ldots", "...", x)
-    x <- gsub("\\\\dots", "...", x)
-    x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
-    x
-}
-
-CleanOmniLineUTF8 <- function(x)
-{
-    x <- gsub("\\\\R", "R", x)
-    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\email\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\code\\{(.+?)\\}", "\u2018\\1\u2019", x)
     x <- gsub("\\\\samp\\{(.+?)\\}", "\u2018\\1\u2019", x)
+    x <- gsub("\\\\acronym\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\option\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\env\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\var\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\strong\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\special\\{(.*?)\\}", "\\1", x)
     x <- gsub("\\\\file\\{(.+?)\\}", "\u2018\\1\u2019", x)
     x <- gsub("\\\\sQuote\\{(.+?)\\}", "\u2018\\1\u2019", x)
     x <- gsub("\\\\dQuote\\{(.+?)\\}", "\u201c\\1\u201d", x)
     x <- gsub("\\\\emph\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\bold\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\item ", " \u2022 ", x)
-    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\eqn\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\deqn\\{(.*?)\\}\\{(.*?)\\}", "\\2", x)
     x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\href\\{\\{.+?\\}\\{(.+?)\\}\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{\\\\out\\{.\\}\\}\\{ \\}\\}\\{\\}", " ", x) # \sspace
+    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\1\u2019 <\\1>", x)
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
     x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
+    x <- gsub("\\\\verb\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\out\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\if\\{html\\}\\{.+?\\}", "", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
+    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
+    x <- gsub("\\\\figure\\{.*?\\}\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\figure\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\tabular\\{.*?\\}\\{(.*?)\\}", "\\1\\\\cr", x)
+    x <- gsub("\\\\tab ", "\t", x)
+    x <- gsub("\\\\item\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\item ", " \u2022 ", x)
+    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1", x)
+    if(grepl("\\\\describe\\{", x)){
+        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
+        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
+    }
+    if(NvimcomEnv$isAscii){
+        x <- gsub("\u2018", "\004", x)
+        x <- gsub("\u2019", "\004", x)
+        x <- gsub("\u201c", '"', x)
+        x <- gsub("\u201d", '"', x)
+        x <- gsub("\u2022", '-', x)
+    }
+    x <- gsub("'", "\004", x)
     x
 }
 
-if(!is.na(localeToCharset()[1]) && localeToCharset()[1] == "UTF-8" && version$os != "cygwin"){
-    CleanOmniLine <- CleanOmniLineUTF8
-} else {
-    CleanOmniLine <- CleanOmniLineASCII
-}
 
 # Code adapted from the gbRd package
 GetFunDescription <- function(pkg)
@@ -267,13 +253,10 @@ GetFunDescription <- function(pkg)
     GetDescr <- function(x)
     {
         x <- paste0(x, collapse = "")
-        ttl <- sub(".*\\\\title\\{\\s*", "", x)
-        ttl <- gsub("\n", " ", ttl)
-        ttl <- gsub("  +", " ", ttl)
-        ttl <- CleanOmniLine(ttl)
-        ttl <- sub("\\s*\\}.*", "", ttl)
-        ttl <- gsub("\\{", "", ttl)
-        x <- sub(".*\\\\description\\{\\s*", "", x)
+        x <- sub("\\\\usage\\{.*", "", x)
+        x <- CleanOmniLine(x)
+        ttl <- sub(".*\\\\title\\{(.*?)\\}.*", "\\1", x)
+        x <- sub(".*\\\\description\\{(.*)}.*", "\\1", x)
         xc <- charToRaw(x)
         k <- 1
         i <- 1
@@ -300,13 +283,6 @@ GetFunDescription <- function(pkg)
     }
     NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
                                        "alias" = als)
-}
-
-CleanOmnils <- function(f)
-{
-    x <- readLines(f)
-    x <- CleanOmniLine(x)
-    writeLines(x, f)
 }
 
 # Build Omni List
@@ -365,7 +341,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
                                   obj, " (", curpack, ", ", curlib, ").\n", sep = ""))
             }
             sink()
-            CleanOmnils(omnilist)
             # Build list of functions for syntax highlight
             fl <- readLines(omnilist)
             fl <- fl[grep("\006\003\006", fl)]

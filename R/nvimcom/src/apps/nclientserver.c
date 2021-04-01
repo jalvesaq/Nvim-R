@@ -675,6 +675,7 @@ void start_server()
 char *count_sep(char *b1, int *size)
 {
     *size = strlen(b1);
+    // Some packages do not export any objects.
     if(*size == 1)
         return b1;
 
