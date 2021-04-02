@@ -111,17 +111,17 @@ function RWarningMsg(wmsg)
 endfunction
 
 if has("nvim")
-    if !has("nvim-0.3.4")
-        call RWarningMsg("Nvim-R requires Neovim >= 0.3.4.")
+    if !has("nvim-0.4.3")
+        call RWarningMsg("Nvim-R requires Neovim >= 0.4.3.")
         let g:rplugin.failed = 1
         finish
     endif
 elseif v:version < "801"
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.3.4 or Vim >= 8.1.")
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.4.3 or Vim >= 8.1.1705")
     let g:rplugin.failed = 1
     finish
-elseif !has("channel") || !has("job")
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.3.4 or Vim >= 8.1.\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+elseif !has("channel") || !has("job") || !has('patch-8.1.1705')
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.4.3 or Vim >= 8.1.1705\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin.failed = 1
     finish
 endif
@@ -3599,12 +3599,8 @@ function StartFloatWin()
     endif
 endfunction
 
-" Delete the variable s:user_data, update syntax/rdocpreview.vim and change the condition below to
-" has('nvim-0.5.0') || has('patch-8.2.84') when it evaluates to TRUE in Ubuntu (perhaps, 20.10)
-if has('nvim-0.4.3') || has('patch-8.1.1705')
-    autocmd CompleteChanged * call StartFloatWin()
-    autocmd CompleteDone * call OnCompleteDone()
-endif
+autocmd CompleteChanged * call StartFloatWin()
+autocmd CompleteDone * call OnCompleteDone()
 
 function RGetNewBase(base)
     if a:base =~ ":::"
@@ -3835,26 +3831,11 @@ function WaitRCompletion()
         if has('nvim-0.5.0') || has('patch-8.2.84')
             return s:compl_menu
         elseif has('nvim-0.4.3') || has('patch-8.1.1705')
-            " They have float window, but 'user_data' must be string
+            " They have float window, but 'user_data' must be string (Ubuntu 20.04)
             let s:user_data = {}
             for item in s:compl_menu
                 let wrd = item['word']
                 let s:user_data[wrd] = deepcopy(item['user_data'])
-                let item['user_data'] = ''
-            endfor
-        else
-            " No support for float window: use the old preview window
-            for item in s:compl_menu
-                let wrd = item['word']
-                if item['user_data']['cls'] == 'a'
-                    let item['info'] = item['user_data']['argument']
-                elseif item['user_data']['cls'] == 'f'
-                    let usage = item['user_data']['usage']
-                    call map(usage, 'join(v:val, " = ")')
-                    let usage = wrd . '(' . join(usage, ", ") . ')'
-                    let item['info'] = FormatTxt('Description: ' . item['user_data']['descr'], ' ' , "\n ", winwidth(0)) .
-                                \ "\n" . FormatTxt('Usage: ' . usage . "\t", ' ' , "\n  ", winwidth(0))
-                endif
                 let item['user_data'] = ''
             endfor
         endif

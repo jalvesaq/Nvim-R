@@ -34,31 +34,8 @@ function SendCmdToR_Buffer(...)
             endif
         endif
 
-        if g:R_auto_scroll && cmd !~ '^quit('
-            if exists("*nvim_win_set_cursor")
-                " These functions exist only in Neovim >= 0.4.0:
-                if bwid != -1
-                    call nvim_win_set_cursor(bwid, [nvim_buf_line_count(nvim_win_get_buf(bwid)), 0])
-                endif
-            else
-                " TODO: Delete this code and update the documentation when
-                " everyone is using Neovim >= 0.4.0 (released on 2019-04-08)
-                let sbopt = &switchbuf
-                set switchbuf=useopen,usetab
-                let curtab = tabpagenr()
-                let isnormal = mode() ==# 'n'
-                let curwin = winnr()
-                exe 'sb ' . g:rplugin.R_bufname
-                call cursor('$', 1)
-                if tabpagenr() != curtab
-                    exe 'normal! ' . curtab . 'gt'
-                endif
-                exe curwin . 'wincmd w'
-                if isnormal
-                    stopinsert
-                endif
-                exe 'set switchbuf=' . sbopt
-            endif
+        if g:R_auto_scroll && cmd !~ '^quit(' && bwid != -1
+            call nvim_win_set_cursor(bwid, [nvim_buf_line_count(nvim_win_get_buf(bwid)), 0])
         endif
 
         if !(a:0 == 2 && a:2 == 0)

@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.14.1
-For Neovim >= 0.3.4 and Vim >= 8.1
+For Neovim >= 0.4.3 and Vim >= 8.1.1705
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -1589,16 +1589,19 @@ in your |vimrc|:
 >
    let R_hi_fun = 0
 <
-In either Neovim >= 0.4.3 or Vim >= 8.1.1705, a float window with addtional
-information is shown during omni completion. In Neovim only, if you want to
-change the highlighting of the text describing the object whose name is being
-completed, the line separating the description from either the function
-arguments or the object summary, and, when completing a function argument, the
-name of the argument, choose what highlighting groups you want to use (see
-|highlight-groups| )and put in your |init.vim| lines as in the example:
+A float window with addtional information is shown during omni completion.
+In Neovim only, if you want to change the highlighting of the float window,
+you should choose what highlighting groups you want to use (see
+|highlight-groups|) and put in your |init.vim| lines as in the example:
 >
+   " text describing the object whose name is being completed
    hi def link previewDescr Title
+
+   " the line separating the description from either the function arguments or
+   " the object summary
    hi def link previewSep   PreProc
+
+   " the name of the argument (when completing function arguments)
    hi def link previewArg Statement
 <
 The default values are, respectively, NormalFloat, NormalFloat and Special.
