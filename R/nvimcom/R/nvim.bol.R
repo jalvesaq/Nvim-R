@@ -29,6 +29,14 @@ nvim.grepl <- function(pattern, x) {
     }
 }
 
+nvim.getInfo <- function(printenv, x)
+{
+    info <- "\006\006"
+    als <- NvimcomEnv$pkgdescr[[printenv]]$alias[NvimcomEnv$pkgdescr[[printenv]]$alias[, "name"] == x, "alias"]
+    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[als]], silent = TRUE)
+    return(info)
+}
+
 nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = FALSE) {
     if(curlevel == 0){
         xx <- try(get(x, envir), silent = TRUE)
@@ -90,9 +98,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     cat(x, "\006\003\006\006", printenv, "\006",
                         nvim.args(x, spath = spath), "\n", sep = "")
                 } else {
-                    info <- "\006\006"
-                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
-                        silent = TRUE)
+                    info <- nvim.getInfo(printenv, x)
                     cat(x, "\006\003\006\006", printenv, "\006",
                         nvim.args(x, pkg = printenv, spath = spath), info, "\006\n", sep = "")
                 }
@@ -103,9 +109,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
         } else {
             if(is.list(xx) || is.environment(xx)){
                 if(curlevel == 0){
-                    info <- "\006\006"
-                    try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
-                        silent = TRUE)
+                    info <- nvim.getInfo(printenv, x)
                     if(is.data.frame(xx))
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv, "\006[", nrow(xx), ", ", ncol(xx), "]", info, "\006\n", sep="")
                     else if(is.list(xx))
@@ -116,13 +120,11 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
                     cat(x, "\006", x.group, "\006", x.class, "\006", printenv, "\006[]\006\006\006\n", sep="")
                 }
             } else {
-                info <- ""
-                try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[NvimcomEnv$pkgdescr[[printenv]]$alias[[x]]]],
-                        silent = TRUE)
-                if(!length(info) || info == ""){
+                info <- nvim.getInfo(printenv, x)
+                if(info == "\006\006"){
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if(!inherits(xattr, "try-error"))
-                        info <- paste0("\006\006", xattr)
+                        info <- paste0("\006\006", CleanOmniLine(xattr))
                 }
                 cat(x, "\006", x.group, "\006", x.class, "\006", printenv, "\006[]", info, "\006\n", sep="")
             }
@@ -150,10 +152,11 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
     }
 }
 
-# TODO: Transfer this code C: write quickly a dirty omnls_ file and then use a
-# C function or application to clean it. This would fix a bug affecting nested
-# commands such as \strong{aaa \href{www}{www}} because the current code finds
-# the next brace and not the matching brace.
+# NOTE: This function takes only about 15% of the time to build an omnls_
+# file, but it would be better to rewrite it in C to fix a bug affecting
+# nested commands such as \strong{aaa \href{www}{www}} because the current
+# code finds the next brace and not the matching brace. However, this cannot
+# be a priority because the bug affects only about 0.01% of all omnils_ lines).
 CleanOmniLine <- function(x)
 {
     if(length(x) == 0)
@@ -198,7 +201,7 @@ CleanOmniLine <- function(x)
     x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\1\u2019 <\\1>", x)
+    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\2\u2019 <\\1>", x)
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
     x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
@@ -245,6 +248,16 @@ GetFunDescription <- function(pkg)
     tab <- read.table(idx, sep = "\t", comment.char = "", quote = "", stringsAsFactors = FALSE)
     als <- tab$V2
     names(als) <- tab$V1
+    als <- list("name" = names(als), "alias" = unname(als))
+    als$name <- lapply(als$name, function(x) strsplit(x, ",")[[1]])
+    for(i in 1:length(als$alias))
+        als$name[[i]] <- cbind(als$alias[[i]], als$name[[i]])
+    als <- do.call("rbind", als$name)
+    if(nrow(als) > 1){
+        als <- als[complete.cases(als), ]
+        als <- als[!duplicated(als[, 2]), ]
+    }
+    colnames(als) <- c("alias", "name")
 
     if(!file.exists(paste0(pth, pkg, ".rdx")))
         return(NULL)
@@ -254,14 +267,17 @@ GetFunDescription <- function(pkg)
     {
         x <- paste0(x, collapse = "")
         x <- sub("\\\\usage\\{.*", "", x)
+        x <- sub("\\\\details\\{.*", "", x)
         x <- CleanOmniLine(x)
         ttl <- sub(".*\\\\title\\{(.*?)\\}.*", "\\1", x)
-        x <- sub(".*\\\\description\\{(.*)}.*", "\\1", x)
+        x <- sub(".*\\\\description\\{", "", x)
+
+        # Get the matching bracket
         xc <- charToRaw(x)
         k <- 1
         i <- 1
         l <- length(xc)
-        while(i < l)
+        while(i <= l)
         {
             if(xc[i] == 123){
                 k <- k + 1
