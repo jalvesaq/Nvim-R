@@ -877,14 +877,9 @@ PkgData *get_pkg(const char *nm)
 
 void add_pkg(const char *nm, int verbose)
 {
-    if(pkgList){
-        PkgData *pd = pkgList;
-        while(pd->next)
-            pd = pd->next;
-        pd->next = new_pkg_data(nm, verbose);
-    } else {
-        pkgList = new_pkg_data(nm, verbose);
-    }
+    PkgData *tmp = pkgList;
+    pkgList = new_pkg_data(nm, verbose);
+    pkgList->next = tmp;
 }
 
 void update_pkg_list()
