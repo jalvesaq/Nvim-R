@@ -57,7 +57,7 @@ NvimcomEnv$pkgdescr <- list()
                   sep = "\x02"),
            PACKAGE="nvimcom")
     }
-    if(!is.na(localeToCharset()[1]) && localeToCharset()[1] == "UTF-8" && version$os != "cygwin")
+    if(!is.na(utils::localeToCharset()[1]) && utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin")
         NvimcomEnv$isAscii <- FALSE
     else
         NvimcomEnv$isAscii <- TRUE
