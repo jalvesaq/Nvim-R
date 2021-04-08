@@ -3362,7 +3362,7 @@ function CreateNewFloat(...)
             endwhile
             if filereadable(g:rplugin.tmpdir . "/args_for_completion")
                 let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
-                let usage = '[' . substitute(usage, "\002", "'", 'g') . ']'
+                let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
                 let usage = eval(usage)
                 call map(usage, 'join(v:val, " = ")')
                 let usage = join(usage, ", ")
