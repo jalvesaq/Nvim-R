@@ -3307,6 +3307,10 @@ function FormatInfo(width, needblank)
     let info = ''
     if ud['cls'] == 'a'
         let info = ' ' . FormatTxt(ud['argument'], ' ', " \n  ", a:width - 1)
+    elseif ud['cls'] == 'l'
+        let info = ' ' . FormatTxt(ud['ttl'], ' ', " \n ", a:width - 1) . ' '
+        let info .= "\n————\n"
+        let info .= ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1)
     else
         if ud['descr'] != ''
             let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) . ' '
@@ -3686,7 +3690,8 @@ function GetListOfRLibs(base)
         call filter(pd, 'v:val =~ "^" . a:base')
         for line in pd
             let tmp = split(line, "\x09")
-            call add(argls, {'word': tmp[0], 'menu': tmp[1], 'info': "Description: " . tmp[2]})
+            call add(argls, {'word': tmp[0]})
+            let s:user_data[tmp[0]] = {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}
         endfor
     endif
     return argls
