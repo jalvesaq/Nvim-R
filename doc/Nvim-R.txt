@@ -2003,7 +2003,7 @@ scripts, put in your |vimrc|:
 <
 Currently, there is only one script known to extend Nvim-R features:
 
-   Support to the devtools R package~
+   Support for the devtools R package~
    https://github.com/mllg/vim-devtools-plugin
 
 
@@ -2032,7 +2032,7 @@ If the reference includes the field "file", you can open this file by typing
 
 Rmarkdown~
 
-For RMarkdown documents it is recommended the installation of zotcite for
+For RMarkdown documents it is recommended to install zotcite for
 completing citation keys directly from Zotero database:
 
    https://github.com/jalvesaq/zotcite
