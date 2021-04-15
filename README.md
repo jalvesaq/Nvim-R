@@ -30,9 +30,9 @@ for details.
 
 ## Usage
 
-Please, read the plugin's
-[documentation](https://github.com/jamespeapen/Nvim-R/wiki).
-for instructions on [usage](https://github.com/jamespeapen/Nvim-R/wiki/Use).
+Please read the plugin's
+[documentation](https://github.com/jamespeapen/Nvim-R/wiki) for instructions on
+[usage](https://github.com/jamespeapen/Nvim-R/wiki/Use).
 
 
 
