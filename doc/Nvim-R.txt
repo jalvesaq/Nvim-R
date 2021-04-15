@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.14.1
+Version: 0.9.15
 For Neovim >= 0.4.3 and Vim >= 8.1.1705
 
  1. Overview                                    |Nvim-R-overview|
@@ -103,17 +103,17 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.2.0 (Linux, OS X) or >= 0.2.1 (Windows):
+   Neovim >= 0.4.3
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 8.1:
+   or Vim >= 8.1.1705:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
 
 
-   R >= 3.0.0:
+   R >= 4.0.0:
       http://www.r-project.org/
 
    Notes about the R package `nvimcom`:
@@ -151,7 +151,7 @@ Additional dependencies for editing Rnoweb documents:~
 		 (Not required on either Windows or OS X)
 
    Python 3 and python3-pybtex library: required for omnicompletion of
-   citation keys (following |R_cite_pattern|).
+   citation keys (following |R_cite_pattern|) in Rnoweb documents.
 
 
 Additional dependencies for editing Rmd documents:~
@@ -159,12 +159,12 @@ Additional dependencies for editing Rmd documents:~
    xdotool: Required to reload the page on the web browser (Linux only).
 
    Python 3 and python3-pybtex library: required for omnicompletion of
-   citation keys (following the `@` symbol).
+   citation keys (following the `@` symbol) if `zotcite` is not installed.
 
 
 Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 
-   Tmux >= 2.0:  http://tmux.sourceforge.net
+   Tmux >= 3.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
 		 terminal emulator (see |R_external_term|).
 
@@ -182,54 +182,16 @@ configuration.
 ------------------------------------------------------------------------------
 3.2. Installation of the plugin~
 
-Now, install Nvim-R. You have two options: Vimball and Vim Package.
-
-
-Vimball~
-
-If you want to install from the vimball, download the file Nvim-R.vmb from:
-
-   http://www.vim.org/scripts/script.php?script_id=2628
-
-Then, open the file with either Vim or Neovim and do:
->
-   :packadd vimball
-   :so %
-<
-Finally, press the space bar a few times to ensure the installation of all
-files.
-
-
-Vim Package~
-
 If you have a previous Vimball installation, you should uninstall it first:
 >
    :packadd vimball
    :RmVimball Nvim-R
 <
-The Vim package is a zip file released at:
+Either use a plugin manager to install Nvim-R or follow the instructions on
+Vim |packages| to install the Nvim-R package (either the zip or the tar.gz
+file) released at:
 
     https://github.com/jalvesaq/Nvim-R/releases
-
-If, for instance, it was saved in the `/tmp` directory, to install it on an
-Unix system, you should do for Neovim:
->
-   mkdir -p ~/.local/share/nvim/site/pack/R
-   cd ~/.local/share/nvim/site/pack/R
-   unzip /tmp/Nvim-R_0.9.6.zip
-<
-The directory for Vim on Unix is `~/.vim/pack/R`.
-For Neovim on Windows, it is `~/AppData/Local/nvim/pack/R`.
-And, for Vim on Windows, it is `~/vimfiles/pack/R`.
-The name of the last subdirectory does not need to be `R`; it might be
-anything.
-
-Finally, in Vim (or Neovim) run `:helptags` (adjust the path according to your
-system):
->
-   :helptags ~/.local/share/nvim/site/pack/R/start/Nvim-R/doc
-<
-See |packages| for details.
 
 
 ------------------------------------------------------------------------------
@@ -1105,11 +1067,10 @@ output, Nvim-R will move the cursor to the last line of R Console before
 sending a command to it, forcing the auto scrolling of the terminal.
 
 								   *R_hl_term*
-If you are using Neovim < 0.4.0, Nvim-R will enter the R Console to be able to
-move the cursor to its last line. This will trigger an auto command that
-relies on the cursor moving to the terminal window. If you have defined such
-auto command, you will may want to put the line below in your |init.vim| to
-disable the auto scrolling of the terminal:
+If you are using Neovim, Nvim-R will move the cursor to the end of R Console's
+buffer before sending a command to force the scrolling R output, but you can
+put the line below in your |init.vim| to disable the auto scrolling of the
+terminal:
 >
    let R_auto_scroll = 0
 <
@@ -3189,7 +3150,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.14.1 (2020-07-04)
+0.9.15 (2021-04-14)
 
  * Delete options R_ls_env_tol, R_objbr_labelerr, R_show_arg_help.
  * New options: R_clear_console, R_debug, R_auto_start, R_dbg_jump.
@@ -3198,6 +3159,7 @@ Examples:
  * Make R_rmdchunk more flexible.
  * Change default key binding for calling debug() from \db to \bg to avoid
    conflict with \d (send line).
+ * Require either Neovim >= 0.4.3 or Vim >= 8.1.1705.
 
 0.9.14 (2020-06-01)
 

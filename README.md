@@ -18,20 +18,22 @@ Plug 'jalvesaq/Nvim-R', {'branch': 'stable'}
 The `stable` branch is a copy of the last released version plus minor bug
 fixes eventually found after the release. I plan to keep the stable branch
 compatible with Ubuntu LTS releases, and the master branch compatible with
-Ubuntu normal releases.
+Ubuntu normal releases. If you need an older version, you could try either the
+`oldstable` branch or one of the
+[tagged versions](https://github.com/jalvesaq/Nvim-R/tags).
 
-Please, read the section *Installation* from the plugin's
-[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
+James Eapen maintains an online version of the plugin's
+[documentation](https://github.com/jamespeapen/Nvim-R/wiki).
+Please, read the section
+[Installation](https://github.com/jamespeapen/Nvim-R/wiki/Installation)
 for details.
 
 ## Usage
 
 Please, read the plugin's
-[documentation](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/doc/Nvim-R.txt)
-for instructions on usage.
+[documentation](https://github.com/jamespeapen/Nvim-R/wiki).
+for instructions on [usage](https://github.com/jamespeapen/Nvim-R/wiki/Use).
 
-There is also an [online version](https://github.com/jamespeapen/Nvim-R/wiki)
-of the documentation maintained by James Eapen.
 
 
 ## Screenshots
