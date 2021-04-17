@@ -29,13 +29,6 @@
 set encoding=utf-8
 scriptencoding utf-8
 
-" Check if Vim-R-plugin is installed
-if exists("*WaitVimComStart")
-    echohl WarningMsg
-    call input("Please, uninstall Vim-R-plugin before using Nvim-R. [Press <Enter> to continue]")
-    echohl None
-endif
-
 " Do this only once
 if exists("s:did_global_stuff")
     finish
@@ -4326,6 +4319,13 @@ endif
 
 if CheckNvimcomVersion(0)
     call StartNClientServer("Before_R")
+endif
+
+" Check if Vim-R-plugin is installed
+if exists("*WaitVimComStart")
+    echohl WarningMsg
+    call input("Please, uninstall Vim-R-plugin before using Nvim-R. [Press <Enter> to continue]")
+    echohl None
 endif
 
 let s:ff = split(globpath(&rtp, "R/functions.vim"))
