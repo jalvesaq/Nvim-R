@@ -48,6 +48,16 @@ endif
 let g:rplugin.debug_info = {}
 
 "==========================================================================
+" Check if there is more than one copy of Nvim-R
+" (e.g. from the Vimballl and from a plugin manager)
+"==========================================================================
+
+if exists("*RWarningMsg")
+    " A common_global.vim script was sourced from another version of NvimR.
+    finish
+endif
+
+"==========================================================================
 " Functions that are common to r, rnoweb, rhelp and rdoc
 "==========================================================================
 
@@ -3835,8 +3845,8 @@ function WaitRCompletion()
         let s:is_completing = 1
         if has('nvim-0.5.0') || has('patch-8.2.84')
             return s:compl_menu
-        elseif has('nvim-0.4.3') || has('patch-8.1.1705')
-            " They have float window, but 'user_data' must be string (Ubuntu 20.04)
+        else
+            " 'user_data' must be string (Ubuntu 20.04)
             let s:user_data = {}
             for item in s:compl_menu
                 let wrd = item['word']
@@ -4318,27 +4328,27 @@ if CheckNvimcomVersion(0)
     call StartNClientServer("Before_R")
 endif
 
-" Check if r-plugin/functions.vim exist
-let s:ff = split(globpath(&rtp, "r-plugin/functions.vim"), " ", "\n")
-" Check if other Vim-R-plugin files are installed
-let s:ft = split(globpath(&rtp, "ftplugin/r*_rplugin.vim"), " ", "\n")
-if len(s:ff) > 0 || len(s:ft) > 0
-    call RWarningMsg("It seems that Vim-R-plugin is installed.\n" .
-                \ "Please, completely uninstall it before using Nvim-R.\n" .
-                \ "Below is a list of what looks like Vim-R-plugin files:\n" . join(s:ff, "\n") . "\n" . join(s:ft) . "\n")
-endif
-
-" Check if there is more than one copy of Nvim-R
-" (e.g. from the Vimballl and from a plugin manager)
-let s:ff = split(substitute(globpath(&rtp, "R/functions.vim"), "functions.vim", "", "g"), "\n")
-let s:ft = split(globpath(&rtp, "ftplugin/r*_nvimr.vim"), "\n")
-if len(s:ff) > 1 || len(s:ft) > 5
-    call RWarningMsg("It seems that Nvim-R is installed in more than one place.\n" .
-                \ "Please, remove one of them to avoid conflicts.\n" .
-                \ "Below is a list of some of the possibly duplicated directories and files:\n" . join(s:ff, "\n") . "\n" . join(s:ft, "\n") . "\n")
+let s:ff = split(globpath(&rtp, "R/functions.vim"))
+if len(s:ff) > 1
+    function WarnDupNvimR()
+        let ff = split(globpath(&rtp, "R/functions.vim"))
+        let msg = ["", "===   W A R N I N G   ===", "",
+                    \ "It seems that Nvim-R is installed in more than one place.",
+                    \ "Please, remove one of them to avoid conflicts.",
+                    \ "Below is a list of some of the possibly duplicated directories and files:", ""]
+        for ffd in ff
+            let msg += ["  " . substitute(ffd, "R/functions.vim", "", "g")]
+        endfor
+        unlet ff
+        let msg  += ["", "Please, uninstall one version of Nvim-R.", ""]
+        exe len(msg) . "split Warning"
+        call setline(1, msg)
+        set nomodified
+        redraw
+    endfunction
+    autocmd VimEnter * call WarnDupNvimR()
 endif
 unlet s:ff
-unlet s:ft
 
 " 2016-08-25
 if exists("g:R_nvimcom_wait")
