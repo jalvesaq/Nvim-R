@@ -1012,6 +1012,7 @@ of
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omni completion are stored
 |R_omni_size|         Maximum size of buffer during omni completion
+|R_omni_tmp_file|     Save omni buffer in temporary file
 |R_remote_tmpdir|     Mount point of remote temporary directory
 |R_nvimcom_home|      Mount point of remote R library
 |Nvim-R-df-view|      Options for visualizing a data.frame or matrix
@@ -2248,6 +2249,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 
 ------------------------------------------------------------------------------
 								 *R_omni_size*
+							     *R_omni_tmp_file*
 6.36 Number of results in omni completion~
 
 Nvim-R receives the list of objects for omni completion from the nclientserver
@@ -3180,7 +3182,7 @@ Examples:
 
 0.9.15.1 (2021-04-14)
 
- * New option: R_omni_size.
+ * New options: R_omni_size and R_omni_tmp_file.
 
 0.9.15 (2021-04-14)
 
