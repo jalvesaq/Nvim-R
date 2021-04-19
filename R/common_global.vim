@@ -86,7 +86,8 @@ function RFloatWarn(wmsg)
                     \ 'col': winwidth(0) - realwidth,
                     \ 'row': &lines - 3 - wht, 'anchor': 'NW', 'style': 'minimal'}
         let s:float_warn = nvim_open_win(s:warn_buf, 0, opts)
-        call nvim_win_set_option(s:float_warn, 'winhl', 'Normal:WarningMsg')
+        hi FloatWarnNormal ctermfg=196 guifg=#ff0000 guibg=#222200
+        call nvim_win_set_option(s:float_warn, 'winhl', 'Normal:FloatWarnNormal')
         call timer_start(2000 * len(fmsgl), 'CloseRWarn')
     else
         let fline = &lines - 2 - wht
@@ -776,11 +777,26 @@ function StartNClientServer(w)
     if g:R_objbr_allnames
         let $NVIMR_OBJBR_ALLNAMES = "TRUE"
     endif
+    if exists("g:R_omni_size")
+        let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = string(g:R_omni_size)
+    else
+        if has("nvim") && g:rplugin.is_darwin
+            let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = "7600"
+        else
+            let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = "65000"
+        endif
+    endif
+    if g:R_omni_tmp_file
+        let $NVIMR_OMNI_TMP_FILE = "1"
+        call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
+    endif
     let g:rplugin.jobs["ClientServer"] = StartJob([nvc], g:rplugin.job_handlers)
     "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', nvc], g:rplugin.job_handlers)
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
+    unlet $NVIMR_MAX_CHANNEL_BUFFER_SIZE
+    unlet $NVIMR_OMNI_TMP_FILE
 endfunction
 
 function UpdatePathForR()
@@ -3583,30 +3599,45 @@ function OnCompleteDone()
     let s:user_data = {}
 endfunction
 
+" TODO: delete s:user_data when Ubuntu has('nvim-0.5.0') && has('patch-8.2.84')
 let s:user_data = {}
-function StartFloatWin()
+function AskForComplInfo()
     if ! pumvisible()
         return
     endif
     " Other plugins (example, ncm-R) fill the 'user_data' dictionary
     if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
+        let s:compl_event = deepcopy(v:event)
         if s:user_data != {}
-            let s:compl_event = deepcopy(v:event)
+            " TODO: Delete this code when Neovim 0.5 is released
             let s:compl_event['completed_item']['user_data'] = deepcopy(s:user_data[v:event['completed_item']['word']])
-            call timer_start(1, 'CreateNewFloat', {})
-        elseif has_key(v:event['completed_item'], 'user_data') &&
-                    \ type(v:event['completed_item']['user_data']) == v:t_dict &&
-                    \ has_key(v:event['completed_item']['user_data'], 'cls')
-            let s:compl_event = deepcopy(v:event)
-            " Neovim doesn't allow to open a float window from here:
-            call timer_start(1, 'CreateNewFloat', {})
+        endif
+        if has_key(s:compl_event['completed_item'], 'user_data') &&
+                    \ type(s:compl_event['completed_item']['user_data']) == v:t_dict
+            if has_key(s:compl_event['completed_item']['user_data'], 'pkg')
+                let pkg = s:compl_event['completed_item']['user_data']['pkg']
+                let wrd = s:compl_event['completed_item']['word']
+                " Request function description and usage
+                call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+            else
+                " Neovim doesn't allow to open a float window from here:
+                call timer_start(1, 'CreateNewFloat', {})
+            endif
         endif
     elseif s:float_win
         call CloseFloatWin()
     endif
 endfunction
 
-autocmd CompleteChanged * call StartFloatWin()
+function SetComplInfo(dctnr)
+    " Replace user_data with the complete version
+    let s:compl_event['completed_item']['user_data'] = deepcopy(a:dctnr)
+    if len(a:dctnr) > 0
+        call CreateNewFloat()
+    endif
+endfunction
+
+autocmd CompleteChanged * call AskForComplInfo()
 autocmd CompleteDone * call OnCompleteDone()
 
 function RGetNewBase(base)
@@ -3693,8 +3724,12 @@ function GetListOfRLibs(base)
         call filter(pd, 'v:val =~ "^" . a:base')
         for line in pd
             let tmp = split(line, "\x09")
-            call add(argls, {'word': tmp[0]})
-            let s:user_data[tmp[0]] = {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}
+            if has('nvim-0.5.0') || has('patch-8.2.84')
+                call add(argls, {'word': tmp[0], 'user_data': {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}})
+            else
+                call add(argls, {'word': tmp[0]})
+                let s:user_data[tmp[0]] = {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}
+            endif
         endfor
     endif
     return argls
@@ -3722,6 +3757,17 @@ function FindStartRObj()
         let s:argkey = argkey
     endif
     return idx2 - 1
+endfunction
+
+function ReadComplMenu()
+    if filereadable(g:rplugin.tmpdir . "/nvimbol_finished")
+        let txt = readfile(g:rplugin.tmpdir . "/nvimbol_finished")[0]
+        let s:compl_menu = deepcopy(eval(txt))
+        call delete(g:rplugin.tmpdir . "/nvimbol_finished")
+    else
+        let s:compl_menu = {}
+    endif
+    let s:waiting_compl_menu = 0
 endfunction
 
 function SetComplMenu(cmn)
@@ -3837,6 +3883,7 @@ function WaitRCompletion()
     if exists('s:compl_menu')
         let s:is_completing = 1
         if has('nvim-0.5.0') || has('patch-8.2.84')
+            " 'user_data' might be a dictionary
             return s:compl_menu
         else
             " 'user_data' must be string (Ubuntu 20.04)
@@ -3849,6 +3896,7 @@ function WaitRCompletion()
         endif
         return s:compl_menu
     endif
+    return []
 endfunction
 
 function RSourceOtherScripts()
@@ -4014,6 +4062,7 @@ let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
+let g:R_omni_tmp_file     = get(g:, "R_omni_tmp_file",      1)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_clear_console     = get(g:, "R_clear_console",      1)
 
@@ -4335,7 +4384,7 @@ if len(s:ff) > 1
         let msg = ["", "===   W A R N I N G   ===", "",
                     \ "It seems that Nvim-R is installed in more than one place.",
                     \ "Please, remove one of them to avoid conflicts.",
-                    \ "Below is a list of some of the possibly duplicated directories and files:", ""]
+                    \ "Below are the paths of the possibly duplicated installations:", ""]
         for ffd in ff
             let msg += ["  " . substitute(ffd, "R/functions.vim", "", "g")]
         endfor
