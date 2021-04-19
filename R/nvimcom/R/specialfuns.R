@@ -151,7 +151,7 @@ nvim.GlobalEnv.fun.args <- function(funcname)
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     cat(nvim.args(funcname))
     sink()
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
@@ -163,7 +163,7 @@ nvim.get.summary <- function(obj, wdth)
     print(summary(obj))
     sink()
     options(width = owd)
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", 'FinishGetSummary()', PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
@@ -393,16 +393,6 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, ext
     }
     writeLines(text = res,
                con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
-    return(invisible(NULL))
-}
-
-nvim.args.descr <- function(funcname)
-{
-    frm <- formals(get(funcname))
-    arglist <- gbRd.args2txt(funcname, names(frm))
-    writeLines(arglist,
-               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0('FinishArgsCompletion("', argkey, '", "', rkeyword0,'")'), PACKAGE="nvimcom")
     return(invisible(NULL))
 }

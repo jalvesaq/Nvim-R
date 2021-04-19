@@ -252,8 +252,12 @@ function IsFirstRArg(lnum, cpos)
     return 1
 endfunction
 
-function FinishArgsCompletion()
-    let s:ArgCompletionFinished = 1
+function FinishArgsCompletion(base, rkey)
+    if exists('s:compl_menu')
+        unlet s:compl_menu
+    endif
+    call JobStdin(g:rplugin.jobs["ClientServer"], "5A" . a:base .
+                \ "\002" . a:rkey . "\n")
 endfunction
 
 function RGetFL(mode)
@@ -3369,45 +3373,6 @@ function CreateNewFloat(...)
 
     let wrd = s:compl_event['completed_item']['word']
 
-    if s:compl_event['completed_item']['user_data']['cls'] == 'f'
-        let usage = deepcopy(s:compl_event['completed_item']['user_data']['usage'])
-        call map(usage, 'join(v:val, " = ")')
-        let usage = join(usage, ", ")
-        if usage == 'not_checked'
-            " Function at the .GlobalEnv
-            let s:ArgCompletionFinished = 0
-            call delete(g:rplugin.tmpdir . "/args_for_completion")
-            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . wrd . '")')
-            let ii = 20
-            while ii > 0 && s:ArgCompletionFinished == 0
-                let ii = ii - 1
-                sleep 30m
-            endwhile
-            if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-                let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
-                let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
-                let usage = eval(usage)
-                call map(usage, 'join(v:val, " = ")')
-                let usage = join(usage, ", ")
-            else
-                let usage = "COULD NOT GET ARGUMENTS"
-            endif
-        endif
-        let s:usage = wrd . '(' . usage . ')'
-    elseif  wrd =~ '\k\{-}\$\k\{-}'
-        let s:ArgCompletionFinished = 0
-        call delete(g:rplugin.tmpdir . "/args_for_completion")
-        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.get.summary(' . wrd . ', 59)')
-        let ii = 20
-        while ii > 0 && s:ArgCompletionFinished == 0
-            let ii = ii - 1
-            sleep 30m
-        endwhile
-        if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-            let s:compl_event['completed_item']['user_data']['summary'] = readfile(g:rplugin.tmpdir . "/args_for_completion")
-        endif
-    endif
-
     " Get the required height for a standard float preview window
     let flines = FormatInfo(60, 1)
     if len(flines) == 0
@@ -3629,9 +3594,48 @@ function AskForComplInfo()
     endif
 endfunction
 
+function FinishGlbEnvFunArgs(fnm)
+    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
+        let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
+        let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
+        let usage = eval(usage)
+        call map(usage, 'join(v:val, " = ")')
+        let usage = join(usage, ", ")
+        let s:usage = a:fnm . '(' . usage . ')'
+    else
+        let s:usage = "COULD NOT GET ARGUMENTS"
+    endif
+    call CreateNewFloat()
+endfunction
+
+function FinishGetSummary()
+    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
+        let s:compl_event['completed_item']['user_data']['summary'] = readfile(g:rplugin.tmpdir . "/args_for_completion")
+    endif
+    call CreateNewFloat()
+endfunction
+
 function SetComplInfo(dctnr)
     " Replace user_data with the complete version
     let s:compl_event['completed_item']['user_data'] = deepcopy(a:dctnr)
+
+    if a:dctnr['cls'] == 'f'
+        let usage = deepcopy(a:dctnr['usage'])
+        call map(usage, 'join(v:val, " = ")')
+        let usage = join(usage, ", ")
+        if usage == 'not_checked'
+            " Function at the .GlobalEnv
+            call delete(g:rplugin.tmpdir . "/args_for_completion")
+            call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.GlobalEnv.fun.args("' . a:dctnr['word'] . '")')
+            return
+        endif
+        let s:usage = a:dctnr['word'] . '(' . usage . ')'
+    elseif a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
+        call delete(g:rplugin.tmpdir . "/args_for_completion")
+        call SendToNvimcom("\x08" . $NVIMR_ID . 'nvimcom:::nvim.get.summary(' . a:dctnr['word'] . ', 59)')
+        return
+    endif
+
     if len(a:dctnr) > 0
         call CreateNewFloat()
     endif
@@ -3695,25 +3699,8 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
 
     " Save documentation of arguments to be used by nclientserver
     call delete(g:rplugin.tmpdir . "/args_for_completion")
-    let s:ArgCompletionFinished = 0
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
-    let ii = 20
-    while ii > 0 && s:ArgCompletionFinished == 0
-        let ii = ii - 1
-        sleep 30m
-    endwhile
-
-    if s:ArgCompletionFinished == 0 && ii == 0
-        return []
-    endif
-
-    if exists('s:compl_menu')
-        unlet s:compl_menu
-    endif
-    let s:waiting_compl_menu = 1
-    call JobStdin(g:rplugin.jobs["ClientServer"], "5A" . a:base .
-                \ "\002" . a:rkeyword0 . "\n")
     return WaitRCompletion()
 endfunction
 
@@ -3843,6 +3830,7 @@ function CompleteR(findstart, base)
                     endif
 
                     call UpdateRGlobalEnv(1)
+                    let s:waiting_compl_menu = 1
                     return GetRArgs(a:base, rkeyword0, firstobj, pkg)
                 endif
                 let idx -= 1
