@@ -3686,7 +3686,7 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
     elseif a:pkg != ""
         let msg .= ', pkg = ' . a:pkg
     endif
-    let msg .= ', extrainfo = TRUE)'
+    let msg .= ')'
 
     " Save documentation of arguments to be used by nclientserver
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)

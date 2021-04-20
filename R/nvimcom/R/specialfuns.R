@@ -184,7 +184,7 @@ nvim.fix.string <- function(x, sdq = TRUE)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE)
+nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE)
 {
     frm <- NA
     funcmeth <- NA
@@ -241,7 +241,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
 
     if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0){
         arglist <- gbRd.args2txt(funcname, names(frm))
-        arglist <- lapply(arglist, nvim.fix.string)
+        arglist <- lapply(arglist, nvim.fix.string, sdq)
     }
 
     res <- NULL
@@ -378,16 +378,16 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, extrainfo = FALSE)
+nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL)
 {
     if(firstobj == ""){
-        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
+        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
     } else {
         objclass <- nvim.getclass(firstobj)
         if(objclass[1] == "#E#" || objclass[1] == "")
-            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
         else
-            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
     }
     writeLines(text = res,
                con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
