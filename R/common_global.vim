@@ -215,7 +215,12 @@ function CompleteChunkOptions(base)
 
     call sort(ktopt)
     for kopt in ktopt
-        call add(rr, kopt)
+        if has('nvim-0.5.0') || has('patch-8.2.84')
+            call add(rr, kopt)
+        else
+            let s:user_data[kopt['word']] = remove(kopt, 'user_data')
+            call add(rr, kopt)
+        endif
     endfor
     return rr
 endfunction
@@ -3856,8 +3861,10 @@ function WaitRCompletion()
             let s:user_data = {}
             for item in s:compl_menu
                 let wrd = item['word']
-                let s:user_data[wrd] = deepcopy(item['user_data'])
-                let item['user_data'] = ''
+                if has_key(item, 'user_data')
+                    let s:user_data[wrd] = deepcopy(item['user_data'])
+                    let item['user_data'] = ''
+                endif
             endfor
         endif
         return s:compl_menu
