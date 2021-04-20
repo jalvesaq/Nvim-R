@@ -201,8 +201,6 @@ function CompleteChunkOptions(base)
         let dict['word'] = dict['word'] . '='
         let dict['menu'] = '= ' . dict['menu']
         let dict['user_data']['cls'] = 'k'
-        " FIXME: FormatTxt() should deal with newlines properly (ex. completion of fig.show)
-        let dict['user_data']['descr'] = substitute(dict['user_data']['descr'], "|", '\\cr', "g")
         let ktopt += [deepcopy(dict)]
     endfor
 
@@ -3648,15 +3646,12 @@ function RGetNewBase(base)
     return [newbase, prefix, pkg]
 endfunction
 
-function FormatTxt(text, splt, jn, maxl)
-    let atext = substitute(a:text, "\004", "'", "g")
-    let atext = substitute(atext, '\\cr', "\n", "g")
-    let wlist = split(atext, a:splt)
+function FormatPrgrph(text, splt, jn, maxlen)
+    let wlist = split(a:text, a:splt)
     let txt = ['']
     let ii = 0
-    let maxlen = a:maxl - len(a:jn)
     for wrd in wlist
-        if strdisplaywidth(txt[ii] . a:splt . wrd) < maxlen
+        if strdisplaywidth(txt[ii] . a:splt . wrd) < a:maxlen
             let txt[ii] .= a:splt . wrd
         else
             let ii += 1
@@ -3665,6 +3660,18 @@ function FormatTxt(text, splt, jn, maxl)
     endfor
     let txt[0] = substitute(txt[0], '^' . a:splt, '', '')
     return join(txt, a:jn)
+endfunction
+
+function FormatTxt(text, splt, jn, maxl)
+    let maxlen = a:maxl - len(a:jn)
+    let atext = substitute(a:text, "\004", "'", "g")
+    let plist = split(atext, "\002")
+    let txt = ''
+    for prg in plist
+        let txt .= "\n " . FormatPrgrph(prg, a:splt, a:jn, maxlen)
+    endfor
+    let txt = substitute(txt, "^\n ", "", "")
+    return txt
 endfunction
 
 function GetRArgs(base, rkeyword0, firstobj, pkg)
