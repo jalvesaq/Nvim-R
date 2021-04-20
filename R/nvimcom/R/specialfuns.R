@@ -184,7 +184,7 @@ nvim.fix.string <- function(x, sdq = TRUE)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, spath = FALSE)
+nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE)
 {
     frm <- NA
     funcmeth <- NA
@@ -210,7 +210,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     if(is.na(frm[1])){
         if(is.null(pkg)){
             deffun <- paste(funcname, ".default", sep = "")
-            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv" && !spath) {
+            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
                 funcname <- deffun
                 funcmeth <- deffun
             } else if(!existsFunction(funcname)) {
@@ -229,7 +229,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                     ff <- get(funcname, pos = idx)
                 frm <- formals(ff)
             } else {
-                if(!isNamespaceLoaded(pkg) && !spath)
+                if(!isNamespaceLoaded(pkg))
                     loadNamespace(pkg)
                 ff <- getAnywhere(funcname)
                 idx <- grep(pkg, ff$where)
@@ -239,10 +239,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         }
     }
 
-    if(pkgname[1] == ".GlobalEnv" || spath)
-        extrainfo <- FALSE
-
-    if(extrainfo && length(frm) > 0){
+    if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0){
         arglist <- gbRd.args2txt(funcname, names(frm))
         arglist <- lapply(arglist, nvim.fix.string)
     }
@@ -265,9 +262,10 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else {
                 str2 <- paste0("', 'menu': ' '")
             }
-            res <- append(res, paste0(str1, str2,
-                                      ", 'user_data': {'cls': 'a', 'argument': '",
-                                      arglist[[field]], "'}}, "))
+            if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0)
+                res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '", arglist[[field]], "'}}, "))
+            else
+                res <- append(res, paste0(str1, str2, "}, "))
         } else {
             if (type == 'symbol') {
                 res <- append(res, paste0("['", field, "'], "))

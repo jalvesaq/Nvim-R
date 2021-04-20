@@ -37,7 +37,7 @@ nvim.getInfo <- function(printenv, x)
     return(info)
 }
 
-nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = FALSE) {
+nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     if(curlevel == 0){
         xx <- try(get(x, envir), silent = TRUE)
         if(inherits(xx, "try-error"))
@@ -96,11 +96,11 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
             if(curlevel == 0){
                 if(nvim.grepl("GlobalEnv", printenv)){
                     cat(x, "\006\003\006\006", printenv, "\006",
-                        nvim.args(x, spath = spath), "\n", sep = "")
+                        nvim.args(x), "\n", sep = "")
                 } else {
                     info <- nvim.getInfo(printenv, x)
                     cat(x, "\006\003\006\006", printenv, "\006",
-                        nvim.args(x, pkg = printenv, spath = spath), info, "\006\n", sep = "")
+                        nvim.args(x, pkg = printenv), info, "\006\n", sep = "")
                 }
             } else {
                 # some libraries have functions as list elements
@@ -137,7 +137,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
         xxl <- length(xx)
         if(!is.null(xxl) && xxl > 0){
             for(k in obj.names){
-                nvim.omni.line(paste(x, "$", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
+                nvim.omni.line(paste(x, "$", k, sep=""), envir, printenv, curlevel, maxlevel)
             }
         }
     } else if(isS4(xx) && curlevel <= maxlevel){
@@ -146,7 +146,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0, spath = F
         xxl <- length(xx)
         if(!is.null(xxl) && xxl > 0){
             for(k in obj.names){
-                nvim.omni.line(paste(x, "@", k, sep=""), envir, printenv, curlevel, maxlevel, spath)
+                nvim.omni.line(paste(x, "@", k, sep=""), envir, printenv, curlevel, maxlevel)
             }
         }
     }

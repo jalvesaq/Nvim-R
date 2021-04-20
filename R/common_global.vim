@@ -191,49 +191,31 @@ function ReadRMsg()
 endfunction
 
 function CompleteChunkOptions(base)
+    " https://yihui.org/knitr/options/#chunk-options (2021-04-19)
+    let lines = readfile(g:rplugin.home . '/R/chunk_options')
+
+    let ktopt = []
+    for lin in lines
+        let dict = eval(lin)
+        let dict['abbr'] = dict['word']
+        let dict['word'] = dict['word'] . '='
+        let dict['menu'] = '= ' . dict['menu']
+        let dict['user_data']['cls'] = 'k'
+        " FIXME: FormatTxt() should deal with newlines properly (ex. completion of fig.show)
+        let dict['user_data']['descr'] = substitute(dict['user_data']['descr'], "|", '\\cr', "g")
+        let ktopt += [deepcopy(dict)]
+    endfor
+
     let rr = []
-    " https://github.com/yihui/yihui.name/blob/master/content/knitr/options.md
-    " 2017-02-03
-    let ktopt = ['eval=TRUE', 'echo=TRUE', 'results="markup|asis|hold|hide"',
-                \ 'warning=TRUE', 'error=TRUE', 'message=TRUE', 'split=FALSE',
-                \ 'include=TRUE', 'strip.white=TRUE', 'tidy=FALSE',
-                \ 'tidy.opts= ', 'prompt=FALSE', 'comment="##"',
-                \ 'highlight=TRUE', 'background="#F7F7F7"', 'cache=FALSE',
-                \ 'cache.path="cache/"', 'cache.vars= ',
-                \ 'cache.lazy=TRUE', 'cache.comments= ', 'cache.rebuild=FALSE',
-                \ 'dependson=""', 'autodep=FALSE', 'fig.path= ',
-                \ 'fig.keep="high|none|all|first|last"',
-                \ 'fig.show="asis|hold|animate|hide"', 'dev= ', 'dev.args= ',
-                \ 'fig.ext= ', 'dpi=72', 'fig.width=7', 'fig.height=7',
-                \ 'fig.asp= ', 'fig.dim=c(7, 7)', 'out.width="7in"',
-                \ 'out.height="7in"', 'out.extra= ', 'resize.width= ',
-                \ 'resize.height= ', 'fig.align="left|right|center"',
-                \ 'fig.ncol=""', 'fig.sep=""', 'fig.showtext=FALSE',
-                \ 'fig.env="figure"', 'fig.cap=""', 'fig.scap=""', 'fig.lp="fig:"',
-                \ 'fig.pos=""', 'fig.subcap= ', 'fig.process= ', 'interval=1',
-                \ 'aniopts="controls,loop"', 'ffmpeg.bitrate="1M"',
-                \ 'ffmpeg.format="webm"', 'code= ', 'ref.label= ', 'child= ',
-                \ 'engine="R"', 'engine.path=""', 'opts.label=""', 'purl=TRUE',
-                \ "R.options= "]
-    if &filetype == 'rnoweb'
-        let ktopt += ['external=TRUE', 'sanitize=FALSE', 'size="normalsize"']
-    endif
-    if &filetype == 'rmd' || &filetype == 'rrst'
-        let ktopt += ['fig.retina=1', 'class.output=""', 'class.source=""']
-        if &filetype == 'rmd'
-            let ktopt += ['collapse=FALSE']
-        endif
-    endif
 
     if strlen(a:base) > 0
         let newbase = '^' . substitute(a:base, "\\$$", "", "")
-        call filter(ktopt, 'v:val =~ newbase')
+        call filter(ktopt, 'v:val["abbr"] =~ newbase')
     endif
 
     call sort(ktopt)
     for kopt in ktopt
-        let tmp = split(kopt, "=")
-        call add(rr, {'word': tmp[0] . '=', 'abbr': tmp[0], 'menu': '= ' . tmp[1]})
+        call add(rr, kopt)
     endfor
     return rr
 endfunction
@@ -2795,10 +2777,6 @@ function RAskHelp(...)
 endfunction
 
 
-function RArgsStatusLine()
-    return s:status_line[s:sttl_count]
-endfunction
-
 function PrintRObject(rkeyword)
     if bufname("%") =~ "Object_Browser"
         let firstobj = ""
@@ -3689,6 +3667,7 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
         return []
     endif
 
+    call delete(g:rplugin.tmpdir . "/args_for_completion")
     let msg = 'nvimcom:::nvim_complete_args("' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
         let msg .= ', firstobj = "' . a:firstobj . '"'
@@ -3698,7 +3677,6 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
     let msg .= ', extrainfo = TRUE)'
 
     " Save documentation of arguments to be used by nclientserver
-    call delete(g:rplugin.tmpdir . "/args_for_completion")
     call SendToNvimcom("\x08" . $NVIMR_ID . msg)
 
     return WaitRCompletion()

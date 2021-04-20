@@ -1700,7 +1700,7 @@ int main(int argc, char **argv){
                     p++;
                 *p = 0;
                 p++;
-                strncpy(NvimcomPort, msg, 15);
+                memcpy(NvimcomPort, msg, 15);
 #ifdef _WIN64
                 RConsole = (HWND)atoll(p);
 #else
@@ -1709,7 +1709,7 @@ int main(int argc, char **argv){
                 if(msg[0] == '0')
                     RConsole = NULL;
 #else
-                strncpy(NvimcomPort, msg, 15);
+                memcpy(NvimcomPort, msg, 15);
 #endif
                 break;
             case '2': // Send message
