@@ -1061,7 +1061,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     let g:Rout_prompt_str = substitute(g:Rout_prompt_str, '.*#N#', '', '')
     let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
 
-    if has('nvim') && type(g:R_external_term) == v:t_number && g:R_external_term == 0
+    if has('nvim') && has_key(g:rplugin, "R_bufname")
         " Put the cursor and the end of the buffer to ensure automatic scrolling
         " See: https://github.com/neovim/neovim/issues/2636
         let isnormal = mode() ==# 'n'
@@ -3053,23 +3053,6 @@ function RControlMaps()
     call RCreateMaps('nvi', 'RMakeODT',    'ko', ':call RMakeRmd("odt_document")')
 endfunction
 
-
-function SpaceForRGrDevice()
-    let savesb = &switchbuf
-    set switchbuf=useopen,usetab
-    let splr = &splitright
-    set splitright
-    37vsplit Space_for_Graphics
-    setlocal nomodifiable
-    setlocal noswapfile
-    set buftype=nofile
-    set nowrap
-    set winfixwidth
-    exe "sb " . g:rplugin.curbuf
-    let &splitright = splr
-    exe "set switchbuf=" . savesb
-endfunction
-
 function RCreateStartMaps()
     " Start
     "-------------------------------------
@@ -3551,7 +3534,7 @@ function AskForComplInfo()
     if ! pumvisible()
         return
     endif
-    " Other plugins (example, ncm-R) fill the 'user_data' dictionary
+    " Other plugins fill the 'user_data' dictionary
     if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
         let s:compl_event = deepcopy(v:event)
         if s:user_data != {}
@@ -3624,27 +3607,6 @@ endfunction
 
 autocmd CompleteChanged * call AskForComplInfo()
 autocmd CompleteDone * call OnCompleteDone()
-
-function RGetNewBase(base)
-    if a:base =~ ":::"
-        return ["", "", ""]
-    elseif a:base =~ "::"
-        let newbase = substitute(a:base, ".*::", "", "")
-        let prefix = substitute(a:base, "::.*", "::", "")
-        let pkg = substitute(a:base, "::.*", "", "")
-    else
-        let newbase = a:base
-        let prefix = ""
-        let pkg = ""
-    endif
-
-    " The char '$' at the end of `a:base` is treated as end of line, and
-    " the pattern is never found in `line`.
-    let newbase = '^' . substitute(newbase, "\\$$", "", "")
-    " A dot matches anything
-    let newbase = substitute(newbase, '\.', '\\.', 'g')
-    return [newbase, prefix, pkg]
-endfunction
 
 function FormatPrgrph(text, splt, jn, maxlen)
     let wlist = split(a:text, a:splt)
@@ -3978,9 +3940,6 @@ else
         endif
     endif
 endif
-
-" For compatibility with ncm-R:
-let g:rplugin_tmpdir = g:rplugin.tmpdir
 
 let $NVIMR_TMPDIR = g:rplugin.tmpdir
 if !isdirectory(g:rplugin.tmpdir)
