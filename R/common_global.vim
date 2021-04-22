@@ -2177,7 +2177,7 @@ function SendLineToR(godown, ...)
     if ok
         if a:godown =~ "down"
             call GoDown()
-            if has_op
+            if exists('has_op') && has_op
                 call SendLineToR(a:godown)
             endif
         else

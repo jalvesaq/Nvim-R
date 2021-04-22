@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.15
+Version: 0.9.15.1
 For Neovim >= 0.4.3 and Vim >= 8.1.1705
 
  1. Overview                                    |Nvim-R-overview|
@@ -62,12 +62,11 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send commands with the object under cursor as argument: help, args,
         plot, print, str, summary, example, names.
       - Send to R the Sweave, knit and pdflatex commands.
-  * Omni completion for R objects (.GlobalEnv and loaded packages).
-  * Omni completion of function arguments.
-  * Omni completion of knitr chunk options.
-  * Omni completion of bibliographic entries (Rmd and Rnoweb).
-  * Omni completion of python code in knitr chunks if the jedi-vim plugin is
-    installed (Rmd).
+  * Omni completion of:
+      - R objects (.GlobalEnv and loaded packages).
+      - function arguments.
+      - knitr chunk options.
+      - python code in knitr chunks if the jedi-vim plugin is installed (Rmd).
   * Limited support for debugging R functions.
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
@@ -869,9 +868,9 @@ others would be very time consuming to fix without breaking anything.
 5.1. R's source() issues~
 
 The R's `source()` function of the base package prints an extra new line
-between commands if the option echo = TRUE, and error and warning messages are
-printed only after the entire code is sourced. This makes it more difficult to
-find errors in the code sent to R. Details:
+between commands if the option `echo = TRUE`, and error and warning messages
+are printed only after the entire code is sourced. This makes it more
+difficult to find errors in the code sent to R. Details:
 
    https://stat.ethz.ch/pipermail/r-devel/2012-December/065352.html
 
@@ -879,16 +878,16 @@ find errors in the code sent to R. Details:
 ------------------------------------------------------------------------------
 5.2. The menu may not reflect some of your custom key bindings~
 
-If you have created a custom key binding for Nvim-R, the menu in
-GVim will not always reflect the correct key binding if it is not the same for
-Normal, Visual and Insert modes.
+If you have created a custom key binding for Nvim-R, the menu in GVim will not
+always reflect the correct key binding if it is not the same for Normal,
+Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
 5.3. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
-operator. Also, only current function scope is sent to R. See:
+operator. Also, only the current function scope is sent to R. See:
 
    https://github.com/jalvesaq/Nvim-R/issues/34
 
@@ -3180,8 +3179,9 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.15.1 (2021-04-14)
+0.9.15.1 (2021-04-22)
 
+ * Minor bug fixes.
  * New options: R_omni_size and R_omni_tmp_file.
 
 0.9.15 (2021-04-14)
