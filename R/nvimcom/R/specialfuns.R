@@ -151,7 +151,7 @@ nvim.GlobalEnv.fun.args <- function(funcname)
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     cat(nvim.args(funcname))
     sink()
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
@@ -163,7 +163,7 @@ nvim.get.summary <- function(obj, wdth)
     print(summary(obj))
     sink()
     options(width = owd)
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", 'FinishGetSummary()', PACKAGE="nvimcom")
     return(invisible(NULL))
 }
 
@@ -184,7 +184,7 @@ nvim.fix.string <- function(x, sdq = TRUE)
 }
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, spath = FALSE)
+nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE)
 {
     frm <- NA
     funcmeth <- NA
@@ -210,7 +210,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     if(is.na(frm[1])){
         if(is.null(pkg)){
             deffun <- paste(funcname, ".default", sep = "")
-            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv" && !spath) {
+            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
                 funcname <- deffun
                 funcmeth <- deffun
             } else if(!existsFunction(funcname)) {
@@ -229,7 +229,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                     ff <- get(funcname, pos = idx)
                 frm <- formals(ff)
             } else {
-                if(!isNamespaceLoaded(pkg) && !spath)
+                if(!isNamespaceLoaded(pkg))
                     loadNamespace(pkg)
                 ff <- getAnywhere(funcname)
                 idx <- grep(pkg, ff$where)
@@ -239,12 +239,9 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         }
     }
 
-    if(pkgname[1] == ".GlobalEnv" || spath)
-        extrainfo <- FALSE
-
-    if(extrainfo && length(frm) > 0){
+    if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0){
         arglist <- gbRd.args2txt(funcname, names(frm))
-        arglist <- lapply(arglist, nvim.fix.string)
+        arglist <- lapply(arglist, nvim.fix.string, sdq)
     }
 
     res <- NULL
@@ -265,9 +262,10 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else {
                 str2 <- paste0("', 'menu': ' '")
             }
-            res <- append(res, paste0(str1, str2,
-                                      ", 'user_data': {'cls': 'a', 'argument': '",
-                                      arglist[[field]], "'}}, "))
+            if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0)
+                res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '", arglist[[field]], "'}}, "))
+            else
+                res <- append(res, paste0(str1, str2, "}, "))
         } else {
             if (type == 'symbol') {
                 res <- append(res, paste0("['", field, "'], "))
@@ -380,29 +378,19 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL, extrainfo = FALSE)
+nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL)
 {
     if(firstobj == ""){
-        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
+        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
     } else {
         objclass <- nvim.getclass(firstobj)
         if(objclass[1] == "#E#" || objclass[1] == "")
-            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
         else
-            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = extrainfo)
+            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
     }
     writeLines(text = res,
                con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
-    return(invisible(NULL))
-}
-
-nvim.args.descr <- function(funcname)
-{
-    frm <- formals(get(funcname))
-    arglist <- gbRd.args2txt(funcname, names(frm))
-    writeLines(arglist,
-               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
-    .C("nvimcom_msg_to_nvim", 'FinishArgsCompletion()', PACKAGE="nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0('FinishArgsCompletion("', argkey, '", "', rkeyword0,'")'), PACKAGE="nvimcom")
     return(invisible(NULL))
 }

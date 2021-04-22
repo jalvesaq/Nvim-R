@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.15
+Version: 0.9.15.1
 For Neovim >= 0.4.3 and Vim >= 8.1.1705
 
  1. Overview                                    |Nvim-R-overview|
@@ -62,12 +62,11 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send commands with the object under cursor as argument: help, args,
         plot, print, str, summary, example, names.
       - Send to R the Sweave, knit and pdflatex commands.
-  * Omni completion for R objects (.GlobalEnv and loaded packages).
-  * Omni completion of function arguments.
-  * Omni completion of knitr chunk options.
-  * Omni completion of bibliographic entries (Rmd and Rnoweb).
-  * Omni completion of python code in knitr chunks if the jedi-vim plugin is
-    installed (Rmd).
+  * Omni completion of:
+      - R objects (.GlobalEnv and loaded packages).
+      - function arguments.
+      - knitr chunk options.
+      - python code in knitr chunks if the jedi-vim plugin is installed (Rmd).
   * Limited support for debugging R functions.
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
@@ -150,7 +149,7 @@ Additional dependencies for editing Rnoweb documents:~
                  Required for better SyncTeX support under X Server.
 		 (Not required on either Windows or OS X)
 
-   Python 3 and python3-pybtex library: required for omnicompletion of
+   Python 3 and python3-pybtex library: required for omni completion of
    citation keys (following |R_cite_pattern|) in Rnoweb documents.
 
 
@@ -158,7 +157,7 @@ Additional dependencies for editing Rmd documents:~
 
    xdotool: Required to reload the page on the web browser (Linux only).
 
-   Python 3 and python3-pybtex library: required for omnicompletion of
+   Python 3 and python3-pybtex library: required for omni completion of
    citation keys (following the `@` symbol) if `zotcite` is not installed.
 
 
@@ -530,7 +529,7 @@ The command may be abbreviated to `:Rh` and you can either press <Tab> to
 trigger the autocompletion of R objects names or hit CTRL-D to list the
 possible completions (see |cmdline-completion| for details on the various ways
 of getting command-line completion). The list of objects used for completion
-is the same available for omnicompletion (see |R_start_libs|). You may close
+is the same available for omni completion (see |R_start_libs|). You may close
 the R documentation buffer by simply pressing `q`.
 
 The command <LocalLeader>td will run `dput()` with the object under cursor as
@@ -653,7 +652,8 @@ you have inserted the '$' symbol after the data.frame name.
 
 Only the names of objects in .GlobalEnv and in loaded libraries are completed.
 If R is not running, only objects of libraries listed in |R_start_libs| will
-have their names completed. The omnicompletion menu is limited to 2000 items.
+have their names completed. The omni completion menu will be truncated if the
+buffer being transmitted becomes too big (see |R_omni_size|).
 
 Vim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
@@ -868,9 +868,9 @@ others would be very time consuming to fix without breaking anything.
 5.1. R's source() issues~
 
 The R's `source()` function of the base package prints an extra new line
-between commands if the option echo = TRUE, and error and warning messages are
-printed only after the entire code is sourced. This makes it more difficult to
-find errors in the code sent to R. Details:
+between commands if the option `echo = TRUE`, and error and warning messages
+are printed only after the entire code is sourced. This makes it more
+difficult to find errors in the code sent to R. Details:
 
    https://stat.ethz.ch/pipermail/r-devel/2012-December/065352.html
 
@@ -878,16 +878,16 @@ find errors in the code sent to R. Details:
 ------------------------------------------------------------------------------
 5.2. The menu may not reflect some of your custom key bindings~
 
-If you have created a custom key binding for Nvim-R, the menu in
-GVim will not always reflect the correct key binding if it is not the same for
-Normal, Visual and Insert modes.
+If you have created a custom key binding for Nvim-R, the menu in GVim will not
+always reflect the correct key binding if it is not the same for Normal,
+Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
 5.3. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
-operator. Also, only current function scope is sent to R. See:
+operator. Also, only the current function scope is sent to R. See:
 
    https://github.com/jalvesaq/Nvim-R/issues/34
 
@@ -918,7 +918,7 @@ If you start R before Vim, it will not inherit from Vim the environment
 variables R_DEFAULT_PACKAGES, NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and
 NVIMR_SECRET. The first one induces R to load nvimcom; the second variable is
 the path used by the R package nvimcom to save temporary files used by Nvim-R
-to: perform omnicompletion, show R documentation in a Vim buffer, and update
+to: perform omni completion, show R documentation in a Vim buffer, and update
 the Object Browser. The two last ones are used by Nvim-R and by nvimcom to
 know that the connections are valid. Unless you are running R in a Neovim's
 built-in terminal (which is the default on Unix), if you use Vim to start R,
@@ -962,7 +962,7 @@ of
 |R_path|              Directory where R is
 |R_app|, |R_cmd|        Names of R applications
 |R_args|              Arguments to pass to R
-|R_start_libs|        Objects for omnicompletion and syntax highlight
+|R_start_libs|        Objects for omni completion and syntax highlight
 |Rout_more_colors|    More syntax highlighting in R output
 |R_hi_fun|            Highlight R functions
 |R_hi_fun_paren|      Highlight R functions only if followed by a `(`
@@ -1009,7 +1009,9 @@ of
 |R_user_maps_only|    Only user specified key bindings
 |R_disable_cmds|      List of commands to be disabled
 |R_tmpdir|            Where temporary files are created
-|R_compldir|          Where lists for omnicompletion are stored
+|R_compldir|          Where lists for omni completion are stored
+|R_omni_size|         Maximum size of buffer during omni completion
+|R_omni_tmp_file|     Save omni buffer in temporary file
 |R_remote_tmpdir|     Mount point of remote temporary directory
 |R_nvimcom_home|      Mount point of remote R library
 |Nvim-R-df-view|      Options for visualizing a data.frame or matrix
@@ -1483,10 +1485,10 @@ the SDI style of the graphical user interface.
 6.10. Omnicompletion and syntax highlighting~
 
 The list of functions to be highlighted and the list of objects for
-omnicompletion are built dynamically as the libraries are loaded by R.
+omni completion are built dynamically as the libraries are loaded by R.
 However, you can set the value of R_start_libs if you want that
 the functions and objects of specific packages are respectively highlighted
-and available for omnicompletion even if R is not running yet. By default,
+and available for omni completion even if R is not running yet. By default,
 only the functions of vanilla R are always highlighted. Below is the default
 value of R_start_libs:
 >
@@ -1536,7 +1538,7 @@ you prefer these functions more quickly highlighted, change the value of
    let R_hi_fun_globenv = 2 " Highlight immediately
 <
 If the value of `R_hi_fun_globenv` is 0, it is automatically increased to 1 if
-you either trigger omnicompletion or open the Object Browser.
+you either trigger omni completion or open the Object Browser.
 
 Functions from environments in the search path are highlighted as functions
 from packages, but in Neovim (not in Vim) you can set a different highlight
@@ -2013,19 +2015,19 @@ Currently, there is only one script known to extend Nvim-R features:
 
 Rnoweb~
 
-The omnicompletion of bibliographic data from bib files requires Python 3 and
+The omni completion of bibliographic data from bib files requires Python 3 and
 the PyBTeX library for Python 3.
 
-For Rnoweb documents, omnicompletion of non R code is similar to that provided
-by LaTeX-Box, but better adjusted for an Rnoweb document. The completion of
-citation keys gathers data from `.bib` files in the same directory of the
-current Rnoweb document, and the completion works only if a pattern similar to
-"\cite{" precedes the cursor (see |R_cite_pattern|). Some of the most commonly
-used LaTeX commands are also completed. The completion of the argument for
-both `\ref{}` and `\pageref{}` includes both the label of R chunks where the
-option `fig.cap` was found prefixed with `fig:` and the string attributed to
-the argument `label` in the R code, but only if they begin with the substring
-"tab:".
+For Rnoweb documents, omni completion of non R code is similar to that
+provided by LaTeX-Box, but better adjusted for an Rnoweb document. The
+completion of citation keys gathers data from `.bib` files in the same
+directory of the current Rnoweb document, and the completion works only if a
+pattern similar to "\cite{" precedes the cursor (see |R_cite_pattern|). Some
+of the most commonly used LaTeX commands are also completed. The completion of
+the argument for both `\ref{}` and `\pageref{}` includes both the label of R
+chunks where the option `fig.cap` was found prefixed with `fig:` and the
+string attributed to the argument `label` in the R code, but only if they
+begin with the substring "tab:".
 
 If the reference includes the field "file", you can open this file by typing
 <LocalLeader>od in Normal mode with the cursor over the citation key.
@@ -2245,9 +2247,36 @@ want to know what they are, while editing an R file, do in Normal mode:
 <
 
 ------------------------------------------------------------------------------
+								 *R_omni_size*
+							     *R_omni_tmp_file*
+6.36 Number of results in omni completion~
+
+Nvim-R receives the list of objects for omni completion from the nclientserver
+job running in the background. If the list is not too big, it is transmitted
+through nclientserver's stdout; otherwise, it is transmitted through a
+temporary file. The default size limit is 7600 bytes in Neovim running on Mac
+OS X and 65000 bytes on other systems. Higher values may cause errors during
+completion (malformed |Dictionary| due to unmatched single quotes, missing
+colons, etc.). If you see such bugs during omni completion you should choose a
+value lower than the default, but if you believe that your system support a
+higher you can increase it by setting the value of `R_omni_size` in your
+|vimrc|, as in the example:
+>
+   let R_omni_size = 36000
+<
+If saving the list in a temporary file is too slow for you --- for instance,
+if you are using a plugin to run omni completion automatically --- you can put
+the following line in your |vimrc|:
+>
+   R_omni_tmp_file = 0
+<
+Then no temporary file will be used, but big lists will be truncated.
+
+
+------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
 							      *R_nvimcom_home*
-6.36 Options for accessing Remote R from local Vim~
+6.37 Options for accessing Remote R from local Vim~
 
 See |Nvim-R-remote|.
 
@@ -2255,7 +2284,7 @@ See |Nvim-R-remote|.
 							      *Nvim-R-df-view*
 							      *R_csv_app*
 							      *R_csv_delim*
-6.37 View a data.frame or matrix~
+6.38 View a data.frame or matrix~
 
 
 You can see data.frames and matrices in external applications. You should
@@ -2293,7 +2322,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.38 SyncTeX support~
+6.39 SyncTeX support~
 
 SyncTeX is a set of communication systems used by some PDF viewers and by some
 text editors which allow users to jump from a specific line in the text editor
@@ -2341,7 +2370,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.38.1 Okular configuration~
+6.39.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -2358,7 +2387,7 @@ of Okular will be started.
 
 
 ------------------------------------------------------------------------------
-6.38.2 Skim configuration~
+6.39.2 Skim configuration~
 
 In Skim, click in the drop down menu and fill the fields:
 >
@@ -2869,7 +2898,7 @@ your Rnoweb file is called report.Rnw... You can:
    autocmd FileType rnoweb let b:main_tex_file = substitute(expand("%"), "\....$", ".tex", "")
 <
 Of course you must run either `knitr()` or `Sweave()` before trying LaTeX-Box
-omnicompletion. Please, read LaTeX-Box documentation for more information.
+omni completion. Please, read LaTeX-Box documentation for more information.
 
 
 See also: |R_latexcmd|.
@@ -2892,7 +2921,7 @@ document from the beginning.
    let maplocalleader = ','
    let mapleader = ';'
 
-   " Use Ctrl+Space to do omnicompletion:
+   " Use Ctrl+Space to do omni completion:
    if has('nvim') || has('gui_running')
        inoremap <C-Space> <C-x><C-o>
    else
@@ -3149,6 +3178,11 @@ Examples:
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.15.1 (2021-04-22)
+
+ * Minor bug fixes.
+ * New options: R_omni_size and R_omni_tmp_file.
 
 0.9.15 (2021-04-14)
 
