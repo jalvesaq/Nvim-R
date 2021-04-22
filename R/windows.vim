@@ -5,7 +5,7 @@ let s:sumatra_in_path = 0
 let g:R_set_home_env = get(g:, "R_set_home_env", 1)
 let g:R_i386 = get(g:, "R_i386", 0)
 
-if !exists("g:rplugin.R_path")
+if !has_key(g:rplugin, "R_path")
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
     let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
     let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')

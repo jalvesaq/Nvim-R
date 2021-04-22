@@ -2250,7 +2250,7 @@ function ClearRInfo()
     let g:rplugin.nvimcom_port = 0
 
     " Legacy support for running R in a Tmux split pane
-    if exists('g:rplugin.tmux_split') && exists('g:R_tmux_title') && g:rplugin.tmux_split
+    if has_key(g:rplugin, "tmux_split") && exists('g:R_tmux_title') && g:rplugin.tmux_split
                 \ && g:R_tmux_title != 'automatic' && g:R_tmux_title != ''
         call system("tmux set automatic-rename on")
     endif
@@ -2285,7 +2285,7 @@ function RQuit(how)
 
     call g:SendCmdToR(qcmd)
 
-    if exists('g:rplugin.tmux_split') || a:how == 'save'
+    if has_key(g:rplugin, "tmux_split") || a:how == 'save'
         sleep 200m
     endif
 
@@ -2475,7 +2475,7 @@ function AskRDoc(rkeyword, package, getclass)
     call AddForDeletion(s:docfile)
 
     let firstobj = ""
-    if bufname("%") =~ "Object_Browser" || (exists("g:rplugin.R_bufname") && bufname("%") == g:rplugin.R_bufname)
+    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . g:rplugin.rscript_name
@@ -2530,14 +2530,14 @@ function ShowRDoc(rkeyword)
         return
     endif
 
-    if exists("g:rplugin.R_bufname") && bufname("%") == g:rplugin.R_bufname
+    if has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname
         " Exit Terminal mode and go to Normal mode
         stopinsert
     endif
 
     " Legacy support for running R in a Tmux split pane.
     " If the help command was triggered in the R Console, jump to Vim pane:
-    if exists('g:rplugin.tmux_split') && g:rplugin.tmux_split && !s:running_rhelp
+    if has_key(g:rplugin, "tmux_split") && g:rplugin.tmux_split && !s:running_rhelp
         let slog = system("tmux select-pane -t " . g:rplugin.editor_pane)
         if v:shell_error
             call RWarningMsg(slog)
@@ -2545,7 +2545,7 @@ function ShowRDoc(rkeyword)
     endif
     let s:running_rhelp = 0
 
-    if bufname("%") =~ "Object_Browser" || (exists("g:rplugin.R_bufname") && bufname("%") == g:rplugin.R_bufname)
+    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . g:rplugin.rscript_name
@@ -2932,7 +2932,7 @@ endfunction
 
 " render a document with rmarkdown
 function! RMakeRmd(t)
-    if !exists("g:rplugin.pdfviewer")
+    if !has_key(g:rplugin, "pdfviewer")
         call RSetPDFViewer()
     endif
 
@@ -3908,7 +3908,7 @@ command RDebugInfo :call ShowRDebugInfo()
 "             rplugin_  for internal parameters
 "==========================================================================
 
-if !exists("g:rplugin.compldir")
+if !has_key(g:rplugin, "compldir")
     exe "source " . substitute(expand("<sfile>:h:h"), " ", "\\ ", "g") . "/R/setcompldir.vim"
 endif
 
@@ -4140,7 +4140,7 @@ if g:R_objbr_h < 4
 endif
 
 " Control the menu 'R' and the tool bar buttons
-if !exists("g:rplugin.hasmenu")
+if !has_key(g:rplugin, "hasmenu")
     let g:rplugin.hasmenu = 0
 endif
 

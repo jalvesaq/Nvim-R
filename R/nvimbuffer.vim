@@ -54,7 +54,7 @@ function SendCmdToR_Buffer(...)
 endfunction
 
 function CloseRTerm()
-    if exists("g:rplugin.R_bufname")
+    if has_key(g:rplugin, "R_bufname")
         try
             " R migh have been killed by closing the terminal buffer with the :q command
             exe "sbuffer " . g:rplugin.R_bufname

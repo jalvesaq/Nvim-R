@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rnoweb, Rhelp and Rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin.failed")
+if has_key(g:rplugin, "failed")
     finish
 endif
 
@@ -190,7 +190,7 @@ function! s:OnCompleteDone()
 endfunction
 
 if g:R_non_r_compl
-    if !exists("g:rplugin.py3")
+    if !has_key(g:rplugin, "py3")
         call CheckPyBTeX()
     endif
     if !has_key(g:rplugin.debug_info, 'BibComplete')

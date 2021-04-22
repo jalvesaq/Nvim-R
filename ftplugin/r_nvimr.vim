@@ -5,7 +5,7 @@ endif
 
 " Source scripts common to R, Rnoweb, Rhelp, Rmd, Rrst and rdoc files:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if exists("g:rplugin.failed")
+if has_key(g:rplugin, "failed")
     finish
 endif
 

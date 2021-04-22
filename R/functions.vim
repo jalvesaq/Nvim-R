@@ -38,19 +38,14 @@ let g:rplugin.debug_lists = []
 let g:rplugin.loaded_libs = []
 let s:Rhelp_list = []
 
-" For compatibility with ncm-R:
-let g:rplugin_loaded_libs = g:rplugin.loaded_libs
-
-" For compatibility with ncm-R:
-"
 " syntax/r.vim may have being called before ftplugin/r.vim
-if !exists("g:rplugin.compldir")
+if !has_key(g:rplugin, "compldir")
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/setcompldir.vim"
 endif
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Function for highlighting rFunction
+" Function for highlighting rFunction keywords
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " Must be run for each buffer

@@ -32,7 +32,7 @@ setlocal nocursorline
 setlocal nocursorcolumn
 setlocal nospell
 
-if !exists("g:rplugin.hasmenu")
+if !has_key(g:rplugin, "hasmenu")
     let g:rplugin.hasmenu = 0
 endif
 
@@ -77,7 +77,7 @@ function! UpdateOB(what)
         endif
         call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:false)
     else
-        if exists("g:rplugin.curbuf") && g:rplugin.curbuf != "Object_Browser"
+        if has_key(g:rplugin, "curbuf") && g:rplugin.curbuf != "Object_Browser"
             let savesb = &switchbuf
             set switchbuf=useopen,usetab
             sil noautocmd sb Object_Browser
