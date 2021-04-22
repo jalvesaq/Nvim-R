@@ -189,7 +189,10 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     frm <- NA
     funcmeth <- NA
     if(!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE){
-        mlen <- try(length(methods(funcname)), silent = TRUE)
+        saved.warn <- getOption("warn")
+        options(warn = -1)
+        on.exit(options(warn = saved.warn))
+        mlen <- try(length(methods(funcname)), silent = TRUE) # Still get warns
         if(class(mlen) == "integer" && mlen > 0){
             for(i in 1:length(objclass)){
                 funcmeth <- paste(funcname, ".", objclass[i], sep = "")
