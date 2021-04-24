@@ -53,7 +53,7 @@ etags2ctags <- function(etagsfile, ctagsfile){
                 curaddr <- gsub("\\\\", "\\\\\\\\", curaddr)
                 curaddr <- gsub("\t", "\\\\t", curaddr)
                 curaddr <- gsub("/", "\\\\/", curaddr)
-                curaddr <- paste("/^", curaddr, "$/;\"", sep = "")
+                curaddr <- paste0("/^", curaddr, "$/;\"")
                 clines[k] <- paste(curname, curfile, curaddr, sep = "\t")
                 i <- i + 1
                 k <- k + 1

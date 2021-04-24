@@ -321,7 +321,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     if(missing(packlist))
         listpack <- loadpack[grep("^package:", loadpack)]
     else
-        listpack <- paste("package:", packlist, sep = "")
+        listpack <- paste0("package:", packlist)
 
     needunload <- FALSE
     for(curpack in listpack){
@@ -356,8 +356,8 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             for(obj in obj.list){
                 ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
                 if(inherits(ol, "try-error"))
-                    warning(paste("Error while generating omni completion line for: ",
-                                  obj, " (", curpack, ", ", curlib, ").\n", sep = ""))
+                    warning(paste0("Error while generating omni completion line for: ",
+                                  obj, " (", curpack, ", ", curlib, ").\n"))
             }
             sink()
             # Build list of functions for syntax highlight
@@ -402,7 +402,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
         }
     }
     writeLines(text = "Finished",
-               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished", sep = ""))
+               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished"))
     return(invisible(NULL))
 }
 

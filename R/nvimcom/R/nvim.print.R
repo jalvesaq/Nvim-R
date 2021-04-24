@@ -9,8 +9,8 @@ nvim.print <- function(object, firstobj)
             mlen <- try(length(methods(object)), silent = TRUE)
             if(class(mlen) == "integer" && mlen > 0){
                 for(cls in objclass){
-                    if(exists(paste(object, ".", objclass, sep = ""))){
-                        .newobj <- get(paste(object, ".", objclass, sep = ""))
+                    if(exists(paste0(object, ".", objclass))){
+                        .newobj <- get(paste0(object, ".", objclass))
                         message(paste0("Note: Printing ", object, ".", objclass))
                         break
                     }

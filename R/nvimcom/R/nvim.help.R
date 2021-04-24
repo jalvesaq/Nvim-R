@@ -19,7 +19,7 @@ nvim.help <- function(topic, w, firstobj, package)
             mlen <- try(length(methods(topic)), silent = TRUE)
             if(class(mlen) == "integer" && mlen > 0){
                 for(i in 1:length(objclass)){
-                    newtopic <- paste(topic, ".", objclass[i], sep = "")
+                    newtopic <- paste0(topic, ".", objclass[i])
                     if(length(utils::help(newtopic))){
                         topic <- newtopic
                         break
@@ -73,7 +73,7 @@ nvim.help <- function(topic, w, firstobj, package)
         h <- utils::help(topic, package = as.character(package), help_type = "text")
 
     if(length(h) == 0){
-        msg <- paste('No documentation for "', topic, '" in loaded packages and libraries.', sep = "")
+        msg <- paste0('No documentation for "', topic, '" in loaded packages and libraries.')
         .C("nvimcom_msg_to_nvim", paste0("RWarningMsg('", msg, "')"), PACKAGE="nvimcom")
         return(invisible(NULL))
     }
@@ -85,9 +85,9 @@ nvim.help <- function(topic, w, firstobj, package)
             .C("nvimcom_msg_to_nvim", paste0("ShowRDoc('", msg, "')"), PACKAGE="nvimcom")
             return(invisible(NULL))
         } else {
-            h <- h[grep(paste("/", package, "/", sep = ""), h)]
+            h <- h[grep(paste0("/", package, "/"), h)]
             if(length(h) == 0){
-                msg <- paste("Package '", package, "' has no documentation for '", topic, "'", sep = "")
+                msg <- paste0("Package '", package, "' has no documentation for '", topic, "'")
                 .C("nvimcom_msg_to_nvim", paste0("RWarningMsg('", msg, "')"), PACKAGE="nvimcom")
                 return(invisible(NULL))
             }

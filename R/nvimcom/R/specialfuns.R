@@ -195,7 +195,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         mlen <- try(length(methods(funcname)), silent = TRUE) # Still get warns
         if(class(mlen) == "integer" && mlen > 0){
             for(i in 1:length(objclass)){
-                funcmeth <- paste(funcname, ".", objclass[i], sep = "")
+                funcmeth <- paste0(funcname, ".", objclass[i])
                 if(existsFunction(funcmeth)){
                     funcname <- funcmeth
                     frm <- formals(funcmeth)
@@ -212,7 +212,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
 
     if(is.na(frm[1])){
         if(is.null(pkg)){
-            deffun <- paste(funcname, ".default", sep = "")
+            deffun <- paste0(funcname, ".default")
             if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
                 funcname <- deffun
                 funcmeth <- deffun
@@ -227,7 +227,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             idx <- grep(paste0(":", pkg, "$"), search())
             if(length(idx)){
                 ff <- "NULL"
-                tr <- try(ff <- get(paste(funcname, ".default", sep = ""), pos = idx), silent = TRUE)
+                tr <- try(ff <- get(paste0(funcname, ".default"), pos = idx), silent = TRUE)
                 if(class(tr)[1] == "try-error")
                     ff <- get(funcname, pos = idx)
                 frm <- formals(ff)
@@ -301,12 +301,12 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                 info <- pkgname[1]
             if(!is.na(funcmeth)){
                 if(info != "")
-                    info <- paste(info, ", ", sep = "")
-                info <- paste(info, "function:", funcmeth, "()", sep = "")
+                    info <- paste0(info, ", ")
+                info <- paste0(info, "function:", funcmeth, "()")
             }
             # TODO: Add the method name to the completion menu
             # if(info != "")
-            #    res <- paste(res, "\x04", info, sep = "")
+            #    res <- paste0(res, "\x04", info)
         }
     }
 
@@ -393,7 +393,7 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL)
             res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
     }
     writeLines(text = res,
-               con = paste(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion", sep = ""))
+               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     .C("nvimcom_msg_to_nvim", paste0('FinishArgsCompletion("', argkey, '", "', rkeyword0,'")'), PACKAGE="nvimcom")
     return(invisible(NULL))
 }
