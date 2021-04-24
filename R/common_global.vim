@@ -560,6 +560,9 @@ function CheckNvimcomVersion(build)
             else
                 let rversion = system(g:rplugin.Rcmd . ' --version')
                 let rversion = substitute(rversion, '.*R version \(\S\{-}\) .*', '\1', '')
+                if rversion < '4.0.0'
+                    call RWarningMsg("Nvim-R requires R >= 4.0.0")
+                endif
                 let g:rplugin.debug_info['R_version'] = rversion
                 if g:rplugin.R_version != rversion
                     let neednew = 1
