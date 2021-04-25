@@ -543,10 +543,10 @@ endfunction
 
 let s:bo_stderr = []
 function OnBuildOmnlsStderr(...)
-    if has('nvim')
-        let txt = substitute(join(a:2), "\r", '', 'g')
-    else
-        let txt = substitute(a:2, "\n", '', 'g'))
+    if type(a:2) == v:t_list
+        let txt = substitute(join(a:2), '[\r\n]', '', 'g')
+    elseif type(a:2) == v:t_string
+        let txt = substitute(a:2, '[\r\n]', '', 'g')
     endif
     if txt !~ "^\s*$"
         let s:bo_stderr += [txt]
