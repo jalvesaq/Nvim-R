@@ -3145,7 +3145,7 @@ goal (tested on April, 2017).
             let R_compldir = '/home/locallogin/.remoteR/NvimR_cache'
             let R_tmpdir = '/home/locallogin/.remoteR/NvimR_cache/tmp'
             let R_remote_tmpdir = '/home/remotelogin/.cache/NvimR_cache/tmp'
-            let R_nvimcom_home = '/home/locallogin/.remoteR/R_library/nvimcom'
+            let R_nvimcom_home = '/home/locallogin/.remoteR/library/nvimcom'
         endif
 <
       - Mount the remote directories:

@@ -84,8 +84,6 @@ static char myport[128];
 
 typedef struct pkg_info_ {
     char *name;
-    int loaded;
-    int built;
     struct pkg_info_ *next;
 } PkgInfo;
 
@@ -288,7 +286,6 @@ static PkgInfo *nvimcom_pkg_info_new(const char *nm)
     PkgInfo *pi = calloc(1, sizeof(PkgInfo));
     pi->name = malloc((strlen(nm)+1) * sizeof(char));
     strcpy(pi->name, nm);
-    pi->loaded = 1;
     return pi;
 }
 
@@ -650,12 +647,14 @@ static int nvimcom_checklibs()
 
     needsfillmsg = 1;
 
-    while(pkg){
-        pkg->loaded = 0;
-        pkg = pkg->next;
+    char fn[576];
+    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    FILE *f = fopen(fn, "w");
+    if(f == NULL){
+        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
+        return(newnlibs);
     }
 
-    int k = 0;
     for(int i = 0; i < newnlibs; i++){
         PROTECT(l = STRING_ELT(a, i));
         libname = CHAR(l);
@@ -664,39 +663,14 @@ static int nvimcom_checklibs()
             libn = strstr(libn, ":");
             libn++;
             pkg = nvimcom_get_pkg(libn);
-            if(pkg)
-                pkg->loaded = 1;
-            else
+            if(!pkg)
                 nvimcom_pkg_info_add(libn);
-            k++;
+            fprintf(f, "%s\n", libn);
         }
         UNPROTECT(1);
     }
     UNPROTECT(1);
 
-    pkg = pkgList;
-    while(pkg){
-        if(pkg->built == 0){
-            sprintf(buf, "nvimcom:::nvim.buildomnils('%s')", pkg->name);
-            nvimcom_eval_expr(buf);
-            pkg->built = 1;
-        }
-        pkg = pkg->next;
-    }
-
-    char fn[576];
-    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *f = fopen(fn, "w");
-    if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-        return(newnlibs);
-    }
-    pkg = pkgList;
-    while(pkg){
-        if(pkg->loaded && pkg->built)
-            fprintf(f, "%s\n", pkg->name);
-        pkg = pkg->next;
-    }
     fclose(f);
 
     return(newnlibs);
@@ -711,7 +685,7 @@ static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
     nvimcom_checklibs();
     if(edsrvr[0] != 0 && needsfillmsg){
         needsfillmsg = 0;
-        nvimcom_nvimclient("FillRLibList()", edsrvr);
+        nvimcom_nvimclient("BuildOmnils()", edsrvr);
     }
     if(setwidth && getenv("COLUMNS")){
         int columns = atoi(getenv("COLUMNS"));
@@ -1107,7 +1081,7 @@ static void nvimcom_server_thread(void *arg)
 #endif
 
 
-void nvimcom_Start(int *vrb, int *anm, int *swd, char **pth, char **vcv, char **rinfo)
+void nvimcom_Start(int *vrb, int *anm, int *swd, char **vcv, char **pth, char **rinfo)
 {
     verbose = *vrb;
     allnames = *anm;

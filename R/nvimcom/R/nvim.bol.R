@@ -313,26 +313,19 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     if(!missing(packlist) && is.null(NvimcomEnv$pkgdescr[[packlist]]))
         GetFunDescription(packlist)
 
-    if(getOption("nvimcom.verbose") > 3)
-        cat("Building files with lists of objects in loaded packages for",
-            "omni completion and Object Browser...\n")
-
     loadpack <- search()
     if(missing(packlist))
         listpack <- loadpack[grep("^package:", loadpack)]
     else
         listpack <- paste0("package:", packlist)
 
-    needunload <- FALSE
     for(curpack in listpack){
         curlib <- sub("^package:", "", curpack)
         if(nvim.grepl(curlib, loadpack) == FALSE){
-            cat("Loading   '", curlib, "'...\n", sep = "")
-            needunload <- try(require(curlib, character.only = TRUE))
-            if(needunload != TRUE){
-                needunload <- FALSE
+            ok <- try(require(curlib, warn.conflicts = FALSE,
+                                      quietly = TRUE, character.only = TRUE))
+            if(!ok)
                 next
-            }
         }
 
         # Save title of package in pack_descriptions:
@@ -395,11 +388,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             writeLines(text = '', con = omnilist)
             writeLines(text = '" No functions found.', con = sub("omnils_", "fun_", omnilist))
         }
-        if(needunload){
-            cat("Detaching '", curlib, "'...\n", sep = "")
-            try(detach(curpack, unload = TRUE, character.only = TRUE), silent = TRUE)
-            needunload <- FALSE
-        }
     }
     writeLines(text = "Finished",
                con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished"))
@@ -407,37 +395,27 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 }
 
 nvim.buildomnils <- function(p){
+    # No verbosity because running as Neovim job
+    options(nvimcom.verbose = 0)
+
     pvi <- utils::packageDescription(p)$Version
     bdir <- paste0(Sys.getenv("NVIMR_COMPLDIR"), "/")
     odir <- dir(bdir)
     pbuilt <- odir[grep(paste0("omnils_", p, "_"), odir)]
     fbuilt <- odir[grep(paste0("fun_", p, "_"), odir)]
 
-    # This option might not have been set if R is running remotely
-    if(is.null(getOption("nvimcom.verbose")))
-        options(nvimcom.verbose = 0)
 
-    if(length(pbuilt) > 0){
-        pvb <- sub(".*_.*_", "", pbuilt)
-        if(pvb == pvi){
-            if(file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime){
-                unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-                nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
-                if(getOption("nvimcom.verbose") > 3)
-                    cat("nvimcom R: omnils is older than the README\n")
-            } else{
-                if(getOption("nvimcom.verbose") > 3)
-                    cat("nvimcom R: omnils version is up to date:", p, pvi, "\n")
-            }
-        } else {
-            if(getOption("nvimcom.verbose") > 3)
-                cat("nvimcom R: omnils is outdated: ", p, " (", pvb, " x ", pvi, ")\n", sep = "")
-            unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-            nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
-        }
-    } else {
-        if(getOption("nvimcom.verbose") > 3)
-            cat("nvimcom R: omnils does not exist:", p, "\n")
+    if(length(fbuilt) > 1 || length(pbuilt) > 1 || length(fbuilt) == 0 || length(pbuilt) == 0){
+        # omnils is either duplicated or inexistent
+        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
+        return(invisible(NULL))
+    }
+
+    pvb <- sub(".*_.*_", "", pbuilt)
+    if(pvb != pvi || file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime){
+        # omnils is either outdated or older than the README
+        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
     }
 }

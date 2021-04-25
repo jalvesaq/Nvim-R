@@ -140,24 +140,18 @@ static void ParseMsg(char *buf)
     if(strstr(b, VimSecret) == b){
         b += VimSecretLen;
 
-        // Update the GlobalEnv buffer and the Librarie buffers before sending
-        // the message to Nvim-R because they must be ready for omni completion
+        // Update the GlobalEnv buffer before sending the message to Nvim-R
+        // because it must be ready for omni completion
         if(str_here(b, "call GlblEnvUpdated(1)"))
             update_glblenv_buffer();
-        if(str_here(b, "call FillRLibList()"))
-            update_pkg_list();
 
         printf("%s\n", b);
         fflush(stdout);
 
         // Update the Object Browser after sending the message to Nvim-R to
         // avoid unnecessary delays in omni completion
-        if(auto_obbr){
-            if(str_here(b, "call GlblEnvUpdated(1)"))
-                omni2ob();
-            else if(str_here(b, "call FillRLibList()"))
-                lib2ob();
-        }
+        if(auto_obbr && str_here(b, "call GlblEnvUpdated(1)"))
+            omni2ob();
     } else {
         fprintf(stderr, "Strange string received: \"%s\"\n", b);
         fflush(stderr);
@@ -1769,9 +1763,13 @@ int main(int argc, char **argv){
                 break;
             case '5':
                 msg++;
-                if(*msg == '1'){
-                    msg++;
-                    complete(msg, NULL);
+                if(*msg == '0'){
+                    update_pkg_list();
+                    if(auto_obbr)
+                        lib2ob();
+                } else if(*msg == '1'){
+                        msg++;
+                        complete(msg, NULL);
                 } else {
                     msg++;
                     char *base = msg;

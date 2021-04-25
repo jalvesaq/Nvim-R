@@ -55,23 +55,13 @@ endif
 
 let g:rplugin.lastft = &filetype
 
-" Check if b:pdf_is_open already exists because this script is called when
-" FillRLibList() is called
+" Check if b:pdf_is_open already exists to avoid errors at other places
 if !exists("b:pdf_is_open")
     let b:pdf_is_open = 0
 endif
 
 if !exists("g:SendCmdToR")
     let g:SendCmdToR = function('SendCmdToR_fake')
-endif
-
-" Were new libraries loaded by R?
-if !exists("b:rplugin_new_libs")
-    let b:rplugin_new_libs = 0
-endif
-" When using as a global plugin for non R files, RCheckLibList will not exist
-if exists("*RCheckLibList") && !exists("*nvim_buf_set_option")
-    autocmd BufEnter <buffer> call RCheckLibList()
 endif
 
 autocmd! InsertLeave <buffer> if pumvisible() == 0 | pclose | endif

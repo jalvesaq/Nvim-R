@@ -315,6 +315,9 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
 
 
 nvim.list.args <- function(ff){
+    saved.warn <- getOption("warn")
+    options(warn = -1)
+    on.exit(options(warn = saved.warn))
     mm <- try(methods(ff), silent = TRUE)
     if(class(mm) == "MethodsFunction" && length(mm) > 0){
         for(i in 1:length(mm)){
@@ -367,14 +370,10 @@ nvim.getclass <- function(x)
         return("#E#")
     }
 
-    if(getOption("nvimcom.verbose") < 3){
-        saved.warn <- getOption("warn")
-        options(warn = -1)
-        on.exit(options(warn = saved.warn))
-        tr <- try(cls <- class(get(x, envir = .GlobalEnv)), silent = TRUE)
-    } else {
-        tr <- try(cls <- class(get(x, envir = .GlobalEnv)))
-    }
+    saved.warn <- getOption("warn")
+    options(warn = -1)
+    on.exit(options(warn = saved.warn))
+    tr <- try(cls <- class(get(x, envir = .GlobalEnv)), silent = TRUE)
     if(class(tr)[1] == "try-error")
         return("#E#")
 
