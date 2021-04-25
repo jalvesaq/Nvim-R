@@ -37,7 +37,7 @@ let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
     " Also in functions.vim
-    let g:rplugin = {'debug_info': {'Build_omnils_pkg': ''},
+    let g:rplugin = {'debug_info': {'Build_omnils_pkg': '', 'libraries': []},
                 \ 'libraries_in_ncs': [],
                 \ 'loaded_libs': []}
 endif
@@ -518,6 +518,8 @@ endfunction
 function ShowRSysLog(slog, fname, msg)
     let logl = split(a:slog, "\n")
     exe len(logl) . "split " . a:fname
+    setlocal buftype=nofile
+    setlocal noswapfile
     call setline(1, logl)
     set nomodified
     redraw
@@ -529,9 +531,6 @@ function ShowRSysLog(slog, fname, msg)
 endfunction
 
 function RSetDefaultPkg()
-    if !exists('s:r_default_pkgs')
-        let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
-    endif
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
     elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
@@ -545,9 +544,9 @@ endfunction
 let s:bo_stderr = []
 function OnBuildOmnlsStderr(...)
     if has('nvim')
-        let txt = substitute(join(a:2), '\r', '', 'g')
+        let txt = substitute(join(a:2), "\r", '', 'g')
     else
-        let txt = substitute(a:2, '\n', '', 'g'))
+        let txt = substitute(a:2, "\n", '', 'g'))
     endif
     if txt !~ "^\s*$"
         let s:bo_stderr += [txt]
@@ -660,13 +659,13 @@ function FindNCSpath(libdir)
     endif
     if filereadable(a:libdir . '/nvimcom/bin/' . ncs)
         return a:libdir . '/nvimcom/bin/' . ncs
-    elseif filereadable(a:libdir . '/nvimcom/bin/x64' . ncs)
-        return a:libdir . '/nvimcom/bin/x64' . ncs
-    elseif filereadable(a:libdir . '/nvimcom/bin/i386' . ncs)
-        return a:libdir . '/nvimcom/bin/i386' . ncs
+    elseif filereadable(a:libdir . '/nvimcom/bin/x64/' . ncs)
+        return a:libdir . '/nvimcom/bin/x64/' . ncs
+    elseif filereadable(a:libdir . '/nvimcom/bin/i386/' . ncs)
+        return a:libdir . '/nvimcom/bin/i386/' . ncs
     endif
 
-    call RWarningMsg('Application "' . ncs . '" not found.')
+    call RWarningMsg('Application "' . ncs . '" not found at "' . a:libdir . '"')
     return ''
 endfunction
 
@@ -731,11 +730,6 @@ function CheckNvimcomVersion()
                     \ 'cat(.libPaths()[1L],',
                     \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
                     \ '    sep = "\n")',
-                    \ 'sink()',
-                    \ 'sink("' . cmpldir . '/path_to_nvimcom")',
-                    \ 'cat(.libPaths()[1L],',
-                    \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
-                    \ '    sep = "\n")',
                     \ 'sink()' ]
         call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_path.R')
         let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
@@ -784,23 +778,23 @@ function CheckNvimcomVersion()
                 call delete("nvimcom_" . required_nvimcom . ".tar.gz")
                 return 0
             else
-                let g:rplugin.debug_info['Get_nvimcom_version'] = system(g:rplugin.Rcmd .
-                            \ " --quiet --no-save --no-restore --no-echo -e '" .
-                            \ 'cat(installed.packages()["nvimcom", c("Version", "LibPath", "Built")])' . "'")
+                call delete("nvimcom_" . required_nvimcom . ".tar.gz")
+                let rcode = ['cat(installed.packages()["nvimcom", c("Version", "LibPath", "Built")], sep = "\n", file = "' . cmpldir . '/nvimcom_info")']
+                call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_info.R')
+                let g:rplugin.debug_info['Get_nvimcom_version'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_info.R"')
                 if v:shell_error
                     call ShowRSysLog(g:rplugin.debug_info['Get_nvimcom_version'], "Error_getting_nvimcom_version", "Failed to get nvimcom version")
+                    call delete(g:rplugin.tmpdir . '/nvimcom_info.R')
                     return 0
                 else
-                    let info = split(g:rplugin.debug_info['Get_nvimcom_version'])
-                    let ncspath = FindNCSpath(info[1])
+                    call delete(g:rplugin.tmpdir . '/nvimcom_info.R')
+                    let info = readfile(g:rplugin.compldir . '/nvimcom_info')
                     let s:nvimcom_version = info[0]
                     let s:nvimcom_home = info[1]
-                    let s:ncs_path = ncspath
+                    let s:ncs_path = FindNCSpath(info[1])
                     let s:R_version = info[2]
-                    call writefile([info[0], info[1], ncspath, info[2]], g:rplugin.compldir . '/nvimcom_info')
                     echon "OK!"
                 endif
-                call delete("nvimcom_" . required_nvimcom . ".tar.gz")
             endif
         endif
         if has("win32")
@@ -823,9 +817,6 @@ command RGetNCSInfo :call RequestNCSInfo()
 
 function StartNClientServer()
     if IsJobRunning("ClientServer")
-        return
-    endif
-    if !filereadable(g:rplugin.compldir . '/path_to_nvimcom')
         return
     endif
 
@@ -4359,6 +4350,8 @@ if !executable(g:rplugin.R)
     call RWarningMsg("R executable not found: '" . g:rplugin.R . "'")
 endif
 
+let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
+
 function GlobalRInit(...)
     if CheckNvimcomVersion()
         call StartNClientServer()
@@ -4370,7 +4363,11 @@ function PreGlobalRealInit()
 endfunction
 
 let s:starting_ncs = 1
-autocmd VimEnter * call PreGlobalRealInit()
+if v:vim_did_enter == 0
+    autocmd VimEnter * call PreGlobalRealInit()
+else
+    call GlobalRInit()
+endif
 
 " Check if Vim-R-plugin is installed
 if exists("*WaitVimComStart")

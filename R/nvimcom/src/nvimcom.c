@@ -631,7 +631,6 @@ static void nvimcom_eval_expr(const char *buf)
 static int nvimcom_checklibs()
 {
     const char *libname;
-    char buf[256];
     char *libn;
     SEXP a, l;
 

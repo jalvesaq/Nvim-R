@@ -31,7 +31,7 @@ endif
 
 if !exists('g:rplugin')
     " Also in common_global.vim
-    let g:rplugin = {'debug_info': {'Build_omnils_pkg': ''},
+    let g:rplugin = {'debug_info': {'Build_omnils_pkg': '', 'libraries': []},
                 \ 'libraries_in_ncs': [],
                 \ 'loaded_libs': []}
 endif
