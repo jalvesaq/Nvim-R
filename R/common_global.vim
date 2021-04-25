@@ -542,7 +542,7 @@ function RSetDefaultPkg()
 endfunction
 
 let s:bo_stderr = []
-function OnBuildOmnlsStderr(...)
+function OnBuildOmnilsStderr(...)
     if type(a:2) == v:t_list
         let txt = substitute(join(a:2), '[\r\n]', '', 'g')
     elseif type(a:2) == v:t_string
@@ -553,7 +553,7 @@ function OnBuildOmnlsStderr(...)
     endif
 endfunction
 
-function OnBuildOmnlsExit(...)
+function OnBuildOmnilsExit(...)
     if has('nvim')
         call ROnJobExit(a:1, a:2, a:3)
     else
@@ -642,13 +642,13 @@ function BuildOmnils(...)
     let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
     let jh = deepcopy(g:rplugin.job_handlers)
     if has('nvim')
-        let jh['on_stderr'] = function('OnBuildOmnlsStderr')
-        let jh['on_exit'] = function('OnBuildOmnlsExit')
+        let jh['on_stderr'] = function('OnBuildOmnilsStderr')
+        let jh['on_exit'] = function('OnBuildOmnilsExit')
     else
-        let jh['err_cb'] = function('OnBuildOmnlsStderr')
-        let jh['exit_cb'] = function('OnBuildOmnlsExit')
+        let jh['err_cb'] = function('OnBuildOmnilsStderr')
+        let jh['exit_cb'] = function('OnBuildOmnilsExit')
     endif
-    let g:rplugin.jobs["Build_Omnils"] = StartJob([g:rplugin.Rcmd, '--quiet', '--no-save', '--no-restore', '--no-echo', '-e', blist], jh)
+    let g:rplugin.jobs["Build_Omnils"] = StartJob([g:rplugin.Rcmd, '--quiet', '--vanilla', '--no-echo', '--slave', '-e', blist], jh)
 endfunction
 
 function FindNCSpath(libdir)
@@ -4257,12 +4257,12 @@ let s:ncs_path = ""
 let s:R_version = "0"
 if filereadable(g:rplugin.compldir . "/nvimcom_info")
     let s:flines = readfile(g:rplugin.compldir . "/nvimcom_info")
-    if len(s:flines) == 4
-        if isdirectory(s:flines[1]) && filereadable(s:flines[2])
+    if len(s:flines) == 3
+        let s:ncs_path = FindNCSpath(s:flines[1])
+        if s:ncs_path != ''
             let s:nvimcom_version = s:flines[0]
             let s:nvimcom_home = s:flines[1]
-            let s:ncs_path = s:flines[2]
-            let s:R_version = s:flines[3]
+            let s:R_version = s:flines[2]
         endif
     endif
     unlet s:flines
