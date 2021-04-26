@@ -554,16 +554,18 @@ function OnBuildOmnilsStderr(...)
 endfunction
 
 function OnBuildOmnilsExit(...)
-    if has('nvim')
-        call ROnJobExit(a:1, a:2, a:3)
-    else
-        call ROnJobExit(a:1, a:2)
-    endif
+    if !has('win32')
+        if has('nvim')
+            call ROnJobExit(a:1, a:2, a:3)
+        else
+            call ROnJobExit(a:1, a:2)
+        endif
 
-    if a:2 != 0
-        call RWarningMsg('[Build_Omnils] exited with status ' . a:2)
-        let g:rplugin.debug_info['Build_Omnils_Stderr'] = s:bo_stderr
-        return
+        if a:2 != 0
+            call RWarningMsg('[Build_Omnils] exited with status ' . a:2)
+            let g:rplugin.debug_info['Build_Omnils_Stderr'] = s:bo_stderr
+            return
+        endif
     endif
 
     for rlib in g:rplugin.built_libraries
@@ -640,6 +642,23 @@ function BuildOmnils(...)
     let g:rplugin.debug_info['Build_omnils_pkg'] .= '(' . blist . ') '
     let blist = 'nvimcom:::nvim.buildomnils("' . blist . '")'
     let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
+
+    if has('win32')
+	let oldRP =  $R_DEFAULT_PACKAGES
+	let $R_DEFAULT_PACKAGES = ""
+        let rcode = ['.libPaths(c("' . s:nvimcom_home . '", .libPaths()))', 'library("nvimcom")'] + split(blist, ';')
+        call writefile(rcode, g:rplugin.tmpdir . '/buildomnils.R')
+        let rout = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/buildomnils.R"')
+        if v:shell_error
+            call RWarningMsg(rout)
+            return 0
+        endif
+	let $R_DEFAULT_PACKAGES = oldRP
+        call delete(g:rplugin.tmpdir . '/buildomnils.R')
+        call OnBuildOmnilsExit()
+        return
+    endif
+
     let jh = deepcopy(g:rplugin.job_handlers)
     if has('nvim')
         let jh['on_stderr'] = function('OnBuildOmnilsStderr')
