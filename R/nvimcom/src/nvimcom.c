@@ -84,6 +84,7 @@ static char myport[128];
 
 typedef struct pkg_info_ {
     char *name;
+    char *version;
     struct pkg_info_ *next;
 } PkgInfo;
 
@@ -129,7 +130,8 @@ static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
 {
     // Prefix NVIMR_SECRET to msg to increase security
     strncpy(finalmsg, nvimsecr, 1023);
-    strncat(finalmsg, "call ", 1023);
+    if (*msg != '+')
+        strncat(finalmsg, "call ", 1023);
     if(strlen(msg) < 980){
         strncat(finalmsg, msg, 1023);
     } else {
@@ -281,17 +283,19 @@ void nvimcom_msg_to_nvim(char **cmd)
     nvimcom_nvimclient(*cmd, edsrvr);
 }
 
-static PkgInfo *nvimcom_pkg_info_new(const char *nm)
+static PkgInfo *nvimcom_pkg_info_new(const char *nm, const char *vrsn)
 {
     PkgInfo *pi = calloc(1, sizeof(PkgInfo));
     pi->name = malloc((strlen(nm)+1) * sizeof(char));
     strcpy(pi->name, nm);
+    pi->version = malloc((strlen(vrsn)+1) * sizeof(char));
+    strcpy(pi->version, vrsn);
     return pi;
 }
 
-static void nvimcom_pkg_info_add(const char *nm)
+static void nvimcom_pkg_info_add(const char *nm, const char *vrsn)
 {
-    PkgInfo *pi = nvimcom_pkg_info_new(nm);
+    PkgInfo *pi = nvimcom_pkg_info_new(nm, vrsn);
     if(pkgList){
         pi->next = pkgList;
         pkgList = pi;
@@ -632,9 +636,13 @@ static int nvimcom_checklibs()
 {
     const char *libname;
     char *libn;
+    char buf[128];
+    ParseStatus status;
+    int er = 0;
     SEXP a, l;
+    SEXP cmdSexp, cmdexpr, ans;
 
-    PkgInfo *pkg = pkgList;
+    PkgInfo *pkg;
 
     PROTECT(a = eval(lang1(install("search")), R_GlobalEnv));
 
@@ -646,14 +654,6 @@ static int nvimcom_checklibs()
 
     needsfillmsg = 1;
 
-    char fn[576];
-    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *f = fopen(fn, "w");
-    if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-        return(newnlibs);
-    }
-
     for(int i = 0; i < newnlibs; i++){
         PROTECT(l = STRING_ELT(a, i));
         libname = CHAR(l);
@@ -662,14 +662,41 @@ static int nvimcom_checklibs()
             libn = strstr(libn, ":");
             libn++;
             pkg = nvimcom_get_pkg(libn);
-            if(!pkg)
-                nvimcom_pkg_info_add(libn);
-            fprintf(f, "%s\n", libn);
+            if(!pkg){
+                snprintf(buf, 127, "utils::packageDescription('%s')$Version", libn);
+                PROTECT(cmdSexp = allocVector(STRSXP, 1));
+                SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
+                PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+                if (status != PARSE_OK) {
+                    REprintf("nvimcom error parsing: %s\n", buf);
+                } else {
+                    PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
+                    if(er){
+                        REprintf("nvimcom error executing: %s\n", buf);
+                    } else {
+                        nvimcom_pkg_info_add(libn, CHAR(STRING_ELT(ans, 0)));
+                    }
+                    UNPROTECT(1);
+                }
+                UNPROTECT(2);
+            }
         }
         UNPROTECT(1);
     }
     UNPROTECT(1);
 
+    char fn[576];
+    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    FILE *f = fopen(fn, "w");
+    if(f == NULL){
+        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
+        return(newnlibs);
+    }
+    pkg = pkgList;
+    do {
+        fprintf(f, "%s_%s\n", pkg->name, pkg->version);
+        pkg = pkg->next;
+    } while (pkg);
     fclose(f);
 
     return(newnlibs);
@@ -684,7 +711,7 @@ static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
     nvimcom_checklibs();
     if(edsrvr[0] != 0 && needsfillmsg){
         needsfillmsg = 0;
-        nvimcom_nvimclient("BuildOmnils()", edsrvr);
+        nvimcom_nvimclient("+BuildOmnils", edsrvr);
     }
     if(setwidth && getenv("COLUMNS")){
         int columns = atoi(getenv("COLUMNS"));

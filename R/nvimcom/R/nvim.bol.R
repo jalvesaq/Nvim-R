@@ -328,19 +328,10 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
                 next
         }
 
-        # Save title of package in pack_descriptions:
-        if(file.exists(paste0(Sys.getenv("NVIMR_COMPLDIR"), "/pack_descriptions")))
-            pack_descriptions <- readLines(paste0(Sys.getenv("NVIMR_COMPLDIR"),
-                                                  "/pack_descriptions"))
-        else
-            pack_descriptions <- character()
-        pack_descriptions <- c(paste(curlib,
-                           gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Title),
-                           gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Description),
-                           sep = "\t"), pack_descriptions)
-        pack_descriptions <- sort(pack_descriptions[!duplicated(pack_descriptions)])
-        writeLines(pack_descriptions,
-                   paste0(Sys.getenv("NVIMR_COMPLDIR"), "/pack_descriptions"))
+        # Save title of package in its decr_ file:
+        writeLines(paste(gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Title),
+                         gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Description), sep = "\t"),
+                   paste0(Sys.getenv("NVIMR_COMPLDIR"), "/descr_", curlib, "_", utils::packageDescription(curlib)$Version))
 
         obj.list <- objects(curpack, all.names = allnames)
         l <- length(obj.list)
@@ -395,6 +386,11 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 }
 
 nvim.buildomnils <- function(p){
+    if(length(p) > 1){
+        for(pkg in p)
+            nvim.buildomnils(pkg)
+        return(invisible(NULL))
+    }
     # No verbosity because running as Neovim job
     options(nvimcom.verbose = 0)
 

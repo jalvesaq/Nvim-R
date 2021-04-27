@@ -120,6 +120,8 @@ function SendCmdToR_Windows(...)
     return 1
 endfunction
 
+call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
+
 " 2020-05-19
 if exists("g:Rtools_path")
     call RWarningMsg('The variable "Rtools_path" is no longer used.')

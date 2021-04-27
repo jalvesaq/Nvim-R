@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -41,10 +42,13 @@ static char *compl_buffer;
 static int compl_buffer_size;
 static long max_buffer_size;
 static char *omni_tmp_file;
+static int building_omnils;
+static int more_to_build;
 void omni2ob();
 void lib2ob();
 void update_pkg_list();
 void update_glblenv_buffer();
+static void build_omnils();
 
 typedef struct liststatus_ {
     char *key;
@@ -62,10 +66,12 @@ static ListStatus *listTree = NULL;
 
 typedef struct pkg_data_ {
     char *name;
+    char *version;
     char *descr;
     char *omnils;
     int nobjs;
     int loaded;
+    int built;
     struct pkg_data_ *next;
 } PkgData;
 
@@ -86,6 +92,17 @@ static int Sfd = -1;
 static pthread_t Tid;
 static char myport[128];
 #endif
+
+/*static void Log(const char *fmt, ...)
+{
+    va_list argptr;
+    FILE *f = fopen("/tmp/nclientserver_log", "a");
+    va_start(argptr, fmt);
+    vfprintf(f, fmt, argptr);
+    fprintf(f, "\n");
+    va_end(argptr);
+    fclose(f);
+}*/
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -140,13 +157,24 @@ static void ParseMsg(char *buf)
     if(strstr(b, VimSecret) == b){
         b += VimSecretLen;
 
+        // Log("tcp:   %s", b);
+
         // Update the GlobalEnv buffer before sending the message to Nvim-R
         // because it must be ready for omni completion
         if(str_here(b, "call GlblEnvUpdated(1)"))
             update_glblenv_buffer();
 
-        printf("%s\n", b);
-        fflush(stdout);
+        if(str_here(b, "+BuildOmnils")){
+            // FIXME: Can this be asynchronous?
+            update_pkg_list();
+            build_omnils();
+        }
+
+        if (*b != '+'){
+            // Send the command to Nvim-R
+            printf("%s\n", b);
+            fflush(stdout);
+        }
 
         // Update the Object Browser after sending the message to Nvim-R to
         // avoid unnecessary delays in omni completion
@@ -756,95 +784,47 @@ char *read_omnils_file(const char *fn, int *size)
     return buffer;
 }
 
-char *read_pkg_descr(const char *pkgnm)
+char *read_pkg_descr(const char *pkgnm, const char *version)
 {
     char b[256];
-    char *s, *nm, *dscr;
-    snprintf(b, 255, "%s/pack_descriptions", getenv("NVIMR_COMPLDIR"));
-    FILE *f = fopen(b, "r");
-    if(!f)
-        return NULL;
+    char *s, *d;
+    snprintf(b, 255, "%s/descr_%s_%s", getenv("NVIMR_COMPLDIR"), pkgnm, version);
 
-    while((s = fgets(b, 127, f))){
-        nm = b;
+    d = read_file(b);
+    s = d;
+    if (s) {
         while(*s != '\t' && *s != 0)
             s++;
-        if(*s == '\t'){
-            *s = 0;
-            if(strcmp(nm, pkgnm) == 0){
-                s++;
-                dscr = s;
-                while(*s != '\t' && *s != 0){
-                    s++;
-                    if(*s == '\t'){
-                        *s = 0;
-                        char *pkgdscr = malloc(sizeof(char) * (1 + strlen(dscr)));
-                        strcpy(pkgdscr, dscr);
-                        fclose(f);
-                        return pkgdscr;
-                    }
-                }
-            }
-        }
+        *s = 0;
     }
-    fclose(f);
-    return NULL;
+    return d;
 }
 
-char *get_cached_omnils(const char *onm, int verbose, int *size)
+char *get_cached_omnils(const char *nm, const char *vrsn, int *size)
 {
-    DIR *d;
-    struct dirent *e;
     char fnm[512];
-    char fname[512];
-    char *o;
-
-    d = opendir(getenv("NVIMR_COMPLDIR"));
-    if(d != NULL){
-        snprintf(fnm, 511, "omnils_%s_", onm);
-        while((e = readdir(d))){
-            if(strstr(e->d_name, fnm)){
-                snprintf(fname, 511, "%s/%s", getenv("NVIMR_COMPLDIR"), e->d_name);
-                closedir(d);
-                o = read_omnils_file(fname, size);
-                if(o == NULL){
-                    fprintf(stderr, "Error in omnils file: %s\n", onm);
-                    fflush(stderr);
-                }
-                return o;
-            }
-        }
-        closedir(d);
-        if(verbose){
-            fprintf(stderr, "Couldn't find omni file for \"%s\"\n", onm);
-            fflush(stderr);
-        }
-    } else {
-        fprintf(stderr, "Couldn't open the cache directory (%s)\n",
-                getenv("NVIMR_COMPLDIR"));
-        fflush(stderr);
-    }
-    return NULL;
+    snprintf(fnm, 511, "%s/omnils_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+    return read_omnils_file(fnm, size);
 }
 
 void pkg_delete(PkgData *pd)
 {
     free(pd->name);
+    free(pd->version);
     if(pd->descr)
         free(pd->descr);
+    if (pd->version)
+        free(pd->version);
     if(pd->omnils)
         free(pd->omnils);
     free(pd);
 }
 
-PkgData *new_pkg_data(const char *nm, int verbose)
+void load_pkg_data(PkgData *pd, int verbose)
 {
-    PkgData *pd = calloc(1, sizeof(PkgData));
-    pd->name = malloc((strlen(nm)+1) * sizeof(char));
-    strcpy(pd->name, nm);
-    pd->descr = read_pkg_descr(nm);
     int size;
-    pd->omnils = get_cached_omnils(nm, verbose, &size);
+    pd->descr = read_pkg_descr(pd->name, pd->version);
+    pd->omnils = get_cached_omnils(pd->name, pd->version, &size);
     pd->nobjs = 0;
     if(pd->omnils){
         pd->loaded = 1;
@@ -852,6 +832,29 @@ PkgData *new_pkg_data(const char *nm, int verbose)
             for(int i = 0; i < size; i++)
                 if(pd->omnils[i] == '\n')
                     pd->nobjs++;
+    }
+}
+
+PkgData *new_pkg_data(const char *nm, const char *vrsn, int verbose)
+{
+    char buf[1024];
+
+    PkgData *pd = calloc(1, sizeof(PkgData));
+    pd->name = malloc((strlen(nm)+1) * sizeof(char));
+    strcpy(pd->name, nm);
+    pd->version = malloc((strlen(vrsn)+1) * sizeof(char));
+    strcpy(pd->version, vrsn);
+    pd->loaded = 1;
+
+    // Check if both fun_ and omnils_ exist
+    pd->built = 1;
+    snprintf(buf, 1023, "%s/fun_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+    if (access(buf, F_OK) != 0) {
+        pd->built = 0;
+    } else {
+        snprintf(buf, 1023, "%s/fun_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+        if (access(buf, F_OK) != 0)
+            pd->built = 0;
     }
     return pd;
 }
@@ -871,17 +874,118 @@ PkgData *get_pkg(const char *nm)
     return NULL;
 }
 
-void add_pkg(const char *nm, int verbose)
+void add_pkg(const char *nm, const char *vrsn, int verbose)
 {
     PkgData *tmp = pkgList;
-    pkgList = new_pkg_data(nm, verbose);
+    pkgList = new_pkg_data(nm, vrsn, verbose);
     pkgList->next = tmp;
+}
+
+static void finish_bo()
+{
+    PkgData *pkg = pkgList;
+    while (pkg) {
+        if (pkg->built && !pkg->omnils)
+            load_pkg_data(pkg, 1);
+        pkg = pkg->next;
+    }
+
+    building_omnils = 0;
+    if (more_to_build) {
+        more_to_build = 0;
+        build_omnils();
+    } else {
+        // Message to Neovim: Update syntax and Rhelp_list
+        printf("call UpdateSynRhlist()\n");
+        fflush(stdout);
+    }
+}
+
+static int run_R_code(const char *s)
+{
+    int stt;
+#ifdef WIN32
+    stt = WinExec(s, SW_HIDE);
+    if (stt == 0)
+        stt = 1;
+    if (stt > 31)
+        stt = 0;
+#else
+    stt = system(s);
+#endif
+
+    if (stt != 0) {
+        printf("call ShowBuildOmnilsError()\n");
+        fflush(stdout);
+    }
+    return stt;
+}
+
+static void fake_libnames(const char *s)
+{
+    char b[2048];
+    snprintf(b, 1500, "R --quiet --vanilla --no-echo --slave -e 'nms <- c(%s); pkgs <- installed.packages(); nms <- nms[nms %%in%% rownames(pkgs)]; cat(paste(nms, installed.packages()[nms, \"Built\"], collapse = \"\\n\", sep = \"_\"), \"\\n\", sep = \"\", file = \"%s/libnames_%s\")' >\"%s/run_R_stdout\" 2>\"%s/run_R_stderr\"", s, tmpdir, getenv("NVIMR_ID"), tmpdir, tmpdir);
+    if (run_R_code(b) == 0){
+        update_pkg_list();
+        build_omnils();
+        snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+        char *lnames = read_file(b);
+        snprintf(b, 512, "%s/last_default_libnames", getenv("NVIMR_COMPLDIR"));
+        FILE *f = fopen(b, "w");
+        if(f){
+           fwrite(lnames, sizeof(char), strlen(lnames), f);
+           fclose(f);
+        }
+        free(lnames);
+    }
+}
+
+static void build_omnils()
+{
+    if (building_omnils) {
+        more_to_build = 1;
+        return;
+    }
+    building_omnils = 1;
+
+    char buf[1024];
+
+    memset(compl_buffer, 0, compl_buffer_size);
+    char *p = compl_buffer;
+
+    PkgData *pkg = pkgList;
+
+    p = str_cat(p, "R --quiet --vanilla --no-echo --slave -e 'library(\"nvimcom\"); nvimcom:::nvim.buildomnils(c(");
+    int k = 0;
+    while (pkg) {
+        if (pkg->built == 0) {
+            if (k == 0)
+                snprintf(buf, 63, "\"%s\"", pkg->name);
+            else
+                snprintf(buf, 63, ", \"%s\"", pkg->name);
+            p = str_cat(p, buf);
+            pkg->built = 1;
+            k++;
+        }
+        pkg = pkg->next;
+    }
+    snprintf(buf, 1023, "))' >\"%s/run_R_stdout\" 2>\"%s/run_R_stderr\"", tmpdir, tmpdir);
+    p = str_cat(p, buf);
+
+    if(k == 0){
+        finish_bo();
+        return;
+    }
+
+    run_R_code(compl_buffer);
+
+    finish_bo();
 }
 
 void update_pkg_list()
 {
     char buf[512];
-    char *s;
+    char *s, *vrsn;
     char lbnm[128];
     PkgData *pkg;
 
@@ -901,14 +1005,20 @@ void update_pkg_list()
     }
 
     while((s = fgets(lbnm, 127, flib))){
+        while(*s != '_')
+            s++;
+        *s = 0;
+        s++;
+        vrsn = s;
         while(*s != '\n')
             s++;
         *s = 0;
+
         pkg = get_pkg(lbnm);
-        if(pkg)
+        if (pkg)
             pkg->loaded = 1;
         else
-            add_pkg(lbnm, 1);
+            add_pkg(lbnm, vrsn, 1);
     }
     fclose(flib);
 
@@ -1238,8 +1348,6 @@ void omni2ob()
 
 void lib2ob()
 {
-    update_pkg_list();
-
     F2 = fopen(liblist, "w");
     if(!F2){
         fprintf(stderr, "Failed to open \"%s\"\n", liblist);
@@ -1345,24 +1453,6 @@ void objbr_setup()
     // List tree sentinel
     listTree = new_ListStatus("base:", 0);
 
-    // Initialize the pkgList variable to enable omnicompletion even before R is loaded
-    if(getenv("R_DEFAULT_PACKAGES")){
-        char *s = malloc(sizeof(char) * (strlen(getenv("R_DEFAULT_PACKAGES"))+1));
-        strcpy(s, getenv("R_DEFAULT_PACKAGES"));
-        char *p = strtok(s, ",");
-        while(p){
-            add_pkg(p, 0);
-            p = strtok(NULL, ",");
-        }
-        free(s);
-    } else {
-        add_pkg("base", 0);
-        add_pkg("utils", 0);
-        add_pkg("grDevices", 0);
-        add_pkg("graphics", 0);
-        add_pkg("stats", 0);
-        add_pkg("methods", 0);
-    }
     grow_compl_buffer();
 }
 
@@ -1681,9 +1771,11 @@ int main(int argc, char **argv){
     start_server();
 
     while(fgets(line, 1023, stdin)){
+
         for(unsigned int i = 0; i < strlen(line); i++)
             if(line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
+        // Log("stdin: %s",  line);
         msg = line;
         switch(*msg){
             case '1': // SetPort
@@ -1742,6 +1834,10 @@ int main(int argc, char **argv){
                             omni2ob();
                         else
                             lib2ob();
+                        break;
+                    case '5': // Save fake libnames_
+                        msg++;
+                        fake_libnames(msg);
                         break;
                     case '7':
                         f = fopen("/tmp/listTree", "w");

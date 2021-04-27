@@ -38,8 +38,8 @@ let s:did_global_stuff = 1
 if !exists('g:rplugin')
     " Also in functions.vim
     let g:rplugin = {'debug_info': {'Build_omnils_pkg': '', 'libraries': []},
-                \ 'libraries_in_ncs': [],
-                \ 'loaded_libs': []}
+                \ 'libraries_in_R': [],
+                \ 'default_libs': []}
 endif
 
 "==========================================================================
@@ -541,133 +541,64 @@ function RSetDefaultPkg()
     endif
 endfunction
 
-let s:bo_stderr = []
-function OnBuildOmnilsStderr(...)
-    if type(a:2) == v:t_list
-        let txt = substitute(join(a:2), '[\r\n]', '', 'g')
-    elseif type(a:2) == v:t_string
-        let txt = substitute(a:2, '[\r\n]', '', 'g')
-    endif
-    if txt !~ "^\s*$"
-        let s:bo_stderr += [txt]
-    endif
+function ShowBuildOmnilsError()
+    let ferr = readfile(g:rplugin.tmpdir . '/run_R_stderr')
+    let g:rplugin.debug_info['Error running R code'] = join(ferr, "\n")
+    call RWarningMsg('Error building omnils_ file. Run :RDebugInfo for details.')
 endfunction
 
-function OnBuildOmnilsExit(...)
-    if !has('win32')
-        if has('nvim')
-            call ROnJobExit(a:1, a:2, a:3)
-        else
-            call ROnJobExit(a:1, a:2)
-        endif
-
-        if a:2 != 0
-            call RWarningMsg('[Build_Omnils] exited with status ' . a:2)
-            let g:rplugin.debug_info['Build_Omnils_Stderr'] = s:bo_stderr
-            return
-        endif
+function UpdateSynRhlist()
+    if !filereadable(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+        return
     endif
 
-    for rlib in g:rplugin.built_libraries
-        let haslib = 0
-        for nlib in g:rplugin.libraries_in_ncs
-            if rlib == nlib
-                let haslib = 1
-                break
-            endif
-        endfor
-        if !haslib
-            call AddToRhelpList(rlib)
-            let g:rplugin.libraries_in_ncs += [rlib]
+    let g:rplugin.libraries_in_R = readfile(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+    for lib in g:rplugin.libraries_in_R
+        call SourceRFunList(lib)
+        call AddToRhelpList(lib)
+    endfor
+    call FunHiOtherBf()
+endfunction
+
+function RLisObjs(arglead, cmdline, curpos)
+    let lob = []
+    let rkeyword = '^' . a:arglead
+    for xx in s:Rhelp_list
+        if xx =~ rkeyword
+            call add(lob, xx)
         endif
     endfor
-
-    " Avoid mismatch between loaded libraries in R and
-    " built omnils files in the cache directory
-    if s:more_to_build == 0
-        call JobStdin(g:rplugin.jobs["ClientServer"], "50\n")
-        call FunHiOtherBf()
-    endif
-
-    let s:building_omnils = 0
-    if s:more_to_build
-        call BuildOmnils()
-    endif
+    return lob
 endfunction
 
-let s:building_omnils = 0
-let s:more_to_build = 0
-let g:rplugin.built_libraries = []
-let g:rplugin.libraries_in_ncs = []
-function BuildOmnils(...)
-    if s:building_omnils
-        let s:more_to_build = 1
-        return
-    endif
+let s:Rhelp_list = []
+let s:Rhelp_loaded = []
 
-    " FIXME: The list of loaded packages must be sent to nvimclient in the
-    " correct order to guarantee that functions with the same name will be
-    " masked in the correct order
-    "
-    let blist = []
-
-    " Get the list of currently loaded packages
-    if filereadable(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
-        let g:rplugin.libraries_in_R = readfile(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
-        for lib in g:rplugin.libraries_in_R
-            let isbuilt = 0
-            for olib in g:rplugin.built_libraries
-                if lib == olib
-                    let isbuilt = 1
-                    break
-                endif
-            endfor
-            if isbuilt == 0
-                let g:rplugin.built_libraries += [lib]
-                let blist += [lib]
-            endif
-        endfor
-    else
-        call RWarningMsg("File not found: " . g:rplugin.tmpdir . "/libnames_")
-        return
-    endif
-
-    if len(blist) == 0
-        " All omnils files already built
-        return
-    endif
-
-    let s:building_omnils = 1
-    let blist = join(blist, ',')
-    let g:rplugin.debug_info['Build_omnils_pkg'] .= '(' . blist . ') '
-    let blist = 'nvimcom:::nvim.buildomnils("' . blist . '")'
-    let blist = substitute(blist, ',', '");nvimcom:::nvim.buildomnils("', 'g')
-
-    if has('win32')
-	let oldRP =  $R_DEFAULT_PACKAGES
-	let $R_DEFAULT_PACKAGES = ""
-        let rcode = ['.libPaths(c("' . s:nvimcom_home . '", .libPaths()))', 'library("nvimcom")'] + split(blist, ';')
-        call writefile(rcode, g:rplugin.tmpdir . '/buildomnils.R')
-        let rout = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/buildomnils.R"')
-        if v:shell_error
-            call RWarningMsg(rout)
-            return 0
+function AddToRhelpList(lib)
+    for lbr in s:Rhelp_loaded
+        if lbr == a:lib
+            return
         endif
-	let $R_DEFAULT_PACKAGES = oldRP
-        call delete(g:rplugin.tmpdir . '/buildomnils.R')
-        call OnBuildOmnilsExit()
+    endfor
+    let s:Rhelp_loaded += [a:lib]
+
+    let omf = g:rplugin.compldir . '/omnils_' . a:lib
+
+    " List of objects
+    let olist = readfile(omf)
+
+    " Library setwidth has no functions
+    if len(olist) == 0 || (len(olist) == 1 && len(olist[0]) < 3)
         return
     endif
 
-    let jh = deepcopy(g:rplugin.job_handlers)
-    if has('nvim')
-        let jh['on_stderr'] = function('OnBuildOmnilsStderr')
-        let jh['on_exit'] = function('OnBuildOmnilsExit')
-    else
-        let jh['err_cb'] = function('OnBuildOmnilsStderr')
-        let jh['exit_cb'] = function('OnBuildOmnilsExit')
-    endif
-    let g:rplugin.jobs["Build_Omnils"] = StartJob([g:rplugin.Rcmd, '--quiet', '--vanilla', '--no-echo', '--slave', '-e', blist], jh)
+    " List of objects for :Rhelp completion
+    for xx in olist
+        let xxx = split(xx, "\x06")
+        if len(xxx) > 0 && xxx[0] !~ '\$'
+            call add(s:Rhelp_list, xxx[0])
+        endif
+    endfor
 endfunction
 
 function FindNCSpath(libdir)
@@ -689,7 +620,6 @@ function FindNCSpath(libdir)
 endfunction
 
 function CheckNvimcomVersion()
-    let g:rplugin.need_omnils = 0
     let neednew = 0
     if isdirectory(s:nvimcom_home . "/00LOCK-nvimcom")
         call RWarningMsg('Perhaps you should delete the directory "' .
@@ -730,7 +660,6 @@ function CheckNvimcomVersion()
     " Nvim-R might have been installed as root in a non writable directory.
     " We have to build nvimcom in a writable directory before installing it.
     if neednew
-        let g:rplugin.need_omnils = 1
         exe "cd " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g')
         if has("win32")
             call SetRHome()
@@ -869,6 +798,8 @@ function StartNClientServer()
             let $NVIMR_SECRET = randlst[1]
         endif
     endif
+    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+
     if g:R_objbr_opendf
         let $NVIMR_OPENDF = "TRUE"
     endif
@@ -889,7 +820,6 @@ function StartNClientServer()
     endif
     if g:R_omni_tmp_file
         let $NVIMR_OMNI_TMP_FILE = "1"
-        call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
     endif
     let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
     "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
@@ -899,16 +829,6 @@ function StartNClientServer()
     unlet $NVIMR_MAX_CHANNEL_BUFFER_SIZE
     unlet $NVIMR_OMNI_TMP_FILE
 
-    call RSetDefaultPkg()
-    if g:rplugin.need_omnils
-        if $R_DEFAULT_PACKAGES =~# "\<base\>"
-            let rdp = split(substitute($R_DEFAULT_PACKAGES, ',nvimcom', '', '') ',')
-        else
-            let rdp = split('base,' . substitute($R_DEFAULT_PACKAGES, ',nvimcom', '', ''), ',')
-        endif
-        call writefile(rdp, g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
-        call BuildOmnils()
-    endif
     call RSetDefaultPkg()
 endfunction
 
@@ -984,18 +904,13 @@ function StartR(whatr)
     call writefile([], g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call writefile([], g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call writefile([], g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
 
     call AddForDeletion(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
     call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
     call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
-    if has("win32")
-        call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
-    endif
 
     " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
     let start_options = ['Sys.setenv("R_DEFAULT_PACKAGES" = "' . s:r_default_pkgs . '")']
@@ -1360,6 +1275,16 @@ function RSetMyPort(p)
     let g:rplugin.myport = a:p
     let $NVIMR_PORT = a:p
     let s:starting_ncs = 0
+
+    " Now, build (if necessary) and load the default package before running R.
+    if !exists("g:R_start_libs")
+        let g:R_start_libs = "base,stats,graphics,grDevices,utils,methods"
+    endif
+    if !isdirectory(g:rplugin.tmpdir)
+        call mkdir(g:rplugin.tmpdir, "p", 0700)
+    endif
+    let pkgs = '"' . substitute(g:R_start_libs, ',', '", "', 'g') . '"'
+    call JobStdin(g:rplugin.jobs["ClientServer"], "35" . pkgs . "\n")
 endfunction
 
 " No support for break points
@@ -2330,7 +2255,6 @@ endfunction
 function ClearRInfo()
     call delete(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call delete(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     call delete(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     for fn in s:del_list
         call delete(fn)
@@ -4296,7 +4220,9 @@ let g:rplugin.has_wmctrl = 0
 let s:docfile = g:rplugin.tmpdir . "/Rdoc"
 
 " List of files to be deleted on VimLeave
-let s:del_list = [s:Rsource_write]
+let s:del_list = [s:Rsource_write,
+            \ g:rplugin.tmpdir . '/run_R_stdout',
+            \ g:rplugin.tmpdir . '/run_R_stderr']
 
 " Create an empty file to avoid errors if the user do Ctrl-X Ctrl-O before
 " starting R:
