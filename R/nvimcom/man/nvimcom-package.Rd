@@ -2,8 +2,8 @@
 \alias{nvimcom-package}
 \alias{nvimcom}
 \docType{package}
-\title{Allow the communication between Nvim and R }
-\description{This package provides a TCP/IP server to allow the communication
+\title{Allow the communication between Nvim and R}
+\description{This package provides a TCP/IP server to allow communication
   between R and Nvim-R. It also has some functions called by the
   plugin.
 

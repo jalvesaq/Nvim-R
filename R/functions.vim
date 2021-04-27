@@ -11,14 +11,14 @@ hi def link rGlobEnvFun  Function
 " Only source the remaining of this script once
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if exists("*SourceRFunList")
-    if len(g:rplugin.libraries_in_R) > 0
-        for s:lib in g:rplugin.libraries_in_R
+    if len(g:rplugin.libs_in_ncs) > 0
+        for s:lib in g:rplugin.libs_in_ncs
             " Add rFunction keywords to r syntax
             call SourceRFunList(s:lib)
         endfor
         unlet s:lib
-    elseif len(g:rplugin.default_libs) > 0
-        for s:lib in g:rplugin.default_libs
+    elseif len(s:default_libs) > 0
+        for s:lib in s:default_libs
             call SourceRFunList(s:lib)
         endfor
         unlet s:lib
@@ -32,9 +32,7 @@ endif
 
 if !exists('g:rplugin')
     " Also in common_global.vim
-    let g:rplugin = {'debug_info': {'Build_omnils_pkg': '', 'libraries': []},
-                \ 'libraries_in_R': [],
-                \ 'default_libs': []}
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': []}
 endif
 
 " syntax/r.vim may have being called before ftplugin/r.vim
@@ -99,17 +97,20 @@ endfunction
 " and build the list for completion of :Rhelp
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-if len(g:rplugin.default_libs) == 0 && filereadable(g:rplugin.compldir . '/last_default_libnames')
+let s:default_libs = []
+if filereadable(g:rplugin.compldir . '/last_default_libnames')
     let s:deflibs = readfile(g:rplugin.compldir . '/last_default_libnames')
-    for s:lib in s:deflibs
-        if filereadable(g:rplugin.compldir . '/fun_' . s:lib)
-            let g:rplugin.default_libs += [s:lib]
-        endif
-    endfor
-    unlet s:lib
+    if  len(s:deflibs) > 0
+        for s:lib in s:deflibs
+            if filereadable(g:rplugin.compldir . '/fun_' . s:lib)
+                let s:default_libs += [s:lib]
+            endif
+        endfor
+        unlet s:lib
+    endif
 endif
-if len(g:rplugin.default_libs) > 0
-    for s:lib in g:rplugin.default_libs
+if len(s:default_libs) > 0
+    for s:lib in s:default_libs
         call SourceRFunList(s:lib)
     endfor
     unlet s:lib

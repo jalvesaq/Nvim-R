@@ -37,9 +37,7 @@ let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
     " Also in functions.vim
-    let g:rplugin = {'debug_info': {'Build_omnils_pkg': '', 'libraries': []},
-                \ 'libraries_in_R': [],
-                \ 'default_libs': []}
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': []}
 endif
 
 "==========================================================================
@@ -552,8 +550,8 @@ function UpdateSynRhlist()
         return
     endif
 
-    let g:rplugin.libraries_in_R = readfile(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
-    for lib in g:rplugin.libraries_in_R
+    let g:rplugin.libs_in_ncs = readfile(g:rplugin.tmpdir . "/libs_in_ncs")
+    for lib in g:rplugin.libs_in_ncs
         call SourceRFunList(lib)
         call AddToRhelpList(lib)
     endfor

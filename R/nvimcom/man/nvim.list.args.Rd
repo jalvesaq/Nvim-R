@@ -2,7 +2,7 @@
 \alias{nvim.list.args}
 \title{List function arguments}
 \description{
-  List function arguments and the function methods arguments.
+  List function arguments and function methods arguments.
 }
 \usage{
 nvim.list.args(ff)

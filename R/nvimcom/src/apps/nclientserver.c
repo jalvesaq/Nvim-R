@@ -31,6 +31,7 @@ static int OpenLS;
 static int nvimcom_is_utf8;
 static int allnames;
 
+static char compldir[256];
 static char tmpdir[256];
 static char liblist[576];
 static char globenv[576];
@@ -786,9 +787,9 @@ char *read_omnils_file(const char *fn, int *size)
 
 char *read_pkg_descr(const char *pkgnm, const char *version)
 {
-    char b[256];
+    char b[512];
     char *s, *d;
-    snprintf(b, 255, "%s/descr_%s_%s", getenv("NVIMR_COMPLDIR"), pkgnm, version);
+    snprintf(b, 511, "%s/descr_%s_%s", compldir, pkgnm, version);
 
     d = read_file(b);
     s = d;
@@ -803,7 +804,7 @@ char *read_pkg_descr(const char *pkgnm, const char *version)
 char *get_cached_omnils(const char *nm, const char *vrsn, int *size)
 {
     char fnm[512];
-    snprintf(fnm, 511, "%s/omnils_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+    snprintf(fnm, 511, "%s/omnils_%s_%s", compldir, nm, vrsn);
     return read_omnils_file(fnm, size);
 }
 
@@ -848,11 +849,11 @@ PkgData *new_pkg_data(const char *nm, const char *vrsn, int verbose)
 
     // Check if both fun_ and omnils_ exist
     pd->built = 1;
-    snprintf(buf, 1023, "%s/fun_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+    snprintf(buf, 1023, "%s/fun_%s_%s", compldir, nm, vrsn);
     if (access(buf, F_OK) != 0) {
         pd->built = 0;
     } else {
-        snprintf(buf, 1023, "%s/fun_%s_%s", getenv("NVIMR_COMPLDIR"), nm, vrsn);
+        snprintf(buf, 1023, "%s/fun_%s_%s", compldir, nm, vrsn);
         if (access(buf, F_OK) != 0)
             pd->built = 0;
     }
@@ -895,6 +896,23 @@ static void finish_bo()
         more_to_build = 0;
         build_omnils();
     } else {
+
+        // Create a list of built omnils_ because libnames_ might have
+        // already changed and Nvim-R would try to read omnils_ files not
+        // built yet.
+        char buf[512];
+        snprintf(buf, 511, "%s/libs_in_ncs", tmpdir);
+        FILE *f = fopen(buf, "w");
+        if (f) {
+            pkg = pkgList;
+            while (pkg) {
+                if (pkg->loaded && pkg->built && pkg->omnils)
+                    fprintf(f, "%s_%s\n", pkg->name, pkg->version);
+                pkg = pkg->next;
+            }
+            fclose(f);
+        }
+
         // Message to Neovim: Update syntax and Rhelp_list
         printf("call UpdateSynRhlist()\n");
         fflush(stdout);
@@ -930,7 +948,7 @@ static void fake_libnames(const char *s)
         build_omnils();
         snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
         char *lnames = read_file(b);
-        snprintf(b, 512, "%s/last_default_libnames", getenv("NVIMR_COMPLDIR"));
+        snprintf(b, 512, "%s/last_default_libnames", compldir);
         FILE *f = fopen(b, "w");
         if(f){
            fwrite(lnames, sizeof(char), strlen(lnames), f);
@@ -1432,6 +1450,7 @@ void objbr_setup()
         strcpy(strT, "|- ");
     }
 
+    strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
     strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
     snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));

@@ -1,9 +1,8 @@
 \name{nvim.interlace.rmd}
 \alias{nvim.interlace.rmd}
-\title{Convert a rmd file to PDF}
+\title{Convert an Rmd file into PDF}
 \description{
-  Run the \pkg{knitr} function \code{knit()} to convert a rmd file to
-  PDF.
+  Run the \pkg{knitr} function \code{knit()} to convert an Rmd file into PDF.
 }
 \usage{
 nvim.interlace.rmd(Rmdfile, outform = NULL, rmddir, ...)
