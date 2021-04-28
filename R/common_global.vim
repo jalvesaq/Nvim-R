@@ -870,29 +870,6 @@ function StartNClientServer()
     call RSetDefaultPkg()
 endfunction
 
-function UpdatePathForR()
-    if exists("g:R_path")
-        " Add R directory to the $PATH
-        let g:rplugin.R_path = expand(g:R_path)
-        if !isdirectory(g:rplugin.R_path)
-            call RWarningMsg('"' . g:R_path . '" is not a directory. Fix the value of R_path in your vimrc.')
-            return 0
-        endif
-        if substitute($PATH, '\\', '/', 'g') !~ '^' . g:rplugin.R_path
-            if has("win32")
-                let $PATH = g:rplugin.R_path . ';' . substitute($PATH, ';' . g:rplugin.R_path . ';', ';', '')
-            else
-                let $PATH = g:rplugin.R_path . ':' . substitute($PATH, ':' . g:rplugin.R_path . ':', ':', '')
-            endif
-        endif
-        if !executable(g:rplugin.R)
-            call RWarningMsg('"' . g:rplugin.R . '" not found. Fix the value of either R_path or R_app in your vimrc.')
-            return 0
-        endif
-    endif
-    return 1
-endfunction
-
 " Start R
 function StartR(whatr)
     let s:wait_nvimcom = 1
@@ -910,8 +887,6 @@ function StartR(whatr)
         endwhile
         unlet s:starting_ncs
     endif
-
-    call UpdatePathForR()
 
     if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
@@ -4283,29 +4258,18 @@ else
     let g:rplugin.Rcmd = "R"
 endif
 
-if UpdatePathForR() == 0
-    let g:rplugin.failed = 1
-    finish
-endif
-
 if exists("g:RStudio_cmd")
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/rstudio.vim"
 endif
 
 if has("win32")
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/windows.vim"
+else
+    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/unix.vim"
 endif
 
 if g:R_applescript
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/osx.vim"
-endif
-
-if !has("win32")
-    if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) ||
-                \ type(g:R_external_term) == v:t_string ||
-                \ (exists('g:R_source') && g:R_source =~# 'tmux_split.vim')
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/tmux.vim"
-    endif
 endif
 
 if type(g:R_external_term) == v:t_number && g:R_external_term == 0

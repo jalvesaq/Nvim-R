@@ -1439,14 +1439,21 @@ Vim will run the first R executable in the path. You can set an alternative
 path to R in your |vimrc| as in the examples:
 >
    let R_path = '/path/to/my/preferred/R/version/bin'
-   let R_path = "C:\\Program Files\\R\\R-3.3.1\\bin\\i386"
+   let R_path = "C:\\Program Files\\R\\R-4.0.1\\bin\\x64"
 <
 On Windows, Vim will try to find the R install path in the Windows Registry.
 
 You can set the path to a different R version for specific R scripts in your
 |vimrc|. Example:
 >
-   autocmd BufReadPre ~/old* let R_path='~/app/R-2.8.1/bin'
+   autocmd BufReadPre ~/old* let R_path='~/app/R-4.0.0/bin'
+<
+The `R_path` variable can also be prefixed to the `PATH` environment variable.
+So, it can include more than one directory separated by a `;` on Windows or a
+`:` on other systems. This is specially important to include the path to
+RTools `bin` directory on Windows. Example:
+>
+   let R_path = 'c:\rtools40\usr\bin;C:\rtools40\mingw64\bin;C:\Program Files\R\R-4.0.1\bin\x64'
 <
 By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
 Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
@@ -3183,6 +3190,7 @@ Examples:
 
  * Minor bug fixes.
  * New options: R_omni_size and R_omni_tmp_file.
+ * Option R_path might be a list of directories.
 
 0.9.15 (2021-04-14)
 
