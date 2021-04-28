@@ -662,11 +662,9 @@ function CheckNvimcomVersion()
         if has("win32")
             call SetRHome()
             let cmpldir = substitute(g:rplugin.compldir, '\\', '/', 'g')
-            let shellcmd = 'cmd'
-            let scrptnm = 'cmds.bat'
+            let scrptnm = 'cmds.cmd'
         else
             let cmpldir = g:rplugin.compldir
-            let shellcmd = 'sh'
             let scrptnm = 'cmds.sh'
         endif
 
@@ -717,8 +715,8 @@ function CheckNvimcomVersion()
             let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . required_nvimcom . ".tar.gz"]
         endif
         let cmds += ["rm nvimcom_" . required_nvimcom . ".tar.gz",
-                    \ g:rplugin.Rcmd . " --no-restore --no-save --slave -e '" .
-                    \ 'cat(installed.packages()["nvimcom", c("Version", "LibPath", "Built")], sep = "\n", file = "' . cmpldir . '/nvimcom_info")' . "'"]
+                    \ g:rplugin.Rcmd . ' --no-restore --no-save --slave -e "' .
+                    \ "cat(installed.packages()['nvimcom', c('Version', 'LibPath', 'Built')], sep = '\\n', file = '" . cmpldir . "/nvimcom_info')" . '"']
 
         call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)
 
@@ -731,7 +729,11 @@ function CheckNvimcomVersion()
                         \ 'err_cb':  'RBuildStderr',
                         \ 'exit_cb': 'RBuildExit'}
         endif
-        let g:rplugin.jobs["Build_R"] = StartJob([shellcmd, g:rplugin.tmpdir . '/' . scrptnm], jobh)
+        if has('win32')
+            let g:rplugin.jobs["Build_R"] = StartJob([scrptnm], jobh)
+        else
+            let g:rplugin.jobs["Build_R"] = StartJob(['sh', g:rplugin.tmpdir . '/' . scrptnm], jobh)
+        endif
 
         if has("win32")
             call UnsetRHome()
