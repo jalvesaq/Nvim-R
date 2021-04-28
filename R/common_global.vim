@@ -625,7 +625,7 @@ function CheckNvimcomVersion()
     endif
 
     let flines = readfile(g:rplugin.home . "/R/nvimcom/DESCRIPTION")
-    let required_nvimcom = substitute(flines[1], "Version: ", "", "")
+    let s:required_nvimcom = substitute(flines[1], "Version: ", "", "")
 
     if s:nvimcom_home == ""
         let neednew = 1
@@ -637,7 +637,7 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(s:nvimcom_home . "/nvimcom/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
-            if nvers != required_nvimcom
+            if nvers != s:required_nvimcom
                 let neednew = 1
                 let g:rplugin.debug_info['Why build nvimcom'] = 'Version mismatch'
             else
@@ -658,6 +658,7 @@ function CheckNvimcomVersion()
     " Nvim-R might have been installed as root in a non writable directory.
     " We have to build nvimcom in a writable directory before installing it.
     if neednew
+        call delete(g:rplugin.compldir . '/nvimcom_info')
         exe "cd " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g')
         if has("win32")
             call SetRHome()
@@ -710,15 +711,16 @@ function CheckNvimcomVersion()
                         \ 'rm -rf "' . g:R_tmpdir . '/nvimcom"']
         endif
         if has("win32")
-            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . required_nvimcom . ".tar.gz"]
+            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz"]
         else
-            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . required_nvimcom . ".tar.gz"]
+            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . s:required_nvimcom . ".tar.gz"]
         endif
-        let cmds += ["rm nvimcom_" . required_nvimcom . ".tar.gz",
+        let cmds += ["rm nvimcom_" . s:required_nvimcom . ".tar.gz",
                     \ g:rplugin.Rcmd . ' --no-restore --no-save --slave -e "' .
                     \ "cat(installed.packages()['nvimcom', c('Version', 'LibPath', 'Built')], sep = '\\n', file = '" . cmpldir . "/nvimcom_info')" . '"']
 
         call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)
+        call AddForDeletion(g:rplugin.tmpdir . '/' .  scrptnm)
 
         if has('nvim')
             let jobh = {'on_stdout': function('RBuildStdout'),
@@ -747,9 +749,9 @@ endfunction
 let s:RBout = []
 function RBuildStdout(...)
     if has('nvim')
-        let s:RBout += [substitute(join(a:2), '\n', '', 'g')]
+        let s:RBout += [substitute(join(a:2), '\r', '', 'g')]
     else
-        let s:RBout += [substitute(a:2, '\n', '', 'g')]
+        let s:RBout += [substitute(a:2, '\r', '', 'g')]
     endif
 endfunction
 
@@ -765,23 +767,24 @@ endfunction
 function RBuildExit(...)
     if a:2 == 0 && filereadable(g:rplugin.compldir . '/nvimcom_info')
         let info = readfile(g:rplugin.compldir . '/nvimcom_info')
-        let s:nvimcom_version = info[0]
-        let s:nvimcom_home = info[1]
-        let s:ncs_path = FindNCSpath(info[1])
-        let s:R_version = info[2]
-        echon "OK!"
-        call StartNClientServer()
+        if len(info) == 3
+            let s:nvimcom_version = info[0]
+            let s:nvimcom_home = info[1]
+            let s:ncs_path = FindNCSpath(info[1])
+            let s:R_version = info[2]
+            call StartNClientServer()
+            echon "OK!"
+        else
+            call delete(g:rplugin.compldir . '/nvimcom_info')
+            call RWarningMsg("ERROR! Please, do :RDebugInfo for details")
+        endif
     else
-        echon "ERROR!"
-        " if v:shell_error
-        "     if filereadable(expand("~/.R/Makevars"))
-        "         call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
-        "     else
-        "         call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom")
-        "     endif
-        "     call delete("nvimcom_" . required_nvimcom . ".tar.gz")
-        "     return 0
-        " endif
+        if filereadable(expand("~/.R/Makevars"))
+            call RWarningMsg("ERROR! Please, run :RDebugInfo for details, and check your '~/.R/Makevars'.")
+        else
+            call RWarningMsg("ERROR! Please, run :RDebugInfo for details")
+        endif
+        call delete(g:rplugin.tmpdir . "nvimcom_" . s:required_nvimcom . ".tar.gz")
     endif
     let g:rplugin.debug_info["RBuildOut"] = join(s:RBout, "\n")
     let g:rplugin.debug_info["RBuildErr"] = join(s:RBerr, "\n")
@@ -1055,9 +1058,6 @@ function SetSendCmdToR(...)
     elseif has("win32")
         let g:SendCmdToR = function('SendCmdToR_Windows')
     endif
-    if !s:has_warning
-        echon "\r       "
-    endif
     let s:wait_nvimcom = 0
 endfunction
 
@@ -1088,17 +1088,13 @@ function WaitNvimcomStart()
 endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
-    let s:has_warning = 0
-
     if !exists("g:R_nvimcom_home") && a:nvimcomhome != s:nvimcom_home
         call RWarningMsg('Mismatch in directory names: "' . s:nvimcom_home . '" and "' . a:nvimcomhome . '"')
-        let s:has_warning = 1
         sleep 1
     endif
 
     if s:nvimcom_version != a:nvimcomversion
         call RWarningMsg('Mismatch in nvimcom versions: "' . s:nvimcom_version . '" and "' . a:nvimcomversion . '"')
-        let s:has_warning = 1
         sleep 1
     endif
 
@@ -1142,7 +1138,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         if has("win32")
             if $RCONSOLE == "0"
                 call RWarningMsg("nvimcom did not save R window ID")
-                let s:has_warning = 1
             endif
         endif
         " Set nvimcom port in nvimclient
@@ -1153,7 +1148,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         endif
     else
         call RWarningMsg("nvimcom is not running")
-        let s:has_warning = 1
     endif
 
     if exists("g:RStudio_cmd")
