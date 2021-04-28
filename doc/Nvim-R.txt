@@ -128,10 +128,8 @@ Main dependencies:~
        include "nvimcom" among the packages to be loaded (see
        |nvimcom-not-loaded|).
 
-     - On Windows, you have to install Rtools to be able to build the package:
-       https://cran.r-project.org/bin/windows/Rtools/
-       You may also have to set the `PATH` environment variable in your
-       |vimrc| (see |Rtools-path|).
+     - On Windows, you have to install Rtools40 to be able to build the
+       package: https://cran.r-project.org/bin/windows/Rtools/
 
 
 Additional dependencies for editing Rnoweb documents:~
@@ -241,7 +239,9 @@ Finally, run the command `:RDebugInfo` after <LocalLeader>rf and check the
 path where nvimcom was installed.
 
 On Windows, nvimcom compilation will fail if your `.Rprofile` outputs anything
-during R Startup.
+during R Startup. It will also fail with a message about `--slave` not being a
+`gcc` option if either `make.exe` or `gcc.exe` from RTools40 are not the first
+ones found in your systems's `PATH` (see |R_path| and |Rtools-path|).
 
 
 ------------------------------------------------------------------------------
@@ -1238,7 +1238,7 @@ If R cannot find either `make` or `gcc` while trying to compile nvimcom, you
 should add their directories to the beginning of the `PATH` environment
 variable in your |vimrc|:
 >
-   let $PATH = "c:\\rtools40\\usr\\bin;c:\\rtools40\\mingw64\\bin;" . $PATH
+   let $PATH = "C:\\rtools40\\mingw64\\bin;C:\\rtools40\\usr\\bin;" . $PATH
 <
 By default, Nvim-R will save the positions of R Console and Vim windows
 when you quit R with the <LocalLeader>rq command, and it will restore the
@@ -1451,9 +1451,9 @@ You can set the path to a different R version for specific R scripts in your
 The `R_path` variable can also be prefixed to the `PATH` environment variable.
 So, it can include more than one directory separated by a `;` on Windows or a
 `:` on other systems. This is specially important to include the path to
-RTools `bin` directory on Windows. Example:
+RTools `bin` directories on Windows. Example:
 >
-   let R_path = 'c:\rtools40\usr\bin;C:\rtools40\mingw64\bin;C:\Program Files\R\R-4.0.1\bin\x64'
+   let R_path = 'C:\rtools40\mingw64\bin;C:\rtools40\usr\bin;C:\Program Files\R\R-4.0.1\bin\x64'
 <
 By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
 Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim

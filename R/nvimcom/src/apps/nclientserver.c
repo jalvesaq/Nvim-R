@@ -792,8 +792,8 @@ char *read_pkg_descr(const char *pkgnm, const char *version)
     snprintf(b, 511, "%s/descr_%s_%s", compldir, pkgnm, version);
 
     d = read_file(b);
-    s = d;
-    if (s) {
+    if (d) {
+        s = d;
         while(*s != '\t' && *s != 0)
             s++;
         *s = 0;
@@ -1713,8 +1713,8 @@ void complete(const char *base, const char *funcnm)
                     p = str_cat(p, t);
                 t = strtok(NULL, "\n");
             }
+            free(s);
         }
-        free(s);
         if(base[0] == 0){
             // base will be empty if completing only function arguments
             printf("call SetComplMenu([%s])\n", compl_buffer);

@@ -513,21 +513,6 @@ function IsSendCmdToRFake()
     return 0
 endfunction
 
-function ShowRSysLog(slog, fname, msg)
-    let logl = split(a:slog, "\n")
-    exe len(logl) . "split " . a:fname
-    setlocal buftype=nofile
-    setlocal noswapfile
-    call setline(1, logl)
-    set nomodified
-    redraw
-    call RWarningMsg(a:msg)
-    if has("win32")
-        call UnsetRHome()
-    endif
-    sleep 1
-endfunction
-
 function RSetDefaultPkg()
     if $R_DEFAULT_PACKAGES == ""
         let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
@@ -684,6 +669,9 @@ function CheckNvimcomVersion()
         let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
         if v:shell_error
             call RWarningMsg(g:rplugin.debug_info['.libPaths()'])
+            if has("win32")
+                call SetRHome()
+            endif
             return 0
         endif
         let libpaths = readfile(g:rplugin.tmpdir . "/libpaths")
@@ -786,7 +774,7 @@ function RBuildExit(...)
         endif
         call delete(g:rplugin.tmpdir . "nvimcom_" . s:required_nvimcom . ".tar.gz")
     endif
-    let g:rplugin.debug_info["RBuildOut"] = join(s:RBout, "\n")
+    "let g:rplugin.debug_info["RBuildOut"] = join(s:RBout, "\n")
     let g:rplugin.debug_info["RBuildErr"] = join(s:RBerr, "\n")
 endfunction
 

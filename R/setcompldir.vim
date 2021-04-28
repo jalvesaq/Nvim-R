@@ -51,9 +51,6 @@ else
     let g:rplugin.compldir = g:rplugin.uservimfiles . "/R/objlist/"
 endif
 
-" For compatibility with ncm-R:
-let g:rplugin_compldir = g:rplugin.compldir
-
 " Create the directory if it doesn't exist yet
 if !isdirectory(g:rplugin.compldir)
     call mkdir(g:rplugin.compldir, "p")

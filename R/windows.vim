@@ -19,11 +19,15 @@ if exists('g:R_path')
     unlet s:rpath
     unlet s:dir
 else
-    if isdirectory('C:\rtools40\mingw64\bin')
-        let $PATH = 'C:\rtools40\mingw64\bin;' . $PATH
-    endif
-    if isdirectory('C:\rtools40\usr\bin')
+    if isdirectory($RTOOLS40_HOME . '\usr\bin')
+        let $PATH = $RTOOLS40_HOME . '\usr\bin;' . $PATH
+    elseif isdirectory('C:\rtools40\usr\bin')
         let $PATH = 'C:\rtools40\usr\bin;' . $PATH
+    endif
+    if isdirectory($RTOOLS40_HOME . '\mingw64\bin\')
+        let $PATH = $RTOOLS40_HOME . '\mingw64\bin;' . $PATH
+    elseif isdirectory('C:\rtools40\mingw64\bin')
+        let $PATH = 'C:\rtools40\mingw64\bin;' . $PATH
     endif
 
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
