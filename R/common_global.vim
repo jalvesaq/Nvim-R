@@ -662,8 +662,12 @@ function CheckNvimcomVersion()
         if has("win32")
             call SetRHome()
             let cmpldir = substitute(g:rplugin.compldir, '\\', '/', 'g')
+            let shellcmd = 'cmd'
+            let scrptnm = 'cmds.bat'
         else
             let cmpldir = g:rplugin.compldir
+            let shellcmd = 'sh'
+            let scrptnm = 'cmds.sh'
         endif
 
         " The user libs directory may not exist yet if R was just upgraded
@@ -699,57 +703,88 @@ function CheckNvimcomVersion()
         call delete(g:rplugin.tmpdir . "/libpaths")
 
         echo "Updating nvimcom... "
+
         if !exists("g:R_remote_tmpdir")
-            let g:rplugin.debug_info['CMD_build'] = system(g:rplugin.Rcmd . ' CMD build "' . g:rplugin.home . '/R/nvimcom"')
+            let cmds = [g:rplugin.Rcmd . ' CMD build "' . g:rplugin.home . '/R/nvimcom"']
         else
-            call system('cp -R "' . g:rplugin.home . '/R/nvimcom" .')
-            let g:rplugin.debug_info['CMD_build'] = system(g:rplugin.Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"')
-            call system('rm -rf "' . g:R_tmpdir . '/nvimcom"')
+            let cmds =['cp -R "' . g:rplugin.home . '/R/nvimcom" .',
+                        \ g:rplugin.Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"',
+                        \ 'rm -rf "' . g:R_tmpdir . '/nvimcom"']
         endif
-        if v:shell_error
-            call ShowRSysLog(g:rplugin.debug_info['CMD_build'], "Error_building_nvimcom", "Failed to build nvimcom")
-            return 0
+        if has("win32")
+            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . required_nvimcom . ".tar.gz"]
         else
-            if has("win32")
-                let g:rplugin.debug_info['CMD_INSTALL'] = system(g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . required_nvimcom . ".tar.gz")
-            else
-                let g:rplugin.debug_info['CMD_INSTALL'] = system(g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . required_nvimcom . ".tar.gz")
-            endif
-            if v:shell_error
-                if filereadable(expand("~/.R/Makevars"))
-                    call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
-                else
-                    call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom")
-                endif
-                call delete("nvimcom_" . required_nvimcom . ".tar.gz")
-                return 0
-            else
-                call delete("nvimcom_" . required_nvimcom . ".tar.gz")
-                let rcode = ['cat(installed.packages()["nvimcom", c("Version", "LibPath", "Built")], sep = "\n", file = "' . cmpldir . '/nvimcom_info")']
-                call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_info.R')
-                let g:rplugin.debug_info['Get_nvimcom_version'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_info.R"')
-                if v:shell_error
-                    call ShowRSysLog(g:rplugin.debug_info['Get_nvimcom_version'], "Error_getting_nvimcom_version", "Failed to get nvimcom version")
-                    call delete(g:rplugin.tmpdir . '/nvimcom_info.R')
-                    return 0
-                else
-                    call delete(g:rplugin.tmpdir . '/nvimcom_info.R')
-                    let info = readfile(g:rplugin.compldir . '/nvimcom_info')
-                    let s:nvimcom_version = info[0]
-                    let s:nvimcom_home = info[1]
-                    let s:ncs_path = FindNCSpath(info[1])
-                    let s:R_version = info[2]
-                    echon "OK!"
-                endif
-            endif
+            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . required_nvimcom . ".tar.gz"]
         endif
+        let cmds += ["rm nvimcom_" . required_nvimcom . ".tar.gz",
+                    \ g:rplugin.Rcmd . " --no-restore --no-save --slave -e '" .
+                    \ 'cat(installed.packages()["nvimcom", c("Version", "LibPath", "Built")], sep = "\n", file = "' . cmpldir . '/nvimcom_info")' . "'"]
+
+        call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)
+
+        if has('nvim')
+            let jobh = {'on_stdout': function('RBuildStdout'),
+                        \ 'on_stderr': function('RBuildStderr'),
+                        \ 'on_exit': function('RBuildExit')}
+        else
+            let jobh = {'out_cb':  'RBuildStdout',
+                        \ 'err_cb':  'RBuildStderr',
+                        \ 'exit_cb': 'RBuildExit'}
+        endif
+        let g:rplugin.jobs["Build_R"] = StartJob([shellcmd, g:rplugin.tmpdir . '/' . scrptnm], jobh)
+
         if has("win32")
             call UnsetRHome()
         endif
         silent cd -
+    else
+        call StartNClientServer()
     endif
-    return 1
 endfunction
+
+let s:RBout = []
+function RBuildStdout(...)
+    if has('nvim')
+        let s:RBout += [substitute(join(a:2), '\n', '', 'g')]
+    else
+        let s:RBout += [substitute(a:2, '\n', '', 'g')]
+    endif
+endfunction
+
+let s:RBerr = []
+function RBuildStderr(...)
+    if has('nvim')
+        let s:RBerr += [substitute(join(a:2), '\r', '', 'g')]
+    else
+        let s:RBerr += [substitute(a:2, '\r', '', 'g')]
+    endif
+endfunction
+
+function RBuildExit(...)
+    if a:2 == 0 && filereadable(g:rplugin.compldir . '/nvimcom_info')
+        let info = readfile(g:rplugin.compldir . '/nvimcom_info')
+        let s:nvimcom_version = info[0]
+        let s:nvimcom_home = info[1]
+        let s:ncs_path = FindNCSpath(info[1])
+        let s:R_version = info[2]
+        echon "OK!"
+        call StartNClientServer()
+    else
+        echon "ERROR!"
+        " if v:shell_error
+        "     if filereadable(expand("~/.R/Makevars"))
+        "         call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom. Please, check your '~/.R/Makevars'.")
+        "     else
+        "         call ShowRSysLog(g:rplugin.debug_info['CMD_INSTALL'], "Error_installing_nvimcom", "Failed to install nvimcom")
+        "     endif
+        "     call delete("nvimcom_" . required_nvimcom . ".tar.gz")
+        "     return 0
+        " endif
+    endif
+    let g:rplugin.debug_info["RBuildOut"] = join(s:RBout, "\n")
+    let g:rplugin.debug_info["RBuildErr"] = join(s:RBerr, "\n")
+endfunction
+
 
 function NclientserverInfo(info)
     echo a:info
@@ -4296,9 +4331,7 @@ endif
 let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
 
 function GlobalRInit(...)
-    if CheckNvimcomVersion()
-        call StartNClientServer()
-    endif
+    call CheckNvimcomVersion()
 endfunction
 
 function PreGlobalRealInit()
