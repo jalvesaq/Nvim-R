@@ -948,13 +948,15 @@ static void fake_libnames(const char *s)
         build_omnils();
         snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
         char *lnames = read_file(b);
-        snprintf(b, 512, "%s/last_default_libnames", compldir);
-        FILE *f = fopen(b, "w");
-        if(f){
-           fwrite(lnames, sizeof(char), strlen(lnames), f);
-           fclose(f);
+        if (lnames) {
+            snprintf(b, 512, "%s/last_default_libnames", compldir);
+            FILE *f = fopen(b, "w");
+            if(f){
+                fwrite(lnames, sizeof(char), strlen(lnames), f);
+                fclose(f);
+            }
+            free(lnames);
         }
-        free(lnames);
     }
 }
 
