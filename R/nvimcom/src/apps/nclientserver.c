@@ -921,18 +921,28 @@ static void finish_bo()
 
 static int run_R_code(const char *s)
 {
+    char b[1024];
+    char fnm[512];
     int stt;
-#ifdef WIN32
-    stt = WinExec(s, SW_HIDE);
-    if (stt == 0)
-        stt = 1;
-    if (stt > 31)
-        stt = 0;
-#else
-    stt = system(s);
-#endif
 
-    if (stt != 0) {
+    snprintf(fnm, 511, "%s/bo_code.R", tmpdir);
+    FILE *f = fopen(fnm, "w");
+    if (f) {
+	fwrite(s, sizeof(char), strlen(s), f);
+	fclose(f);
+    } else {
+        fprintf(stderr, "Failed to write \"%s/bo_code.R\"\n", fnm);
+        return 1;
+    }
+
+    snprintf(b, 1023, "R --quiet --vanilla --no-echo --slave -f \"%s/bo_code.R\" > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
+
+#ifdef WIN32
+    // system() pops up the cmd window
+    if ((stt = WinExec(b, SW_HIDE)) < 32) {
+#else
+    if ((stt = system(b)) != 0) {
+#endif
         printf("call ShowBuildOmnilsError()\n");
         fflush(stdout);
     }
@@ -942,7 +952,7 @@ static int run_R_code(const char *s)
 static void fake_libnames(const char *s)
 {
     char b[2048];
-    snprintf(b, 1500, "R --quiet --vanilla --no-echo --slave -e 'nms <- c(%s); pkgs <- installed.packages(); nms <- nms[nms %%in%% rownames(pkgs)]; cat(paste(nms, installed.packages()[nms, \"Built\"], collapse = \"\\n\", sep = \"_\"), \"\\n\", sep = \"\", file = \"%s/libnames_%s\")' >\"%s/run_R_stdout\" 2>\"%s/run_R_stderr\"", s, tmpdir, getenv("NVIMR_ID"), tmpdir, tmpdir);
+    snprintf(b, 1500, "nms <- c(%s)\npkgs <- installed.packages()\nnms <- nms[nms %%in%% rownames(pkgs)]\ncat(paste(nms, installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
     if (run_R_code(b) == 0){
         update_pkg_list();
         build_omnils();
@@ -975,22 +985,21 @@ static void build_omnils()
 
     PkgData *pkg = pkgList;
 
-    p = str_cat(p, "R --quiet --vanilla --no-echo --slave -e 'library(\"nvimcom\"); nvimcom:::nvim.buildomnils(c(");
+    p = str_cat(p, "library('nvimcom'); nvimcom:::nvim.buildomnils(c(");
     int k = 0;
     while (pkg) {
         if (pkg->built == 0) {
             if (k == 0)
-                snprintf(buf, 63, "\"%s\"", pkg->name);
+                snprintf(buf, 63, "'%s'", pkg->name);
             else
-                snprintf(buf, 63, ", \"%s\"", pkg->name);
+                snprintf(buf, 63, ", '%s'", pkg->name);
             p = str_cat(p, buf);
             pkg->built = 1;
             k++;
         }
         pkg = pkg->next;
     }
-    snprintf(buf, 1023, "))' >\"%s/run_R_stdout\" 2>\"%s/run_R_stderr\"", tmpdir, tmpdir);
-    p = str_cat(p, buf);
+    p = str_cat(p, "))");
 
     if(k == 0){
         finish_bo();

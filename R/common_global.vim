@@ -709,6 +709,7 @@ function CheckNvimcomVersion()
 
         call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)
         call AddForDeletion(g:rplugin.tmpdir . '/' .  scrptnm)
+        let g:rplugin.debug_info["Build_cmds"] = join(cmds, "\n")
 
         if has('nvim')
             let jobh = {'on_stdout': function('RBuildStdout'),
@@ -1275,8 +1276,9 @@ function RSetMyPort(p)
     if !isdirectory(g:rplugin.tmpdir)
         call mkdir(g:rplugin.tmpdir, "p", 0700)
     endif
-    let pkgs = '"' . substitute(g:R_start_libs, ',', '", "', 'g') . '"'
+    let pkgs = "'" . substitute(g:R_start_libs, ",", "', '", "g") . "'"
     call JobStdin(g:rplugin.jobs["ClientServer"], "35" . pkgs . "\n")
+    "call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
 endfunction
 
 " No support for break points
@@ -4318,7 +4320,11 @@ if len(s:ff) > 1
         set nomodified
         redraw
     endfunction
-    autocmd VimEnter * call WarnDupNvimR()
+    if v:vim_did_enter
+        call WarnDupNvimR()
+    else
+        autocmd VimEnter * call WarnDupNvimR()
+    endif
 endif
 unlet s:ff
 
