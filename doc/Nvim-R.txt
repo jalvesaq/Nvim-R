@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.15.1
+Version: 0.9.16
 For Neovim >= 0.4.3 and Vim >= 8.1.1705
 
  1. Overview                                    |Nvim-R-overview|
@@ -3179,7 +3179,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
-0.9.15.1 (2021-04-22)
+0.9.16 (2021-04-29)
 
  * Minor bug fixes.
  * New options: R_omni_size and R_omni_tmp_file.
