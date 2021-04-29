@@ -23,7 +23,6 @@ HWND RConsole = NULL;
 #include <sys/time.h>
 #endif
 
-static FILE *F2;
 static char strL[8];
 static char strT[8];
 static int OpenDF;
@@ -51,9 +50,10 @@ void update_pkg_list();
 void update_glblenv_buffer();
 static void build_omnils();
 
+// Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
-    char *key;
-    int status;
+    char *key;  // Name of the object or library. Library names are prefixed with "package:"
+    int status; // 0: closed; 1: open
     struct liststatus_ *left;
     struct liststatus_ *right;
 } ListStatus;
@@ -65,14 +65,17 @@ typedef struct name_list_ {
 
 static ListStatus *listTree = NULL;
 
+// Store information from an R library
 typedef struct pkg_data_ {
-    char *name;
-    char *version;
-    char *descr;
-    char *omnils;
-    int nobjs;
-    int loaded;
-    int built;
+    char *name;      // the package name
+    char *version;   // the package version number
+    char *fname;     // omnils_ file name in the compldir
+    char *descr;     // the package short description
+    char *omnils;    // a copy of the omnils_ file
+    int nobjs;       // number of objects in the omnils_
+    int loaded;      // in libnames_
+    time_t to_build; // name sent to build list
+    int built;       // omnils_ found
     struct pkg_data_ *next;
 } PkgData;
 
@@ -94,7 +97,8 @@ static pthread_t Tid;
 static char myport[128];
 #endif
 
-/*static void Log(const char *fmt, ...)
+/*
+static void Log(const char *fmt, ...)
 {
     va_list argptr;
     FILE *f = fopen("/tmp/nclientserver_log", "a");
@@ -103,7 +107,8 @@ static char myport[128];
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}*/
+}
+*/
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -801,21 +806,13 @@ char *read_pkg_descr(const char *pkgnm, const char *version)
     return d;
 }
 
-char *get_cached_omnils(const char *nm, const char *vrsn, int *size)
-{
-    char fnm[512];
-    snprintf(fnm, 511, "%s/omnils_%s_%s", compldir, nm, vrsn);
-    return read_omnils_file(fnm, size);
-}
-
 void pkg_delete(PkgData *pd)
 {
     free(pd->name);
     free(pd->version);
+    free(pd->fname);
     if(pd->descr)
         free(pd->descr);
-    if (pd->version)
-        free(pd->version);
     if(pd->omnils)
         free(pd->omnils);
     free(pd);
@@ -825,7 +822,7 @@ void load_pkg_data(PkgData *pd, int verbose)
 {
     int size;
     pd->descr = read_pkg_descr(pd->name, pd->version);
-    pd->omnils = get_cached_omnils(pd->name, pd->version, &size);
+    pd->omnils = read_omnils_file(pd->fname, &size);
     pd->nobjs = 0;
     if(pd->omnils){
         pd->loaded = 1;
@@ -847,9 +844,12 @@ PkgData *new_pkg_data(const char *nm, const char *vrsn, int verbose)
     strcpy(pd->version, vrsn);
     pd->loaded = 1;
 
+    snprintf(buf, 1023, "%s/omnils_%s_%s", compldir, nm, vrsn);
+    pd->fname = malloc((strlen(buf)+1) * sizeof(char));
+    strcpy(pd->fname, buf);
+
     // Check if both fun_ and omnils_ exist
     pd->built = 1;
-    snprintf(buf, 1023, "%s/fun_%s_%s", compldir, nm, vrsn);
     if (access(buf, F_OK) != 0) {
         pd->built = 0;
     } else {
@@ -882,43 +882,7 @@ void add_pkg(const char *nm, const char *vrsn, int verbose)
     pkgList->next = tmp;
 }
 
-static void finish_bo()
-{
-    PkgData *pkg = pkgList;
-    while (pkg) {
-        if (pkg->built && !pkg->omnils)
-            load_pkg_data(pkg, 1);
-        pkg = pkg->next;
-    }
-
-    building_omnils = 0;
-    if (more_to_build) {
-        more_to_build = 0;
-        build_omnils();
-    } else {
-
-        // Create a list of built omnils_ because libnames_ might have
-        // already changed and Nvim-R would try to read omnils_ files not
-        // built yet.
-        char buf[512];
-        snprintf(buf, 511, "%s/libs_in_ncs", tmpdir);
-        FILE *f = fopen(buf, "w");
-        if (f) {
-            pkg = pkgList;
-            while (pkg) {
-                if (pkg->loaded && pkg->built && pkg->omnils)
-                    fprintf(f, "%s_%s\n", pkg->name, pkg->version);
-                pkg = pkg->next;
-            }
-            fclose(f);
-        }
-
-        // Message to Neovim: Update syntax and Rhelp_list
-        printf("call UpdateSynRhlist()\n");
-        fflush(stdout);
-    }
-}
-
+// Get a string with R code, save it in a file and source the file with R.
 static int run_R_code(const char *s)
 {
     char b[1024];
@@ -956,6 +920,8 @@ static int run_R_code(const char *s)
 #endif
 }
 
+// Build the fun_ and omnils_ files required for syntax highlighting and omni
+// completion before starting R. This function is called by Nvim-R
 static void fake_libnames(const char *s)
 {
     char b[2048];
@@ -977,8 +943,11 @@ static void fake_libnames(const char *s)
     }
 }
 
+// Read the list of libraries loaded in R, and run another R instance to build
+// the omnils_, fun_ and descr_ files in compldir.
 static void build_omnils()
 {
+    //Log("building_omnils: %d %d", building_omnils, more_to_build);
     if (building_omnils) {
         more_to_build = 1;
         return;
@@ -992,30 +961,67 @@ static void build_omnils()
 
     PkgData *pkg = pkgList;
 
+    // It would be easir to call R once for each library, but we will build
+    // all cache files at once to avoid the cost of starting R many times.
     p = str_cat(p, "library('nvimcom'); nvimcom:::nvim.buildomnils(c(");
     int k = 0;
     while (pkg) {
-        if (pkg->built == 0) {
+        if (pkg->to_build == 0) {
             if (k == 0)
                 snprintf(buf, 63, "'%s'", pkg->name);
             else
                 snprintf(buf, 63, ", '%s'", pkg->name);
             p = str_cat(p, buf);
-            pkg->built = 1;
+            time(&pkg->to_build);
             k++;
         }
         pkg = pkg->next;
     }
     p = str_cat(p, "))");
 
-    if(k == 0){
-        finish_bo();
+    if(k)
+        run_R_code(compl_buffer);
+
+
+    // Check if all files were really built before trying to load them.
+    int all_built = 1;
+    pkg = pkgList;
+    while (pkg) {
+        //Log("check_all_built: [%d %d] {%d} %s (%lu)", pkg->loaded, pkg->built, access(pkg->fname, F_OK), pkg->name, pkg->to_build);
+        if (pkg->built == 0 && access(pkg->fname, F_OK) == 0)
+            pkg->built = 1;
+        if (pkg->built && !pkg->omnils)
+            load_pkg_data(pkg, 1);
+        pkg = pkg->next;
+    }
+
+    // If this function was called while it was running, build the remaining cache
+    // files before saving the list of libraries whose cache files were built.
+    building_omnils = 0;
+    if (more_to_build) {
+        more_to_build = 0;
+        build_omnils();
         return;
     }
 
-    run_R_code(compl_buffer);
+    //Log("finish_bo");
+    // Finally create a list of built omnils_ because libnames_ might have
+    // already changed and Nvim-R would try to read omnils_ files not built yet.
+    snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+    FILE *f = fopen(buf, "w");
+    if (f) {
+        PkgData *pkg = pkgList;
+        while (pkg) {
+            if (pkg->loaded && pkg->built && pkg->omnils)
+                fprintf(f, "%s_%s\n", pkg->name, pkg->version);
+            pkg = pkg->next;
+        }
+        fclose(f);
+    }
 
-    finish_bo();
+    // Message to Neovim: Update both syntax and Rhelp_list
+    printf("call UpdateSynRhlist()\n");
+    fflush(stdout);
 }
 
 void update_pkg_list()
@@ -1144,7 +1150,7 @@ void toggle_list_status(ListStatus *root, const char *s)
         p->status = !p->status;
 }
 
-static const char *write_ob_line(const char *p, const char *bs, char *prfx, int closeddf)
+static const char *write_ob_line(const char *p, const char *bs, char *prfx, int closeddf, FILE *fl)
 {
     char base1[128];
     char base2[128];
@@ -1203,9 +1209,9 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
 
     if(!(bsnm[0] == '.' && allnames == 0)){
         if(f[1][0] == '\003')
-            fprintf(F2, "   %s(#%s\t%s\n", prfx, f[0], descr);
+            fprintf(fl, "   %s(#%s\t%s\n", prfx, f[0], descr);
         else
-            fprintf(F2, "   %s%c#%s\t%s\n", prfx, f[1][0], f[0], descr);
+            fprintf(fl, "   %s%c#%s\t%s\n", prfx, f[1][0], f[0], descr);
     }
 
     if(*p == 0)
@@ -1289,9 +1295,9 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
 
             if(*p){
                 if(str_here(p, base1))
-                    p = write_ob_line(p, base1, prefix, 0);
+                    p = write_ob_line(p, base1, prefix, 0, fl);
                 else
-                    p = write_ob_line(p, bsnm, prefix, 0);
+                    p = write_ob_line(p, bsnm, prefix, 0, fl);
             }
         }
     }
@@ -1362,20 +1368,20 @@ void omni2ob()
     if(!glbnv_buffer)
         return;
 
-    F2 = fopen(globenv, "w");
-    if(!F2){
+    FILE *f = fopen(globenv, "w");
+    if(!f){
         fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
         fflush(stderr);
         return;
     }
 
-    fprintf(F2, ".GlobalEnv | Libraries\n\n");
+    fprintf(f, ".GlobalEnv | Libraries\n\n");
 
     const char *s = glbnv_buffer;
     while(*s)
-        s = write_ob_line(s, "", "", 0);
+        s = write_ob_line(s, "", "", 0, f);
 
-    fclose(F2);
+    fclose(f);
     if(auto_obbr){
         fputs("call UpdateOB('GlobalEnv')\n", stdout);
         fflush(stdout);
@@ -1384,13 +1390,13 @@ void omni2ob()
 
 void lib2ob()
 {
-    F2 = fopen(liblist, "w");
-    if(!F2){
+    FILE *f = fopen(liblist, "w");
+    if(!f){
         fprintf(stderr, "Failed to open \"%s\"\n", liblist);
         fflush(stderr);
         return;
     }
-    fprintf(F2, "Libraries | .GlobalEnv\n\n");
+    fprintf(f, "Libraries | .GlobalEnv\n\n");
 
     char lbnmc[512];
     PkgData *pkg;
@@ -1401,9 +1407,9 @@ void lib2ob()
     while(pkg){
         if(pkg->loaded){
             if(pkg->descr)
-                fprintf(F2, "   :#%s\t%s\n", pkg->name, pkg->descr);
+                fprintf(f, "   :#%s\t%s\n", pkg->name, pkg->descr);
             else
-                fprintf(F2, "   :#%s\t\n", pkg->name);
+                fprintf(f, "   :#%s\t\n", pkg->name);
             snprintf(lbnmc, 511, "%s:", pkg->name);
             stt = get_list_status(lbnmc, 0);
             if(pkg->omnils && pkg->nobjs > 0 && stt == 1){
@@ -1411,16 +1417,16 @@ void lib2ob()
                 nLibObjs = pkg->nobjs - 1;
                 while(*p){
                     if(nLibObjs == 0)
-                        p = write_ob_line(p, "", strL, 1);
+                        p = write_ob_line(p, "", strL, 1, f);
                     else
-                        p = write_ob_line(p, "", strT, 1);
+                        p = write_ob_line(p, "", strT, 1, f);
                 }
             }
         }
         pkg = pkg->next;
     }
 
-    fclose(F2);
+    fclose(f);
     fputs("call UpdateOB('libraries')\n", stdout);
     fflush(stdout);
 }

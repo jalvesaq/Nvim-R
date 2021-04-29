@@ -531,11 +531,11 @@ function ShowBuildOmnilsError(stt)
 endfunction
 
 function UpdateSynRhlist()
-    if !filereadable(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+    if !filereadable(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
         return
     endif
 
-    let g:rplugin.libs_in_ncs = readfile(g:rplugin.tmpdir . "/libs_in_ncs")
+    let g:rplugin.libs_in_ncs = readfile(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
     for lib in g:rplugin.libs_in_ncs
         call SourceRFunList(lib)
         call AddToRhelpList(lib)
@@ -689,8 +689,6 @@ function CheckNvimcomVersion()
         call delete(g:rplugin.tmpdir . '/nvimcom_path.R')
         call delete(g:rplugin.tmpdir . "/libpaths")
 
-        echo "Updating nvimcom... "
-
         if !exists("g:R_remote_tmpdir")
             let cmds = [g:rplugin.Rcmd . ' CMD build "' . g:rplugin.home . '/R/nvimcom"']
         else
@@ -762,7 +760,6 @@ function RBuildExit(...)
             let s:ncs_path = FindNCSpath(info[1])
             let s:R_version = info[2]
             call StartNClientServer()
-            echon "OK!"
         else
             call delete(g:rplugin.compldir . '/nvimcom_info')
             call RWarningMsg("ERROR! Please, do :RDebugInfo for details")
@@ -848,8 +845,8 @@ function StartNClientServer()
     if g:R_omni_tmp_file
         let $NVIMR_OMNI_TMP_FILE = "1"
     endif
-    let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    "let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
+    let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
@@ -874,7 +871,7 @@ function StartR(whatr)
                 break
             endif
         endwhile
-        unlet s:starting_ncs
+        let s:starting_ncs = 0
     endif
 
     if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string
@@ -1278,7 +1275,8 @@ function RSetMyPort(p)
     endif
     let pkgs = "'" . substitute(g:R_start_libs, ",", "', '", "g") . "'"
     call JobStdin(g:rplugin.jobs["ClientServer"], "35" . pkgs . "\n")
-    "call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
 endfunction
 
 " No support for break points
