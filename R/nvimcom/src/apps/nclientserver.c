@@ -943,10 +943,17 @@ static int run_R_code(const char *s)
 #else
     if ((stt = system(b)) != 0) {
 #endif
-        printf("call ShowBuildOmnilsError()\n");
+        printf("call ShowBuildOmnilsError('%d')\n", stt);
         fflush(stdout);
     }
+#ifdef WIN32
+    if (stt > 31)
+        return 0;
+    else
+        return 1;
+#else
     return stt;
+#endif
 }
 
 static void fake_libnames(const char *s)
