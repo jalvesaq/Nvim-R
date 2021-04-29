@@ -1,6 +1,6 @@
 \name{nvim.interlace.rnoweb}
 \alias{nvim.interlace.rnoweb}
-\title{Run either Sweave or knit and, then, pdflatex on a Rnoweb file}
+\title{Run either Sweave or knit and, then, pdflatex on an Rnoweb file}
 \description{
   Run the R function Sweave() or knit() and, then, the application pdflatex.
 }

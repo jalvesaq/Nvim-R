@@ -5,7 +5,31 @@ let s:sumatra_in_path = 0
 let g:R_set_home_env = get(g:, "R_set_home_env", 1)
 let g:R_i386 = get(g:, "R_i386", 0)
 
-if !has_key(g:rplugin, "R_path")
+if exists('g:R_path')
+    let s:rpath = split(g:R_path, ';')
+    call map(s:rpath, 'expand(v:val)')
+    call reverse(s:rpath)
+    for s:dir in s:rpath
+        if isdirectory(s:dir)
+            let $PATH = s:dir . ';' . $PATH
+        else
+            call RWarningMsg('"' . s:dir . '" is not a directory. Fix the value of R_path in your vimrc.')
+        endif
+    endfor
+    unlet s:rpath
+    unlet s:dir
+else
+    if isdirectory($RTOOLS40_HOME . '\usr\bin')
+        let $PATH = $RTOOLS40_HOME . '\usr\bin;' . $PATH
+    elseif isdirectory('C:\rtools40\usr\bin')
+        let $PATH = 'C:\rtools40\usr\bin;' . $PATH
+    endif
+    if isdirectory($RTOOLS40_HOME . '\mingw64\bin\')
+        let $PATH = $RTOOLS40_HOME . '\mingw64\bin;' . $PATH
+    elseif isdirectory('C:\rtools40\mingw64\bin')
+        let $PATH = 'C:\rtools40\mingw64\bin;' . $PATH
+    endif
+
     call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
     let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
     let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
@@ -119,6 +143,8 @@ function SendCmdToR_Windows(...)
     call JobStdin(g:rplugin.jobs["ClientServer"], "73" . cmd)
     return 1
 endfunction
+
+call AddForDeletion(g:rplugin.tmpdir . "/run_cmd.bat")
 
 " 2020-05-19
 if exists("g:Rtools_path")

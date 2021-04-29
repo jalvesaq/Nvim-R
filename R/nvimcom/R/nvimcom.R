@@ -43,18 +43,19 @@ NvimcomEnv$pkgdescr <- list()
 
     if(interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != ""){
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
+        nvinf <- installed.packages()["nvimcom", c("Version", "LibPath", "Built")]
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.setwidth")),
-           path.package("nvimcom"),
-           as.character(utils::packageVersion("nvimcom")),
-           paste(paste0(version$major, ".", version$minor),
-                  getOption("OutDec"),
-                  gsub("\n", "#N#", getOption("prompt")),
-                  getOption("continue"),
-                  paste(.packages(), collapse = " "),
-                  sep = "\x02"),
+           nvinf[1],
+           nvinf[2],
+           paste(nvinf[3],
+                 getOption("OutDec"),
+                 gsub("\n", "#N#", getOption("prompt")),
+                 getOption("continue"),
+                 paste(.packages(), collapse = " "),
+                 sep = "\x02"),
            PACKAGE="nvimcom")
     }
     if(!is.na(utils::localeToCharset()[1]) && utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin")

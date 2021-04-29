@@ -16,6 +16,9 @@ nvim.help <- function(topic, w, firstobj, package)
     if(!missing(firstobj) && firstobj != ""){
         objclass <- nvim.getclass(firstobj)
         if(objclass != "#E#" && objclass != ""){
+            saved.warn <- getOption("warn")
+            options(warn = -1)
+            on.exit(options(warn = saved.warn))
             mlen <- try(length(methods(topic)), silent = TRUE)
             if(class(mlen) == "integer" && mlen > 0){
                 for(i in 1:length(objclass)){

@@ -7,7 +7,8 @@
 \alias{NvimR.block}
 \title{Wrapper to base::source}
 \description{
-  Call base::source with the arguments print.eval=TRUE and spaced=FALSE.
+  Call base::source with the arguments \code{print.eval=TRUE} and
+  \code{spaced=FALSE}.
 }
 \usage{
   NvimR.source(..., print.eval = TRUE, spaced = FALSE)
