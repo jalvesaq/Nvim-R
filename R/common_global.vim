@@ -845,8 +845,8 @@ function StartNClientServer()
     if g:R_omni_tmp_file
         let $NVIMR_OMNI_TMP_FILE = "1"
     endif
-    "let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
+    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
