@@ -807,9 +807,9 @@ function StartNClientServer()
 
     if $NVIMR_ID == ""
         if has('nvim')
-            let randstr = system([ncs, 'random'])
+            let randstr = system(['randint2'])
         else
-            let randstr = system(ncs . ' random')
+            let randstr = system('randint2')
         endif
         if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
             call RWarningMsg('Using insecure communication with R due to failure to get random numbers from nclientserver: '
@@ -4315,6 +4315,9 @@ if len(s:ff) > 1
         let msg  += ["", "Please, uninstall one version of Nvim-R.", ""]
         exe len(msg) . "split Warning"
         call setline(1, msg)
+        setlocal bufhidden=wipe
+        setlocal noswapfile
+        set buftype=nofile
         set nomodified
         redraw
     endfunction
