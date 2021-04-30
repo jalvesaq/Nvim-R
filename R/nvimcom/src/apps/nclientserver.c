@@ -388,7 +388,8 @@ static void SendToServer(const char *port, const char *msg)
     else
         a = getaddrinfo("127.0.0.1", port, &hints, &result);
     if (a != 0) {
-        fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n", port, msg, gai_strerror(a));
+        fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n",
+                port, msg, gai_strerror(a));
         fflush(stderr);
         return;
     }
@@ -899,7 +900,9 @@ static int run_R_code(const char *s)
         return 1;
     }
 
-    snprintf(b, 1023, "R --quiet --vanilla --no-echo --slave -f \"%s/bo_code.R\" > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
+    snprintf(b, 1023,
+            "R --quiet --vanilla --no-echo --slave -f \"%s/bo_code.R\""
+            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
 
 #ifdef WIN32
     // system() pops up the cmd window
@@ -909,15 +912,9 @@ static int run_R_code(const char *s)
 #endif
         printf("call ShowBuildOmnilsError('%d')\n", stt);
         fflush(stdout);
-    }
-#ifdef WIN32
-    if (stt > 31)
         return 0;
-    else
-        return 1;
-#else
-    return stt;
-#endif
+    }
+    return 1;
 }
 
 // Build the fun_ and omnils_ files required for syntax highlighting and omni
@@ -925,23 +922,36 @@ static int run_R_code(const char *s)
 static void fake_libnames(const char *s)
 {
     char b[2048];
-    snprintf(b, 1500, "nms <- c(%s)\npkgs <- installed.packages()\nnms <- nms[nms %%in%% rownames(pkgs)]\ncat(paste(nms, installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
-    if (run_R_code(b) == 0){
+    snprintf(b, 1500,
+            "nms <- c(%s)\n"
+            "pkgs <- installed.packages()\n"
+            "nms <- nms[nms %%in%% rownames(pkgs)]\n"
+            "cat(paste(nms, installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
+            "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
+
+    // Don't check the return vale of run_R_code because it's unreliable on Windows
+    run_R_code(b);
+
+    snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    if (access(b, F_OK) == 0) {
         update_pkg_list();
         build_omnils();
-        snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-        char *lnames = read_file(b);
-        if (lnames) {
-            snprintf(b, 512, "%s/last_default_libnames", compldir);
-            FILE *f = fopen(b, "w");
-            if(f){
-                fwrite(lnames, sizeof(char), strlen(lnames), f);
-                fclose(f);
+        snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+        if (access(b, F_OK) == 0) {
+            char *lnames = read_file(b);
+            if (lnames) {
+                snprintf(b, 512, "%s/last_default_libnames", compldir);
+                FILE *f = fopen(b, "w");
+                if(f){
+                    fwrite(lnames, sizeof(char), strlen(lnames), f);
+                    fclose(f);
+                }
+                free(lnames);
             }
-            free(lnames);
         }
     }
 }
+
 
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_, fun_ and descr_ files in compldir.
@@ -963,7 +973,7 @@ static void build_omnils()
 
     // It would be easir to call R once for each library, but we will build
     // all cache files at once to avoid the cost of starting R many times.
-    p = str_cat(p, "library('nvimcom'); nvimcom:::nvim.buildomnils(c(");
+    p = str_cat(p, "library('nvimcom')\nnvimcom:::nvim.buildomnils(c(");
     int k = 0;
     while (pkg) {
         if (pkg->to_build == 0) {
@@ -982,9 +992,10 @@ static void build_omnils()
     if(k)
         run_R_code(compl_buffer);
 
+    // Don't check the return value of run_R_code because some packages might
+    // have been successfully built before R exiting with status > 0.
 
     // Check if all files were really built before trying to load them.
-    int all_built = 1;
     pkg = pkgList;
     while (pkg) {
         //Log("check_all_built: [%d %d] {%d} %s (%lu)", pkg->loaded, pkg->built, access(pkg->fname, F_OK), pkg->name, pkg->to_build);
@@ -1775,28 +1786,21 @@ void complete(const char *base, const char *funcnm)
 
 int main(int argc, char **argv){
 
-    if(argc == 2 && strcmp(argv[1], "random") == 0){
-        time_t t;
-        srand((unsigned) time(&t));
-        printf("%d%d %d%d", rand(), rand(), rand(), rand());
+    char line[1024];
+    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
+        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)",
+                getenv("NVIMR_SECRET"), argv[1], argv[2]);
+        SendToServer(getenv("NVIMR_PORT"), line);
         return 0;
     }
 
-    objbr_setup();
-
     FILE *f;
-
-    char line[1024];
     char *msg;
     char t;
     memset(line, 0, 1024);
     strcpy(NvimcomPort, "0");
 
-    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
-        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)", getenv("NVIMR_SECRET"), argv[1], argv[2]);
-        SendToServer(getenv("NVIMR_PORT"), line);
-        return 0;
-    }
+    objbr_setup();
 
 #ifdef WIN32
     Windows_setup();
