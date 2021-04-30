@@ -401,18 +401,18 @@ static void SendToServer(const char *port, const char *msg)
             continue;
 
         if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1)
-            break;		   /* Success */
+            break;     /* Success */
 
         close(s);
     }
 
-    if (rp == NULL) {		   /* No address succeeded */
+    if (rp == NULL) {     /* No address succeeded */
         fprintf(stderr, "Could not connect.\n");
         fflush(stderr);
         return;
     }
 
-    freeaddrinfo(result);	   /* No longer needed */
+    freeaddrinfo(result);    /* No longer needed */
 
     len = strlen(msg);
     if (write(s, msg, len) != (ssize_t)len) {
@@ -884,37 +884,146 @@ void add_pkg(const char *nm, const char *vrsn, int verbose)
 }
 
 // Get a string with R code, save it in a file and source the file with R.
-static int run_R_code(const char *s)
+static int run_R_code(const char *s, int senderror)
 {
-    char b[1024];
     char fnm[512];
-    int stt;
 
     snprintf(fnm, 511, "%s/bo_code.R", tmpdir);
     FILE *f = fopen(fnm, "w");
     if (f) {
-	fwrite(s, sizeof(char), strlen(s), f);
-	fclose(f);
+        fwrite(s, sizeof(char), strlen(s), f);
+        fclose(f);
     } else {
         fprintf(stderr, "Failed to write \"%s/bo_code.R\"\n", fnm);
         return 1;
     }
 
+#ifdef WIN32
+    char tdir[1024];
+    snprintf(tdir, 1023, "%s", tmpdir);
+    char *p = tdir;
+    while (*p) {
+        if (*p == '/')
+            *p = '\\';
+        p++;
+    }
+
+    // https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
+    SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+
+    HANDLE g_hChildStd_OUT_Rd = NULL;
+    HANDLE g_hChildStd_OUT_Wr = NULL;
+
+    if (! CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
+        fprintf(stderr, "CreatePipe error\n");
+        return 1;
+    }
+
+    // Ensure the read handle to the pipe for STDOUT is not inherited.
+    if (! SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+        fprintf(stderr, "SetHandleInformation error\n");
+        return 1;
+    }
+
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si;
+    BOOL res = FALSE;
+
+    // Set up members of the PROCESS_INFORMATION structure.
+
+    ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+
+    // Set up members of the STARTUPINFO structure.
+    // This structure specifies the STDIN and STDOUT handles for redirection.
+
+    ZeroMemory(&si, sizeof(STARTUPINFO));
+    si.cb = sizeof(STARTUPINFO);
+    si.hStdError = g_hChildStd_OUT_Wr;
+    si.hStdOutput = NULL;
+    si.hStdInput = NULL;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+
+    // Create the child process.
+
+    res = CreateProcess(NULL,
+            "R.exe --quiet --vanilla --no-echo --slave -f bo_code.R",  // Command line
+            NULL,          // process security attributes
+            NULL,          // primary thread security attributes
+            TRUE,          // handles are inherited
+            CREATE_NO_WINDOW,             // creation flags
+            NULL,          // use parent's environment
+            tdir,             // use tmpdir directory
+            &si,  // STARTUPINFO pointer
+            &pi);  // receives PROCESS_INFORMATION
+
+    // If an error occurs, exit the application.
+    if (! res) {
+        fprintf(stderr, "CreateProcess error: %ld\n", GetLastError());
+        fflush(stderr);
+        return 0;
+    }
+
+    DWORD exit_code;
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    GetExitCodeProcess(pi.hProcess, &exit_code);
+
+    // Close handles to the child process and its primary thread.
+    // Some applications might keep these handles to monitor the status
+    // of the child process, for example.
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // Close handle to the stderr pipes no longer needed by the child process.
+    // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+    CloseHandle(g_hChildStd_OUT_Wr);
+
+    // Read output from the child process's pipe for STDOUT
+    // and write to the parent process's pipe in a file.
+    // Stop when there is no more data.
+    DWORD dwRead;
+    char chBuf[1024];
+    res = FALSE;
+
+    snprintf(fnm, 511, "%s\\run_R_stderr", tdir);
+    f = fopen(fnm, "w");
+    for (;;) {
+        res = ReadFile(g_hChildStd_OUT_Rd, chBuf, 1024, &dwRead, NULL);
+        if (!res || dwRead == 0)
+            break;
+        if (f)
+            fwrite(chBuf, sizeof(char), strlen(chBuf), f);
+    }
+    if (f)
+        fclose(f);
+
+    if (exit_code != 0) {
+        if (senderror) {
+            printf("call ShowBuildOmnilsError('%ld')\n", exit_code);
+            fflush(stdout);
+        }
+        return 0;
+    }
+    return 1;
+
+#else
+    char b[1024];
     snprintf(b, 1023,
             "R --quiet --vanilla --no-echo --slave -f \"%s/bo_code.R\""
             " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
 
-#ifdef WIN32
-    // system() pops up the cmd window
-    if ((stt = WinExec(b, SW_HIDE)) < 32) {
-#else
+    int stt;
     if ((stt = system(b)) != 0) {
-#endif
-        printf("call ShowBuildOmnilsError('%d')\n", stt);
-        fflush(stdout);
+        if (senderror) {
+            printf("call ShowBuildOmnilsError('%d')\n", stt);
+            fflush(stdout);
+        }
         return 0;
     }
     return 1;
+#endif
 }
 
 // Build the fun_ and omnils_ files required for syntax highlighting and omni
@@ -929,11 +1038,11 @@ static void fake_libnames(const char *s)
             "cat(paste(nms, installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
             "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
 
-    // Don't check the return vale of run_R_code because it's unreliable on Windows
-    run_R_code(b);
+    int stt = run_R_code(b, 0);
 
+    // Don't rely only in the return vale of run_R_code because it's wrong on Windows
     snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    if (access(b, F_OK) == 0) {
+    if (stt && access(b, F_OK) == 0) {
         update_pkg_list();
         build_omnils();
         snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
@@ -942,16 +1051,17 @@ static void fake_libnames(const char *s)
             if (lnames) {
                 snprintf(b, 512, "%s/last_default_libnames", compldir);
                 FILE *f = fopen(b, "w");
-                if(f){
+                if (f){
                     fwrite(lnames, sizeof(char), strlen(lnames), f);
                     fclose(f);
                 }
                 free(lnames);
             }
         }
+    } else {
+        printf("call ShowBuildOmnilsError('%d')\n", stt);
     }
 }
-
 
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_, fun_ and descr_ files in compldir.
@@ -989,8 +1099,8 @@ static void build_omnils()
     }
     p = str_cat(p, "))");
 
-    if(k)
-        run_R_code(compl_buffer);
+    if (k)
+        run_R_code(compl_buffer, 1);
 
     // Don't check the return value of run_R_code because some packages might
     // have been successfully built before R exiting with status > 0.
@@ -1573,7 +1683,6 @@ void compl_info(const char *wrd, const char *pkg)
                 p = grow_compl_buffer();
                 len = strlen(compl_buffer);
             }
-
 
             p = str_cat(p, "{'cls': '");
             if(f[1][0] == '\003')

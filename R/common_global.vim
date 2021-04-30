@@ -525,9 +525,14 @@ function RSetDefaultPkg()
 endfunction
 
 function ShowBuildOmnilsError(stt)
-    let ferr = readfile(g:rplugin.tmpdir . '/run_R_stderr')
-    let g:rplugin.debug_info['Error running R code'] = 'Exit status: ' . a:stt . "\n" . join(ferr, "\n")
-    call RWarningMsg('Error building omnils_ file. Run :RDebugInfo for details.')
+    if filereadable(g:rplugin.tmpdir . '/run_R_stderr')
+        let ferr = readfile(g:rplugin.tmpdir . '/run_R_stderr')
+        let g:rplugin.debug_info['Error running R code'] = 'Exit status: ' . a:stt . "\n" . join(ferr, "\n")
+        call RWarningMsg('Error building omnils_ file. Run :RDebugInfo for details.')
+        call delete(g:rplugin.tmpdir . '/run_R_stderr')
+    else
+        call RWarningMsg(g:rplugin.tmpdir . '/run_R_stderr not found')
+    endif
 endfunction
 
 function UpdateSynRhlist()
