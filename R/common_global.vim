@@ -675,7 +675,7 @@ function CheckNvimcomVersion()
         if v:shell_error
             call RWarningMsg(g:rplugin.debug_info['.libPaths()'])
             if has("win32")
-                call SetRHome()
+                call UnSetRHome()
             endif
             return 0
         endif
@@ -850,8 +850,14 @@ function StartNClientServer()
     if g:R_omni_tmp_file
         let $NVIMR_OMNI_TMP_FILE = "1"
     endif
+    if has('win32')
+        call SetRHome()
+    endif
     let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
     "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    if has('win32')
+        call UnSetRHome()
+    endif
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
