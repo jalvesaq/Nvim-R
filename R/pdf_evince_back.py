@@ -21,7 +21,7 @@
 
 import dbus, subprocess, time
 import dbus.mainloop.glib, sys, os, signal
-from gi.repository import GObject
+from gi.repository import GLib
 
 RUNNING, CLOSED = range(2)
 
@@ -122,6 +122,6 @@ dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 a = EvinceWindowProxy('file://' + path_output, True)
 
-loop = GObject.MainLoop()
+loop = GLib.MainLoop()
 loop.run()
 

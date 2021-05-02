@@ -1,24 +1,150 @@
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
 
-### Jakson Alves de Aquino
-### Tue, January 18, 2011
+# For building omnls files
+nvim.fix.string <- function(x, sdq = TRUE)
+{
+    x <- gsub("\n", "\\\\n", x)
+    x <- gsub("\r", "\\\\r", x)
+    x <- gsub("\t", "\\\\t", x)
+    x <- gsub("'", "\004", x)
+    if(sdq){
+        x <- gsub('"', '\\\\"', x)
+    } else {
+        x <- sub("^\\s*", "", x)
+        x <- paste(x, collapse = "")
+    }
+    x
+}
 
-# This function writes two files: one with the names of all functions in all
-# packages (either loaded or installed); the other file lists all objects,
-# including function arguments. These files are used by Vim to highlight
-# functions and to complete the names of objects and the arguments of
-# functions.
+# Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
+nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE)
+{
+    frm <- NA
+    funcmeth <- NA
+    if(!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE){
+        saved.warn <- getOption("warn")
+        options(warn = -1)
+        on.exit(options(warn = saved.warn))
+        mlen <- try(length(methods(funcname)), silent = TRUE) # Still get warns
+        if(class(mlen) == "integer" && mlen > 0){
+            for(i in 1:length(objclass)){
+                funcmeth <- paste0(funcname, ".", objclass[i])
+                if(existsFunction(funcmeth)){
+                    funcname <- funcmeth
+                    frm <- formals(funcmeth)
+                    break
+                }
+            }
+        }
+    }
+
+    if(is.null(pkg))
+        pkgname <- find(funcname, mode = "function")
+    else
+        pkgname <- pkg
+
+    if(is.na(frm[1])){
+        if(is.null(pkg)){
+            deffun <- paste0(funcname, ".default")
+            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
+                funcname <- deffun
+                funcmeth <- deffun
+            } else if(!existsFunction(funcname)) {
+                return("")
+            }
+            if(is.primitive(get(funcname)))
+                return(nvim.primitive.args(funcname))
+            else
+                frm <- formals(get(funcname, envir = globalenv()))
+        } else {
+            idx <- grep(paste0(":", pkg, "$"), search())
+            if(length(idx)){
+                ff <- "NULL"
+                tr <- try(ff <- get(paste0(funcname, ".default"), pos = idx), silent = TRUE)
+                if(class(tr)[1] == "try-error")
+                    ff <- get(funcname, pos = idx)
+                frm <- formals(ff)
+            } else {
+                if(!isNamespaceLoaded(pkg))
+                    loadNamespace(pkg)
+                ff <- getAnywhere(funcname)
+                idx <- grep(pkg, ff$where)
+                if(length(idx))
+                    frm <- formals(ff$objs[[idx]])
+            }
+        }
+    }
+
+    if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0){
+        arglist <- gbRd.args2txt(funcname, names(frm))
+        arglist <- lapply(arglist, nvim.fix.string, sdq)
+    }
+
+    res <- NULL
+    for(field in names(frm)){
+        type <- typeof(frm[[field]])
+        if(extrainfo){
+            str1 <- paste0("{'word': '", field)
+            if (type == 'symbol') {
+                str2 <- paste0("', 'menu': ' '")
+            } else if (type == 'character') {
+                str2 <- paste0(" = ', 'menu': '\"", nvim.fix.string(frm[[field]]), "\"'")
+            } else if (type == 'logical' || type == 'double' || type == 'integer') {
+                str2 <- paste0(" = ', 'menu': '", as.character(frm[[field]]), "'")
+            } else if (type == 'NULL') {
+                str2 <- paste0(" = ', 'menu': 'NULL'")
+            } else if (type == 'language') {
+                str2 <- paste0(" = ', 'menu': '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'")
+            } else {
+                str2 <- paste0("', 'menu': ' '")
+            }
+            if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0)
+                res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '", arglist[[field]], "'}}, "))
+            else
+                res <- append(res, paste0(str1, str2, "}, "))
+        } else {
+            if (type == 'symbol') {
+                res <- append(res, paste0("['", field, "'], "))
+            } else if (type == 'character') {
+                res <- append(res, paste0("['", field, "', '\"", nvim.fix.string(frm[[field]]), "\"'], "))
+            } else if (type == 'logical' || type == 'double' || type == 'integer') {
+                res <- append(res, paste0("['", field, "', '", as.character(frm[[field]]), "'], "))
+            } else if (type == 'NULL') {
+                res <- append(res, paste0("['", field, "', '", 'NULL', "'], "))
+            } else if (type == 'language') {
+                res <- append(res, paste0("['", field, "', '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'], "))
+            } else {
+                res <- append(res, paste0("['", field, "'], "))
+                warning(paste0("nvim.args: ", funcname, " [", field, "]", " (typeof = ", type, ")"))
+            }
+        }
+    }
+
+
+    if(!extrainfo)
+        res <- paste0(res, collapse='')
+
+
+    if(length(res) == 0 || res == ""){
+        res <- "[]"
+    } else {
+        if(is.null(pkg)){
+            info <- ""
+            if(length(pkgname) > 1)
+                info <- pkgname[1]
+            if(!is.na(funcmeth)){
+                if(info != "")
+                    info <- paste0(info, ", ")
+                info <- paste0(info, "function:", funcmeth, "()")
+            }
+            # TODO: Add the method name to the completion menu
+            # if(info != "")
+            #    res <- paste0(res, "\x04", info)
+        }
+    }
+
+    return(res)
+}
+
 
 nvim.grepl <- function(pattern, x) {
     res <- grep(pattern, x)
@@ -273,6 +399,7 @@ GetFunDescription <- function(pkg)
         x <- sub("\\\\details\\{.*", "", x)
         x <- CleanOmniLine(x)
         ttl <- sub(".*\\\\title\\{(.*?)\\}.*", "\\1", x)
+        ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
         x <- sub(".*\\\\description\\{", "", x)
 
         # Get the matching bracket
@@ -385,6 +512,10 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     return(invisible(NULL))
 }
 
+# This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
+#   - descr_  : package description for the object browser
+#   - fun_    : function names for syntax highlighting
+#   - omnils_ : data for omni completion and object browser
 nvim.buildomnils <- function(p){
     if(length(p) > 1){
         for(pkg in p)

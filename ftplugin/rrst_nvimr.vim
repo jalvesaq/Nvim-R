@@ -186,6 +186,8 @@ call RCreateMaps('ni',  'REDSendChunk',    'ca', ':call b:SendChunkToR("echo", "
 call RCreateMaps('n',   'RNextRChunk',     'gn', ':call b:NextRChunk()')
 call RCreateMaps('n',   'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
+let g:R_strict_rst = get(g:, "R_strict_rst",         1)
+
 " Menu R
 if has("gui_running")
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/gui_running.vim"

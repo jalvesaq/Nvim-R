@@ -58,11 +58,6 @@ typedef struct liststatus_ {
     struct liststatus_ *right;
 } ListStatus;
 
-typedef struct name_list_ {
-    char *name;
-    struct name_list_ *next;
-} NameList;
-
 static ListStatus *listTree = NULL;
 
 // Store information from an R library
@@ -175,6 +170,8 @@ static void ParseMsg(char *buf)
             update_pkg_list();
             build_omnils();
         }
+
+        // FIXME: Should intercept GlblEnvUpdated(1) too?
 
         if (*b != '+'){
             // Send the command to Nvim-R
@@ -372,7 +369,7 @@ static void SendToServer(const char *port, const char *msg)
 
     /* Obtain address(es) matching host/port */
     if(strncmp(port, "0", 15) == 0){
-        fprintf(stderr, "Port is 0\n");
+        fprintf(stderr, "Is R running?\n");
         fflush(stderr);
         return;
     }
@@ -480,7 +477,7 @@ static void SendToRConsole(char *aString){
         NvimHwnd = GetForegroundWindow();
 
     char msg[512];
-    snprintf(msg, 510, "\005%s%s", getenv("NVIMR_ID"), aString);
+    snprintf(msg, 510, "C%s%s", getenv("NVIMR_ID"), aString);
     SendToServer(NvimcomPort, msg);
     Sleep(0.02);
 
@@ -1067,7 +1064,6 @@ static void fake_libnames(const char *s)
 // the omnils_, fun_ and descr_ files in compldir.
 static void build_omnils()
 {
-    //Log("building_omnils: %d %d", building_omnils, more_to_build);
     if (building_omnils) {
         more_to_build = 1;
         return;
@@ -1108,7 +1104,6 @@ static void build_omnils()
     // Check if all files were really built before trying to load them.
     pkg = pkgList;
     while (pkg) {
-        //Log("check_all_built: [%d %d] {%d} %s (%lu)", pkg->loaded, pkg->built, access(pkg->fname, F_OK), pkg->name, pkg->to_build);
         if (pkg->built == 0 && access(pkg->fname, F_OK) == 0)
             pkg->built = 1;
         if (pkg->built && !pkg->omnils)
@@ -1125,7 +1120,6 @@ static void build_omnils()
         return;
     }
 
-    //Log("finish_bo");
     // Finally create a list of built omnils_ because libnames_ might have
     // already changed and Nvim-R would try to read omnils_ files not built yet.
     snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
@@ -1310,7 +1304,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     else
         df = OpenLS;
 
-    // Remove duplicated single quote (required to transfer data to Vim)
+    // Replace \004 with curly closing single quote
     if(f[1][0] == '\003')
         s = f[5];
     else
@@ -1320,9 +1314,19 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     } else {
         i = 0; j = 0;
         while(s[i] && i < 159){
-            descr[j] = s[i];
-            if(s[i] == '\'' && s[i + 1] == '\'')
-                i++;
+            if(s[i] == '\004'){
+                if(nvimcom_is_utf8){
+                    descr[j] = '\xe2';
+                    j++;
+                    descr[j] = '\x80';
+                    j++;
+                    descr[j] = '\x99';
+                } else {
+                    descr[j] = '\'';
+                }
+            } else {
+                descr[j] = s[i];
+            }
             i++; j++;
         }
         descr[j] = 0;
@@ -1427,39 +1431,23 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
 
 void hi_glbenv_fun()
 {
-    NameList *nmlist = NULL;
-    NameList *nm;
     char *p = glbnv_buffer;
     char *s;
+
+    printf("call UpdateLocalFunctions('");
     while(*p){
         s = p;
         while(*s != 0)
             s++;
         s++;
-        if(*s == '\003'){
-            nm = calloc(1, sizeof(NameList));
-            nm->name = p;
-            nm->next = nmlist;
-            nmlist = nm;
-        }
+        if (*s == '\003')
+            printf("%s ", p);
         while(*p != '\n')
             p++;
         p++;
     }
-
-    if(nmlist){
-        printf("call UpdateLocalFunctions('");
-        while(nmlist){
-            printf("%s", nmlist->name);
-            nm = nmlist;
-            nmlist = nmlist->next;
-            if(nmlist)
-                printf(" ");
-            free(nm);
-        }
-        printf("')\n");
-        fflush(stdout);
-    }
+    printf("')\n");
+    fflush(stdout);
 }
 
 void update_glblenv_buffer()

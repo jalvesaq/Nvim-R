@@ -1,18 +1,192 @@
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
 
-### Jakson Alves de Aquino
+nvim.edit <- function(name, file, title)
+{
+    if(file != "")
+        stop("Feature not implemented. Use nvim to edit files.")
+    if(is.null(name))
+        stop("Feature not implemented. Use nvim to create R objects from scratch.")
 
+    waitf <- paste0(Sys.getenv("NVIMR_TMPDIR"), "/edit_", Sys.getenv("NVIMR_ID"), "_wait")
+    editf <- paste0(Sys.getenv("NVIMR_TMPDIR"), "/edit_", Sys.getenv("NVIMR_ID"))
+    unlink(editf)
+    writeLines(text = "Waiting...", con = waitf)
+
+    initial = paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimcom_edit_", round(runif(1, min = 100, max = 999)))
+    sink(initial)
+    dput(name)
+    sink()
+
+    .C("nvimcom_msg_to_nvim",
+       paste0("EditRObject('", initial, "')"),
+       PACKAGE="nvimcom")
+
+    while(file.exists(waitf))
+        Sys.sleep(1)
+    x <- eval(parse(editf))
+    unlink(initial)
+    unlink(editf)
+    x
+}
+
+vi <- function(name = NULL, file = "")
+{
+    nvim.edit(name, file)
+}
+
+nvim_capture_source_output <- function(s, o)
+{
+    capture.output(base::source(s, echo = TRUE), file = o)
+    .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE="nvimcom")
+}
+
+nvim_dput <- function(oname, howto = "tabnew")
+{
+    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+    eval(parse(text = paste0("dput(", oname, ")")))
+    sink()
+    .C("nvimcom_msg_to_nvim",
+       paste0('ShowRObj("', howto, '", "', oname, '", "r")'),
+       PACKAGE="nvimcom")
+}
+
+nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_viewer = NULL)
+{
+    if(is.data.frame(oname) || is.matrix(oname)){
+        # Only when the rkeyword includes "::"
+        o <- oname
+        oname <- sub("::", "_", deparse(substitute(oname)))
+    } else {
+        oname_split <- unlist(strsplit(oname, "$", fixed = TRUE))
+        oname_split <- unlist(strsplit(oname_split, "[[", fixed = TRUE))
+        oname_split <- unlist(strsplit(oname_split, "]]", fixed = TRUE))
+        ok <- try(o <- get(oname_split[[1]], envir = .GlobalEnv), silent = TRUE)
+        if(length(oname_split) > 1){
+            for (i in 2:length(oname_split)) {
+                oname_integer <- suppressWarnings(o <- as.integer(oname_split[[i]]))
+                if(is.na(oname_integer)){
+                    ok <- try(o <- ok[[oname_split[[i]]]], silent = TRUE)
+                } else {
+                    ok <- try(o <- ok[[oname_integer]], silent = TRUE)
+                }
+            }
+        }
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+    }
+    if(is.data.frame(o) || is.matrix(o)){
+        if(!is.null(nrows)){
+          o <- head(o, n = nrows)
+        }
+        if(!is.null(R_df_viewer)){
+            .C("nvimcom_msg_to_nvim",
+               paste0("g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+        if(getOption("nvimcom.delim") == "\t"){
+            write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                        fileEncoding = fenc,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        } else {
+            write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                        fileEncoding = fenc,
+                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+        }
+        .C("nvimcom_msg_to_nvim", paste0("RViewDF('", oname, "', '", howto, "')"), PACKAGE="nvimcom")
+    } else {
+        nvim_dput(oname, howto)
+    }
+    return(invisible(NULL))
+}
+
+NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE)
+{
+    if (with(R.Version(), paste(major, minor, sep = '.')) >= '3.4.0') {
+        base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval, spaced = spaced)
+    } else {
+        base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval)
+    }
+}
+
+NvimR.selection <- function(..., local = parent.frame()) NvimR.source(..., local = local)
+
+NvimR.paragraph <- function(..., local = parent.frame()) NvimR.source(..., local = local)
+
+NvimR.block <- function(..., local = parent.frame()) NvimR.source(..., local = local)
+
+NvimR.function <- function(..., local = parent.frame()) NvimR.source(..., local = local)
+
+NvimR.chunk <- function(..., local = parent.frame()) NvimR.source(..., local = local)
+
+source.and.clean <- function(f, ...)
+{
+    on.exit(unlink(f))
+    source(f, ...)
+}
+
+nvim_format <- function(l1, l2, wco, sw)
+{
+    if(is.null(getOption("nvimcom.formatfun"))){
+        if("styler" %in% rownames(installed.packages())){
+           options(nvimcom.formatfun = "style_text")
+        } else {
+            if("formatR" %in% rownames(installed.packages())){
+                options(nvimcom.formatfun = "tidy_source")
+            } else {
+                .C("nvimcom_msg_to_nvim",
+                   "RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
+                   PACKAGE="nvimcom")
+                return(invisible(NULL))
+            }
+        }
+    }
+
+    if(getOption("nvimcom.formatfun") == "tidy_source"){
+        ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
+                                       file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
+                                       width.cutoff = wco))
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               "RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+    } else if(getOption("nvimcom.formatfun") == "style_text"){
+        txt <- readLines(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"))
+        ok <- try(styler::style_text(txt, indent_by = sw))
+        if(inherits(ok, "try-error")){
+            .C("nvimcom_msg_to_nvim",
+               "RWarningMsg('Error trying to execute the function styler::style_text()')",
+               PACKAGE="nvimcom")
+            return(invisible(NULL))
+        }
+        writeLines(ok, paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"))
+    }
+
+    .C("nvimcom_msg_to_nvim",
+       paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+       PACKAGE="nvimcom")
+    return(invisible(NULL))
+}
+
+nvim_insert <- function(cmd, howto = "tabnew")
+{
+    try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
+    if(inherits(ok, "try-error")){
+        .C("nvimcom_msg_to_nvim",
+           paste0("RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
+           PACKAGE="nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0('FinishRInsert("', howto, '")'),
+           PACKAGE="nvimcom")
+    }
+    return(invisible(NULL))
+}
 
 ###############################################################################
 # The code of the next four functions were copied from the gbRd package
@@ -134,7 +308,6 @@ gbRd.args2txt <- function(rdo, arglist){
 
 ###############################################################################
 
-
 nvim.primitive.args <- function(x)
 {
     fun <- get(x)
@@ -167,153 +340,6 @@ nvim.get.summary <- function(obj, wdth)
     return(invisible(NULL))
 }
 
-# For building omnls files
-nvim.fix.string <- function(x, sdq = TRUE)
-{
-    x <- gsub("\n", "\\\\n", x)
-    x <- gsub("\r", "\\\\r", x)
-    x <- gsub("\t", "\\\\t", x)
-    x <- gsub("'", "\004", x)
-    if(sdq){
-        x <- gsub('"', '\\\\"', x)
-    } else {
-        x <- sub("^\\s*", "", x)
-        x <- paste(x, collapse = "")
-    }
-    x
-}
-
-# Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE)
-{
-    frm <- NA
-    funcmeth <- NA
-    if(!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE){
-        saved.warn <- getOption("warn")
-        options(warn = -1)
-        on.exit(options(warn = saved.warn))
-        mlen <- try(length(methods(funcname)), silent = TRUE) # Still get warns
-        if(class(mlen) == "integer" && mlen > 0){
-            for(i in 1:length(objclass)){
-                funcmeth <- paste0(funcname, ".", objclass[i])
-                if(existsFunction(funcmeth)){
-                    funcname <- funcmeth
-                    frm <- formals(funcmeth)
-                    break
-                }
-            }
-        }
-    }
-
-    if(is.null(pkg))
-        pkgname <- find(funcname, mode = "function")
-    else
-        pkgname <- pkg
-
-    if(is.na(frm[1])){
-        if(is.null(pkg)){
-            deffun <- paste0(funcname, ".default")
-            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
-                funcname <- deffun
-                funcmeth <- deffun
-            } else if(!existsFunction(funcname)) {
-                return("")
-            }
-            if(is.primitive(get(funcname)))
-                return(nvim.primitive.args(funcname))
-            else
-                frm <- formals(get(funcname, envir = globalenv()))
-        } else {
-            idx <- grep(paste0(":", pkg, "$"), search())
-            if(length(idx)){
-                ff <- "NULL"
-                tr <- try(ff <- get(paste0(funcname, ".default"), pos = idx), silent = TRUE)
-                if(class(tr)[1] == "try-error")
-                    ff <- get(funcname, pos = idx)
-                frm <- formals(ff)
-            } else {
-                if(!isNamespaceLoaded(pkg))
-                    loadNamespace(pkg)
-                ff <- getAnywhere(funcname)
-                idx <- grep(pkg, ff$where)
-                if(length(idx))
-                    frm <- formals(ff$objs[[idx]])
-            }
-        }
-    }
-
-    if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0){
-        arglist <- gbRd.args2txt(funcname, names(frm))
-        arglist <- lapply(arglist, nvim.fix.string, sdq)
-    }
-
-    res <- NULL
-    for(field in names(frm)){
-        type <- typeof(frm[[field]])
-        if(extrainfo){
-            str1 <- paste0("{'word': '", field)
-            if (type == 'symbol') {
-                str2 <- paste0("', 'menu': ' '")
-            } else if (type == 'character') {
-                str2 <- paste0(" = ', 'menu': '\"", nvim.fix.string(frm[[field]]), "\"'")
-            } else if (type == 'logical' || type == 'double' || type == 'integer') {
-                str2 <- paste0(" = ', 'menu': '", as.character(frm[[field]]), "'")
-            } else if (type == 'NULL') {
-                str2 <- paste0(" = ', 'menu': 'NULL'")
-            } else if (type == 'language') {
-                str2 <- paste0(" = ', 'menu': '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'")
-            } else {
-                str2 <- paste0("', 'menu': ' '")
-            }
-            if(pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0)
-                res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '", arglist[[field]], "'}}, "))
-            else
-                res <- append(res, paste0(str1, str2, "}, "))
-        } else {
-            if (type == 'symbol') {
-                res <- append(res, paste0("['", field, "'], "))
-            } else if (type == 'character') {
-                res <- append(res, paste0("['", field, "', '\"", nvim.fix.string(frm[[field]]), "\"'], "))
-            } else if (type == 'logical' || type == 'double' || type == 'integer') {
-                res <- append(res, paste0("['", field, "', '", as.character(frm[[field]]), "'], "))
-            } else if (type == 'NULL') {
-                res <- append(res, paste0("['", field, "', '", 'NULL', "'], "))
-            } else if (type == 'language') {
-                res <- append(res, paste0("['", field, "', '", nvim.fix.string(deparse(frm[[field]]), FALSE), "'], "))
-            } else {
-                res <- append(res, paste0("['", field, "'], "))
-                warning(paste0("nvim.args: ", funcname, " [", field, "]", " (typeof = ", type, ")"))
-            }
-        }
-    }
-
-
-    if(!extrainfo)
-        res <- paste0(res, collapse='')
-
-
-    if(length(res) == 0 || res == ""){
-        res <- "[]"
-    } else {
-        if(is.null(pkg)){
-            info <- ""
-            if(length(pkgname) > 1)
-                info <- pkgname[1]
-            if(!is.na(funcmeth)){
-                if(info != "")
-                    info <- paste0(info, ", ")
-                info <- paste0(info, "function:", funcmeth, "()")
-            }
-            # TODO: Add the method name to the completion menu
-            # if(info != "")
-            #    res <- paste0(res, "\x04", info)
-        }
-    }
-
-    return(res)
-}
-
-
 nvim.list.args <- function(ff){
     saved.warn <- getOption("warn")
     options(warn = -1)
@@ -331,7 +357,6 @@ nvim.list.args <- function(ff){
     }
     print(args(ff))
 }
-
 
 nvim.plot <- function(x)
 {

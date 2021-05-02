@@ -21,7 +21,7 @@
 
 import dbus
 import dbus.mainloop.glib, sys, os
-from gi.repository import GObject
+from gi.repository import GLib
 
 RUNNING, CLOSED = range(2)
 
@@ -108,7 +108,7 @@ class EvinceWindowProxy:
     def SyncView(self, input_file, data):
         if self.status == CLOSED:
             if self.spawn:
-                self._tmp_syncview = [input_file, data, 0];
+                self._tmp_syncview = [input_file, data, 0]
                 self._handler = self._syncview_handler
                 self._get_dbus_name(True)
                 sys.stdout.write("call Evince_Again()")
@@ -140,6 +140,6 @@ def sync_view(ev_window, path_input, line_number):
     ev_window.SyncView(path_input, (line_number, 1))
     loop.quit()
 
-GObject.timeout_add(400, sync_view, a, path_input, line_number)
-loop = GObject.MainLoop()
+GLib.timeout_add(400, sync_view, a, path_input, line_number)
+loop = GLib.MainLoop()
 loop.run()

@@ -28,7 +28,7 @@ function SendCmdToR_Buffer(...)
                 if has("win32")
                     let cmd = "options(width=" . Rwidth . "); ". cmd
                 else
-                    call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . Rwidth . ")")
+                    call SendToNvimcom("E", "options(width=" . Rwidth . ")")
                     sleep 10m
                 endif
             endif
@@ -41,11 +41,7 @@ function SendCmdToR_Buffer(...)
         if !(a:0 == 2 && a:2 == 0)
             let cmd = cmd . "\n"
         endif
-        if exists('*chansend')
-            call chansend(g:rplugin.jobs["R"], cmd)
-        else
-            call jobsend(g:rplugin.jobs["R"], cmd)
-        endif
+        call chansend(g:rplugin.jobs["R"], cmd)
         return 1
     else
         call RWarningMsg("Is R running?")

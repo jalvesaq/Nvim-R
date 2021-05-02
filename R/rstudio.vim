@@ -33,6 +33,6 @@ function SendCmdToRStudio(...)
         call RWarningMsg("Is RStudio running?")
     endif
     let cmd = substitute(a:1, '"', '\\"', "g")
-    call SendToNvimcom("\x08" . $NVIMR_ID . 'sendToConsole("' . cmd . '", execute=TRUE)')
+    call SendToNvimcom("T", 'sendToConsole("' . cmd . '", execute=TRUE)')
     return 1
 endfunction

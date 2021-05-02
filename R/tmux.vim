@@ -1,10 +1,7 @@
 " Check whether Tmux is OK
 if !executable('tmux')
-    if exists("*termopen")
-        let g:R_external_term = 0
-    else
-        call RWarningMsg("tmux executable not found")
-    endif
+    let g:R_external_term = 0
+    call RWarningMsg("tmux executable not found")
     finish
 endif
 
@@ -13,14 +10,14 @@ if system("uname") =~ "OpenBSD"
     let s:tmuxversion = "0.0"
 else
     let s:tmuxversion = system("tmux -V")
-    let s:tmuxversion = substitute(s:tmuxversion, "master", "1.8", "")
-    let s:tmuxversion = substitute(s:tmuxversion, "next", "1.8", "")
+    let s:tmuxversion = substitute(s:tmuxversion, "master", "3.0", "")
+    let s:tmuxversion = substitute(s:tmuxversion, "next", "3.0", "")
     let s:tmuxversion = substitute(s:tmuxversion, '.*tmux \([0-9]\.[0-9]\).*', '\1', '')
     if strlen(s:tmuxversion) != 3
         let s:tmuxversion = "1.0"
     endif
-    if s:tmuxversion < "1.8"
-        call RWarningMsg("Nvim-R requires Tmux >= 1.8")
+    if s:tmuxversion < "3.0"
+        call RWarningMsg("Nvim-R requires Tmux >= 3.0")
         let g:rplugin.failed = 1
         finish
     endif

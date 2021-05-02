@@ -18,8 +18,8 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
     let pdfname = substitute(a:ppath, " ", "%20", "g")
 
     if g:rplugin.evince_loop < 2
-        let g:rplugin.jobs["Python (Evince forward)"] = StartJob(["python",
-                    \ g:rplugin.home . "/R/synctex_evince_forward.py",
+        let g:rplugin.jobs["Python (Evince forward)"] = StartJob([s:py,
+                    \ g:rplugin.home . "/R/pdf_evince_forward.py",
                     \ texname, pdfname, string(a:texln)], g:rplugin.job_handlers)
     else
         let g:rplugin.evince_loop = 0
@@ -45,7 +45,7 @@ function Run_EvinceBackward()
     endif
     if !did_evince
         call add(s:evince_list, pdfpath)
-        let g:rplugin.jobs["Python (Evince backward)"] = StartJob(["python", g:rplugin.home . "/R/synctex_evince_backward.py", pdfpath], g:rplugin.job_handlers)
+        let g:rplugin.jobs["Python (Evince backward)"] = StartJob([s:py, g:rplugin.home . "/R/pdf_evince_back.py", pdfpath], g:rplugin.job_handlers)
     endif
 endfunction
 
@@ -56,3 +56,9 @@ function! Evince_Again()
     let g:rplugin.evince_loop += 1
     call SyncTeX_forward()
 endfunction
+
+if executable('python3')
+    let s:py = 'python3'
+else
+    let s:py = 'python'
+endif

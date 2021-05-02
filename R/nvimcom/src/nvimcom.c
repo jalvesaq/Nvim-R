@@ -850,23 +850,21 @@ static void nvimcom_send_running_info(int bindportn)
 
 static void nvimcom_parse_received_msg(char *buf)
 {
-    char *bbuf;
+    char *p;
 
     if(verbose > 2){
-        bbuf = buf;
-        if(buf[0] < 30)
-            bbuf++;
-        REprintf("nvimcom Received: [%d] %s\n", buf[0], bbuf);
+        p = buf + strlen(getenv("NVIMR_ID")) + 1;
+        REprintf("nvimcom Received: [%c] %s\n", buf[0], p);
     }
 
     switch(buf[0]){
-        case 2:
+        case 'A':
             autoglbenv = 1;
             break;
-        case 3:
+        case 'N':
             autoglbenv = 0;
             break;
-        case 4: // Write GlobalEnvList_
+        case 'G': // Write GlobalEnvList_
 #ifdef WIN32
             if(!r_is_busy)
                 nvimcom_globalenv_list();
@@ -876,43 +874,48 @@ static void nvimcom_parse_received_msg(char *buf)
 #endif
             break;
 #ifdef WIN32
-        case 5:
-            bbuf = buf;
-            bbuf++;
-            if(strstr(bbuf, getenv("NVIMR_ID")) == bbuf){
-                bbuf += strlen(getenv("NVIMR_ID"));
+        case 'C': // Send command to Rgui Console
+            p = buf;
+            p++;
+            if(strstr(p, getenv("NVIMR_ID")) == p){
+                p += strlen(getenv("NVIMR_ID"));
                 r_is_busy = 1;
-                Rconsolecmd(bbuf);
+                Rconsolecmd(p);
             }
             break;
 #endif
-        case 6: // Evaluate lazy object
+        case 'L': // Evaluate lazy object
 #ifdef WIN32
             if(r_is_busy)
                 break;
 #endif
-            bbuf = buf;
-            bbuf++;
+            p = buf;
+            p++;
+            if(strstr(p, getenv("NVIMR_ID")) == p){
+                p += strlen(getenv("NVIMR_ID"));
 #ifdef WIN32
-            char flag_eval[512];
-            snprintf(flag_eval, 510, "%s <- %s", bbuf, bbuf);
-            nvimcom_eval_expr(flag_eval);
-            *flag_eval = 0;
+                char flag_eval[512];
+                snprintf(flag_eval, 510, "%s <- %s", p, p);
+                nvimcom_eval_expr(flag_eval);
+                *flag_eval = 0;
+                nvimcom_globalenv_list();
 #else
-            snprintf(flag_eval, 510, "%s <- %s", bbuf, bbuf);
-            nvimcom_fire();
+                snprintf(flag_eval, 510, "%s <- %s", p, p);
+                flag_glbenv = 1;
+                nvimcom_fire();
 #endif
+            }
             break;
-        case 8: // eval expression
-            bbuf = buf;
-            bbuf++;
-            if(strstr(bbuf, getenv("NVIMR_ID")) == bbuf){
-                bbuf += strlen(getenv("NVIMR_ID"));
+        case 'E': // eval expression
+            p = buf;
+            p++;
+            if(strstr(p, getenv("NVIMR_ID")) == p){
+                p += strlen(getenv("NVIMR_ID"));
 #ifdef WIN32
                 if(!r_is_busy)
-                    nvimcom_eval_expr(bbuf);
+                    nvimcom_eval_expr(p);
 #else
-                strncpy(flag_eval, bbuf, 510);
+                strncpy(flag_eval, p, 510);
                 nvimcom_fire();
 #endif
             } else {
@@ -1107,11 +1110,12 @@ static void nvimcom_server_thread(void *arg)
 #endif
 
 
-void nvimcom_Start(int *vrb, int *anm, int *swd, char **vcv, char **pth, char **rinfo)
+void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, char **vcv, char **pth, char **rinfo)
 {
     verbose = *vrb;
     allnames = *anm;
     setwidth = *swd;
+    autoglbenv = *age;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);

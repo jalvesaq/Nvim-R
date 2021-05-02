@@ -1,15 +1,14 @@
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Support for rGlobEnvFun
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " File types that embed R, such as Rnoweb, require at least one keyword
 " defined immediately
 syn keyword rGlobEnvFun ThisIsADummyGlobEnvFunKeyword
 hi def link rGlobEnvFun  Function
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Only source the remaining of this script once
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 if exists("*SourceRFunList")
     if len(g:rplugin.libs_in_ncs) > 0
         for s:lib in g:rplugin.libs_in_ncs
@@ -26,9 +25,9 @@ if exists("*SourceRFunList")
     finish
 endif
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Set global variables when this script is called for the first time
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 
 if !exists('g:rplugin')
     " Also in common_global.vim
@@ -41,9 +40,9 @@ if !has_key(g:rplugin, "compldir")
 endif
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Function for highlighting rFunction keywords
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 
 " Must be run for each buffer
 function SourceRFunList(lib)
@@ -52,6 +51,10 @@ function SourceRFunList(lib)
     endif
 
     let fnm = g:rplugin.compldir . '/fun_' . a:lib
+
+    if has_key(g:rplugin, "localfun")
+        call UpdateLocalFunctions(g:rplugin.localfun)
+    endif
 
     " Highlight R functions
     if !exists("g:R_hi_fun_paren") || g:R_hi_fun_paren == 0
@@ -72,14 +75,14 @@ function SourceRFunList(lib)
 endfunction
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Function called when nvimcom updates the list of loaded libraries
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 
 function FunHiOtherBf()
     " Syntax highlight other buffers
     if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        if exists("*nvim_buf_set_option")
+        if has("nvim")
             for bId in nvim_list_bufs()
                 call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
             endfor
@@ -91,11 +94,11 @@ function FunHiOtherBf()
 endfunction
 
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 " Source the Syntax scripts for the first time, before the
 " buffer is drawn to include rFunction keywords in r syntax
 " and build the list for completion of :Rhelp
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"==============================================================================
 
 let s:default_libs = []
 if filereadable(g:rplugin.compldir . '/last_default_libnames')

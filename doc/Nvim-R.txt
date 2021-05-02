@@ -996,7 +996,6 @@ of
 |R_openhtml|          Open HTML after processing either Rrst or Rmd
 |R_strict_rst|        Code style for generated rst files
 |R_insert_mode_cmds|  Allow R commands in insert mode
-|R_allnames|          Show names which begin with a dot
 |R_rmhidden|          Remove hidden objects from R workspace
 |R_source|            Source additional scripts
 |R_non_r_compl|       Bibliography completion
@@ -1545,7 +1544,7 @@ you prefer these functions more quickly highlighted, change the value of
    let R_hi_fun_globenv = 2 " Highlight immediately
 <
 If the value of `R_hi_fun_globenv` is 0, it is automatically increased to 1 if
-you either trigger omni completion or open the Object Browser.
+you trigger omni completion.
 
 Functions from environments in the search path are highlighted as functions
 from packages, but in Neovim (not in Vim) you can set a different highlight
@@ -1979,15 +1978,9 @@ See also: |Nvim-R-localleader|.
 
 
 ------------------------------------------------------------------------------
-								  *R_allnames*
 								  *R_rmhidden*
 6.26. Show/remove hidden objects~
 
-Hidden objects are not included in the list of objects for omni completion. If
-you prefer to include them, put in your |vimrc|:
->
-   let g:R_allnames = 1
-<
 Hidden objects are removed from R workspace when you do <LocalLeader>rm. If
 you prefer to remove only visible objects, put in your |vimrc|:
 >
@@ -2331,10 +2324,10 @@ name of the object under the cursor.
 							      *Nvim-R-SyncTeX*
 6.39 SyncTeX support~
 
-SyncTeX is a set of communication systems used by some PDF viewers and by some
-text editors which allow users to jump from a specific line in the text editor
-to the corresponding line in the PDF viewer and vice-versa. The Nvim-R
-has support for the SyncTeX systems of five applications:
+SyncTeX is a communication system used by some PDF viewers and by some text
+editors which allow users to jump from a specific line in the text editor to
+the corresponding line in the PDF viewer and vice-versa. Nvim-R has support
+for SyncTeX in five applications:
 
    Linux:   Zathura, Evince and Okular
    OS X:    Skim
@@ -2347,7 +2340,7 @@ To completely disable SyncTeX support, put in your |vimrc|:
 >
    let R_synctex = 0
 <
-You do not have to do anything special in your Rnoweb document if you are
+You do not have to do anything special in your Rnoweb document, if you are
 using the knitr package, and are editing single file Rnoweb documents.
 Otherwise, keep reading...
 
@@ -2627,16 +2620,8 @@ http://www.r-project.org/Licenses/
 								 *Nvim-R-tips*
 9. FAQ and tips~
 
-9.1. How to start and quit R automatically?~
+9.1. How to quit R automatically?~
 
-If you want that R is started automatically when you start editing an R
-script, you should create in |vimrc| auto commands for each R file type that
-you usually edit. However, you should try to start R only if it is not already
-started. Examples for R and RMarkdown:
->
-   autocmd FileType r if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
-   autocmd FileType rmd if string(g:SendCmdToR) == "function('SendCmdToR_fake')" | call StartR("R") | endif
-<
 And if you want to quit automatically when quiting Vim, put in your |vimrc|
 (replace `"nosave"` with `"save"` if you want to save R's workspace):
 >
@@ -2944,7 +2929,7 @@ document from the beginning.
 								 *rout_colors*
 9.17. Syntax highlight of .Rout files~
 
-You can set the both foreground background colors of R output in your |vimrc|.
+You can set both foreground and background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
 interface of Neovim with 'termguicolors' (see |true-color|):
 >

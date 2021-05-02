@@ -21,7 +21,7 @@ function SendCmdToR_Buffer(...)
                 if has("win32")
                     let cmd = "options(width=" . Rwidth . "); ". cmd
                 else
-                    call SendToNvimcom("\x08" . $NVIMR_ID . "options(width=" . Rwidth . ")")
+                    call SendToNvimcom("E", "options(width=" . Rwidth . ")")
                     sleep 10m
                 endif
             endif

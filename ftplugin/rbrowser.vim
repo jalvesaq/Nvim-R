@@ -68,7 +68,7 @@ function! UpdateOB(what)
     else
         let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     endif
-    if exists("*nvim_buf_set_lines")
+    if has("nvim")
         let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
         call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:true)
         call nvim_buf_set_lines(g:rplugin.ob_buf, 0, nvim_buf_line_count(g:rplugin.ob_buf), 0, fcntt)
@@ -132,7 +132,7 @@ function! RBrowserDoubleClick()
     let curline = getline(".")
     if g:rplugin.curview == "GlobalEnv"
         if curline =~ "&#.*\t"
-            " FIXME: lazy objects must be evaluated before being opened.
+            call SendToNvimcom("L", key)
         elseif curline =~ "\[#.*\t" || curline =~ "\$#.*\t" || curline =~ "<#.*\t" || curline =~ ":#.*\t"
             call JobStdin(g:rplugin.jobs["ClientServer"], "33G" . key . "\n")
         else
@@ -327,7 +327,7 @@ endfunction
 
 function! OnOBBufUnload()
     if g:R_hi_fun_globenv < 2
-        call SendToNvimcom("\003" . $NVIMR_ID)
+        call SendToNvimcom("N", "OnOBBufUnload")
     endif
 endfunction
 

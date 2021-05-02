@@ -75,29 +75,19 @@ function StartZathuraNeovim(fullpath)
 endfunction
 
 function StartZathuraVim(fullpath)
-    let pycode = ["# -*- coding: " . &encoding . " -*-",
-                \ "import subprocess",
-                \ "import os",
-                \ "import sys",
-                \ "FNULL = open(os.devnull, 'w')",
-                \ "a3 = '" . a:fullpath . "'",
-                \ "zpid = subprocess.Popen(['zathura', '--synctex-editor-command', 'nclientserver %{input} %{line}', a3], stdout = FNULL, stderr = FNULL).pid",
-                \ "sys.stdout.write(str(zpid))" ]
-    call writefile(pycode, g:rplugin.tmpdir . "/start_zathura.py")
-    let pid = system("python '" . g:rplugin.tmpdir . "/start_zathura.py" . "'")
-    if pid == 0
-        call RWarningMsg("Failed to run Zathura: " . substitute(pid, "\n", " ", "g"))
+    let jobid = job_start(["zathura",
+                \ "--synctex-editor-command",
+                \ "nclientserver %{input} %{line}", a:fullpath],
+                \ {"stoponexit": "", "err_cb": function('ROnJobStderr')})
+    if job_info(jobid)["status"] == "run"
+        let g:rplugin.jobs["Zathura"] = job_getchannel(jobid)
+        let g:rplugin.zathura_pid[a:fullpath] = job_info(jobid)["process"]
     else
-        let g:rplugin.zathura_pid[a:fullpath] = pid
+        call RWarningMsg("Failed to run Zathura...")
     endif
-    call delete(g:rplugin.tmpdir . "/start_zathura.py")
 endfunction
 
 function RStart_Zathura(fullpath)
-    if g:R_synctex && g:rplugin.nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
-        call StartNClientServer('RStart_Zathura')
-    endif
-
     " Use wmctrl to check if the pdf is already open and get Zathura's PID to
     " close the document and kill Zathura.
     let fname = substitute(a:fullpath, ".*/", "", "")
@@ -120,7 +110,7 @@ function RStart_Zathura(fullpath)
     endif
 
     let $NVIMR_PORT = g:rplugin.myport
-    if exists("*jobpid")
+    if has("nvim")
         call StartZathuraNeovim(a:fullpath)
     else
         call StartZathuraVim(a:fullpath)

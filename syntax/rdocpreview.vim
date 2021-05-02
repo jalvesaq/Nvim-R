@@ -1,6 +1,7 @@
 
 syntax clear
 
+" The regions are delimited by non separable spaces (digraph NS)
 if g:rplugin.compl_cls == 'f'
     runtime syntax/r.vim
     syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'
