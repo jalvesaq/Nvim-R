@@ -946,7 +946,7 @@ static int run_R_code(const char *s, int senderror)
     // Create the child process.
 
     res = CreateProcess(NULL,
-            "R.exe --quiet --vanilla --no-echo --slave -f bo_code.R",  // Command line
+            "R.exe --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",  // Command line
             NULL,          // process security attributes
             NULL,          // primary thread security attributes
             TRUE,          // handles are inherited
@@ -1008,7 +1008,7 @@ static int run_R_code(const char *s, int senderror)
 #else
     char b[1024];
     snprintf(b, 1023,
-            "R --quiet --vanilla --no-echo --slave -f \"%s/bo_code.R\""
+            "R --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
             " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
 
     int stt;
