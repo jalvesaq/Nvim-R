@@ -2570,12 +2570,7 @@ could write custom key bindings in your |vimrc|, as in the examples below:
    nmap <silent> <LocalLeader>rk :call RAction("levels")<CR>
    nmap <silent> <LocalLeader>t :call RAction("tail")<CR>
    nmap <silent> <LocalLeader>H :call RAction("head")<CR>
-   nmap <silent> <LocalLeader>h :call RAction("head", "@,48-57,_,.")<CR>
 <
-The second, and optional, argument that can be passed to RAction is the value
-of 'iskeyword' that will be used to get the word under cursor (see the last
-example above).
-
 If you want an action over an selection, then the second argument must be the
 string `"v"`:
 >

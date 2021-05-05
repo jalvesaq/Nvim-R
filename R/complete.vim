@@ -309,6 +309,7 @@ function SetComplInfo(dctnr)
     " Replace user_data with the complete version
     let s:compl_event['completed_item']['user_data'] = deepcopy(a:dctnr)
 
+    " FIXME: This code should be in nclientserver.
     if a:dctnr['cls'] == 'f'
         let usage = deepcopy(a:dctnr['usage'])
         call map(usage, 'join(v:val, " = ")')
@@ -331,6 +332,7 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
+" FIXME: Should be local to buffer
 autocmd CompleteChanged * call AskForComplInfo()
 autocmd CompleteDone * call OnCompleteDone()
 
@@ -378,7 +380,6 @@ function FindStartRObj()
     let cpos = getpos(".")
     let idx = cpos[2] - 2
     let idx2 = cpos[2] - 2
-    call cursor(lnum, cpos[2] - 1)
     if line[idx2] == ' ' || line[idx2] == ',' || line[idx2] == '('
         let idx2 = cpos[2]
         let s:argkey = ''
@@ -457,19 +458,17 @@ function CompleteR(findstart, base)
                 endif
                 if np == 0
                     " The opening parenthesis was found
-                    call cursor(lnum, idx)
-                    let rkeyword0 = RGetKeyword('@,48-57,_,.,:,$,@-@')
+                    let rkeyword0 = RGetKeyword(lnum, idx)
                     let firstobj = ""
                     if rkeyword0 =~ "::"
                         let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                         let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
                     else
                         if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                            let firstobj = RGetFirstObj(rkeyword0)
+                            let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
                         endif
                         let pkg = ""
                     endif
-                    call cursor(cpos[1], cpos[2])
 
                     if (rkeyword0 == "library" || rkeyword0 == "require") && IsFirstRArg(lnum, cpos)
                         let argls = GetListOfRLibs(a:base)

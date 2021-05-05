@@ -458,34 +458,47 @@ endfunction
 
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
-function RGetKeyword(iskw)
+function RGetKeyword(...)
     " Go back some columns if character under cursor is not valid
-    let save_cursor = getpos(".")
-    let curline = line(".")
-    let line = getline(curline)
+    if a:0 == 2
+        let line = getline(a:1)
+        let i = a:2
+    else
+        let line = getline(".")
+        let i = col(".") - 1
+    endif
     if strlen(line) == 0
         return ""
     endif
     " line index starts in 0; cursor index starts in 1:
-    let i = col(".") - 1
-    while i > 0 && "({[ " =~ line[i]
-        call setpos(".", [0, line("."), i])
+    " Skip opening braces
+    while i > 0 && line[i] =~ '(\|\[\|{'
         let i -= 1
     endwhile
-    let save_keyword = &iskeyword
-    exe "setlocal iskeyword=" . a:iskw
-    let rkeyword = expand("<cword>")
-    exe "setlocal iskeyword=" . save_keyword
-    call setpos(".", save_cursor)
+    " Go to the beginning of the word
+    while i > 0 && line[i-1] =~ '\k\|@\|\$\|\:\|_\|\.'
+        let i -= 1
+    endwhile
+    " Go to the end of the word
+    let j = i
+    while line[j] =~ '\k\|@\|\$\|\:\|_\|\.'
+        let j += 1
+    endwhile
+    let rkeyword = strpart(line, i, j - i)
     return rkeyword
 endfunction
 
 " Get the name of the first object after the opening parenthesis. Useful to
 " call a specific print, summary, ..., method instead of the generic one.
-function RGetFirstObj(rkeyword)
+function RGetFirstObj(rkeyword, ...)
     let firstobj = ""
-    let line = substitute(getline("."), '#.*', '', "")
-    let begin = col(".")
+    if a:0 == 2
+        let line = substitute(getline(a:1), '#.*', '', "")
+        let begin = a:2
+    else
+        let line = substitute(getline("."), '#.*', '', "")
+        let begin = col(".")
+    endif
     if strlen(line) > begin
         let piece = strpart(line, begin)
         while piece !~ '^' . a:rkeyword && begin >= 0

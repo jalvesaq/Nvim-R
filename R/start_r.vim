@@ -1917,9 +1917,9 @@ function RAction(rcmd, ...)
     elseif a:0 == 1 && a:1 == "v" && line("'<") == line("'>")
         let rkeyword = strpart(getline("'>"), col("'<") - 1, col("'>") - col("'<") + 1)
     elseif a:0 == 1 && a:1 != "v" && a:1 !~ '^,'
-        let rkeyword = RGetKeyword(a:1)
+        let rkeyword = RGetKeyword()
     else
-        let rkeyword = RGetKeyword('@,48-57,_,.,:,$,@-@')
+        let rkeyword = RGetKeyword()
     endif
     if strlen(rkeyword) > 0
         if a:rcmd == "help"
