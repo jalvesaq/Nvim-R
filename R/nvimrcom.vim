@@ -22,6 +22,7 @@ function GetJobTitle(job_id)
 endfunction
 
 function ROnJobStdout(job_id, data, etype)
+    " DEBUG: call writefile(a:data, "/tmp/nclientserver_stdout", "a")
     for cmd in a:data
         let cmd = substitute(cmd, '\r', '', 'g')
         if cmd == ""

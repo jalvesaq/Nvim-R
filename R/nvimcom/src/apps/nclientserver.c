@@ -39,7 +39,7 @@ static int glbnv_size;
 static int auto_obbr;
 static char *glbnv_buffer;
 static char *compl_buffer;
-static int compl_buffer_size;
+static int compl_buffer_size = 32768;
 static long max_buffer_size;
 static char *omni_tmp_file;
 static int building_omnils;
@@ -49,6 +49,7 @@ void lib2ob();
 void update_pkg_list();
 void update_glblenv_buffer();
 static void build_omnils();
+void complete(const char *base, const char *funcnm);
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
@@ -102,8 +103,7 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}
-*/
+}*/
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -112,19 +112,14 @@ static char *str_cat(char* dest, const char* src)
     return --dest;
 }
 
-static char *grow_compl_buffer()
+static char *grow_buffer(char **b, int *sz)
 {
-    if(compl_buffer){
-        compl_buffer_size += 32768;
-        char *tmp = calloc(compl_buffer_size, sizeof(char));
-        strcpy(tmp, compl_buffer);
-        free(compl_buffer);
-        compl_buffer = tmp;
-    } else {
-        compl_buffer = calloc(32768, sizeof(char));
-        compl_buffer_size = 32768;
-    }
-    return(compl_buffer);
+    *sz += 32768;
+    char *tmp = calloc(*sz, sizeof(char));
+    strcpy(tmp, *b);
+    free(*b);
+    *b = tmp;
+    return tmp;
 }
 
 int str_here(const char *o, const char *b)
@@ -171,7 +166,24 @@ static void ParseMsg(char *buf)
             build_omnils();
         }
 
-        // FIXME: Should intercept GlblEnvUpdated(1) too?
+        if (str_here(b, "+FinishArgsCompletion")) {
+            // FIXME: use strtok
+            char *base = b + 22;
+            char *fnm = base;
+            while(*fnm != ';')
+                fnm++;
+            *fnm = 0;
+            fnm++;
+            b = fnm;
+            while (*b != 0){
+                if (*b == '\n')
+                    *b = 0;
+                b++;
+            }
+            complete(base, fnm);
+            return;
+        }
+
 
         if (*b != '+'){
             // Send the command to Nvim-R
@@ -1605,7 +1617,7 @@ void objbr_setup()
     // List tree sentinel
     listTree = new_ListStatus("base:", 0);
 
-    grow_compl_buffer();
+    compl_buffer = calloc(compl_buffer_size, sizeof(char));
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -1668,7 +1680,7 @@ void compl_info(const char *wrd, const char *pkg)
             nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 256;
             len = p - compl_buffer;
             while((compl_buffer_size - nsz - len) < 0){
-                p = grow_compl_buffer();
+                p = grow_buffer(&compl_buffer, &compl_buffer_size);
                 len = strlen(compl_buffer);
             }
 
@@ -1712,6 +1724,8 @@ char *parse_omnls(const char *s, const char *base, char *p)
         if(str_here(s, base)){
             if(omni_tmp_file == NULL && (p - compl_buffer) >= max_buffer_size){
                 // Truncate completion list if it's becoming too big.
+                // FIXME: send the size of the string. Nvim-R should check the
+                // size before trying to evaluate the string as a list.
                 p = str_cat(p, "{'word': '");
                 p = str_cat(p, base);
                 p = str_cat(p, "', 'menu': 'LIST TRUNCATED ...', 'user_data': {'cls': 't', 'descr': ''}}");
@@ -1752,7 +1766,7 @@ char *parse_omnls(const char *s, const char *base, char *p)
             nsz = strlen(f[0]) + 256;
             len = p - compl_buffer;
             while((compl_buffer_size - nsz - len) < 0){
-                p = grow_compl_buffer();
+                p = grow_buffer(&compl_buffer, &compl_buffer_size);
                 len = strlen(compl_buffer);
             }
 
@@ -1823,7 +1837,6 @@ void complete(const char *base, const char *funcnm)
     int sz;
 
     memset(compl_buffer, 0, compl_buffer_size);
-
     p = compl_buffer;
 
     // Complete function arguments
@@ -1835,7 +1848,7 @@ void complete(const char *base, const char *funcnm)
         if(s){
             sz = strlen(s) + 4;
             while(sz > compl_buffer_size)
-                p = grow_compl_buffer();
+                p = grow_buffer(&compl_buffer, &compl_buffer_size);
             snprintf(buf, 511, "{'word': '%s", base);
             t = strtok(s, "\n");
             while(t){
@@ -2022,12 +2035,12 @@ int main(int argc, char **argv){
                 break;
             case '6':
                 msg++;
-                char *base = msg;
+                char *wrd = msg;
                 while(*msg != '\002')
                     msg++;
                 *msg = 0;
                 msg++;
-                compl_info(base, msg);
+                compl_info(wrd, msg);
                 break;
 #ifdef WIN32
             case '7':

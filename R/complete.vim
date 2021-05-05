@@ -358,19 +358,21 @@ endfunction
 
 function GetListOfRLibs(base)
     let argls = []
-    if filereadable(g:rplugin.compldir . "/pack_descriptions")
-        let pd = readfile(g:rplugin.compldir . "/pack_descriptions")
-        call filter(pd, 'v:val =~ "^" . a:base')
-        for line in pd
-            let tmp = split(line, "\x09")
+    let lsd = glob(g:rplugin.compldir . '/descr_*', 0, 1)
+    for fl in lsd
+        if fl =~ 'descr_' . a:base
+            let pnm = substitute(fl, '.*/descr_\(.\{-}\)_.*', '\1', 'g')
+            let lin = readfile(fl)[0]
+            let dsc = substitute(lin, ".*\t", "", "")
+            let ttl = substitute(lin, "\t.*", "", "")
             if has('nvim-0.5.0') || has('patch-8.2.84')
-                call add(argls, {'word': tmp[0], 'user_data': {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}})
+                call add(argls, {'word': pnm, 'user_data': {'ttl': ttl, 'descr': dsc, 'cls': 'l'}})
             else
-                call add(argls, {'word': tmp[0]})
-                let s:user_data[tmp[0]] = {'ttl': tmp[1], 'descr': tmp[2], 'cls': 'l'}
+                call add(argls, {'word': pnm})
+                let s:user_data[pnm] = {'ttl': ttl, 'descr': dsc, 'cls': 'l'}
             endif
-        endfor
-    endif
+        endif
+    endfor
     return argls
 endfunction
 
@@ -439,61 +441,60 @@ function CompleteR(findstart, base)
         " The base might have changed because the user has hit the backspace key
         call CloseFloatWin()
 
-        if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-            " Check if we need function arguments
-            let line = getline(".")
-            let lnum = line(".")
-            let cpos = getpos(".")
-            let idx = cpos[2] - 2
-            let idx2 = cpos[2] - 2
-            let np = 1
-            let nl = 0
-            let argls = []
-            " Look up to 10 lines above for an opening parenthesis
-            while nl < 10
-                if line[idx] == '('
-                    let np -= 1
-                elseif line[idx] == ')'
-                    let np += 1
-                endif
-                if np == 0
-                    " The opening parenthesis was found
-                    let rkeyword0 = RGetKeyword(lnum, idx)
-                    let firstobj = ""
-                    if rkeyword0 =~ "::"
-                        let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
-                        let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-                    else
-                        if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                            let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
-                        endif
-                        let pkg = ""
+        " Check if we need function arguments
+        let line = getline(".")
+        let lnum = line(".")
+        let cpos = getpos(".")
+        let idx = cpos[2] - 2
+        let idx2 = cpos[2] - 2
+        let np = 1
+        let nl = 0
+        let argls = []
+        " Look up to 10 lines above for an opening parenthesis
+        while nl < 10
+            if line[idx] == '('
+                let np -= 1
+            elseif line[idx] == ')'
+                let np += 1
+            endif
+            if np == 0
+                " The opening parenthesis was found
+                let rkeyword0 = RGetKeyword(lnum, idx)
+                let firstobj = ""
+                if rkeyword0 =~ "::"
+                    let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
+                    let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
+                else
+                    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                        let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
                     endif
+                    let pkg = ""
+                endif
 
-                    if (rkeyword0 == "library" || rkeyword0 == "require") && IsFirstRArg(lnum, cpos)
-                        let argls = GetListOfRLibs(a:base)
-                        if len(argls)
-                            let s:is_completing = 1
-                            return argls
-                        endif
+                let g:TheRKeyword = rkeyword0
+                if (rkeyword0 == "library" || rkeyword0 == "require") && IsFirstRArg(lnum, cpos)
+                    let argls = GetListOfRLibs(a:base)
+                    if len(argls)
+                        let s:is_completing = 1
+                        return argls
                     endif
+                endif
 
-                    call UpdateRGlobalEnv(1)
-                    let s:waiting_compl_menu = 1
-                    return GetRArgs(a:base, rkeyword0, firstobj, pkg)
+                call UpdateRGlobalEnv(1)
+                let s:waiting_compl_menu = 1
+                return GetRArgs(a:base, rkeyword0, firstobj, pkg)
+            endif
+            let idx -= 1
+            if idx <= 0
+                let lnum -= 1
+                if lnum == 0
+                    break
                 endif
-                let idx -= 1
-                if idx <= 0
-                    let lnum -= 1
-                    if lnum == 0
-                        break
-                    endif
-                    let line = getline(lnum)
-                    let idx = strlen(line)
-                    let nl +=1
-                endif
-            endwhile
-        endif
+                let line = getline(lnum)
+                let idx = strlen(line)
+                let nl +=1
+            endif
+        endwhile
 
         if a:base == ''
             " Require at least one character to try omni completion
@@ -584,12 +585,3 @@ function IsFirstRArg(lnum, cpos)
     endwhile
     return 1
 endfunction
-
-function FinishArgsCompletion(base, rkey)
-    if exists('s:compl_menu')
-        unlet s:compl_menu
-    endif
-    call JobStdin(g:rplugin.jobs["ClientServer"], "5A" . a:base .
-                \ "\002" . a:rkey . "\n")
-endfunction
-
