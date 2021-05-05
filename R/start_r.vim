@@ -211,7 +211,7 @@ endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
     if !exists("g:R_nvimcom_home") && a:nvimcomhome != g:rplugin.nvimcom_info['home']
-        call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom['home'] . '" and "' . a:nvimcomhome . '"')
+        call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom_info['home'] . '" and "' . a:nvimcomhome . '"')
         sleep 1
     endif
 
