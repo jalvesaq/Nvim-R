@@ -2075,11 +2075,11 @@ from vim-pandoc or LaTeX-Box
 
 If you want a different function for completion of non R code, you should not
 set the value 'omnifunc' in your |vimrc| because you would lose the completion
-of R objects. It is better to use an |autocmd| to set the value of buffer the
+of R objects. It is better to use an |autocmd| to set the value of the buffer
 variable `b:rplugin_non_r_omnifunc`. Examples:
 >
    autocmd FileType rnoweb let b:rplugin_non_r_omnifunc = "g:LatexBox_Complete"
-   autocmd FileType rmd let b:rplugin_non_r_omnifunc = "g:omnifunc=pandoc#completion#Complete"
+   autocmd FileType rmd let b:rplugin_non_r_omnifunc = "pandoc#completion#Complete"
 <
 Note: On Windows, Nvim-R's bibliographic completion works only with ascii letters.
 
