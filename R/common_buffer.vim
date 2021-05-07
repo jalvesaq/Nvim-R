@@ -4,18 +4,27 @@
 "==============================================================================
 
 
-" Set completion with CTRL-X CTRL-O to autoloaded function.
-if exists('&ofu')
-    let b:rplugin_knitr_pattern = ''
-    if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
-        if &omnifunc == "CompleteR"
-            let b:rplugin_non_r_omnifunc = ""
-        else
-            let b:rplugin_non_r_omnifunc = &omnifunc
-        endif
-    endif
-    if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rdoc" || &filetype == "rhelp" || &filetype == "rrst" || &filetype == "rmd"
-        setlocal omnifunc=CompleteR
+" Set omni completion (both automatic and triggered by CTRL-X CTRL-O)
+if index(g:R_set_omnifunc, &filetype) > -1
+    setlocal omnifunc=CompleteR
+endif
+if index(g:R_auto_omni, &filetype) > -1
+    autocmd TextChangedI <buffer> call RTriggerCompletion()
+    let b:rplugin_saved_completeopt = &completeopt
+    autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
+    autocmd BufEnter <buffer> set completeopt=menuone,noselect
+endif
+if index(g:R_set_omnifunc, &filetype) > -1 || index(g:R_auto_omni, &filetype) > -1
+    autocmd CompleteChanged <buffer> call AskForComplInfo()
+    autocmd CompleteDone <buffer> call OnCompleteDone()
+endif
+
+let b:rplugin_knitr_pattern = ''
+if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
+    if &omnifunc == "CompleteR"
+        let b:rplugin_non_r_omnifunc = ""
+    else
+        let b:rplugin_non_r_omnifunc = &omnifunc
     endif
 endif
 

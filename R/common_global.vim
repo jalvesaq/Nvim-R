@@ -1091,6 +1091,16 @@ endif
 
 let g:rplugin.is_darwin = system("uname") =~ "Darwin"
 
+" Delete options with invalid values
+if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
+    call RWarningMsg('"R_set_omnifunc" must be a list')
+    unlet g:R_set_omnifunc
+endif
+if exists("g:R_auto_omni") && type(g:R_auto_omni) != v:t_list
+    call RWarningMsg('"R_set_omnifunc" must be a list')
+    unlet g:R_auto_omni
+endif
+
 " Variables whose default value are fixed
 let g:R_assign            = get(g:, "R_assign",             1)
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
@@ -1114,6 +1124,8 @@ let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_omni_tmp_file     = get(g:, "R_omni_tmp_file",      1)
+let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "rnoweb", "rhelp", "rrst"])
+let g:R_auto_omni         = get(g:, "R_auto_omni",    [])
 
 if exists(":terminal") != 2
     let g:R_external_term = get(g:, "R_external_term", 1)
@@ -1196,6 +1208,7 @@ else
 endif
 
 " Look for invalid options
+
 let objbrplace = split(g:R_objbr_place, ',')
 if len(objbrplace) > 2
     call RWarningMsg('Too many options for R_objbr_place.')
@@ -1333,10 +1346,14 @@ if !executable(g:rplugin.R)
     call RWarningMsg("R executable not found: '" . g:rplugin.R . "'")
 endif
 
-autocmd FuncUndefined CompleteR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)
+    if len(g:R_auto_omni) == 0
+        autocmd FuncUndefined CompleteR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
+    else
+        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
+    endif
     exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
     call CheckNvimcomVersion()
 endfunction

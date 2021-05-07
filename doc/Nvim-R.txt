@@ -273,19 +273,6 @@ If you use RMarkdown to write academic papers and Zotero for reference
 management, you may want to try zotcite: https://github.com/jalvesaq/zotcite
 
 
-Auto omni completion~
-
-Nvim-R provides omni completion for R code, but it does not offer suggestions
-of completion while you type. If you want to try auto completion, you should
-install an additional plugin for this, for example:
-
-   https://github.com/yami-beta/asyncomplete-omni.vim
-
-or `coc-omni` for
-
-   https://github.com/neoclide/coc.nvim
-
-
 Other plugins~
 
 You may be interested in installing additional general plugins such as
@@ -640,11 +627,13 @@ highlighted only if their libraries are loaded by R (but see
 Note: If you have too many loaded packages Vim may be unable to load the
 list of functions for syntax highlight.
 
-Vim can automatically complete the names of R objects when CTRL-X CTRL-O is
-pressed in insert mode (see |omni-completion| for details). Omni completion
-shows in a pop up menu the name of the object, its class and its environment
-(most frequently, its package name). If the object is a function, the plugin
-also shows the function arguments in a attached float window.
+Vim can automatically complete the names of R objects both as you type them
+and when CTRL-X CTRL-O is pressed in insert mode (to disable these features,
+see |R_auto_omni| and |R_set_omnifunc|; see also |omni-completion| for
+details). Omni completion shows in a pop up menu the name of the object, its
+class and its environment (most frequently, its package name). If the object
+is a function, the plugin also shows the function arguments in a attached
+float window.
 
 If a data.frame is found, while building the list of objects, the columns in
 the data.frame are added to the list but they are shown in the menu only after
@@ -1009,6 +998,8 @@ of
 |R_disable_cmds|      List of commands to be disabled
 |R_tmpdir|            Where temporary files are created
 |R_compldir|          Where lists for omni completion are stored
+|R_set_omnifunc|      Should Nvim-R set the 'omnifunc'?
+|R_auto_omni|         List of files with auto omni completion enabled
 |R_omni_size|         Maximum size of buffer during omni completion
 |R_omni_tmp_file|     Save omni buffer in temporary file
 |R_remote_tmpdir|     Mount point of remote temporary directory
@@ -2247,9 +2238,29 @@ want to know what they are, while editing an R file, do in Normal mode:
 <
 
 ------------------------------------------------------------------------------
+								 *R_auto_omni*
+							      *R_set_omnifunc*
 								 *R_omni_size*
 							     *R_omni_tmp_file*
-6.36 Number of results in omni completion~
+6.36 Omni completion~
+
+Nvim-R sets the 'omnifunc' option to its built-in omni completion function
+(`CompleteR`), but if you prefer to use another function or system (such as
+language server) for omni completion, set in your |vimrc| the value of
+`R_set_omnifunc` as a list including only the file types that must have
+`CompleteR` as the function for omni completion. Example with the default
+value:
+>
+   let R_set_omnifunc = []
+<
+Similarly, you can define what files will have Nvim-R's auto omni completion
+enabled:
+>
+   let R_auto_omni = ["r",  "rmd", "rnoweb", "rhelp", "rrst"]
+<
+Automatic omni completion does not include results from previously defined
+non-R function, such as `htmlcomplete#CompleteTags` when editing Rmd files.
+You should trigger these functions manually with CTRL-X CTRL-O.
 
 Nvim-R receives the list of objects for omni completion from the nclientserver
 job running in the background. If the list is not too big, it is transmitted
@@ -3169,7 +3180,7 @@ Examples:
 0.9.16 (2021-04-29)
 
  * Minor bug fixes.
- * New options: R_omni_size and R_omni_tmp_file.
+ * New options: R_set_omnifunc, R_auto_omni, R_omni_size and R_omni_tmp_file.
  * Option R_path might be a list of directories.
 
 0.9.15 (2021-04-14)

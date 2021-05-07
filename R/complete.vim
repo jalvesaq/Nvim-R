@@ -1,4 +1,12 @@
 " Functions that are called only after omni completion is triggered
+"
+" The menu must be built and rendered very quickly (< 100ms) to make auto
+" completion feasible. That is, the data must be cached (OK, nvim.bol.R),
+" indexed (not yet) and processed quickly (OK, nclientserver.c).
+"
+" The float window that appears when an item is selected can be slower.
+" That is, we can call a function in nvimcom to get the contents of the float
+" window.
 
 let s:float_win = 0
 let s:compl_event = {}
@@ -332,15 +340,7 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-" FIXME: Should be local to buffer
-autocmd CompleteChanged * call AskForComplInfo()
-autocmd CompleteDone * call OnCompleteDone()
-
 function GetRArgs(base, rkeyword0, firstobj, pkg)
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return []
-    endif
-
     call delete(g:rplugin.tmpdir . "/args_for_completion")
     let msg = 'nvimcom:::nvim_complete_args("' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
@@ -352,8 +352,6 @@ function GetRArgs(base, rkeyword0, firstobj, pkg)
 
     " Save documentation of arguments to be used by nclientserver
     call SendToNvimcom("E", msg)
-
-    return WaitRCompletion()
 endfunction
 
 function GetListOfRLibs(base)
@@ -410,9 +408,104 @@ function ReadComplMenu()
     let s:waiting_compl_menu = 0
 endfunction
 
+function NeedRArguments()
+    " Check if we need function arguments
+    let line = getline(".")
+    let lnum = line(".")
+    let cpos = getpos(".")
+    let idx = cpos[2] - 2
+    let idx2 = cpos[2] - 2
+    let np = 1
+    let nl = 0
+    let argls = []
+    " Look up to 10 lines above for an opening parenthesis
+    while nl < 10
+        if line[idx] == '('
+            let np -= 1
+        elseif line[idx] == ')'
+            let np += 1
+        endif
+        if np == 0
+            " The opening parenthesis was found
+            let rkeyword0 = RGetKeyword(lnum, idx)
+            let firstobj = ""
+            if rkeyword0 =~ "::"
+                let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
+                let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
+            else
+                if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                    let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
+                endif
+                let pkg = ""
+            endif
+            return [rkeyword0, firstobj, pkg, lnum, cpos]
+        endif
+        let idx -= 1
+        if idx <= 0
+            let lnum -= 1
+            if lnum == 0
+                break
+            endif
+            let line = getline(lnum)
+            let idx = strlen(line)
+            let nl +=1
+        endif
+    endwhile
+    return []
+endfunction
+
 function SetComplMenu(cmn)
-    let s:compl_menu = deepcopy(a:cmn)
-    let s:waiting_compl_menu = 0
+    if s:is_auto_completing
+        let s:is_auto_completing = 0
+        call complete(s:auto_compl_col + 1, a:cmn)
+    else
+        let s:compl_menu = deepcopy(a:cmn)
+        let s:waiting_compl_menu = 0
+    endif
+endfunction
+
+let s:is_auto_completing = 0
+function RTriggerCompletion()
+    let s:user_data = {}
+    let line = getline(".")
+    let s:auto_compl_col = FindStartRObj()
+    let wrd = RGetKeyword(line("."), s:auto_compl_col)
+
+    if b:IsInRCode(0) == 0 && b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
+        if wrd == ''
+            return
+        endif
+        let s:compl_type = 3
+        let lst = CompleteChunkOptions(wrd)
+        call complete(s:auto_compl_col, lst)
+        return
+    endif
+
+    let nra = NeedRArguments()
+    if len(nra) > 0
+        if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(nra[3], nra[4])
+            let argls = GetListOfRLibs(wrd)
+            if len(argls)
+                let s:is_completing = 1
+                call complete(s:auto_compl_col + 1, argls)
+                return
+            endif
+        endif
+
+        let s:is_auto_completing = 1
+        if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+            call GetRArgs(wrd, nra[0], nra[1], nra[2])
+        endif
+        return
+    endif
+
+    if wrd == ''
+        return
+    endif
+
+    let s:compl_type = 1
+    let s:is_auto_completing = 1
+    call JobStdin(g:rplugin.jobs["ClientServer"], "51" . wrd . "\n")
 endfunction
 
 function CompleteR(findstart, base)
@@ -441,60 +534,23 @@ function CompleteR(findstart, base)
         " The base might have changed because the user has hit the backspace key
         call CloseFloatWin()
 
-        " Check if we need function arguments
-        let line = getline(".")
-        let lnum = line(".")
-        let cpos = getpos(".")
-        let idx = cpos[2] - 2
-        let idx2 = cpos[2] - 2
-        let np = 1
-        let nl = 0
-        let argls = []
-        " Look up to 10 lines above for an opening parenthesis
-        while nl < 10
-            if line[idx] == '('
-                let np -= 1
-            elseif line[idx] == ')'
-                let np += 1
-            endif
-            if np == 0
-                " The opening parenthesis was found
-                let rkeyword0 = RGetKeyword(lnum, idx)
-                let firstobj = ""
-                if rkeyword0 =~ "::"
-                    let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
-                    let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-                else
-                    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                        let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
-                    endif
-                    let pkg = ""
+        let nra = NeedRArguments()
+        if len(nra) > 0
+            if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(nra[3], nra[4])
+                let argls = GetListOfRLibs(a:base)
+                if len(argls)
+                    let s:is_completing = 1
+                    return argls
                 endif
+            endif
 
-                let g:TheRKeyword = rkeyword0
-                if (rkeyword0 == "library" || rkeyword0 == "require") && IsFirstRArg(lnum, cpos)
-                    let argls = GetListOfRLibs(a:base)
-                    if len(argls)
-                        let s:is_completing = 1
-                        return argls
-                    endif
-                endif
-
-                call UpdateRGlobalEnv(1)
-                let s:waiting_compl_menu = 1
-                return GetRArgs(a:base, rkeyword0, firstobj, pkg)
+            call UpdateRGlobalEnv(1)
+            let s:waiting_compl_menu = 1
+            if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+                call GetRArgs(a:base, nra[0], nra[1], nra[2])
+                return WaitRCompletion()
             endif
-            let idx -= 1
-            if idx <= 0
-                let lnum -= 1
-                if lnum == 0
-                    break
-                endif
-                let line = getline(lnum)
-                let idx = strlen(line)
-                let nl +=1
-            endif
-        endwhile
+        endif
 
         if a:base == ''
             " Require at least one character to try omni completion
