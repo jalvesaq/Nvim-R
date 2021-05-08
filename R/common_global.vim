@@ -1097,7 +1097,7 @@ if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
     unlet g:R_set_omnifunc
 endif
 if exists("g:R_auto_omni") && type(g:R_auto_omni) != v:t_list
-    call RWarningMsg('"R_set_omnifunc" must be a list')
+    call RWarningMsg('"R_auto_omni" must be a list')
     unlet g:R_auto_omni
 endif
 

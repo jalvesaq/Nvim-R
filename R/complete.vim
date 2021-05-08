@@ -18,6 +18,9 @@ if g:R_hi_fun_globenv == 0
     let g:R_hi_fun_globenv = 1
 endif
 
+autocmd CompleteChanged <buffer> call AskForComplInfo()
+autocmd CompleteDone <buffer> call OnCompleteDone()
+
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
     let g:rplugin.compl_cls = ud['cls']

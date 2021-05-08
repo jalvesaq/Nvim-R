@@ -14,10 +14,6 @@ if index(g:R_auto_omni, &filetype) > -1
     autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
     autocmd BufEnter <buffer> set completeopt=menuone,noselect
 endif
-if index(g:R_set_omnifunc, &filetype) > -1 || index(g:R_auto_omni, &filetype) > -1
-    autocmd CompleteChanged <buffer> call AskForComplInfo()
-    autocmd CompleteDone <buffer> call OnCompleteDone()
-endif
 
 let b:rplugin_knitr_pattern = ''
 if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
