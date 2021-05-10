@@ -68,6 +68,11 @@ function FormatInfo(width, needblank)
 endfunction
 
 function CreateNewFloat(...)
+    " The popup menu might already be closed.
+    if !pumvisible()
+        return
+    endif
+
     if len(s:compl_event) == 0
         return
     endif
