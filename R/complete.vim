@@ -18,9 +18,6 @@ if g:R_hi_fun_globenv == 0
     let g:R_hi_fun_globenv = 1
 endif
 
-autocmd CompleteChanged <buffer> call AskForComplInfo()
-autocmd CompleteDone <buffer> call OnCompleteDone()
-
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
     let g:rplugin.compl_cls = ud['cls']
@@ -268,7 +265,6 @@ endfunction
 function OnCompleteDone()
     call CloseFloatWin()
     let s:user_data = {}
-    let s:auto_compl_line = 0
     let s:auto_compl_col = 0
 endfunction
 
@@ -401,11 +397,11 @@ function FindStartRObj()
     return idx2 - 1
 endfunction
 
-function NeedRArguments()
+function NeedRArguments(line, cpos)
     " Check if we need function arguments
-    let line = getline(".")
+    let line = a:line
     let lnum = line(".")
-    let cpos = getpos(".")
+    let cpos = a:cpos
     let idx = cpos[2] - 2
     let idx2 = cpos[2] - 2
     let np = 1
@@ -457,39 +453,54 @@ function SetComplMenu(cmn)
     endif
 endfunction
 
+function AutoComplLibname(...)
+    let s:is_completing = 1
+    call complete(s:auto_compl_col + 1, s:libnames_list)
+endfunction
+
+function AutoComplChunkOpts(...)
+    let s:is_completing = 1
+    call complete(s:auto_compl_col + 1, s:chunk_opt_list)
+endfunction
+
 let s:is_auto_completing = 0
-let s:auto_compl_line = 0
 function RTriggerCompletion()
     let s:user_data = {}
-    let lin = getline(".")
-    let curline = line(".")
-    let curcol = FindStartRObj()
-    if curline == s:auto_compl_line && curcol == s:auto_compl_col
-        " Each key press trigger this function three times
-        return
+
+    " We are within the InsertCharPre event
+    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
+        let s:auto_compl_col = FindStartRObj()
+        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
     else
-        let s:auto_compl_line = curline
-        let s:auto_compl_col = curcol
+        let wrd = ""
+        let s:auto_compl_col = col(".")
     endif
-    let wrd = RGetKeyword(line("."), s:auto_compl_col)
+    let lin = getline(".")
+    let lin = strpart(lin, 0, col(".")) . v:char
+
+
+    let g:TheLine = lin . "[" . col(".") . "]" . s:auto_compl_col
 
     if b:IsInRCode(0) == 0 && b:rplugin_knitr_pattern != '' && lin =~ b:rplugin_knitr_pattern
         if wrd == ''
             return
         endif
         let s:compl_type = 3
-        let lst = CompleteChunkOptions(wrd)
-        call complete(s:auto_compl_col, lst)
+        let s:chunk_opt_list = CompleteChunkOptions(wrd)
+        " Can't call complete() here [E523]
+        call timer_start(1, 'AutoComplChunkOpts', {})
         return
     endif
 
-    let nra = NeedRArguments()
+    let cpos = getpos(".")
+    let cpos[2] = cpos[2] + 1
+    let nra = NeedRArguments(lin, cpos)
     if len(nra) > 0
-        if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(nra[3], nra[4])
-            let argls = GetListOfRLibs(wrd)
-            if len(argls)
-                let s:is_completing = 1
-                call complete(s:auto_compl_col + 1, argls)
+        if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(lin, nra[3], nra[4])
+            let s:libnames_list = GetListOfRLibs(wrd)
+            if len(s:libnames_list)
+                " Can't call complete() here [E523]
+                call timer_start(1, 'AutoComplLibname', {})
                 return
             endif
         endif
@@ -536,9 +547,9 @@ function CompleteR(findstart, base)
         " The base might have changed because the user has hit the backspace key
         call CloseFloatWin()
 
-        let nra = NeedRArguments()
+        let nra = NeedRArguments(getline("."), getpos("."))
         if len(nra) > 0
-            if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(nra[3], nra[4])
+            if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(getline("."), nra[3], nra[4])
                 let argls = GetListOfRLibs(a:base)
                 if len(argls)
                     let s:is_completing = 1
@@ -630,8 +641,8 @@ function CompleteChunkOptions(base)
     return rr
 endfunction
 
-function IsFirstRArg(lnum, cpos)
-    let line = getline(a:lnum)
+function IsFirstRArg(line, lnum, cpos)
+    let line = a:line
     let ii = a:cpos[2] - 2
     let cchar = line[ii]
     while ii > 0 && cchar != '('
