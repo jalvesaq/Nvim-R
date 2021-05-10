@@ -263,6 +263,8 @@ endfunction
 function OnCompleteDone()
     call CloseFloatWin()
     let s:user_data = {}
+    let s:auto_compl_line = 0
+    let s:auto_compl_col = 0
 endfunction
 
 " TODO: delete s:user_data when Ubuntu has('nvim-0.5.0') && has('patch-8.2.84')
@@ -306,6 +308,7 @@ function FinishGlbEnvFunArgs(fnm)
     else
         let s:usage = "COULD NOT GET ARGUMENTS"
     endif
+    let s:compl_event['completed_item']['user_data']['descr'] = ''
     call CreateNewFloat()
 endfunction
 
@@ -320,17 +323,10 @@ function SetComplInfo(dctnr)
     " Replace user_data with the complete version
     let s:compl_event['completed_item']['user_data'] = deepcopy(a:dctnr)
 
-    " FIXME: This code should be in nclientserver.
     if a:dctnr['cls'] == 'f'
         let usage = deepcopy(a:dctnr['usage'])
         call map(usage, 'join(v:val, " = ")')
         let usage = join(usage, ", ")
-        if usage == 'not_checked'
-            " Function at the .GlobalEnv
-            call delete(g:rplugin.tmpdir . "/args_for_completion")
-            call SendToNvimcom("E", 'nvimcom:::nvim.GlobalEnv.fun.args("' . a:dctnr['word'] . '")')
-            return
-        endif
         let s:usage = a:dctnr['word'] . '(' . usage . ')'
     elseif a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
         call delete(g:rplugin.tmpdir . "/args_for_completion")
@@ -400,17 +396,6 @@ function FindStartRObj()
     return idx2 - 1
 endfunction
 
-function ReadComplMenu()
-    if filereadable(g:rplugin.tmpdir . "/nvimbol_finished")
-        let txt = readfile(g:rplugin.tmpdir . "/nvimbol_finished")[0]
-        let s:compl_menu = deepcopy(eval(txt))
-        call delete(g:rplugin.tmpdir . "/nvimbol_finished")
-    else
-        let s:compl_menu = {}
-    endif
-    let s:waiting_compl_menu = 0
-endfunction
-
 function NeedRArguments()
     " Check if we need function arguments
     let line = getline(".")
@@ -468,13 +453,22 @@ function SetComplMenu(cmn)
 endfunction
 
 let s:is_auto_completing = 0
+let s:auto_compl_line = 0
 function RTriggerCompletion()
     let s:user_data = {}
-    let line = getline(".")
-    let s:auto_compl_col = FindStartRObj()
+    let lin = getline(".")
+    let curline = line(".")
+    let curcol = FindStartRObj()
+    if curline == s:auto_compl_line && curcol == s:auto_compl_col
+        " Each key press trigger this function three times
+        return
+    else
+        let s:auto_compl_line = curline
+        let s:auto_compl_col = curcol
+    endif
     let wrd = RGetKeyword(line("."), s:auto_compl_col)
 
-    if b:IsInRCode(0) == 0 && b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
+    if b:IsInRCode(0) == 0 && b:rplugin_knitr_pattern != '' && lin =~ b:rplugin_knitr_pattern
         if wrd == ''
             return
         endif

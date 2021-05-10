@@ -9,7 +9,7 @@ if index(g:R_set_omnifunc, &filetype) > -1
     setlocal omnifunc=CompleteR
 endif
 if index(g:R_auto_omni, &filetype) > -1
-    autocmd TextChangedI <buffer> call RTriggerCompletion()
+    autocmd InsertCharPre <buffer> call RTriggerCompletion()
     let b:rplugin_saved_completeopt = &completeopt
     autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
     autocmd BufEnter <buffer> set completeopt=menuone,noselect

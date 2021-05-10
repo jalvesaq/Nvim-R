@@ -71,7 +71,14 @@ function FormatTxt(text, splt, jn, maxl)
     return txt
 endfunction
 
+let s:float_warn = 0
 function RFloatWarn(wmsg)
+    " Close any float warning eventually still open
+    let id = win_id2win(s:float_warn)
+    if id > 0
+        call nvim_win_close(s:float_warn, 1)
+    endif
+
     let fmsg = ' ' . FormatTxt(a:wmsg, ' ', " \n ", 60)
     let fmsgl = split(fmsg, "\n")
     let realwidth = 10
@@ -1123,7 +1130,6 @@ let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun            = get(g:, "R_hi_fun",             1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
-let g:R_omni_tmp_file     = get(g:, "R_omni_tmp_file",      1)
 let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "rnoweb", "rhelp", "rrst"])
 let g:R_auto_omni         = get(g:, "R_auto_omni",    [])
 

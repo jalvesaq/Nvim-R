@@ -28,7 +28,16 @@ function ROnJobStdout(job_id, data, etype)
         if cmd == ""
             continue
         endif
-        if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
+        if cmd[0] == "\005"
+            " Check the size of possibly very big string (dictionary for menu completion).
+            let cmdsplt = split(cmd, "\005")
+            if str2nr(cmdsplt[0]) == strlen(cmdsplt[1])
+                exe cmdsplt[1]
+            else
+                call SetComplMenu([])
+                call RWarningMsg("Wrong string length (menu for completion): " . str2nr(cmdsplt[0]) . " x " . strlen(cmdsplt[1]))
+            endif
+        elseif cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
             exe cmd
         else
             if len(cmd) > 128

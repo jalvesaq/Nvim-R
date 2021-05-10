@@ -268,18 +268,6 @@ function StartNClientServer()
     if g:R_objbr_allnames
         let $NVIMR_OBJBR_ALLNAMES = "TRUE"
     endif
-    if exists("g:R_omni_size")
-        let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = string(g:R_omni_size)
-    else
-        if has("nvim") && g:rplugin.is_darwin
-            let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = "7600"
-        else
-            let $NVIMR_MAX_CHANNEL_BUFFER_SIZE = "65000"
-        endif
-    endif
-    if g:R_omni_tmp_file
-        let $NVIMR_OMNI_TMP_FILE = "1"
-    endif
 
     " We have to set R's home directory on Window because nclientserver will
     " run R to build the list for omni completion.
@@ -295,8 +283,6 @@ function StartNClientServer()
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
-    unlet $NVIMR_MAX_CHANNEL_BUFFER_SIZE
-    unlet $NVIMR_OMNI_TMP_FILE
 
     call RSetDefaultPkg()
 endfunction

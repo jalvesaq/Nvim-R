@@ -40,8 +40,6 @@ static int auto_obbr;
 static char *glbnv_buffer;
 static char *compl_buffer;
 static int compl_buffer_size = 32768;
-static long max_buffer_size;
-static char *omni_tmp_file;
 static int building_omnils;
 static int more_to_build;
 void omni2ob();
@@ -97,7 +95,7 @@ static char myport[128];
 static void Log(const char *fmt, ...)
 {
     va_list argptr;
-    FILE *f = fopen("/tmp/nclientserver_log", "a");
+    FILE *f = fopen("/dev/shm/nclientserver_log", "a");
     va_start(argptr, fmt);
     vfprintf(f, fmt, argptr);
     fprintf(f, "\n");
@@ -161,13 +159,11 @@ static void ParseMsg(char *buf)
             update_glblenv_buffer();
 
         if(str_here(b, "+BuildOmnils")){
-            // FIXME: Can this be asynchronous?
             update_pkg_list();
             build_omnils();
         }
 
         if (str_here(b, "+FinishArgsCompletion")) {
-            // FIXME: use strtok
             char *base = b + 22;
             char *fnm = base;
             while(*fnm != ';')
@@ -1676,6 +1672,14 @@ void compl_info(const char *wrd, const char *pkg)
             if(*s == '\n')
                 s++;
 
+            if (f[1][0] == '\003' && str_here(f[4], "['not_checked']")) {
+                snprintf(compl_buffer, 1024, "%s/args_for_completion", tmpdir);
+                remove(compl_buffer);
+                snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
+                SendToServer(NvimcomPort, compl_buffer);
+                return;
+            }
+
             // Avoid buffer overflow if the information is bigger than compl_buffer.
             nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 256;
             len = p - compl_buffer;
@@ -1722,16 +1726,6 @@ char *parse_omnls(const char *s, const char *base, char *p)
 
     while(*s != 0){
         if(str_here(s, base)){
-            if(omni_tmp_file == NULL && (p - compl_buffer) >= max_buffer_size){
-                // Truncate completion list if it's becoming too big.
-                // FIXME: send the size of the string. Nvim-R should check the
-                // size before trying to evaluate the string as a list.
-                p = str_cat(p, "{'word': '");
-                p = str_cat(p, base);
-                p = str_cat(p, "', 'menu': 'LIST TRUNCATED ...', 'user_data': {'cls': 't', 'descr': ''}}");
-                return p;
-            }
-
             i = 0;
             while(i < 7){
                 f[i] = s;
@@ -1753,14 +1747,6 @@ char *parse_omnls(const char *s, const char *base, char *p)
                 continue;
             if(!count_twice(base, f[0], '['))
                 continue;
-
-            // FIXME: delete this code
-            if(strlen(f[1]) > 2)
-                fprintf(stderr, "TOO BIG [1]: %s [%s]\n", f[1], f[0]);
-            if(strlen(f[2]) > 64)
-                fprintf(stderr, "TOO BIG [2]: %s [%s]\n", f[1], f[0]);
-            if(strlen(f[3]) > 64)
-                fprintf(stderr, "TOO BIG [3]: %s [%s]\n", f[1], f[0]);
 
             // Avoid buffer overflow if the information is bigger than compl_buffer.
             nsz = strlen(f[0]) + 256;
@@ -1860,7 +1846,7 @@ void complete(const char *base, const char *funcnm)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("call SetComplMenu([%s])\n", compl_buffer);
+            printf("\005%lu\005call SetComplMenu([%s])\n", strlen(compl_buffer) + 21, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -1871,26 +1857,12 @@ void complete(const char *base, const char *funcnm)
         p = parse_omnls(glbnv_buffer, base, p);
     PkgData *pd = pkgList;
     while(pd){
-        if(omni_tmp_file == NULL && (p - compl_buffer) >= max_buffer_size)
-            break;
         if(pd->omnils)
             p = parse_omnls(pd->omnils, base, p);
         pd = pd->next;
     }
 
-    if(omni_tmp_file && (p - compl_buffer) >= max_buffer_size){
-        FILE *f = fopen(omni_tmp_file, "w");
-        if(f){
-            fprintf(f, "[%s]\n", compl_buffer);
-            fclose(f);
-        } else {
-            fprintf(stderr, "Could not write file '%s'\n", omni_tmp_file);
-            fflush(stderr);
-        }
-        printf("call ReadComplMenu()\n");
-    } else {
-        printf("call SetComplMenu([%s])\n", compl_buffer);
-    }
+    printf("\005%lu\005call SetComplMenu([%s])\n", strlen(compl_buffer) + 21, compl_buffer);
     fflush(stdout);
 }
 
@@ -1915,15 +1887,6 @@ int main(int argc, char **argv){
 #ifdef WIN32
     Windows_setup();
 #endif
-
-    if(getenv("NVIMR_MAX_CHANNEL_BUFFER_SIZE"))
-        max_buffer_size = atol(getenv("NVIMR_MAX_CHANNEL_BUFFER_SIZE"));
-    else
-        max_buffer_size = 7600;
-    if(getenv("NVIMR_OMNI_TMP_FILE")){
-        omni_tmp_file = calloc((strlen(tmpdir) + 18), sizeof(char));
-        sprintf(omni_tmp_file, "%s/nvimbol_finished", tmpdir);
-    }
 
     start_server();
 

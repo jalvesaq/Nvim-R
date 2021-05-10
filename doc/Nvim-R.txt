@@ -641,8 +641,7 @@ you have inserted the '$' symbol after the data.frame name.
 
 Only the names of objects in .GlobalEnv and in loaded libraries are completed.
 If R is not running, only objects of libraries listed in |R_start_libs| will
-have their names completed. The omni completion menu will be truncated if the
-buffer being transmitted becomes too big (see |R_omni_size|).
+have their names completed.
 
 Vim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
@@ -1000,8 +999,6 @@ of
 |R_compldir|          Where lists for omni completion are stored
 |R_set_omnifunc|      Should Nvim-R set the 'omnifunc'?
 |R_auto_omni|         List of files with auto omni completion enabled
-|R_omni_size|         Maximum size of buffer during omni completion
-|R_omni_tmp_file|     Save omni buffer in temporary file
 |R_remote_tmpdir|     Mount point of remote temporary directory
 |R_nvimcom_home|      Mount point of remote R library
 |Nvim-R-df-view|      Options for visualizing a data.frame or matrix
@@ -2240,8 +2237,6 @@ want to know what they are, while editing an R file, do in Normal mode:
 ------------------------------------------------------------------------------
 								 *R_auto_omni*
 							      *R_set_omnifunc*
-								 *R_omni_size*
-							     *R_omni_tmp_file*
 6.36 Omni completion~
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
@@ -2263,25 +2258,9 @@ non-R function, such as `htmlcomplete#CompleteTags` when editing Rmd files.
 You should trigger these functions manually with CTRL-X CTRL-O.
 
 Nvim-R receives the list of objects for omni completion from the nclientserver
-job running in the background. If the list is not too big, it is transmitted
-through nclientserver's stdout; otherwise, it is transmitted through a
-temporary file. The default size limit is 7600 bytes in Neovim running on Mac
-OS X and 65000 bytes on other systems. Higher values may cause errors during
-completion (malformed |Dictionary| due to unmatched single quotes, missing
-colons, etc.). If you see such bugs during omni completion you should choose a
-value lower than the default, but if you believe that your system support a
-higher you can increase it by setting the value of `R_omni_size` in your
-|vimrc|, as in the example:
->
-   let R_omni_size = 36000
-<
-If saving the list in a temporary file is too slow for you --- for instance,
-if you are using a plugin to run omni completion automatically --- you can put
-the following line in your |vimrc|:
->
-   R_omni_tmp_file = 0
-<
-Then no temporary file will be used, but big lists will be truncated.
+job running in the background. If the list is too big to be transmitted
+through nclientserver's stdout in a single chunk of data, the completion is
+aborted.
 
 
 ------------------------------------------------------------------------------
@@ -3180,7 +3159,7 @@ Examples:
 0.9.16 (2021-04-29)
 
  * Minor bug fixes.
- * New options: R_set_omnifunc, R_auto_omni, R_omni_size and R_omni_tmp_file.
+ * New options: R_set_omnifunc, R_auto_omni.
  * Option R_path might be a list of directories.
 
 0.9.15 (2021-04-14)
