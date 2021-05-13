@@ -1355,9 +1355,7 @@ endif
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)
-    if len(g:R_auto_omni) == 0
-        autocmd FuncUndefined CompleteR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
-    else
+    if len(g:R_auto_omni) > 0 || len(g:R_set_omnifunc) > 0
         exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
     endif
     exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
