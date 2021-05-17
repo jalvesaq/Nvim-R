@@ -47,7 +47,7 @@ void lib2ob();
 void update_pkg_list();
 void update_glblenv_buffer();
 static void build_omnils();
-void complete(const char *base, const char *funcnm);
+void complete(const char *id, const char *base, const char *funcnm);
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
@@ -91,7 +91,7 @@ static pthread_t Tid;
 static char myport[128];
 #endif
 
-/*
+///*
 static void Log(const char *fmt, ...)
 {
     va_list argptr;
@@ -101,7 +101,7 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}*/
+}//*/
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -164,19 +164,25 @@ static void ParseMsg(char *buf)
         }
 
         if (str_here(b, "+FinishArgsCompletion")) {
-            char *base = b + 22;
+            Log("%s", b);
+            // strtok doesn't work here because "base" might be empty.
+            char *id = b + 22;
+            char *base = id;
+            while (*base != ';')
+                base++;
+            *base = 0;
+            base++;
             char *fnm = base;
-            while(*fnm != ';')
+            while (*fnm != ';')
                 fnm++;
             *fnm = 0;
             fnm++;
             b = fnm;
-            while (*b != 0){
-                if (*b == '\n')
-                    *b = 0;
+            while (*b != 0 && *b != '\n')
                 b++;
-            }
-            complete(base, fnm);
+            *b = 0;
+            Log("%s | %s | %s\n", id, base, fnm);
+            complete(id, base, fnm);
             return;
         }
 
@@ -1038,9 +1044,9 @@ static void fake_libnames(const char *s)
     char b[2048];
     snprintf(b, 1500,
             "nms <- c(%s)\n"
-            "pkgs <- installed.packages()\n"
+            "pkgs <- utils::installed.packages()\n"
             "nms <- nms[nms %%in%% rownames(pkgs)]\n"
-            "cat(paste(nms, installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
+            "cat(paste(nms, utils::installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
             "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
 
     int stt = run_R_code(b, 0);
@@ -1817,7 +1823,7 @@ char *parse_omnls(const char *s, const char *base, char *p)
     return p;
 }
 
-void complete(const char *base, const char *funcnm)
+void complete(const char *id, const char *base, const char *funcnm)
 {
     char *p, *s, *t;
     int sz;
@@ -1846,7 +1852,7 @@ void complete(const char *base, const char *funcnm)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%lu\005call SetComplMenu([%s])\n", strlen(compl_buffer) + 21, compl_buffer);
+            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -1862,7 +1868,7 @@ void complete(const char *base, const char *funcnm)
         pd = pd->next;
     }
 
-    printf("\005%lu\005call SetComplMenu([%s])\n", strlen(compl_buffer) + 21, compl_buffer);
+    printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
     fflush(stdout);
 }
 
@@ -1979,22 +1985,12 @@ int main(int argc, char **argv){
                 break;
             case '5':
                 msg++;
-                if(*msg == '0'){
-                    update_pkg_list();
-                    if(auto_obbr)
-                        lib2ob();
-                } else if(*msg == '1'){
-                        msg++;
-                        complete(msg, NULL);
-                } else {
+                char *id = msg;
+                while(*msg != '\003')
                     msg++;
-                    char *base = msg;
-                    while(*msg != '\002')
-                        msg++;
-                    *msg = 0;
-                    msg++;
-                    complete(base, msg);
-                }
+                *msg = 0;
+                msg++;
+                complete(id, msg, NULL);
                 break;
             case '6':
                 msg++;

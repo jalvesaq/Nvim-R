@@ -405,7 +405,7 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL)
+nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL)
 {
     if(firstobj == ""){
         res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
@@ -419,7 +419,7 @@ nvim_complete_args <- function(rkeyword0, argkey, firstobj = "", pkg = NULL)
     writeLines(text = res,
                con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     .C("nvimcom_msg_to_nvim",
-       paste('+FinishArgsCompletion', argkey, rkeyword0, sep = ";"),
+       paste('+FinishArgsCompletion', id, argkey, rkeyword0, sep = ";"),
        PACKAGE="nvimcom")
     return(invisible(NULL))
 }

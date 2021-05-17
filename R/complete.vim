@@ -340,9 +340,12 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-function GetRArgs(base, rkeyword0, firstobj, pkg)
+function GetRArgs(id, base, rkeyword0, firstobj, pkg)
+    if a:rkeyword0 == ""
+        return
+    endif
     call delete(g:rplugin.tmpdir . "/args_for_completion")
-    let msg = 'nvimcom:::nvim_complete_args("' . a:rkeyword0 . '", "' . a:base . '"'
+    let msg = 'nvimcom:::nvim_complete_args("' . a:id . '", "' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
         let msg .= ', firstobj = "' . a:firstobj . '"'
     elseif a:pkg != ""
@@ -374,6 +377,8 @@ function GetListOfRLibs(base)
     return argls
 endfunction
 
+" TODO: Create a copy of this function at nclientserver.c
+" We still need this here for omnifunc
 function FindStartRObj()
     let line = getline(".")
     let lnum = line(".")
@@ -397,6 +402,7 @@ function FindStartRObj()
     return idx2 - 1
 endfunction
 
+" TODO: Transfer this function to nclientserver.c
 function NeedRArguments(line, cpos)
     " Check if we need function arguments
     let line = a:line
@@ -443,10 +449,14 @@ function NeedRArguments(line, cpos)
     return []
 endfunction
 
-function SetComplMenu(cmn)
+function SetComplMenu(id, cmn)
     if s:is_auto_completing
         let s:is_auto_completing = 0
-        call complete(s:auto_compl_col + 1, a:cmn)
+        if a:id == s:completion_id
+            " The completion_id will be invalid if nclientserver is too slow
+            " and the user has already pressed another key
+            call complete(s:auto_compl_col + 1, a:cmn)
+        endif
     else
         let s:compl_menu = deepcopy(a:cmn)
         let s:waiting_compl_menu = 0
@@ -463,9 +473,11 @@ function AutoComplChunkOpts(...)
     call complete(s:auto_compl_col + 1, s:chunk_opt_list)
 endfunction
 
+let s:completion_id = 0
 let s:is_auto_completing = 0
 function RTriggerCompletion()
     let s:user_data = {}
+    let s:completion_id += 1
 
     " We are within the InsertCharPre event
     if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
@@ -475,13 +487,8 @@ function RTriggerCompletion()
         let wrd = ""
         let s:auto_compl_col = col(".")
     endif
-    let lin = getline(".")
-    let lin = strpart(lin, 0, col(".")) . v:char
 
-
-    let g:TheLine = lin . "[" . col(".") . "]" . s:auto_compl_col
-
-    if b:IsInRCode(0) == 0 && b:rplugin_knitr_pattern != '' && lin =~ b:rplugin_knitr_pattern
+    if b:IsInRCode(0) == 2
         if wrd == ''
             return
         endif
@@ -492,6 +499,13 @@ function RTriggerCompletion()
         return
     endif
 
+    let snm = synIDattr(synID(line("."), col(".") - 1, 1), "name")
+    if snm == "rComment"
+        return
+    endif
+
+    let lin = getline(".")
+    let lin = strpart(lin, 0, col(".")) . v:char
     let cpos = getpos(".")
     let cpos[2] = cpos[2] + 1
     let nra = NeedRArguments(lin, cpos)
@@ -505,20 +519,24 @@ function RTriggerCompletion()
             endif
         endif
 
+        if snm == "rString"
+            return
+        endif
+
         let s:is_auto_completing = 1
         if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-            call GetRArgs(wrd, nra[0], nra[1], nra[2])
+            call GetRArgs(s:completion_id, wrd, nra[0], nra[1], nra[2])
         endif
         return
     endif
 
-    if wrd == ''
+    if wrd == '' || snm == "rString"
         return
     endif
 
     let s:compl_type = 1
     let s:is_auto_completing = 1
-    call JobStdin(g:rplugin.jobs["ClientServer"], "51" . wrd . "\n")
+    call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . wrd . "\n")
 endfunction
 
 function CompleteR(findstart, base)
@@ -560,7 +578,7 @@ function CompleteR(findstart, base)
             call UpdateRGlobalEnv(1)
             let s:waiting_compl_menu = 1
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                call GetRArgs(a:base, nra[0], nra[1], nra[2])
+                call GetRArgs(s:completion_id, a:base, nra[0], nra[1], nra[2])
                 return WaitRCompletion()
             endif
         endif
@@ -575,7 +593,7 @@ function CompleteR(findstart, base)
         endif
         call UpdateRGlobalEnv(1)
         let s:waiting_compl_menu = 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "51" . a:base . "\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" .  a:base . "\n")
         return WaitRCompletion()
     endif
 endfunction
@@ -608,6 +626,7 @@ function WaitRCompletion()
     return []
 endfunction
 
+" TODO: Transfer this function to nclientserver.c
 function CompleteChunkOptions(base)
     " https://yihui.org/knitr/options/#chunk-options (2021-04-19)
     let lines = readfile(g:rplugin.home . '/R/chunk_options')
