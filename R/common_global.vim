@@ -154,7 +154,7 @@ endif
 
 " Convert _ into <- 
 function ReplaceUnderS()
-    if &filetype != "r" && b:IsInRCode(0) == 0
+    if &filetype != "r" && b:IsInRCode(0) != 1
         let isString = 1
     else
         let save_unnamed_reg = @@
@@ -229,7 +229,7 @@ endfunction
 function IsLineInRCode(vrb, line)
     let save_cursor = getpos(".")
     call setpos(".", [0, a:line, 1, 0])
-    let isR = b:IsInRCode(a:vrb)
+    let isR = b:IsInRCode(a:vrb) == 1
     call setpos('.', save_cursor)
     return isR
 endfunction

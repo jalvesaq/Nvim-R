@@ -1296,7 +1296,7 @@ endfunction
 " Adapted from marksbrowser plugin
 " Function to get the marks which the cursor is between
 function SendMBlockToR(e, m)
-    if &filetype != "r" && b:IsInRCode(1) == 0
+    if &filetype != "r" && b:IsInRCode(1) != 1
         return
     endif
 
@@ -1337,7 +1337,7 @@ endfunction
 
 " Send functions to R
 function SendFunctionToR(e, m)
-    if &filetype != "r" && b:IsInRCode(1) == 0
+    if &filetype != "r" && b:IsInRCode(1) != 1
         return
     endif
 
@@ -1416,7 +1416,7 @@ function SendSelectionToR(...)
     if &filetype != "r"
         if &filetype == 'rmd' && RmdIsInPythonCode(0)
             let ispy = 1
-        elseif b:IsInRCode(0) == 0
+        elseif b:IsInRCode(0) != 1
             if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
                 call RWarningMsg("Not inside an R code chunk.")
                 return
@@ -1504,7 +1504,7 @@ endfunction
 
 " Send paragraph to R
 function SendParagraphToR(e, m)
-    if &filetype != "r" && b:IsInRCode(1) == 0
+    if &filetype != "r" && b:IsInRCode(1) != 1
         return
     endif
 
@@ -1646,7 +1646,7 @@ function SendLineToR(godown, ...)
             call KnitChild(line, a:godown)
             return
         endif
-        if RnwIsInRCode(1) == 0
+        if RnwIsInRCode(1) != 1
             return
         endif
     endif
@@ -1663,7 +1663,7 @@ function SendLineToR(godown, ...)
             return
         endif
         let line = substitute(line, "^(\\`\\`)\\?", "", "")
-        if RmdIsInRCode(0) == 0
+        if RmdIsInRCode(0) != 1
             if RmdIsInPythonCode(0) == 0
                 call RWarningMsg("Not inside an R code chunk.")
                 return
@@ -1685,7 +1685,7 @@ function SendLineToR(godown, ...)
             return
         endif
         let line = substitute(line, "^\\.\\. \\?", "", "")
-        if RrstIsInRCode(1) == 0
+        if RrstIsInRCode(1) != 1
             return
         endif
     endif
@@ -1697,12 +1697,12 @@ function SendLineToR(godown, ...)
             call AskRDoc(topic, package, 1)
             return
         endif
-        if RdocIsInRCode(1) == 0
+        if RdocIsInRCode(1) != 1
             return
         endif
     endif
 
-    if &filetype == "rhelp" && RhelpIsInRCode(1) == 0
+    if &filetype == "rhelp" && RhelpIsInRCode(1) != 1
         return
     endif
 

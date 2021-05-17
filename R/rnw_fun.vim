@@ -18,7 +18,9 @@ endfunction
 function RnwIsInRCode(vrb)
     let chunkline = search("^<<", "bncW")
     let docline = search("^@", "bncW")
-    if chunkline > docline && chunkline != line(".")
+    if chunkline == line(".")
+        return 2
+    elseif chunkline > docline
         return 1
     else
         if a:vrb
@@ -33,7 +35,7 @@ function RnwPreviousChunk() range
     let chunk = len(rg)
     for var in range(1, chunk)
         let curline = line(".")
-        if RnwIsInRCode(0)
+        if RnwIsInRCode(0) == 1
             let i = search("^<<.*$", "bnW")
             if i != 0
                 call cursor(i-1, 1)
@@ -190,8 +192,9 @@ endfunction
 
 " Send Sweave chunk to R
 function RnwSendChunkToR(e, m)
-    if RnwIsInRCode(0) == 0
-        call RWarningMsg("Not inside an R code chunk.")
+    if RnwIsInRCode(1) == 2
+        call cursor(line(".") + 1, 1)
+    elseif RnwIsInRCode(1) == 0
         return
     endif
     let chunkline = search("^<<", "bncW") + 1
