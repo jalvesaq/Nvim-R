@@ -36,7 +36,7 @@ NvimcomEnv$pkgdescr <- list()
 
     if(interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != ""){
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
-        nvinf <- installed.packages()["nvimcom", c("Version", "LibPath", "Built")]
+        nvinf <- utils::installed.packages()["nvimcom", c("Version", "LibPath", "Built")]
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
