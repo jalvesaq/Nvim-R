@@ -288,9 +288,11 @@ function AskForComplInfo()
                 let wrd = s:compl_event['completed_item']['word']
                 " Request function description and usage
                 call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
-            else
+            elseif has_key(s:compl_event['completed_item']['user_data'], 'cls')
                 " Neovim doesn't allow to open a float window from here:
                 call timer_start(1, 'CreateNewFloat', {})
+            elseif s:float_win
+                call CloseFloatWin()
             endif
         endif
     elseif s:float_win
