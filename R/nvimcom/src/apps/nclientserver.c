@@ -91,7 +91,7 @@ static pthread_t Tid;
 static char myport[128];
 #endif
 
-///*
+/*
 static void Log(const char *fmt, ...)
 {
     va_list argptr;
@@ -101,7 +101,7 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}//*/
+}*/
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -164,7 +164,7 @@ static void ParseMsg(char *buf)
         }
 
         if (str_here(b, "+FinishArgsCompletion")) {
-            Log("%s", b);
+            // Log("%s", b);
             // strtok doesn't work here because "base" might be empty.
             char *id = b + 22;
             char *base = id;
@@ -181,7 +181,7 @@ static void ParseMsg(char *buf)
             while (*b != 0 && *b != '\n')
                 b++;
             *b = 0;
-            Log("%s | %s | %s\n", id, base, fnm);
+            //Log("%s | %s | %s\n", id, base, fnm);
             complete(id, base, fnm);
             return;
         }

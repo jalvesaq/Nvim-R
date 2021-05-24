@@ -8,6 +8,10 @@
 " That is, we can call a function in nvimcom to get the contents of the float
 " window.
 
+if exists("*FormatInfo")
+    finish
+endif
+
 let s:float_win = 0
 let s:compl_event = {}
 let g:rplugin.compl_cls = ''

@@ -2241,17 +2241,22 @@ want to know what they are, while editing an R file, do in Normal mode:
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
 (`CompleteR`), but if you prefer to use another function or system (such as
-language server) for omni completion, set in your |vimrc| the value of
+a language server) for omni completion, set in your |vimrc| the value of
 `R_set_omnifunc` as a list including only the file types that must have
 `CompleteR` as the function for omni completion. Example with the default
 value:
 >
-   let R_set_omnifunc = []
+   let R_set_omnifunc = ["r",  "rmd", "rnoweb", "rhelp", "rrst"]
 <
-Similarly, you can define what files will have Nvim-R's auto omni completion
-enabled:
+Similarly, you can define what files will get Nvim-R's auto omni completion:
 >
    let R_auto_omni = ["r",  "rmd", "rnoweb", "rhelp", "rrst"]
+<
+You should use empty lists if you do not want to use Nvim-R's omni completion
+in any file type:
+>
+   let R_set_omnifunc = []
+   let R_auto_omni = []
 <
 Automatic omni completion does not include results from previously defined
 non-R function, such as `htmlcomplete#CompleteTags` when editing Rmd files.

@@ -25,7 +25,7 @@ function ROnJobStdout(job_id, msg)
         if str2nr(cmdsplt[0]) == strlen(cmdsplt[1])
             exe cmdsplt[1]
         else
-            call SetComplMenu([])
+            call SetComplMenu(0, [])
             call RWarningMsg("Wrong string length (menu for completion): " . str2nr(cmdsplt[0]) . " x " . strlen(cmdsplt[1]))
         endif
     elseif cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
