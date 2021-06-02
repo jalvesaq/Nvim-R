@@ -340,10 +340,6 @@ function UpdateSynRhlist()
 
     let g:rplugin.libs_in_ncs = readfile(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
     for lib in g:rplugin.libs_in_ncs
-        if exists("*SourceRFunList")
-            " R/functions.vim will not be source if r_syntax_fun_pattern = 1
-            call SourceRFunList(lib)
-        endif
         call AddToRhelpList(lib)
     endfor
     if exists("*FunHiOtherBf")

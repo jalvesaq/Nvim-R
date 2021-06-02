@@ -16,11 +16,6 @@ if exists("*SourceRFunList")
             call SourceRFunList(s:lib)
         endfor
         unlet s:lib
-    elseif len(s:default_libs) > 0
-        for s:lib in s:default_libs
-            call SourceRFunList(s:lib)
-        endfor
-        unlet s:lib
     endif
     finish
 endif
@@ -92,29 +87,3 @@ function FunHiOtherBf()
         endif
     endif
 endfunction
-
-
-"==============================================================================
-" Source the Syntax scripts for the first time, before the
-" buffer is drawn to include rFunction keywords in r syntax
-" and build the list for completion of :Rhelp
-"==============================================================================
-
-let s:default_libs = []
-if filereadable(g:rplugin.compldir . '/last_default_libnames')
-    let s:deflibs = readfile(g:rplugin.compldir . '/last_default_libnames')
-    if  len(s:deflibs) > 0
-        for s:lib in s:deflibs
-            if filereadable(g:rplugin.compldir . '/fun_' . s:lib)
-                let s:default_libs += [s:lib]
-            endif
-        endfor
-        unlet s:lib
-    endif
-endif
-if len(s:default_libs) > 0
-    for s:lib in s:default_libs
-        call SourceRFunList(s:lib)
-    endfor
-    unlet s:lib
-endif
