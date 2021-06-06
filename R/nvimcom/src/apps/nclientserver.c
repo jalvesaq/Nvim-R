@@ -1842,11 +1842,19 @@ void complete(const char *id, const char *base, const char *funcnm)
             while(sz > compl_buffer_size)
                 p = grow_buffer(&compl_buffer, &compl_buffer_size);
             snprintf(buf, 511, "{'word': '%s", base);
+#ifdef WIN32
+            t = strtok(s, "\n\r");
+#else
             t = strtok(s, "\n");
+#endif
             while(t){
                 if(strstr(t, buf))
                     p = str_cat(p, t);
+#ifdef WIN32
+                t = strtok(NULL, "\n\r");
+#else
                 t = strtok(NULL, "\n");
+#endif
             }
             free(s);
         }
