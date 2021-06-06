@@ -1871,6 +1871,8 @@ the audible bell only for R by putting in your `~/.inputrc`:
        set bell-style audible
    $endif
 <
+Note: You can't control the bell on Windows; it is hardcoded to run in Rterm
+and to not run in Rgui.
 
 ------------------------------------------------------------------------------
 							   *R_pdfviewer*
