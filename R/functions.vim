@@ -34,6 +34,7 @@ if !has_key(g:rplugin, "compldir")
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/setcompldir.vim"
 endif
 
+let g:R_hi_fun = get(g:, "R_hi_fun", 1)
 
 "==============================================================================
 " Function for highlighting rFunction keywords
@@ -41,7 +42,7 @@ endif
 
 " Must be run for each buffer
 function SourceRFunList(lib)
-    if exists("g:R_hi_fun") && g:R_hi_fun == 0
+    if g:R_hi_fun == 0
         return
     endif
 
@@ -75,15 +76,17 @@ endfunction
 "==============================================================================
 
 function FunHiOtherBf()
+    if &diff || g:R_hi_fun == 0
+        return
+    endif
+
     " Syntax highlight other buffers
-    if !exists("g:R_hi_fun") || g:R_hi_fun != 0
-        if has("nvim")
-            for bId in nvim_list_bufs()
-                call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
-            endfor
-        else
-            silent exe 'set syntax=' . &syntax
-            redraw
-        endif
+    if has("nvim")
+        for bId in nvim_list_bufs()
+            call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
+        endfor
+    else
+        silent exe 'set syntax=' . &syntax
+        redraw
     endif
 endfunction
