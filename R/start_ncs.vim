@@ -326,6 +326,11 @@ function ShowBuildOmnilsError(stt)
         let g:rplugin.debug_info['Error running R code'] = 'Exit status: ' . a:stt . "\n" . join(ferr, "\n")
         call RWarningMsg('Error building omnils_ file. Run :RDebugInfo for details.')
         call delete(g:rplugin.tmpdir . '/run_R_stderr')
+        if g:rplugin.debug_info['Error running R code'] =~ "Error in library(.nvimcom.).*there is no package called .*nvimcom"
+            " This will happen if the user manually changes .libPaths
+            call delete(g:rplugin.compldir . "/nvimcom_info")
+            let g:rplugin.debug_info['Error running R code'] .= "\nPlease, restart " . v:progname
+        endif
     else
         call RWarningMsg(g:rplugin.tmpdir . '/run_R_stderr not found')
     endif
