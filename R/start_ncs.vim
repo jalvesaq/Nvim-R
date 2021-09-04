@@ -412,6 +412,26 @@ if filereadable(g:rplugin.compldir . "/nvimcom_info")
     unlet s:flines
 endif
 if exists("g:R_nvimcom_home")
-    let g:rplugin.nvimcom_info['home'] = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
+    let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
+    let s:ncs_path = FindNCSpath(nvimcom_home)
+
+    if s:ncs_path != '' && filereadable(nvimcom_home . '/nvimcom/DESCRIPTION')
+        let g:rplugin.nvimcom_info['home'] = nvimcom_home
+
+        let ndesc = readfile(g:rplugin.nvimcom_info['home'] . '/nvimcom/DESCRIPTION')
+
+        let versionline = matchstr(ndesc, '^Version: ')
+        if versionline != ''
+            let g:rplugin.nvimcom_info['version'] = substitute(versionline, '^Version: ', '', '')
+        endif
+
+        let buildinfoline = matchstr(ndesc, '^Built:')
+        if buildinfoline != ''
+            let rinfo = matchstr(buildinfoline, 'R [.0-9]\+')
+            if rinfo != ''
+                let g:rplugin.nvimcom_info['Rversion'] = substitute(rinfo, 'R ', '', '')
+            endif
+        endif
+    endif
 endif
 
