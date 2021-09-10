@@ -6,7 +6,6 @@ Tmux split pane, you could try the Tilix terminal emulator, and put in your
 `vimrc`:
 
 ```vim
-let R_in_buffer = 0
 let R_external_term = 'tilix -a session-add-right -e'
 ```
 
@@ -33,7 +32,7 @@ version of Nvim-R or download `tmux_split.vim` from
 and, then, put in your `vimrc`:
 
 ```vim
-let R_source = '/path/to/tmux_split.vim'
+let R_source = '/path/to/Nvim-R/R/tmux_split.vim'
 ```
 
 
