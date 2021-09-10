@@ -238,7 +238,7 @@ function StartNClientServer()
     endif
 
     " The nvimcom package includes a small application to generate random
-    " number and we use it to set both $NVIMR_ID and $NVIMR_SECRET
+    " numbers and we use it to set both $NVIMR_ID and $NVIMR_SECRET
     if $NVIMR_ID == ""
         if has('nvim')
             let randstr = system(['randint2'])
@@ -246,7 +246,7 @@ function StartNClientServer()
             let randstr = system('randint2')
         endif
         if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
-            call RWarningMsg('Using insecure communication with R due to failure to get random numbers from nclientserver: '
+            call RWarningMsg('Using insecure communication with R due to failure to get random numbers: '
                         \ . substitute(randstr, "[\r\n]", ' ', 'g'))
             let $NVIMR_ID = strftime('%m%d%Y%M%S%H')
             let $NVIMR_SECRET = strftime('%m%H%M%d%Y%S')
@@ -411,6 +411,7 @@ if filereadable(g:rplugin.compldir . "/nvimcom_info")
     endif
     unlet s:flines
 endif
+
 if exists("g:R_nvimcom_home")
     let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
     let s:ncs_path = FindNCSpath(nvimcom_home)
