@@ -801,6 +801,7 @@ function RControlMaps()
     " Render script with rmarkdown
     "-------------------------------------
     call RCreateMaps('nvi', 'RMakeRmd',    'kr', ':call RMakeRmd("default")')
+    call RCreateMaps('nvi', 'RMakeAll',    'ka', ':call RMakeRmd("all")')
     call RCreateMaps('nvi', 'RMakePDFK',   'kp', ':call RMakeRmd("pdf_document")')
     call RCreateMaps('nvi', 'RMakePDFKb',  'kl', ':call RMakeRmd("beamer_presentation")')
     call RCreateMaps('nvi', 'RMakeWord',   'kw', ':call RMakeRmd("word_document")')

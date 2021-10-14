@@ -393,6 +393,7 @@ Command
   . Knit and ODT (cur file)                            \ko
   . Knit and Word Document (cur file)                  \kw
   . Markdown render (cur file)                         \kr
+  . Markdown render [all in YAML] (cur file)           \ka
   . Spin (cur file) (only .R)                          \ks
   --------------------------------------------------------
   . Open attachment of reference (Rmd, Rnoweb)         \oa
@@ -2529,7 +2530,7 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RMakeODT	(.Rmd, Open document)
    RMakeWord	(.Rmd, Word document)
    RMakeRmd	(rmarkdown default)
-   RMakeAll	(rmarkdown all in yaml)
+   RMakeAll	(rmarkdown all in YAML)
    ROpenPDF
    RSyncFor	(SyncTeX search forward)
    RGoToTeX	(Got to LaTeX output)
