@@ -31,6 +31,30 @@ function RCompleteBib(base)
     return resp
 endfunction
 
+function! s:GetBibFileName()
+    if !exists('b:rplugin_bibf')
+        let b:rplugin_bibf = ''
+    endif
+    if &filetype == 'rmd'
+        let newbibf = RmdGetYamlField('bibliography')
+        if newbibf == ''
+            let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
+        endif
+    else
+        let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
+    endif
+    if newbibf != b:rplugin_bibf
+        let b:rplugin_bibf = newbibf
+        if IsJobRunning('BibComplete')
+            call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
+        else
+            let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
+            let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
+            call RCreateMaps('n', 'ROpenRefFile', 'od', ':call GetBibAttachment()')
+        endif
+    endif
+endfunction
+
 function s:HasPython3()
     if exists("g:R_python3")
         if filereadable("g:R_python3")
@@ -61,19 +85,30 @@ function s:HasPython3()
     return 1
 endfunction
 
-function CheckPyBTeX()
-    if has_key(g:rplugin.debug_info, 'BibComplete')
-        return
+function CheckPyBTeX(...)
+    if !has_key(g:rplugin.debug_info, 'BibComplete')
+        if !s:HasPython3()
+            return
+        endif
+        call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
+        if v:shell_error == 0
+            let g:rplugin.debug_info['BibComplete'] = "PyBTex OK"
+        else
+            let g:rplugin.debug_info['BibComplete'] = "No PyBTex"
+            let g:rplugin.py3 = ''
+        endif
     endif
-    if !s:HasPython3()
-        return
-    endif
-    call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
-    if v:shell_error == 0
-        let g:rplugin.debug_info['BibComplete'] = "PyBTex OK"
-    else
-        let g:rplugin.debug_info['BibComplete'] = "No PyBTex"
-        let g:rplugin.py3 = ''
+    if g:rplugin.debug_info['BibComplete'] == "PyBTex OK"
+        " Use RBibComplete if possible
+        call s:GetBibFileName()
+        if !exists("b:rplugin_did_bib_autocmd")
+            autocmd BufWritePost <buffer> call s:GetBibFileName()
+            if &filetype == 'rnoweb'
+                let b:rplugin_non_r_omnifunc = "RnwNonRCompletion"
+                autocmd CompleteDone <buffer> call RnwOnCompleteDone()
+            endif
+        endif
+        let b:rplugin_did_bib_autocmd = 1
     endif
 endfunction
 

@@ -36,7 +36,7 @@ function! RWriteRmdChunk()
     endif
 endfunction
 
-function! s:GetYamlField(field)
+function! RmdGetYamlField(field)
     let value = []
     let lastl = line('$')
     let idx = 2
@@ -78,26 +78,6 @@ function! s:GetYamlField(field)
         call map(value, "expand(v:val)")
     endif
     return join(value, "\x06")
-endfunction
-
-function! s:GetBibFileName()
-    if !exists('b:rplugin_bibf')
-        let b:rplugin_bibf = ''
-    endif
-    let newbibf = s:GetYamlField('bibliography')
-    if newbibf == ''
-        let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
-    endif
-    if newbibf != b:rplugin_bibf
-        let b:rplugin_bibf = newbibf
-        if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
-        else
-            let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
-            let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
-            call RCreateMaps('n', 'ROpenRefFile', 'od', ':call GetBibAttachment()')
-        endif
-    endif
 endfunction
 
 function! RmdIsInPythonCode(vrb)
@@ -247,14 +227,7 @@ if !exists('b:rplugin_bibf')
 endif
 
 if g:R_non_r_compl
-    call CheckPyBTeX()
-    if !has_key(g:rplugin.debug_info, 'BibComplete')
-        call s:GetBibFileName()
-        if !exists("b:rplugin_did_bib_autocmd")
-            let b:rplugin_did_bib_autocmd = 1
-            autocmd BufWritePost <buffer> call s:GetBibFileName()
-        endif
-    endif
+    call timer_start(1, "CheckPyBTeX")
 endif
 
 let b:IsInRCode = function("RmdIsInRCode")

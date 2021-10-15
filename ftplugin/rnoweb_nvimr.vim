@@ -35,23 +35,6 @@ endif
 exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/rnw_fun.vim"
 call SetPDFdir()
 
-function! s:GetBibFileName()
-    if !exists('b:rplugin_bibf')
-        let b:rplugin_bibf = ''
-    endif
-    let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
-    if newbibf != b:rplugin_bibf
-        let b:rplugin_bibf = newbibf
-        if IsJobRunning('BibComplete')
-            call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
-        else
-            let aa = [g:rplugin.py3, g:rplugin.home . '/R/bibtex.py', expand("%:p"), b:rplugin_bibf]
-            let g:rplugin.jobs["BibComplete"] = StartJob(aa, g:rplugin.job_handlers)
-            call RCreateMaps('n', 'ROpenRefFile', 'od', ':call GetBibAttachment()')
-        endif
-    endif
-endfunction
-
 function! s:CompleteEnv(base)
     " List from LaTeX-Box
     let lenv = ['abstract]', 'align*}', 'align}', 'center}', 'description}',
@@ -180,7 +163,7 @@ function! RnwNonRCompletion(findstart, base)
     endif
 endfunction
 
-function! s:OnCompleteDone()
+function! RnwOnCompleteDone()
     if s:compl_type == 9
         let s:compl_type = 0
         if has_key(v:completed_item, 'word')
@@ -190,17 +173,11 @@ function! s:OnCompleteDone()
 endfunction
 
 if g:R_non_r_compl
-    if !has_key(g:rplugin, "py3")
-        call CheckPyBTeX()
-    endif
-    if !has_key(g:rplugin.debug_info, 'BibComplete')
-        " Use RBibComplete if possible
-        call s:GetBibFileName()
-        let b:rplugin_non_r_omnifunc = "RnwNonRCompletion"
-        autocmd BufWritePost <buffer> call s:GetBibFileName()
-        autocmd CompleteDone <buffer> call s:OnCompleteDone()
-    endif
+    call timer_start(1, "CheckPyBTeX")
 endif
+
+let s:checkpybtex_called = 1
+
 
 
 " Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,
