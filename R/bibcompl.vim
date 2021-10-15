@@ -62,11 +62,16 @@ function s:HasPython3()
 endfunction
 
 function CheckPyBTeX()
+    if has_key(g:rplugin.debug_info, 'BibComplete')
+        return
+    endif
     if !s:HasPython3()
         return
     endif
     call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
-    if v:shell_error != 0
+    if v:shell_error == 0
+        let g:rplugin.debug_info['BibComplete'] = "PyBTex OK"
+    else
         let g:rplugin.debug_info['BibComplete'] = "No PyBTex"
         let g:rplugin.py3 = ''
     endif
