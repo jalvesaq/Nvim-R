@@ -251,6 +251,7 @@ function MakeRMenu()
         call RCreateMenuItem('nvi', 'Command.Knit\ and\ ODT\ (cur\ file)', 'RMakeODT', 'ko', ':call RMakeRmd("odt_document")')
         call RCreateMenuItem('nvi', 'Command.Knit\ and\ Word\ Document\ (cur\ file)', 'RMakeWord', 'kw', ':call RMakeRmd("word_document")')
         call RCreateMenuItem('nvi', 'Command.Markdown\ render\ (cur\ file)', 'RMakeRmd', 'kr', ':call RMakeRmd("default")')
+        call RCreateMenuItem('nvi', 'Command.Markdown\ render\ [all\ in\ YAML]\ (cur\ file)', 'RMakeRmd', 'ka', ':call RMakeRmd("all")')
     endif
     if &filetype == "r" || g:R_never_unmake_menu
         call RCreateMenuItem('nvi', 'Command.Spin\ (cur\ file)', 'RSpin', 'ks', ':call RSpin()')
