@@ -531,3 +531,14 @@ endif
 if exists('R_show_args')
     call RWarningMsg("The option 'R_show_args' no longer exists.")
 endif
+
+" 2020-06-16
+if exists('g:R_in_buffer')
+    call RWarningMsg('The option "R_in_buffer" was replaced with "R_external_term".')
+endif
+if exists('g:R_term')
+    call RWarningMsg('The option "R_term" was replaced with "R_external_term".')
+endif
+if exists('g:R_term_cmd')
+    call RWarningMsg('The option "R_term_cmd" was replaced with "R_external_term".')
+endif
