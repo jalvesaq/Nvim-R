@@ -1348,10 +1348,6 @@ if has("gui_running")
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/gui_running.vim"
 endif
 
-if !executable(g:rplugin.R)
-    call RWarningMsg("R executable not found: '" . g:rplugin.R . "'")
-endif
-
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)

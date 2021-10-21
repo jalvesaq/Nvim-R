@@ -436,6 +436,10 @@ if exists("g:R_nvimcom_home")
     endif
 endif
 
+if !executable(g:rplugin.R)
+    call RWarningMsg("R executable not found: '" . g:rplugin.R . "'")
+endif
+
 "==============================================================================
 " Check for the existence of duplicated or obsolete code and deprecated options
 "==============================================================================
