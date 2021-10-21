@@ -14,12 +14,16 @@ endif
 " From changelog.vim, with bug fixed by "Si" ("i5ivem")
 " Windows logins can include domain, e.g: 'DOMAIN\Username', need to remove
 " the backslash from this as otherwise cause file path problems.
-if executable("whoami")
-    let g:rplugin.userlogin = system('whoami')
-elseif $USERNAME != ""
-    let g:rplugin.userlogin = $USERNAME
+if $LOGNAME != ""
+    let g:rplugin.userlogin = $LOGNAME
 elseif $USER != ""
     let g:rplugin.userlogin = $USER
+elseif $USERNAME != ""
+    let g:rplugin.userlogin = $USERNAME
+elseif $HOME != ""
+    let g:rplugin.userlogin = substitute($HOME, '.*/', '', '')
+elseif executable("whoami")
+    let g:rplugin.userlogin = system('whoami')
 else
     call RWarningMsg("Could not determine user name.")
     let g:rplugin.failed = 1
