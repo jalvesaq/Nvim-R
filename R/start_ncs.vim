@@ -436,8 +436,33 @@ if exists("g:R_nvimcom_home")
     endif
 endif
 
+" The calls to system() and executable() below are in this script to run
+" asynchronously and avoid slow startup on Mac OS X.
+" See https://github.com/jalvesaq/Nvim-R/issues/625
 if !executable(g:rplugin.R)
     call RWarningMsg("R executable not found: '" . g:rplugin.R . "'")
+endif
+
+let g:rplugin.is_darwin = system("uname") =~ "Darwin"
+
+if g:rplugin.is_darwin
+    let g:R_openpdf = get(g:, "R_openpdf", 1)
+    let g:R_pdfviewer = "skim"
+else
+    let g:R_openpdf = get(g:, "R_openpdf", 2)
+    if has("win32")
+        let g:R_pdfviewer = "sumatra"
+    else
+        let g:R_pdfviewer = get(g:, "R_pdfviewer", "zathura")
+    endif
+endif
+
+if g:rplugin.is_darwin
+    if !exists("g:macvim_skim_app_path")
+        let g:macvim_skim_app_path = '/Applications/Skim.app'
+    endif
+else
+    let g:R_applescript = 0
 endif
 
 "==============================================================================

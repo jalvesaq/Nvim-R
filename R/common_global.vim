@@ -1096,9 +1096,6 @@ if !isdirectory(g:rplugin.tmpdir)
     call mkdir(g:rplugin.tmpdir, "p", 0700)
 endif
 
-
-let g:rplugin.is_darwin = system("uname") =~ "Darwin"
-
 " Delete options with invalid values
 if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
     call RWarningMsg('"R_set_omnifunc" must be a list')
@@ -1176,17 +1173,6 @@ let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
 let g:R_indent_commented = get(g:, "R_indent_commented",            1)
 
-if g:rplugin.is_darwin
-    let g:R_openpdf = get(g:, "R_openpdf", 1)
-    let g:R_pdfviewer = "skim"
-else
-    let g:R_openpdf = get(g:, "R_openpdf", 2)
-    if has("win32")
-        let g:R_pdfviewer = "sumatra"
-    else
-        let g:R_pdfviewer = get(g:, "R_pdfviewer", "zathura")
-    endif
-endif
 
 if !exists("g:r_indent_ess_comments")
     let g:r_indent_ess_comments = 0
@@ -1238,19 +1224,6 @@ unlet objbrplace
 
 "==============================================================================
 " Check if default mean of communication with R is OK
-"==============================================================================
-
-if g:rplugin.is_darwin
-    if !exists("g:macvim_skim_app_path")
-        let g:macvim_skim_app_path = '/Applications/Skim.app'
-    endif
-else
-    let g:R_applescript = 0
-endif
-
-
-"==============================================================================
-" 
 "==============================================================================
 
 " Minimum width for the Object Browser
