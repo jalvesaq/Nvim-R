@@ -14,11 +14,7 @@ let b:did_rdoc_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-" Source scripts common to R, Rnoweb, Rhelp and rdoc files:
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-
-" Some buffer variables common to R, Rnoweb, Rhelp and rdoc file need be
-" defined after the global ones:
+" Define some buffer variables common to R, Rnoweb, Rmd, Rrst, Rhelp and rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 setlocal iskeyword=@,48-57,_,.

@@ -3,14 +3,7 @@ if exists("g:disable_r_ftplugin")
     finish
 endif
 
-" Source scripts common to R, Rnoweb, Rhelp, Rmd, Rrst and rdoc files:
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if has_key(g:rplugin, "failed")
-    finish
-endif
-
-" Some buffer variables common to R, Rnoweb, Rhelp, Rmd, Rrst and rdoc files
-" need be defined after the global ones:
+" Define some buffer variables common to R, Rnoweb, Rmd, Rrst, Rhelp and rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 function! GetRCmdBatchOutput(...)

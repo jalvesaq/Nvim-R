@@ -3,6 +3,9 @@
 " are common for all file types supported by Nvim-R.
 "==============================================================================
 
+" Source scripts common to R, Rnoweb, Rhelp and rdoc files:
+exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
+
 
 " Set omni completion (both automatic and triggered by CTRL-X CTRL-O)
 if index(g:R_set_omnifunc, &filetype) > -1
@@ -54,11 +57,6 @@ let g:rplugin.lastft = &filetype
 if !exists("b:pdf_is_open")
     let b:pdf_is_open = 0
 endif
-
-if !exists("g:SendCmdToR")
-    let g:SendCmdToR = function('SendCmdToR_fake')
-endif
-
 
 if g:R_assign == 3
     iabb <buffer> _ <-

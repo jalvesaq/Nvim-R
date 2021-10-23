@@ -3,14 +3,7 @@ if exists("g:disable_r_ftplugin")
     finish
 endif
 
-" Source scripts common to R, Rnoweb, Rhelp and Rdoc:
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
-if has_key(g:rplugin, "failed")
-    finish
-endif
-
-" Some buffer variables common to R, Rnoweb, Rhelp and Rdoc need to be defined
-" after the global ones:
+" Define some buffer variables common to R, Rnoweb, Rmd, Rrst, Rhelp and rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 " Bibliographic completion
@@ -33,7 +26,6 @@ if g:R_rnowebchunk == 1
 endif
 
 exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/rnw_fun.vim"
-call SetPDFdir()
 
 function! s:CompleteEnv(base)
     " List from LaTeX-Box
@@ -172,13 +164,6 @@ function! RnwOnCompleteDone()
     endif
 endfunction
 
-if g:R_non_r_compl
-    call timer_start(1, "CheckPyBTeX")
-endif
-
-let s:checkpybtex_called = 1
-
-
 
 " Pointers to functions whose purposes are the same in rnoweb, rrst, rmd,
 " rhelp and rdoc and which are called at common_global.vim
@@ -227,12 +212,17 @@ if has("gui_running")
     call MakeRMenu()
 endif
 
-if g:R_synctex && $DISPLAY != "" && g:rplugin.pdfviewer == "evince"
-    let g:rplugin.evince_loop = 0
-    call Run_EvinceBackward()
+call RSourceOtherScripts()
+
+if g:R_non_r_compl
+    call timer_start(1, "CheckPyBTeX")
 endif
 
-call RSourceOtherScripts()
+function RPDFinit(...)
+    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_init.vim"
+endfunction
+
+call timer_start(1, "RPDFinit")
 
 if exists("b:undo_ftplugin")
     let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
