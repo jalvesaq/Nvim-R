@@ -256,6 +256,12 @@ endif
 
 call RSourceOtherScripts()
 
+function RPDFinit(...)
+    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_init.vim"
+endfunction
+
+call timer_start(1, "RPDFinit")
+
 if exists("b:undo_ftplugin")
     let b:undo_ftplugin .= " | unlet! b:IsInRCode b:PreviousRChunk b:NextRChunk b:SendChunkToR"
 else
