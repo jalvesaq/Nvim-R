@@ -668,44 +668,6 @@ function ROpenDoc(fullpath, browser)
     endif
 endfunction
 
-function RSetPDFViewer()
-    let g:rplugin.pdfviewer = tolower(g:R_pdfviewer)
-
-    if g:rplugin.pdfviewer == "zathura"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_zathura.vim"
-    elseif g:rplugin.pdfviewer == "evince"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_evince.vim"
-    elseif g:rplugin.pdfviewer == "okular"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_okular.vim"
-    elseif has("win32") && g:rplugin.pdfviewer == "sumatra"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_sumatra.vim"
-    elseif g:rplugin.is_darwin && g:rplugin.pdfviewer == "skim"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_skim.vim"
-    elseif g:rplugin.pdfviewer == "qpdfview"
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_qpdfview.vim"
-    else
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_generic.vim"
-        if !executable(g:R_pdfviewer)
-            call RWarningMsg("R_pdfviewer (" . g:R_pdfviewer . ") not found.")
-            return
-        endif
-        if g:R_synctex
-            call RWarningMsg('Invalid value for R_pdfviewer: "' . g:R_pdfviewer . '" (SyncTeX will not work)')
-        endif
-    endif
-
-    if !has("win32") && !g:rplugin.is_darwin
-        if executable("wmctrl")
-            let g:rplugin.has_wmctrl = 1
-        else
-            let g:rplugin.has_wmctrl = 0
-            if &filetype == "rnoweb" && g:R_synctex
-                call RWarningMsg("The application wmctrl must be installed to edit Rnoweb effectively.")
-            endif
-        endif
-    endif
-endfunction
-
 " For each noremap we need a vnoremap including <Esc> before the :call,
 " otherwise nvim will call the function as many times as the number of selected
 " lines. If we put <Esc> in the noremap, nvim will bell.
@@ -1050,6 +1012,8 @@ let g:SendLineToRAndInsertOutput = function('RNotRunning')
 let g:SendMBlockToR = function('RNotRunning')
 let g:SendParagraphToR = function('RNotRunning')
 let g:SendSelectionToR = function('RNotRunning')
+let g:SendCmdToR = function('SendCmdToR_fake')
+
 
 
 "==============================================================================

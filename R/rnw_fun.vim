@@ -508,5 +508,3 @@ function SetPDFdir()
         endif
     endif
 endfunction
-
-call RSetPDFViewer()
