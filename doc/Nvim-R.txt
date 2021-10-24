@@ -751,9 +751,44 @@ being added after <Enter>:
 >
    autocmd FileType r setlocal formatoptions-=t formatoptions+=croql
 <
-Tip: You can use Vim substitution command `:%s/#.*//` to delete all comments
-in a buffer (see |:s| and |pattern-overview|).
+If you are using a plugin to comment and uncomment lines of code and don't
+want the default single dash as the comment string, rather prefering two
+dashes as is usual in Emacs/ESS, put this in your |vimrc|:
+>
+   function MyRmdCommentStr()
+     if b:IsInRCode(0) || ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
+       setlocal commentstring=##\ %s
+     else
+       setlocal commentstring=<!--\ %s\ -->
+     endif
+   endfunction
 
+   function MyRnwCommentStr()
+     if b:IsInRCode(0)
+       setlocal commentstring=##\ %s
+     else
+       setlocal commentstring=%\ %s
+     endif
+   endfunction
+
+   function InitMyRmdCmtStr()
+     augroup RmdCStr
+       autocmd!
+       autocmd CursorMoved <buffer> call MyRmdCommentStr()
+     augroup END
+   endfunction
+
+   function InitMyRnwCmtStr()
+     augroup RnwCStr
+       autocmd!
+       autocmd CursorMoved <buffer> call MyRnwCommentStr()
+     augroup END
+   endfunction
+
+   autocmd FileType rmd call InitMyRmdCmtStr()
+   autocmd FileType rnoweb call InitMyRnwCmtStr()
+   autocmd FileType r set commentstring=##\ %s
+<
 
 ------------------------------------------------------------------------------
 								  *RBuildTags*
@@ -2615,8 +2650,9 @@ http://www.r-project.org/Licenses/
 
 9.1. How to quit R automatically?~
 
-And if you want to quit automatically when quiting Vim, put in your |vimrc|
-(replace `"nosave"` with `"save"` if you want to save R's workspace):
+If you are running R in an external terminal emulator and want to quit it
+automatically when quiting Vim, put in your |vimrc| (replace `"nosave"` with
+`"save"` if you want to save R's workspace):
 >
    autocmd VimLeave * if exists("g:SendCmdToR") && string(g:SendCmdToR) != "function('SendCmdToR_fake')" | call RQuit("nosave") | endif
 <
