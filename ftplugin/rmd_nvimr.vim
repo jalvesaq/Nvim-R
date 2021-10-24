@@ -256,7 +256,7 @@ endif
 
 call RSourceOtherScripts()
 
-function RPDFinit(...)
+function! RPDFinit(...)
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_init.vim"
 endfunction
 

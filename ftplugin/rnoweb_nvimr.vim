@@ -218,7 +218,7 @@ if g:R_non_r_compl
     call timer_start(1, "CheckPyBTeX")
 endif
 
-function RPDFinit(...)
+function! RPDFinit(...)
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/pdf_init.vim"
 endfunction
 
