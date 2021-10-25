@@ -60,6 +60,15 @@ if !isdirectory(g:rplugin.compldir)
     call mkdir(g:rplugin.compldir, "p")
 endif
 
+if filereadable(g:rplugin.compldir . "/uname")
+    let g:rplugin.is_darwin = readfile(g:rplugin.compldir . "/README")[0] =~ "Darwin"
+else
+    let s:uname = system("uname")
+    let g:rplugin.is_darwin = s:uname  =~ "Darwin"
+    call writefile([s:uname], g:rplugin.compldir . "/uname")
+    unlet s:uname
+endif
+
 " Create or update the README (omnils_ files will be regenerated if older than
 " the README).
 let s:need_readme = 0

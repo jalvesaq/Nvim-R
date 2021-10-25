@@ -41,8 +41,6 @@ function RSetPDFViewer()
     endif
 endfunction
 
-let g:rplugin.is_darwin = system("uname") =~ "Darwin"
-
 if g:rplugin.is_darwin
     let g:R_openpdf = get(g:, "R_openpdf", 1)
     let g:R_pdfviewer = "skim"
