@@ -758,7 +758,9 @@ function RDebugJump(fnm, lnum)
     endif
 
     if bufloaded(fname)
-        exe 'sb ' . fname
+        if fname != expand("%")
+            exe 'sb ' . fname
+        endif
         exe ':' . flnum
     endif
 
@@ -770,7 +772,7 @@ function RDebugJump(fnm, lnum)
     if g:R_dbg_jump && !s:rdebugging && type(g:R_external_term) == v:t_number && g:R_external_term == 0
         exe 'sb ' . g:rplugin.R_bufname
         startinsert
-    else
+    elseif bname != expand("%")
         exe 'sb ' . bname
     endif
     let s:rdebugging = 1
