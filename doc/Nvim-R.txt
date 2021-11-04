@@ -153,8 +153,6 @@ Additional dependencies for editing Rnoweb documents:~
 
 Additional dependencies for editing Rmd documents:~
 
-   xdotool: Required to reload the page on the web browser (Linux only).
-
    Python 3 and python3-pybtex library: required for omni completion of
    citation keys (following the `@` symbol) if `zotcite` is not installed.
 
@@ -756,8 +754,10 @@ want the default single dash as the comment string, rather prefering two
 dashes as is usual in Emacs/ESS, put this in your |vimrc|:
 >
    function MyRmdCommentStr()
-     if b:IsInRCode(0) || ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
+     if b:IsInRCode(0)
        setlocal commentstring=##\ %s
+     elseif ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
+       setlocal commentstring=#\ %s
      else
        setlocal commentstring=<!--\ %s\ -->
      endif
@@ -3040,53 +3040,10 @@ run will:
 Nvim-R gets the value of R's "browser" option (as returned by
 `getOption("browser")` to open an HTML document. The problem is that most
 browsers always open a new tab instead of refreshing a tab where the document
-is already open. One solution for this issue is to create a script to refresh
-the tab and set the value of the `browser` option to this script. For example,
-on Linux, if you create the script at `~/bin/reload_html` and make it
-executable, and if the `~/bin` directory is in your PATH, you could put in
-your `~/.Rprofile`:
->
-   options(browser = "reload_html")
-<
-The contents of `reload_html` could be:
->
-   #!/bin/sh
+is already open. One solution for this issue is to create a Firefox profile
+which behaves differently, as suggested by Joss Wright at:
 
-   # Get the document title because Firefox use it in the window name
-   WINNAME=`grep '<title>.*</title>' "$1" | sed -e 's/.*<title>\(.*\)<\/title>.*/\1/'`
-
-   # If the title is empty, use the file name
-   if [ "x$WINNAME" = "x" ]
-   then
-       WINNAME=$1
-   fi
-
-   # Check if the page is already open
-   xdotool search --name "$WINNAME" windowactivate --sync
-
-   if [ "$?" = "0" ]
-   then
-       # The page is open; emulate the F5 key press to refresh it:
-       xdotool search --name "$WINNAME" key --clearmodifiers F5
-   else
-       # Start the browser
-       firefox "$1" &
-   fi
-<
-The above script requires that `xdotool` is installed, and it works with
-Firefox. If you prefer Google-Chrome, just replace `firefox` with
-`google-chrome`. Other browsers might require further adjustments. The script
-will not work on Mac OS X because both Firefox and Google-Chrome run on the
-native OS X environment, and the `xdotool` application can manipulate only
-applications running on the X Server.
-
-For examples of Mac OS X scripts, please, see:
-
-   https://gist.github.com/itissid/0725fc55ae837dcb0b40ce1b65511d50
-
-and
-
-   https://gist.github.com/itissid/e167e079fddc07a5b528b6bf8dbea784
+   https://github.com/jalvesaq/Nvim-R/issues/630
 
 
 ------------------------------------------------------------------------------

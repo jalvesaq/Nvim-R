@@ -636,19 +636,20 @@ function RLoadHTML(fullpath, browser)
         return
     endif
 
-    let brwsr = a:browser
-    if brwsr == ''
+    if a:browser == ''
         if has('win32') || g:rplugin.is_darwin
-            let brwsr = 'open'
+            let cmd = ['open', a:fullpath]
         else
-            let brwsr = 'xdg-open'
+            let cmd = ['xdg-open', a:fullpath]
         endif
+    else
+        let cmd = split(a:browser) + [a:fullpath]
     endif
 
     if has('nvim')
-        call jobstart([brwsr, a:fullpath], {'detach': 1})
+        call jobstart(cmd, {'detach': 1})
     else
-        call job_start([brwsr, a:fullpath])
+        call job_start(cmd)
     endif
 endfunction
 
