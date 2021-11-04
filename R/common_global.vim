@@ -1136,8 +1136,8 @@ let g:R_user_maps_only   = get(g:, "R_user_maps_only",              0)
 let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
+let g:R_rmarkdown_args   = get(g:, "R_rmarkdown_args",             "")
 let g:R_indent_commented = get(g:, "R_indent_commented",            1)
-
 
 if !exists("g:r_indent_ess_comments")
     let g:r_indent_ess_comments = 0

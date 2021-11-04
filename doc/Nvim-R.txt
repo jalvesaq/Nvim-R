@@ -1012,6 +1012,7 @@ of
 |R_texerr|            Show a summary of LaTeX errors after compilation
 |R_sweaveargs|        Arguments do `Sweave()`
 |R_rmd_environment|   Environment in which to save evaluated rmd code
+|R_rmarkdown_args|    Further options to be passed to `rmarkdown::render()`
 |R_never_unmake_menu| Do not unmake the menu when switching buffers
 |R_clear_line|        Clear R Console line before sending a command
 |R_editing_mode|      The mode defined in your `~/.inputrc`
@@ -1853,7 +1854,8 @@ You do not need to set `R_cite_pattern` if you have already set the value of
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*
-6.20. Rmd environment~
+							   *R_rmarkdown_args*
+6.20. rmarkdown::render() options~
 
 When rendering an Rmd file, the code can be evaluated (and saved) in a
 specified environment.  The default value is `.GlobalEnv` which makes the
@@ -1862,6 +1864,11 @@ the objects stored in the Rmd file to be available in the global environment,
 you can set
 >
     let R_rmd_environment = 'new.env()'
+<
+Other options to be passed to `rmarkdown::render()` might be defined with
+`R_rmarkdown_args`, as in the example:
+>
+   let R_rmarkdown_args = 'output_dir = "output", clean = FALSE'
 <
 
 ------------------------------------------------------------------------------
@@ -3157,10 +3164,13 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
+ * New options: R_set_omnifunc, R_auto_omni, R_rmarkdown_args.
+ * Delete options: R_omni_tmp_file and R_omni_size
+
 0.9.16 (2021-04-29)
 
  * Minor bug fixes.
- * New options: R_set_omnifunc, R_auto_omni.
+ * New options: R_omni_size and R_omni_tmp_file.
  * Option R_path might be a list of directories.
 
 0.9.15 (2021-04-14)
