@@ -61,7 +61,7 @@ if !isdirectory(g:rplugin.compldir)
 endif
 
 if filereadable(g:rplugin.compldir . "/uname")
-    let g:rplugin.is_darwin = readfile(g:rplugin.compldir . "/README")[0] =~ "Darwin"
+    let g:rplugin.is_darwin = readfile(g:rplugin.compldir . "/uname")[0] =~ "Darwin"
 else
     let s:uname = system("uname")
     let g:rplugin.is_darwin = s:uname  =~ "Darwin"
