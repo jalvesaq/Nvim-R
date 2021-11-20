@@ -1315,16 +1315,10 @@ work on GVim):
 >
    let R_assign_map = '<M-->'
 <
-Note: If you are using Vim in a terminal emulator, you have to put in your
-|vimrc|:
->
-   set <M-->=^[-
-   let R_assign_map = '<M-->'
-<
-where `^[` is obtained by pressing CTRL-V CTRL-[ in Insert mode.
-
 Note: You can't map <C-=>, as StatET does because in Vim only alphabetic
 letters can be mapped in combination with the CTRL key.
+
+See also: https://github.com/jalvesaq/Nvim-R/issues/634
 
 To completely disable this feature, put in your |vimrc|:
 >
