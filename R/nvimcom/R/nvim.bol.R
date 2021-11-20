@@ -247,7 +247,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 }
             } else {
                 info <- nvim.getInfo(printenv, x)
-                if(info == "\006\006"){
+                if(length(info) > 0 && info == "\006\006"){
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if(!inherits(xattr, "try-error"))
                         info <- paste0("\006\006", CleanOmniLine(xattr))
