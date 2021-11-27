@@ -9,5 +9,6 @@ R/nvimcom/src/apps/*.so
 R/nvimcom/src/apps/*.dll
 R/nvimcom/src/apps/nclientserver
 R/nvimcom/src/apps/nclientserver.exe
+R/nvimcom/src/apps/compile_flags.txt
 R/__pycache__/
 R/*.pyc

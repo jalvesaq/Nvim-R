@@ -155,7 +155,7 @@ static void nvimcom_nvimclient(const char *msg, char *port)
     struct addrinfo *result, *rp;
     char portstr[16];
     int s, a;
-    size_t len;
+    ssize_t len;
     int srvport = atoi(port);
 
     if(verbose > 2)
@@ -205,7 +205,7 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 
     char finalmsg[1024];
     nvimcom_set_finalmsg(msg, finalmsg);
-    len = strlen(finalmsg);
+    len = (ssize_t)strlen(finalmsg);
     if (write(s, finalmsg, len) != len) {
         REprintf("Error: partial/failed write\n");
         return;
@@ -358,7 +358,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     p = nvimcom_strcat(p, ebuf);
 
     if(Rf_isLogical(*x)){
-        p = nvimcom_strcat(p, "\006\%\006");
+        p = nvimcom_strcat(p, "\006%\006");
     } else if(Rf_isNumeric(*x)){
         p = nvimcom_strcat(p, "\006{\006");
     } else if(Rf_isFactor(*x)){
@@ -743,8 +743,6 @@ static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
 
 #ifndef WIN32
 static void nvimcom_exec(void *nothing){
-    if(nothing)
-        REprintf("nvimcom_exec received non NULL data\n");
     if(*flag_eval){
         nvimcom_eval_expr(flag_eval);
         *flag_eval = 0;

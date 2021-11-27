@@ -216,7 +216,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     endif
 
     if g:rplugin.nvimcom_info['version'] != a:nvimcomversion
-        call RWarningMsg('Mismatch in nvimcom versions: "' . s:nvimcom_version . '" and "' . a:nvimcomversion . '"')
+        call RWarningMsg('Mismatch in nvimcom versions: "' . g:rplugin.nvimcom_info['version'] . '" and "' . a:nvimcomversion . '"')
         sleep 1
     endif
 
@@ -2115,4 +2115,3 @@ elseif has("win32") && filewritable('NUL')
 else
     let s:null = 'tempfile()'
 endif
-

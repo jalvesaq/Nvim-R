@@ -15,6 +15,7 @@ function CheckNvimcomVersion()
     " Get version of current source code
     let flines = readfile(g:rplugin.home . "/R/nvimcom/DESCRIPTION")
     let s:required_nvimcom = substitute(flines[1], "Version: ", "", "")
+    let g:rplugin.debug_info['Required nvimcom'] = s:required_nvimcom
 
     if g:rplugin.nvimcom_info['home'] == ""
         let neednew = 1
@@ -26,9 +27,10 @@ function CheckNvimcomVersion()
         else
             let ndesc = readfile(g:rplugin.nvimcom_info['home'] . "/nvimcom/DESCRIPTION")
             let nvers = substitute(ndesc[1], "Version: ", "", "")
+            let g:rplugin.debug_info['Installed nvimcom'] = nvers
             if nvers != s:required_nvimcom
                 let neednew = 1
-                let g:rplugin.debug_info['Why build nvimcom'] = 'Version mismatch'
+                let g:rplugin.debug_info['Why build nvimcom'] = 'Nvimcom version mismatch'
             else
                 " Nvimcom is up to date. Check if R version changed.
                 let rversion = system(g:rplugin.Rcmd . ' --version')
@@ -39,7 +41,7 @@ function CheckNvimcomVersion()
                 let g:rplugin.debug_info['R_version'] = rversion
                 if g:rplugin.nvimcom_info['Rversion'] != rversion
                     let neednew = 1
-                    let g:rplugin.debug_info['Why build nvimcom'] = 'Other R version'
+                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch'
                 endif
             endif
         endif

@@ -12,8 +12,14 @@
 #include <process.h>
 #include <windows.h>
 #include <time.h>
+#include <inttypes.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
+#ifdef _WIN64
+#define PRI_SIZET PRIu64
+#else
+#define PRI_SIZET PRIu32
+#endif
 #else
 #include <stdint.h>
 #include <sys/socket.h>
@@ -21,6 +27,7 @@ HWND RConsole = NULL;
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
+#define PRI_SIZET "zu"
 #endif
 
 static char strL[8];
@@ -1626,10 +1633,10 @@ int count_twice(const char *b1, const char *b2, const char ch)
 {
     int n1 = 0;
     int n2 = 0;
-    for(int i = 0; i < strlen(b1); i++)
+    for(unsigned long i = 0; i < strlen(b1); i++)
         if(b1[i] == ch)
             n1++;
-    for(int i = 0; i < strlen(b2); i++)
+    for(unsigned long i = 0; i < strlen(b2); i++)
         if(b2[i] == ch)
             n2++;
     return n1 == n2;
@@ -1860,7 +1867,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -1876,7 +1883,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         pd = pd->next;
     }
 
-    printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+    printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
     fflush(stdout);
 }
 
