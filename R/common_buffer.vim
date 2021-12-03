@@ -3,6 +3,18 @@
 " are common for all file types supported by Nvim-R.
 "==============================================================================
 
+" Set the name of the Object Browser caption if not set yet
+" (must be before sourcing R/common_global.vim if R_auto_start > 0)
+let s:tnr = tabpagenr()
+if !exists("b:objbrtitle")
+    if s:tnr == 1
+        let b:objbrtitle = "Object_Browser"
+    else
+        let b:objbrtitle = "Object_Browser" . s:tnr
+    endif
+    unlet s:tnr
+endif
+
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 
@@ -39,17 +51,6 @@ if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
     endif
 endif
 
-
-" Set the name of the Object Browser caption if not set yet
-let s:tnr = tabpagenr()
-if !exists("b:objbrtitle")
-    if s:tnr == 1
-        let b:objbrtitle = "Object_Browser"
-    else
-        let b:objbrtitle = "Object_Browser" . s:tnr
-    endif
-    unlet s:tnr
-endif
 
 let g:rplugin.lastft = &filetype
 
