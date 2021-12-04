@@ -687,6 +687,12 @@ function FindDebugFunc(srcref)
         if rlines[idx] =~# '^debugging in: '
             let funcnm = substitute(rlines[idx], '^debugging in: \(.\{-}\)(.*', '\1', '')
             let s:func_offset = search('.*\<' . funcnm . '\s*<-\s*function\s*(', 'b')
+            if s:func_offset < 1
+                let s:func_offset = search('.*\<' . funcnm . '\s*=\s*function\s*(', 'b')
+            endif
+            if s:func_offset < 1
+                let s:func_offset = search('.*\<' . funcnm . '\s*<<-\s*function\s*(', 'b')
+            endif
             if s:func_offset > 0
                 let s:func_offset -= 1
             endif

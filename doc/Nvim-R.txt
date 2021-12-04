@@ -814,10 +814,10 @@ following:
    1. Source the R script where the function is with the `source()` function
       of the `base` package.
 
-   2. In the R Console, run the command `debug(funcname)` where `funcname` is
-      the name of the function (not quoted). Nvim-R will send this command to
-      R Console if you press <LocalLeader>db in Normal mode with the cursor
-      over the function name.
+   2. In the R Console, run either `debug(funcname)` or `debugonce(funcname)`
+      where `funcname` is the name of the function (not quoted). Nvim-R will
+      send this command to R Console if you press <LocalLeader>db in Normal
+      mode with the cursor over the function name.
 
    3. Call the function.
 
