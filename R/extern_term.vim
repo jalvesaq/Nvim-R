@@ -176,7 +176,7 @@ endif
 
 if !exists("s:term_name")
     let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'Eterm',
-                \ 'rxvt', 'urxvt', 'aterm', 'roxterm', 'lxterminal', 'xterm', 'alacritty']
+                \ 'rxvt', 'urxvt', 'aterm', 'roxterm', 'lxterminal', 'alacritty', 'xterm']
     for s:term in s:terminals
         if executable(s:term)
             let s:term_name = s:term
