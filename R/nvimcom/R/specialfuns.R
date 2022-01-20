@@ -79,7 +79,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
     }
     if(is.data.frame(o) || is.matrix(o)){
         if(!is.null(nrows)){
-          o <- head(o, n = nrows)
+          o <- utils::head(o, n = nrows)
         }
         if(!is.null(R_df_viewer)){
             .C("nvimcom_msg_to_nvim",

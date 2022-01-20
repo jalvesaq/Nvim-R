@@ -383,7 +383,7 @@ GetFunDescription <- function(pkg)
         als$name[[i]] <- cbind(als$alias[[i]], als$name[[i]])
     als <- do.call("rbind", als$name)
     if(nrow(als) > 1){
-        als <- als[complete.cases(als), ]
+        als <- als[stats::complete.cases(als), ]
         als <- als[!duplicated(als[, 2]), ]
     }
     colnames(als) <- c("alias", "name")
