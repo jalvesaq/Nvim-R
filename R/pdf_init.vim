@@ -29,12 +29,13 @@ function RSetPDFViewer()
         endif
     endif
 
-    if !has("win32") && !g:rplugin.is_darwin
+    if !has("win32") && !g:rplugin.is_darwin && $WAYLAND_DISPLAY == ""
         if executable("wmctrl")
             let g:rplugin.has_wmctrl = 1
         else
             let g:rplugin.has_wmctrl = 0
             if &filetype == "rnoweb" && g:R_synctex
+
                 call RWarningMsg("The application wmctrl must be installed to edit Rnoweb effectively.")
             endif
         endif
