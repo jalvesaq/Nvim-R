@@ -306,6 +306,10 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
             endif
         endfor
     endif
+    if g:R_objbr_auto_start
+        let s:autosttobjbr = 1
+        call timer_start(1, "RObjBrowser")
+    endif
     call timer_start(1000, "SetSendCmdToR")
 endfunction
 
@@ -541,6 +545,8 @@ function StartObjBrowser()
         quit
         call win_gotoid(curwin)
     else
+        let edbuf = bufnr()
+
         " Copy the values of some local variables that will be inherited
         let g:tmp_objbrtitle = b:objbrtitle
 
@@ -585,12 +591,16 @@ function StartObjBrowser()
         " Inheritance of some local variables
         let b:objbrtitle = g:tmp_objbrtitle
         unlet g:tmp_objbrtitle
+        if exists('s:autosttobjbr') && s:autosttobjbr == 1
+            let s:autosttobjbr = 0
+            exe edbuf . 'sb'
+        endif
     endif
     exe "set switchbuf=" . savesb
 endfunction
 
 " Open an Object Browser window
-function RObjBrowser()
+function RObjBrowser(...)
     " Only opens the Object Browser if R is running
     if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
         call RWarningMsg("The Object Browser can be opened only if R is running.")
@@ -2087,6 +2097,7 @@ let g:R_wait_reply        = get(g:, "R_wait_reply",         2)
 let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_clear_console     = get(g:, "R_clear_console",      1)
+let g:R_objbr_auto_start  = get(g:, "R_objbr_auto_start",   0)
 
 " ^K (\013) cleans from cursor to the right and ^U (\025) cleans from cursor
 " to the left. However, ^U causes a beep if there is nothing to clean. The
