@@ -652,10 +652,12 @@ until you manually delete them.
 ------------------------------------------------------------------------------
 4.4. The Object Browser~
 
-You have to use <LocalLeader>ro to either open or close the Object Browser.
-The Object Browser has two views: .GlobalEnv and Libraries. If you press
-<Enter> on the first line of the Object Browser it will toggle the view
-between the objects in .GlobalEnv and the currently loaded libraries.
+You have to use <LocalLeader>ro to either open or close the Object Browser on
+the same tab page. If it is already open on another tab page, it will be
+closed there and opened again in the current one. The Object Browser has two
+views: .GlobalEnv and Libraries. If you press <Enter> on the first line of the
+Object Browser it will toggle the view between the objects in .GlobalEnv and
+the currently loaded libraries.
 
 In the .GlobalEnv view, if a data.frame column has the attribute "label", it
 will also be displayed. For instance, the code below would make the Object
@@ -963,6 +965,7 @@ of
 6. Options~
 
 |R_auto_start|        Start R automatically
+|R_objbr_auto_start|  Start the Object Browser automatically
 |R-built-in-terminal| Options to control Vim/Neovim's built-in terminal
 |R_external_term|     Command to run R in an external terminal emulator
 |R_silent_term|       Do not show terminal errors
@@ -979,7 +982,6 @@ of
 |R_objbr_opendf|      Display data.frames open in the Object Browser
 |R_objbr_openlist|    Display lists open in the Object Browser
 |R_objbr_allnames|    Display hidden objects in the Object Browser
-|R_objbr_auto_start|  Start the Object Browser automatically
 |R_nvimpager|         Use Vim to see R documentation
 |R_open_example|      Use Vim to display R examples
 |R_editor_w|          Minimum width of R script buffer
@@ -1045,7 +1047,8 @@ of
 
 ------------------------------------------------------------------------------
 								*R_auto_start*
-6.1. Start R automatically~
+							  *R_objbr_auto_start*
+6.1. Automatic start: R and Object Browser~
 
 By default, you have to start R manually with the command <LocalLeader>rf.
 If you want that R starts automatically when you load an R script while
@@ -1058,6 +1061,15 @@ even if Vim is already started, put in your |vimrc|:
 >
    let R_auto_start = 2
 <
+See also: |R_after_start|.
+
+If you want to always start the Object Browser immediately after starting R,
+put in your |vimrc|:
+>
+   let R_objbr_auto_start = 1
+<
+See also: |R_after_ob_open|.
+
 
 ------------------------------------------------------------------------------
 							 *R-built-in-terminal*
@@ -1343,7 +1355,6 @@ is preceded by a space and followed by a non-word character.
 							  *R_objbr_opendf*
 							  *R_objbr_openlist*
 							  *R_objbr_allnames*
-							  *R_objbr_auto_start*
 6.6. Object Browser options~
 
 By default, the Object Browser will be created at the right of the script
@@ -1387,11 +1398,6 @@ only if it is explicitly opened. The options `R_objbr_opendf` and
 respectively, `data.frames` and `lists`. The options are ignored for
 `data.frames` and `lists` of libraries which are always started closed.
 
-If you want to always start the Object Browser immediately after starting R,
-put in your |vimrc|:
->
-   let R_objbr_auto_start = 1
-<
 
 ------------------------------------------------------------------------------
 							      *R_open_example*

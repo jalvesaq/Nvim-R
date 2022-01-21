@@ -72,7 +72,6 @@ function StartR_InBuffer()
     let g:SendCmdToR = function('SendCmdToR_NotYet')
 
     let edbuf = bufname("%")
-    let objbrttl = b:objbrtitle
     set switchbuf=useopen
 
     if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
@@ -108,7 +107,6 @@ function StartR_InBuffer()
     else
         let s:number_col = 0
     endif
-    let b:objbrtitle = objbrttl
     if exists("g:R_hl_term") && g:R_hl_term
         silent set syntax=rout
     endif

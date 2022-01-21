@@ -306,11 +306,11 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
             endif
         endfor
     endif
+    call timer_start(1000, "SetSendCmdToR")
     if g:R_objbr_auto_start
         let s:autosttobjbr = 1
-        call timer_start(1, "RObjBrowser")
+        call timer_start(1010, "RObjBrowser")
     endif
-    call timer_start(1000, "SetSendCmdToR")
 endfunction
 
 function SetSendCmdToR(...)
@@ -341,8 +341,8 @@ function RQuit(how)
         call JobStdin(g:rplugin.jobs["ClientServer"], "74" . $NVIMR_COMPLDIR . "\n")
     endif
 
-    if bufloaded(b:objbrtitle)
-        exe "bunload! " . b:objbrtitle
+    if bufloaded('Object_Browser')
+        exe 'bunload! Object_Browser'
         sleep 30m
     endif
 
@@ -539,37 +539,41 @@ function StartObjBrowser()
     " Either open or close the Object Browser
     let savesb = &switchbuf
     set switchbuf=useopen,usetab
-    if bufloaded(b:objbrtitle)
+    if bufloaded('Object_Browser')
         let curwin = win_getid()
-        exe "sb " . b:objbrtitle
+        let curtab = tabpagenr()
+        exe 'sb Object_Browser'
+        let objbrtab = tabpagenr()
         quit
         call win_gotoid(curwin)
+        if curtab != objbrtab
+            call StartObjBrowser()
+        endif
     else
         let edbuf = bufnr()
 
-        " Copy the values of some local variables that will be inherited
-        let g:tmp_objbrtitle = b:objbrtitle
-
         if g:R_objbr_place =~# 'RIGHT'
-            sil exe 'botright vsplit ' . b:objbrtitle
+            sil exe 'botright vsplit Object_Browser'
         elseif g:R_objbr_place =~# 'LEFT'
-            sil exe 'topleft vsplit ' . b:objbrtitle
+            sil exe 'topleft vsplit Object_Browser'
         elseif g:R_objbr_place =~# 'TOP'
-            sil exe 'topleft split ' . b:objbrtitle
+            sil exe 'topleft split Object_Browser'
         elseif g:R_objbr_place =~# 'BOTTOM'
-            sil exe 'botright split ' . b:objbrtitle
+            sil exe 'botright split Object_Browser'
         else
             if g:R_objbr_place =~? 'console'
                 sil exe 'sb ' . g:rplugin.R_bufname
+            else
+                sil exe 'sb ' . g:rplugin.rscript_name
             endif
             if g:R_objbr_place =~# 'right'
-                sil exe 'rightbelow vsplit ' . b:objbrtitle
+                sil exe 'rightbelow vsplit Object_Browser'
             elseif g:R_objbr_place =~# 'left'
-                sil exe 'leftabove vsplit ' . b:objbrtitle
+                sil exe 'leftabove vsplit Object_Browser'
             elseif g:R_objbr_place =~# 'above'
-                sil exe 'aboveleft split ' . b:objbrtitle
+                sil exe 'aboveleft split Object_Browser'
             elseif g:R_objbr_place =~# 'below'
-                sil exe 'belowright split ' . b:objbrtitle
+                sil exe 'belowright split Object_Browser'
             else
                 call RWarningMsg('Invalid value for R_objbr_place: "' . R_objbr_place . '"')
                 exe "set switchbuf=" . savesb
@@ -588,9 +592,6 @@ function StartObjBrowser()
             let g:rplugin.ob_buf = nvim_win_get_buf(g:rplugin.ob_winnr)
         endif
 
-        " Inheritance of some local variables
-        let b:objbrtitle = g:tmp_objbrtitle
-        unlet g:tmp_objbrtitle
         if exists('s:autosttobjbr') && s:autosttobjbr == 1
             let s:autosttobjbr = 0
             exe edbuf . 'sb'
@@ -1083,9 +1084,6 @@ function ShowRDoc(rkeyword)
     endif
     call SetRTextWidth(rkeyw)
 
-    " Local variables that must be inherited by the rdoc buffer
-    let g:tmp_objbrtitle = b:objbrtitle
-
     let rdoccaption = substitute(s:rdoctitle, '\', '', "g")
     if a:rkeyword =~ "R History"
         let rdoccaption = "R_History"
@@ -1134,10 +1132,6 @@ function ShowRDoc(rkeyword)
 
     setlocal modifiable
     let g:rplugin.curbuf = bufname("%")
-
-    " Inheritance of local variables from the script buffer
-    let b:objbrtitle = g:tmp_objbrtitle
-    unlet g:tmp_objbrtitle
 
     let save_unnamed_reg = @@
     set modifiable
