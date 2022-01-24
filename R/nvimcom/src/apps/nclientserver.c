@@ -1495,9 +1495,6 @@ void update_glblenv_buffer()
 
 void omni2ob()
 {
-    if(!glbnv_buffer)
-        return;
-
     FILE *f = fopen(globenv, "w");
     if(!f){
         fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
@@ -1507,9 +1504,11 @@ void omni2ob()
 
     fprintf(f, ".GlobalEnv | Libraries\n\n");
 
-    const char *s = glbnv_buffer;
-    while(*s)
-        s = write_ob_line(s, "", "", 0, f);
+    if (glbnv_buffer) {
+        const char *s = glbnv_buffer;
+        while(*s)
+            s = write_ob_line(s, "", "", 0, f);
+    }
 
     fclose(f);
     if(auto_obbr){
