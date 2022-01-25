@@ -278,6 +278,37 @@ static void nvimcom_squo(const char *buf, char *buf2)
     }
 }
 
+static void nvimcom_backtick(const char *b1, char *b2)
+{
+    int i = 0, j = 0;
+    while (i < 511 && b1[i] != '$' && b1[i] != '@' && b1[i] != 0) {
+        if (b1[i] == '[' && b1[i+1] == '[') {
+            b2[j] = '[';
+            i++; j++;
+            b2[j] = '[';
+            i++; j++;
+        } else {
+            b2[j] = '`';
+            j++;
+        }
+        while (i < 511 && b1[i] != '$' && b1[i] != '@' && b1[i] != '[' && b1[i] != 0) {
+            b2[j] = b1[i];
+            i++; j++;
+        }
+        if (b1[i-1] != ']') {
+            b2[j] = '`';
+            j++;
+        }
+        if (b1[i] == 0)
+            break;
+        if (b1[i] != '[') {
+            b2[j] = b1[i];
+            i++; j++;
+        }
+    }
+    b2[j] = 0;
+}
+
 void nvimcom_msg_to_nvim(char **cmd)
 {
     nvimcom_nvimclient(*cmd, edsrvr);
@@ -349,6 +380,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     ParseStatus status, status2;
     int er = 0;
     char buf[576];
+    char bbuf[512];
 
     if((strlen(glbnvbuf2 + lastglbnvbsz)) > 31744)
         p = nvimcom_grow_buffers();
@@ -437,10 +469,9 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
             snprintf(newenv, 575, "%s%s$", curenvB, xname);
 
         if(xgroup == 4){
-            if(xname[0] >= '0' && xname[0] <= '9')
-                snprintf(buf, 575, "slotNames(%s`%s`)", curenvB, xname);
-            else
-                snprintf(buf, 575, "slotNames(%s%s)", curenvB, xname);
+            snprintf(buf, 575, "%s%s", curenvB, xname);
+            nvimcom_backtick(buf, bbuf);
+            snprintf(buf, 575, "slotNames(%s)", bbuf);
             PROTECT(cmdSexp = allocVector(STRSXP, 1));
             SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
             PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
@@ -461,12 +492,10 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
                     if(len > 0){
                         for(int i = 0; i < len; i++){
                             ename = CHAR(STRING_ELT(ans, i));
-                            if(ename[0] >= '0' && ename[0] <= '9')
-                                snprintf(buf, 575, "%s%s@`%s`", curenvB, xname, ename);
-                            else
-                                snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
+                            snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
+                            nvimcom_backtick(buf, bbuf);
                             PROTECT(cmdSexp2 = allocVector(STRSXP, 1));
-                            SET_STRING_ELT(cmdSexp2, 0, mkChar(buf));
+                            SET_STRING_ELT(cmdSexp2, 0, mkChar(bbuf));
                             PROTECT(cmdexpr2 = R_ParseVector(cmdSexp2, -1, &status2, R_NilValue));
                             if (status2 != PARSE_OK) {
                                 REprintf("nvimcom error: invalid code \"%s@%s\"\n", xname, ename);
