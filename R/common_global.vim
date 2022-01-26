@@ -72,7 +72,15 @@ function FormatTxt(text, splt, jn, maxl)
 endfunction
 
 let s:float_warn = 0
+let g:rplugin.has_notify = v:false
+lua if pcall(require, 'notify') then vim.cmd('let g:rplugin.has_notify = v:true') end
 function RFloatWarn(wmsg)
+    if g:rplugin.has_notify
+        let qmsg = substitute(a:wmsg, "'", "\\\\'", "g")
+        exe "lua require('notify')('" . qmsg . "', 'warn', {title = 'Nvim-R'})"
+        return
+    endif
+
     " Close any float warning eventually still open
     let id = win_id2win(s:float_warn)
     if id > 0
