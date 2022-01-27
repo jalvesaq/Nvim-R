@@ -496,6 +496,9 @@ function UpdateLocalFunctions(funnames)
     syntax clear rGlobEnvFun
     let flist = split(a:funnames, " ")
     for fnm in flist
+        if fnm =~ '[\\\[\$@-]'
+            continue
+        endif
         if !exists('g:R_hi_fun_paren') || g:R_hi_fun_paren == 0
             exe 'syntax keyword rGlobEnvFun ' . fnm
         else

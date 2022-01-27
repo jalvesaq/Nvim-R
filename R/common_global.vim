@@ -73,7 +73,9 @@ endfunction
 
 let s:float_warn = 0
 let g:rplugin.has_notify = v:false
-lua if pcall(require, 'notify') then vim.cmd('let g:rplugin.has_notify = v:true') end
+if has('nvim')
+    lua if pcall(require, 'notify') then vim.cmd('let g:rplugin.has_notify = v:true') end
+endif
 function RFloatWarn(wmsg)
     if g:rplugin.has_notify
         let qmsg = substitute(a:wmsg, "'", "\\\\'", "g")
