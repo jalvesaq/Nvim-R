@@ -1160,13 +1160,14 @@ is, the width will be outdated for the first command executed after a change
 in the number of columns of the R Console window.
 
 							       *R_buffer_opts*
-Nvim-R sets the option 'winfixwidth' in the window where R runs. This prevents
-the window of being automatically resized in some circumstances. It also sets
-the option 'nobuflisted'. You can set the value of `R_buffer_opts` to define
-what options should be set in the R Console buffer. It is a list of Vim
-options separated by spaces. Example with its default value:
+Nvim-R sets the options 'winfixwidth' and 'winfixheight' in the window where R
+runs. This prevents the window of being automatically resized in some
+circumstances. It also sets the option 'nobuflisted'. You can set the value of
+`R_buffer_opts` to define what options should be set in the R Console buffer.
+It is a list of Vim options separated by spaces. Example with its default
+value:
 >
-   let R_buffer_opts = "winfixwidth nobuflisted"
+   let R_buffer_opts = "winfixwidth winfixheight nobuflisted"
 <
 Tips:
 
