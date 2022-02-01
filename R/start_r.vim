@@ -139,9 +139,19 @@ function StartR(whatr)
             endif
         endif
     endif
+
     call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
 
+    " Required to make R load nvimcom without the need of the user including
+    " library(nvimcom) in his or her ~/.Rprofile.
+    if $R_DEFAULT_PACKAGES == ""
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
+        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+    endif
+
     if exists("g:RStudio_cmd")
+        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
         call StartRStudio()
         return
     endif
@@ -219,6 +229,8 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         call RWarningMsg('Mismatch in nvimcom versions: "' . g:rplugin.nvimcom_info['version'] . '" and "' . a:nvimcomversion . '"')
         sleep 1
     endif
+
+    let $R_DEFAULT_PACKAGES = s:r_default_pkgs
 
     let g:rplugin.nvimcom_port = a:bindportn
     let s:R_pid = a:rpid

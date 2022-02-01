@@ -455,19 +455,6 @@ function IsSendCmdToRFake()
     return 0
 endfunction
 
-" Required to make R load nvimcom without the need of the user including
-" library(nvimcom) in his or her ~/.Rprofile.
-function RSetDefaultPkg()
-    if $R_DEFAULT_PACKAGES == ""
-        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
-    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
-        let $R_DEFAULT_PACKAGES .= ",nvimcom"
-    endif
-    if exists("g:RStudio_cmd") && $R_DEFAULT_PACKAGES !~ "rstudioapi"
-        let $R_DEFAULT_PACKAGES .= ",rstudioapi"
-    endif
-endfunction
-
 function SendCmdToR_NotYet(...)
     call RWarningMsg("Not ready yet")
     return 0

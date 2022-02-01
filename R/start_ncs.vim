@@ -285,8 +285,6 @@ function StartNClientServer()
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
-
-    call RSetDefaultPkg()
 endfunction
 
 " This function is called by nclientserver when its server binds to a specific port.
