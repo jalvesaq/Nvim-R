@@ -35,6 +35,7 @@
 #define R_INTERFACE_PTRS 1
 extern int (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
 static int (*save_ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
+static int debug_r;
 static int debugging;
 LibExtern SEXP  R_SrcfileSymbol; // Defn.h
 static void SrcrefInfo();
@@ -1137,12 +1138,13 @@ static void nvimcom_server_thread(void *arg)
 #endif
 
 
-void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, char **vcv, char **pth, char **rinfo)
+void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv, char **pth, char **rinfo)
 {
     verbose = *vrb;
     allnames = *anm;
     setwidth = *swd;
     autoglbenv = *age;
+    debug_r = *dbg;
 
     R_PID = getpid();
     strncpy(nvimcom_version, *vcv, 31);
@@ -1209,8 +1211,10 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, char **vcv, char **pt
 #ifdef WIN32
         r_is_busy = 0;
 #else
-        save_ptr_R_ReadConsole = ptr_R_ReadConsole;
-        ptr_R_ReadConsole = nvimcom_read_console;
+        if (debug_r) {
+            save_ptr_R_ReadConsole = ptr_R_ReadConsole;
+            ptr_R_ReadConsole = nvimcom_read_console;
+        }
 #endif
 
     }
@@ -1232,7 +1236,8 @@ void nvimcom_Stop()
         closesocket(sfd);
         WSACleanup();
 #else
-        ptr_R_ReadConsole = save_ptr_R_ReadConsole;
+        if (debug_r)
+            ptr_R_ReadConsole = save_ptr_R_ReadConsole;
         close(sfd);
         nvimcom_nvimclient("STOP >>> Now <<< !!!", myport);
         pthread_join(tid, NULL);

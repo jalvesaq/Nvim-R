@@ -95,6 +95,11 @@ function StartR(whatr)
     else
         let start_options += ['options(nvimcom.autoglbenv = FALSE)']
     endif
+    if g:R_debug
+        let start_options += ['options(nvimcom.debug_r = TRUE)']
+    else
+        let start_options += ['options(nvimcom.debug_r = FALSE)']
+    endif
     if exists('g:R_setwidth') && g:R_setwidth == 2
         let start_options += ['options(nvimcom.setwidth = TRUE)']
     else
@@ -676,9 +681,6 @@ endif
 let s:func_offset = -2
 let s:rdebugging = 0
 function StopRDebugging()
-    if !g:R_debug
-        return
-    endif
     "call sign_unplace('rdebugcurline')
     "sign unplace rdebugcurline
     sign unplace 1
@@ -747,9 +749,6 @@ function FindDebugFunc(srcref)
 endfunction
 
 function RDebugJump(fnm, lnum)
-    if !g:R_debug
-        return
-    endif
     if a:fnm == '' || a:fnm == '<text>'
         " Functions sent directly to R Console have no associated source file
         " and functions sourced by knitr have '<text>' as source reference.

@@ -19,6 +19,7 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.texerrs = TRUE)
         options(nvimcom.setwidth = TRUE)
         options(nvimcom.autoglbenv = FALSE)
+        options(nvimcom.debug_r = TRUE)
         options(nvimcom.nvimpager = TRUE)
         options(nvimcom.delim = "\t")
     }
@@ -42,6 +43,7 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.setwidth")),
            as.integer(getOption("nvimcom.autoglbenv")),
+           as.integer(getOption("nvimcom.debug_r")),
            nvinf[1],
            nvinf[2],
            paste(nvinf[3],
