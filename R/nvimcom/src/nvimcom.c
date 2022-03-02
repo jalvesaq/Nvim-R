@@ -260,10 +260,10 @@ static void nvimcom_nvimclient(const char *msg, char *port)
 }
 #endif
 
-static void nvimcom_squo(const char *buf, char *buf2)
+static void nvimcom_squo(const char *buf, char *buf2, int bsize)
 {
     int i = 0, j = 0;
-    while(j < 80){
+    while(j < bsize){
         if(buf[i] == '\''){
             buf2[j] = '\'';
             j++;
@@ -641,7 +641,7 @@ static void nvimcom_eval_expr(const char *buf)
     PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
 
     char buf2[80];
-    nvimcom_squo(buf, buf2);
+    nvimcom_squo(buf, buf2, 80);
     if (status != PARSE_OK && verbose > 1) {
         strcpy(rep, "RWarningMsg('Invalid command: ");
         strncat(rep, buf2, 80);
@@ -826,7 +826,7 @@ static void SrcrefInfo()
                 char *buf = calloc(sizeof(char), (2 * slen + 32));
                 char *buf2 = calloc(sizeof(char), (2 * slen + 32));
                 snprintf(buf, 2 * slen + 1, "%s", CHAR(STRING_ELT(filename, 0)));
-                nvimcom_squo(buf, buf2);
+                nvimcom_squo(buf, buf2, 2 * slen + 32);
                 snprintf(buf, 2 * slen + 31, "RDebugJump('%s', %d)", buf2, asInteger(R_Srcref));
                 nvimcom_nvimclient(buf, edsrvr);
                 free(buf);
