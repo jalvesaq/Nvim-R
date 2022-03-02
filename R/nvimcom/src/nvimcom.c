@@ -822,12 +822,15 @@ static void SrcrefInfo()
         if (TYPEOF(srcfile) == ENVSXP) {
             SEXP filename = findVar(install("filename"), srcfile);
             if (isString(filename) && length(filename)) {
-                char buf[256];
-                char buf2[256];
-                snprintf(buf, 127, "%s", CHAR(STRING_ELT(filename, 0)));
+                size_t slen = strlen(CHAR(STRING_ELT(filename, 0)));
+                char *buf = calloc(sizeof(char), (2 * slen + 32));
+                char *buf2 = calloc(sizeof(char), (2 * slen + 32));
+                snprintf(buf, 2 * slen + 1, "%s", CHAR(STRING_ELT(filename, 0)));
                 nvimcom_squo(buf, buf2);
-                snprintf(buf, 255, "RDebugJump('%s', %d)", buf2, asInteger(R_Srcref));
+                snprintf(buf, 2 * slen + 31, "RDebugJump('%s', %d)", buf2, asInteger(R_Srcref));
                 nvimcom_nvimclient(buf, edsrvr);
+                free(buf);
+                free(buf2);
             }
         }
     }
