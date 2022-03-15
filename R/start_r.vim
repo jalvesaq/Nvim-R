@@ -755,12 +755,12 @@ function RDebugJump(fnm, lnum)
         if s:func_offset == -2
             call FindDebugFunc(a:fnm)
         endif
-        if s:func_offset <= 0
+        if s:func_offset < 0
             return
         endif
     endif
 
-    if s:func_offset > 0
+    if s:func_offset >= 0
         let flnum = a:lnum + s:func_offset
         let fname = g:rplugin.rscript_name
     else
