@@ -35,11 +35,11 @@
 #define R_INTERFACE_PTRS 1
 extern int (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
 static int (*save_ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
-static int debug_r;
 static int debugging;
 LibExtern SEXP  R_SrcfileSymbol; // Defn.h
 static void SrcrefInfo();
 #endif
+static int debug_r;
 
 static char nvimcom_version[32];
 
