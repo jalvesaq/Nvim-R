@@ -121,7 +121,7 @@ function SendCmdToR_Term(...)
     if a:0 == 2 && a:2 == 0
         let scmd = "tmux -L NvimR set-buffer '" . str . "' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     else
-        let scmd = "tmux -L NvimR set-buffer '" . str . "\<C-M>' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L NvimR set-buffer '" . str . "\<CR>' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     endif
     let rlog = system(scmd)
     if v:shell_error
