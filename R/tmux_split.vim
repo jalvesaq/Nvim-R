@@ -101,7 +101,7 @@ function SendCmdToR_TmuxSplit(...)
     if a:0 == 2 && a:2 == 0
         let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . g:rplugin.rconsole_pane
     else
-        let scmd = "tmux set-buffer '" . str . "\<C-M>' && tmux paste-buffer -t " . g:rplugin.rconsole_pane
+        let scmd = "tmux set-buffer '" . str . "\<CR>' && tmux paste-buffer -t " . g:rplugin.rconsole_pane
     endif
     let rlog = system(scmd)
     if v:shell_error
