@@ -249,7 +249,7 @@ function RSimpleCommentLine(mode, what)
     let cstr = g:R_rcomment_string
     if (&filetype == "rnoweb"|| &filetype == "rhelp") && IsLineInRCode(0, fline) == 0
         let cstr = "%"
-    elseif (&filetype == "rmd" || &filetype == "rrst") && IsLineInRCode(0, fline) == 0
+    elseif (&filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst") && IsLineInRCode(0, fline) == 0
         return
     endif
 
@@ -304,7 +304,7 @@ function RComment(mode)
     endif
     if (&filetype == "rnoweb" || &filetype == "rhelp") && IsLineInRCode(0, fline) == 0
         let cmt = "%"
-    elseif (&filetype == "rmd" || &filetype == "rrst") && IsLineInRCode(0, fline) == 0
+    elseif (&filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst") && IsLineInRCode(0, fline) == 0
         return
     endif
 
@@ -834,7 +834,7 @@ function RCreateSendMaps()
     call RCreateMaps('ni', 'RDSendParagraph',  'pd', ':call SendParagraphToR("silent", "down")')
     call RCreateMaps('ni', 'REDSendParagraph', 'pa', ':call SendParagraphToR("echo", "down")')
 
-    if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst"
+    if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst"
         call RCreateMaps('ni', 'RSendChunkFH', 'ch', ':call SendFHChunkToR()')
     endif
 
@@ -864,7 +864,7 @@ function RBufEnter()
     if has("gui_running")
         if &filetype != g:rplugin.lastft
             call UnMakeRMenu()
-            if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rdoc" || &filetype == "rbrowser" || &filetype == "rhelp"
+            if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst" || &filetype == "rdoc" || &filetype == "rbrowser" || &filetype == "rhelp"
                 if &filetype == "rbrowser"
                     call MakeRBrowserMenu()
                 else
@@ -876,7 +876,7 @@ function RBufEnter()
             let g:rplugin.lastft = &filetype
         endif
     endif
-    if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || &filetype == "rhelp"
+    if &filetype == "r" || &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst" || &filetype == "rhelp"
         let g:rplugin.rscript_name = bufname("%")
     endif
 endfunction
@@ -1089,7 +1089,7 @@ let g:R_disable_cmds      = get(g:, "R_disable_cmds",    [''])
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
-let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "rnoweb", "rhelp", "rrst"])
+let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 let g:R_auto_omni         = get(g:, "R_auto_omni",    [])
 
 if exists(":terminal") != 2

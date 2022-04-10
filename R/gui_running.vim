@@ -181,7 +181,7 @@ function MakeRMenu()
     call RCreateMenuItem('ni', 'Send.Block\ (cur,\ down)', 'RDSendMBlock', 'bd', ':call SendMBlockToR("silent", "down")')
     call RCreateMenuItem('ni', 'Send.Block\ (cur,\ echo\ and\ down)', 'REDSendMBlock', 'ba', ':call SendMBlockToR("echo", "down")')
     "-------------------------------
-    if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "rrst" || g:R_never_unmake_menu
+    if &filetype == "rnoweb" || &filetype == "rmd" || &filetype == "quarto" || &filetype == "rrst" || g:R_never_unmake_menu
         menu R.Send.-Sep2- <nul>
         call RCreateMenuItem('ni', 'Send.Chunk\ (cur)', 'RSendChunk', 'cc', ':call b:SendChunkToR("silent", "stay")')
         call RCreateMenuItem('ni', 'Send.Chunk\ (cur,\ echo)', 'RESendChunk', 'ce', ':call b:SendChunkToR("echo", "stay")')
@@ -296,7 +296,7 @@ function MakeRMenu()
         call RCreateMenuItem('v',  'Edit.Uncomment\ (line/sel)', 'RSimpleUnComment', 'xu', ':call RSimpleCommentLine("selection", "u")')
         call RCreateMenuItem('ni', 'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("normal")')
         call RCreateMenuItem('v',  'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("selection")')
-        if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || g:R_never_unmake_menu
+        if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto" || g:R_never_unmake_menu
             menu R.Edit.-Sep73- <nul>
             call RCreateMenuItem('n', 'Edit.Go\ (next\ R\ chunk)', 'RNextRChunk', 'gn', ':call b:NextRChunk()')
             call RCreateMenuItem('n', 'Edit.Go\ (previous\ R\ chunk)', '', 'gN', ':call b:PreviousRChunk()')

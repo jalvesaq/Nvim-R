@@ -725,7 +725,7 @@ function FindDebugFunc(srcref)
                 let s:func_offset -= 1
             endif
             if a:srcref == '<text>'
-                if &filetype == 'rmd'
+                if &filetype == 'rmd' || &filetype == 'quarto'
                     let s:func_offset = search('^\s*```\s*{\s*r', 'nb')
                 elseif &filetype == 'rnoweb'
                     let s:func_offset = search('^<<', 'nb')
@@ -1209,7 +1209,7 @@ function RSourceLines(...)
     if &filetype == "rrst"
         let lines = map(copy(lines), 'substitute(v:val, "^\\.\\. \\?", "", "")')
     endif
-    if &filetype == "rmd"
+    if &filetype == "rmd" || &filetype == "quarto"
         let lines = map(copy(lines), 'substitute(v:val, "^(\\`\\`)\\?", "", "")')
     endif
     if !g:R_commented_lines
@@ -1259,7 +1259,7 @@ function GoDown()
             call RnwNextChunk()
             return
         endif
-    elseif &filetype == "rmd"
+    elseif &filetype == "rmd" || &filetype == "quarto"
         let curline = getline(".")
         if curline =~ '^```$'
             call RmdNextChunk()
@@ -1440,10 +1440,10 @@ endfunction
 function SendSelectionToR(...)
     let ispy = 0
     if &filetype != "r"
-        if &filetype == 'rmd' && RmdIsInPythonCode(0)
+        if (&filetype == 'rmd' || &filetype == 'quarto') && RmdIsInPythonCode(0)
             let ispy = 1
         elseif b:IsInRCode(0) != 1
-            if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || (&filetype == "rmd" && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
+            if (&filetype == "rnoweb" && getline(".") !~ "\\Sexpr{") || ((&filetype == "rmd" || &filetype == "quarto") && getline(".") !~ "`r ") || (&filetype == "rrst" && getline(".") !~ ":r:`")
                 call RWarningMsg("Not inside an R code chunk.")
                 return
             endif
@@ -1541,7 +1541,7 @@ function SendParagraphToR(e, m)
         let line = getline(i-1)
         while i > 1 && !(line =~ '^\s*$' ||
                     \ (&filetype == "rnoweb" && line =~ "^<<") ||
-                    \ (&filetype == "rmd" && line =~ "^[ \t]*```{\\(r\\|python\\)"))
+                    \ ((&filetype == "rmd" || &filetype == "quarto") && line =~ "^[ \t]*```{\\(r\\|python\\)"))
             let i -= 1
             let line = getline(i-1)
         endwhile
@@ -1553,7 +1553,7 @@ function SendParagraphToR(e, m)
         let line = getline(j+1)
         if line =~ '^\s*$' ||
                     \ (&filetype == "rnoweb" && line =~ "^@$") ||
-                    \ (&filetype == "rmd" && line =~ "^[ \t]*```$")
+                    \ ((&filetype == "rmd" || &filetype == "quarto") && line =~ "^[ \t]*```$")
             break
         endif
         let j += 1
@@ -1581,7 +1581,7 @@ function SendFHChunkToR()
         let begchk = "^<<.*>>=\$"
         let endchk = "^@"
         let chdchk = "^<<.*child *= *"
-    elseif &filetype == "rmd"
+    elseif &filetype == "rmd" || &filetype == "quarto"
         let begchk = "^[ \t]*```[ ]*{r"
         let endchk = "^[ \t]*```$"
         let chdchk = "^```.*child *= *"
@@ -1677,7 +1677,7 @@ function SendLineToR(godown, ...)
         endif
     endif
 
-    if &filetype == "rmd"
+    if &filetype == "rmd" || &filetype == "quarto"
         if line == "```"
             if a:godown =~ "down"
                 call GoDown()
@@ -1739,7 +1739,7 @@ function SendLineToR(godown, ...)
     let block = 0
     if g:R_parenblock
         let chunkend = ""
-        if &filetype == "rmd"
+        if &filetype == "rmd" || &filetype == "quarto"
             let chunkend = "```"
         elseif &filetype == "rnoweb"
             let chunkend = "@"
