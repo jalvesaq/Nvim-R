@@ -10,6 +10,8 @@ exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_b
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
 
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
+let g:R_quarto_preview_args = get(g:, 'R_quarto_preview_args', '')
+let g:R_quarto_render_args = get(g:, 'R_quarto_render_args', '')
 
 if g:R_rmdchunk == 1
     " Write code chunk in rnoweb files
@@ -246,6 +248,12 @@ call RCreateMaps('ni',  'RDSendChunk',     'cd', ':call b:SendChunkToR("silent",
 call RCreateMaps('ni',  'REDSendChunk',    'ca', ':call b:SendChunkToR("echo", "down")')
 call RCreateMaps('n',   'RNextRChunk',     'gn', ':call b:NextRChunk()')
 call RCreateMaps('n',   'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
+
+" Only .qmd files use these functions:
+call RCreateMaps('n',   'RQuartoRender',  'qr', ':call g:SendCmdToR(''quarto::quarto_render("'' . expand(''%'') . ''"'' . g:R_quarto_render_args . '')'')')
+call RCreateMaps('n',   'RQuartoPreview',  'qp', ':call g:SendCmdToR(''quarto::quarto_preview("'' . expand(''%'') . ''"'' . g:R_quarto_preview_args . '')'')')
+call RCreateMaps('n',   'RQuartoStop',  'qs', ':call g:SendCmdToR(''quarto::quarto_preview_stop()'')')
+
 
 " Menu R
 if has("gui_running")
