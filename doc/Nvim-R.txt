@@ -267,8 +267,10 @@ You can install VOoM from: https://github.com/vim-voom/VOoM
 
 Zotero - zotcite~
 
-If you use RMarkdown to write academic papers and Zotero for reference
-management, you may want to try zotcite: https://github.com/jalvesaq/zotcite
+If you use either RMarkdown or Quarto to write academic papers and Zotero for
+reference management, you may want to try zotcite:
+
+   https://github.com/jalvesaq/zotcite
 
 
 Other plugins~
@@ -463,9 +465,9 @@ where `line` is the line under the cursor, and adds the output as commented
 lines to the source code.
 
 If the cursor is over the header of an R chunk with the `child` option (from
-Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
-commands that send a single line of code to R, then the plugin will send to R
-the command to knit the child document.
+Rnoweb, RMarkdown, Quarto or RreStructuredText document), and you use one of
+the commands that send a single line of code to R, then the plugin will send
+to R the command to knit the child document.
 
 After the commands that send, sweave or knit the current buffer, Vim will
 save the current buffer if it has any pending changes before performing the
@@ -2072,10 +2074,10 @@ begin with the substring "tab:".
 If the reference includes the field "file", you can open this file by typing
 <LocalLeader>od in Normal mode with the cursor over the citation key.
 
-Rmarkdown~
+Rmarkdown and Quarto~
 
-For RMarkdown documents it is recommended to install zotcite for
-completing citation keys directly from Zotero database:
+For either RMarkdown or Quarto documents it is recommended to install zotcite
+for completing citation keys directly from Zotero database:
 
    https://github.com/jalvesaq/zotcite
 
@@ -2670,6 +2672,10 @@ automatically when quiting Vim, put in your |vimrc| (replace `"nosave"` with
 >
    autocmd VimLeave * if exists("g:SendCmdToR") && string(g:SendCmdToR) != "function('SendCmdToR_fake')" | call RQuit("nosave") | endif
 <
+If R is running in the built-in terminal, sending the command
+`quit(save = "no")` while leaving the editor will be meaningless because
+R will be killed by Vim/Neovim before having time to quit gracefully.
+
 
 9.2. Is it possible to stop R from within Vim?~
 
@@ -2833,7 +2839,7 @@ develop a better algorithm in the future.
 ------------------------------------------------------------------------------
 9.10. Highlight chunk header as R code~
 
-By default, Vim will highlight chunk headers of RMarkdown and
+By default, Vim will highlight chunk headers of RMarkdown, Quarto and
 RreStructuredText with a single color. When the code is processed by knitr,
 chunk headers should contain valid R code and, thus, you may want to highlight
 them as such. You can do this by putting in your |vimrc|:
