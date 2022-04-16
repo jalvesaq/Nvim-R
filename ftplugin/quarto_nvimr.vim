@@ -216,6 +216,18 @@ function! RmdNonRCompletion(findstart, base)
     endif
 endfunction
 
+function! RQuarto(what)
+    if a:what == "render"
+        update
+        call g:SendCmdToR('quarto::quarto_render("' . expand('%') . '"' . g:R_quarto_render_args . ')')
+    elseif a:what == "preview"
+        update
+        call g:SendCmdToR('quarto::quarto_preview("' . expand('%') . '"' . g:R_quarto_preview_args . ')')
+    else
+        call g:SendCmdToR('quarto::quarto_stop()')
+    endif
+endfunction
+
 let b:rplugin_non_r_omnifunc = "RmdNonRCompletion"
 if !exists('b:rplugin_bibf')
     let b:rplugin_bibf = ''
@@ -250,9 +262,9 @@ call RCreateMaps('n',   'RNextRChunk',     'gn', ':call b:NextRChunk()')
 call RCreateMaps('n',   'RPreviousRChunk', 'gN', ':call b:PreviousRChunk()')
 
 " Only .qmd files use these functions:
-call RCreateMaps('n',   'RQuartoRender',  'qr', ':call g:SendCmdToR(''quarto::quarto_render("'' . expand(''%'') . ''"'' . g:R_quarto_render_args . '')'')')
-call RCreateMaps('n',   'RQuartoPreview',  'qp', ':call g:SendCmdToR(''quarto::quarto_preview("'' . expand(''%'') . ''"'' . g:R_quarto_preview_args . '')'')')
-call RCreateMaps('n',   'RQuartoStop',  'qs', ':call g:SendCmdToR(''quarto::quarto_preview_stop()'')')
+call RCreateMaps('n',   'RQuartoRender',  'qr', ':call RQuarto("render")')
+call RCreateMaps('n',   'RQuartoPreview',  'qp', ':call RQuarto("preview")')
+call RCreateMaps('n',   'RQuartoStop',  'qs', ':call RQuarto("stop")')
 
 
 " Menu R
