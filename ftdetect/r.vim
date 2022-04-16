@@ -5,6 +5,7 @@ autocmd BufRead *.Rhistory set ft=r
 
 autocmd BufNewFile,BufRead *.Rmd set ft=rmd
 autocmd BufNewFile,BufRead *.rmd set ft=rmd
+autocmd BufNewFile,BufRead *.qmd set ft=quarto
 
 autocmd BufNewFile,BufRead *.Rrst set ft=rrst
 autocmd BufNewFile,BufRead *.rrst set ft=rrst
