@@ -1965,7 +1965,7 @@ that you generate the pdf, you should put in put in your |vimrc|:
 If you use Linux or other Unix and eventually use the system console (without
 the X server) you may want to put in your |vimrc|:
 >
-   if $DISPLAY != ""
+   if $DISPLAY != "" || $WAYLAND_DISPLAY != ""
        let R_openpdf = 1
    endif
 <
@@ -2003,7 +2003,10 @@ your |vimrc|:
 <
 For Quarto documents, the available key bindings are <LocalLeader>qr (render
 document), <LocalLeader>qp (preview document), and <LocalLeader>qs (stop
-previewing).
+previewing). The command <LocalLeader>kr achieves basically the same result of
+<LocalLeader>kr. The difference is that the generated document is open after
+<LocalLeader>kr, and <LocalLeader>qr allows Quarto specific
+options (see |R_quarto_render_args|).
 
 
 ------------------------------------------------------------------------------
@@ -2935,7 +2938,8 @@ And add this to your `~/.Rprofile` if you want to use `w3m`, a text based web
 browser, to navigate through R docs after `help.start()` when you cannot run a
 graphical web browser (e.g. when you are in the Linux console):
 >
-   if(interactive() && Sys.info()[["sysname"]] == "Linux" && Sys.getenv("DISPLAY") == ""){
+   if(interactive() && Sys.info()[["sysname"]] == "Linux" &&
+       Sys.getenv("DISPLAY") == "" && Sys.getenv("WAYLAND_DISPLAY") == ""){
        if(Sys.getenv("TMUX") != "")
            options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
        else if(Sys.getenv("NVIMR_TMPDIR") != "")

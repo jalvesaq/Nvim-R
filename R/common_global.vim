@@ -609,14 +609,14 @@ function RGetFirstObj(rkeyword, ...)
 endfunction
 
 function ROpenPDF(fullpath)
+    if g:R_openpdf == 0
+        return
+    endif
+
     if a:fullpath == "Get Master"
         let fpath = SyncTeX_GetMaster() . ".pdf"
         let fpath = b:rplugin_pdfdir . "/" . substitute(fpath, ".*/", "", "")
         call ROpenPDF(fpath)
-        return
-    endif
-
-    if g:R_openpdf == 0
         return
     endif
 
@@ -651,11 +651,14 @@ function RLoadHTML(fullpath, browser)
 endfunction
 
 function ROpenDoc(fullpath, browser)
+    if a:fullpath == ""
+        return
+    endif
     if !filereadable(a:fullpath)
         call RWarningMsg('The file "' . a:fullpath . '" does not exist.')
         return
     endif
-    if a:fullpath =~ '.odt$'
+    if a:fullpath =~ '.odt$' || a:fullpath =~ '.docx$'
         call system('lowriter ' . a:fullpath . ' &')
     elseif a:fullpath =~ '.pdf$'
         call ROpenPDF(a:fullpath)
@@ -762,11 +765,19 @@ function RControlMaps()
     "-------------------------------------
     call RCreateMaps('nvi', 'RMakeRmd',    'kr', ':call RMakeRmd("default")')
     call RCreateMaps('nvi', 'RMakeAll',    'ka', ':call RMakeRmd("all")')
-    call RCreateMaps('nvi', 'RMakePDFK',   'kp', ':call RMakeRmd("pdf_document")')
-    call RCreateMaps('nvi', 'RMakePDFKb',  'kl', ':call RMakeRmd("beamer_presentation")')
-    call RCreateMaps('nvi', 'RMakeWord',   'kw', ':call RMakeRmd("word_document")')
-    call RCreateMaps('nvi', 'RMakeHTML',   'kh', ':call RMakeRmd("html_document")')
-    call RCreateMaps('nvi', 'RMakeODT',    'ko', ':call RMakeRmd("odt_document")')
+    if &filetype == "quarto"
+        call RCreateMaps('nvi', 'RMakePDFK',   'kp', ':call RMakeRmd("pdf")')
+        call RCreateMaps('nvi', 'RMakePDFKb',  'kl', ':call RMakeRmd("beamer")')
+        call RCreateMaps('nvi', 'RMakeWord',   'kw', ':call RMakeRmd("docx")')
+        call RCreateMaps('nvi', 'RMakeHTML',   'kh', ':call RMakeRmd("html")')
+        call RCreateMaps('nvi', 'RMakeODT',    'ko', ':call RMakeRmd("odt")')
+    else
+        call RCreateMaps('nvi', 'RMakePDFK',   'kp', ':call RMakeRmd("pdf_document")')
+        call RCreateMaps('nvi', 'RMakePDFKb',  'kl', ':call RMakeRmd("beamer_presentation")')
+        call RCreateMaps('nvi', 'RMakeWord',   'kw', ':call RMakeRmd("word_document")')
+        call RCreateMaps('nvi', 'RMakeHTML',   'kh', ':call RMakeRmd("html_document")')
+        call RCreateMaps('nvi', 'RMakeODT',    'ko', ':call RMakeRmd("odt_document")')
+    endif
 endfunction
 
 function RCreateStartMaps()
