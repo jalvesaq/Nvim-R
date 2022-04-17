@@ -74,7 +74,14 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
-    call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
+
+    if &encoding == "utf-8"
+        s:fn_start_options = "start_options_utf8.R"
+    else
+        s:fn_start_options = "start_options.R"
+    endif
+    call AddForDeletion(g:rplugin.tmpdir . "/" . fn_start_options)
+
     call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
 
     " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
@@ -145,7 +152,7 @@ function StartR(whatr)
         endif
     endif
 
-    call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
+    call writefile(start_options, g:rplugin.tmpdir . "/" . fn_start_options)
 
     " Required to make R load nvimcom without the need of the user including
     " library(nvimcom) in his or her ~/.Rprofile.

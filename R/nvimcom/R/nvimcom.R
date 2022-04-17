@@ -12,7 +12,9 @@ NvimcomEnv$pkgdescr <- list()
 
     # The remaining options are set by Neovim. Don't try to set them in your
     # ~/.Rprofile because they will be overridden here:
-    if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))){
+    if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options_utf8.R"))){
+        source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options_utf8.R"), encoding = "UTF-8")
+    } else if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))){
         source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))
     } else {
         options(nvimcom.allnames = FALSE)
