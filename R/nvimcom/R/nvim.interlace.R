@@ -335,7 +335,6 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...)
             else
                 fmt <- outform
         }
-        Rmdfile <- "/home/aquino/vim_r_plugin/exemplo.qmd"
         res <- sub("qmd$", fmt, Rmdfile)
         mtime1 <- file.info(res)$mtime
         quarto::quarto_render(Rmdfile, outform)
