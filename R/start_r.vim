@@ -80,7 +80,7 @@ function StartR(whatr)
     else
         s:fn_start_options = "start_options.R"
     endif
-    call AddForDeletion(g:rplugin.tmpdir . "/" . fn_start_options)
+    call AddForDeletion(g:rplugin.tmpdir . "/" . s:fn_start_options)
 
     call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
 
@@ -152,7 +152,7 @@ function StartR(whatr)
         endif
     endif
 
-    call writefile(start_options, g:rplugin.tmpdir . "/" . fn_start_options)
+    call writefile(start_options, g:rplugin.tmpdir . "/" . s:fn_start_options)
 
     " Required to make R load nvimcom without the need of the user including
     " library(nvimcom) in his or her ~/.Rprofile.
