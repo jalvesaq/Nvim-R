@@ -74,7 +74,13 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
-    call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
+
+    if &encoding == "utf-8"
+        call AddForDeletion(g:rplugin.tmpdir . "/start_options_utf8.R")
+    else
+        call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
+    endif
+
     call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
 
     " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
@@ -134,18 +140,15 @@ function StartR(whatr)
         " `rwd` will not be a real directory if editing a file on the internet
         " with netrw plugin
         if isdirectory(rwd)
-            if has("win32") && &encoding == "utf-8"
-                let start_options += ['.nvim.rwd <- "' . rwd . '"']
-                let start_options += ['Encoding(.nvim.rwd) <- "UTF-8"']
-                let start_options += ['setwd(.nvim.rwd)']
-                let start_options += ['rm(.nvim.rwd)']
-            else
-                let start_options += ['setwd("' . rwd . '")']
-            endif
+            let start_options += ['setwd("' . rwd . '")']
         endif
     endif
 
-    call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
+    if &encoding == "utf-8"
+        call writefile(start_options, g:rplugin.tmpdir . "/start_options_utf8.R")
+    else
+        call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
+    endif
 
     " Required to make R load nvimcom without the need of the user including
     " library(nvimcom) in his or her ~/.Rprofile.
