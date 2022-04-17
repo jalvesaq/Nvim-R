@@ -76,11 +76,10 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
 
     if &encoding == "utf-8"
-        s:fn_start_options = "start_options_utf8.R"
+        call AddForDeletion(g:rplugin.tmpdir . "/start_options_utf8.R")
     else
-        s:fn_start_options = "start_options.R"
+        call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
     endif
-    call AddForDeletion(g:rplugin.tmpdir . "/" . s:fn_start_options)
 
     call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
 
@@ -152,7 +151,11 @@ function StartR(whatr)
         endif
     endif
 
-    call writefile(start_options, g:rplugin.tmpdir . "/" . s:fn_start_options)
+    if &encoding == "utf-8"
+        call writefile(start_options, g:rplugin.tmpdir . "/start_options_utf8.R")
+    else
+        call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
+    endif
 
     " Required to make R load nvimcom without the need of the user including
     " library(nvimcom) in his or her ~/.Rprofile.
