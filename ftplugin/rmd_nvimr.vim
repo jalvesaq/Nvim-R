@@ -239,7 +239,7 @@ call RCreateSendMaps()
 call RControlMaps()
 call RCreateMaps('nvi', 'RSetwd', 'rd', ':call RSetWD()')
 
-" Only .Rmd files use these functions:
+" Only .Rmd and .qmd files use these functions:
 call RCreateMaps('nvi', 'RKnit',           'kn', ':call RKnit()')
 call RCreateMaps('ni',  'RSendChunk',      'cc', ':call b:SendChunkToR("silent", "stay")')
 call RCreateMaps('ni',  'RESendChunk',     'ce', ':call b:SendChunkToR("echo", "stay")')
