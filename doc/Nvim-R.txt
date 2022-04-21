@@ -3211,7 +3211,7 @@ Examples:
 10. News~
 
  * New options: R_set_omnifunc, R_auto_omni, R_rmarkdown_args,
-   R_objbr_auto_start. 
+   R_objbr_auto_start, R_quarto_render_args, and R_quarto_preview_args.
  * Delete options: R_omni_tmp_file and R_omni_size
 
 0.9.16 (2021-04-29)
