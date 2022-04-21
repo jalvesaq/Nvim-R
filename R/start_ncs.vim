@@ -454,10 +454,10 @@ if exists("*WaitVimComStart")
     echohl None
 endif
 
-let s:ff = split(globpath(&rtp, "R/functions.vim"))
+let s:ff = split(globpath(&rtp, "R/functions.vim"), '\n')
 if len(s:ff) > 1
     function WarnDupNvimR()
-        let ff = split(globpath(&rtp, "R/functions.vim"))
+        let ff = split(globpath(&rtp, "R/functions.vim"), '\n')
         let msg = ["", "===   W A R N I N G   ===", "",
                     \ "It seems that Nvim-R is installed in more than one place.",
                     \ "Please, remove one of them to avoid conflicts.",
