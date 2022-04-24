@@ -323,15 +323,33 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...)
     on.exit(setwd(oldwd))
     setwd(rmddir)
 
-    res <- rmarkdown::render(Rmdfile, outform, ...)
-
+    if (grepl("\\.qmd$", Rmdfile, ignore.case = TRUE)) {
+        if(!require(quarto))
+            stop("Please, install the 'quarto' package.")
+        if (is.null(outform)) {
+            cfg <- quarto::quarto_inspect(Rmdfile)
+            fmt <- names(cfg$formats)[1]
+        } else {
+            if (outform == "beamer")
+                fmt <- "pdf"
+            else
+                fmt <- outform
+        }
+        res <- sub("qmd$", fmt, Rmdfile)
+        mtime1 <- file.info(res)$mtime
+        quarto::quarto_render(Rmdfile, outform)
+        mtime2 <- file.info(res)$mtime
+        if (is.na(mtime2) || (!is.na(mtime1) && mtime2 <= mtime1))
+            res <- ""
+    } else {
+        res <- rmarkdown::render(Rmdfile, outform, ...)
+    }
     brwsr <- ""
     if(grepl("\\.html$", res)){
         brwsr <- getOption("browser")
         if(!is.character(brwsr))
             brwsr <- ""
     }
-
     .C("nvimcom_msg_to_nvim",
        paste0("ROpenDoc('", res, "', '", brwsr, "')"),
        PACKAGE = "nvimcom")

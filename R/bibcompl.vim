@@ -35,7 +35,7 @@ function! s:GetBibFileName()
     if !exists('b:rplugin_bibf')
         let b:rplugin_bibf = ''
     endif
-    if &filetype == 'rmd'
+    if &filetype == 'rmd' || &filetype == 'quarto'
         let newbibf = RmdGetYamlField('bibliography')
         if newbibf == ''
             let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")

@@ -31,7 +31,7 @@ augroup RBuffer
 augroup END
 
 let b:rplugin_knitr_pattern = ''
-if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd"
+if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
     if &omnifunc == "CompleteR"
         let b:rplugin_non_r_omnifunc = ""
     else

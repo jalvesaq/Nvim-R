@@ -267,8 +267,10 @@ You can install VOoM from: https://github.com/vim-voom/VOoM
 
 Zotero - zotcite~
 
-If you use RMarkdown to write academic papers and Zotero for reference
-management, you may want to try zotcite: https://github.com/jalvesaq/zotcite
+If you use either RMarkdown or Quarto to write academic papers and Zotero for
+reference management, you may want to try zotcite:
+
+   https://github.com/jalvesaq/zotcite
 
 
 Other plugins~
@@ -394,6 +396,10 @@ Command
   . Markdown render [all in YAML] (cur file)           \ka
   . Spin (cur file) (only .R)                          \ks
   --------------------------------------------------------
+  . Quarto render (cur file)                           \qr
+  . Quarto preview (cur file)                          \qp
+  . Quarto stop preview (all files)                    \qs
+  --------------------------------------------------------
   . Open attachment of reference (Rmd, Rnoweb)         \oa
   . Open PDF (cur file)                                \op
   . Search forward (SyncTeX)                           \gp
@@ -463,9 +469,9 @@ where `line` is the line under the cursor, and adds the output as commented
 lines to the source code.
 
 If the cursor is over the header of an R chunk with the `child` option (from
-Rnoweb, RMarkdown or RreStructuredText document), and you use one of the
-commands that send a single line of code to R, then the plugin will send to R
-the command to knit the child document.
+Rnoweb, RMarkdown, Quarto or RreStructuredText document), and you use one of
+the commands that send a single line of code to R, then the plugin will send
+to R the command to knit the child document.
 
 After the commands that send, sweave or knit the current buffer, Vim will
 save the current buffer if it has any pending changes before performing the
@@ -964,85 +970,87 @@ of
 							      *Nvim-R-options*
 6. Options~
 
-|R_auto_start|        Start R automatically
-|R_objbr_auto_start|  Start the Object Browser automatically
-|R-built-in-terminal| Options to control Vim/Neovim's built-in terminal
-|R_external_term|     Command to run R in an external terminal emulator
-|R_silent_term|       Do not show terminal errors
-|R_set_home_env|      Set the value of $HOME for R (Windows only)
-|R_save_win_pos|      Save positions of R and GVim windows (Windows only)
-|R_arrange_windows|   Restore positions of R and GVim windows (Windows only)
-|R_assign|            Convert '_' into ' <- '
-|R_assign_map|        Choose what to convert into ' <- '
-|R_rnowebchunk|       Convert '<' into '<<>>=\n@' in Rnoweb files
-|R_rmdchunk|          Convert grave accent chunk into delimiters in Rmd files
-|R_objbr_place|       Placement of Object Browser
-|R_objbr_w|           Initial width of Object Browser window
-|R_objbr_h|           Initial height of Object Browser window
-|R_objbr_opendf|      Display data.frames open in the Object Browser
-|R_objbr_openlist|    Display lists open in the Object Browser
-|R_objbr_allnames|    Display hidden objects in the Object Browser
-|R_nvimpager|         Use Vim to see R documentation
-|R_open_example|      Use Vim to display R examples
-|R_editor_w|          Minimum width of R script buffer
-|R_help_w|            Desired width of R documentation buffer
-|R_path|              Directory where R is
-|R_app|, |R_cmd|        Names of R applications
-|R_args|              Arguments to pass to R
-|R_start_libs|        Objects for omni completion and syntax highlight
-|Rout_more_colors|    More syntax highlighting in R output
-|R_hi_fun|            Highlight R functions
-|R_hi_fun_paren|      Highlight R functions only if followed by a `(`
-|R_hi_fun_globenv|    Highlight R functions from .GlobalEnv
-|R_routnotab|         Show output of R CMD BATCH in new window
-|R_indent_commented|  Indent lines commented with the \xx command
-|R_rcomment_string|   String to comment code with \xx and \o
-|R_notmuxconf|        Don't use a specially built Tmux config file
-|R_rconsole_height|   Number of lines of R Console
-|R_rconsole_width|    Number of columns of R Console
-|R_min_editor_width|  Minimum number of columns of editor after R start
-|R_applescript|       Use osascript in Mac OS X to run R.app
-|RStudio_cmd|         Run RStudio instead of R.
-|R_listmethods|       Do `nvim.list.args()` instead of `args()`
-|R_specialplot|       Do `nvim.plot()` instead of `plot()`
-|R_paragraph_begin|   Send paragraph from its beginning
-|R_parenblock|        Send lines until closing parenthesis
-|R_bracketed_paste|   Bracket R code in special escape sequences
-|R_clear_console|     Send <C-L> to clear R's console
-|R_source_args|       Arguments to R `source()` function
-|R_commented_lines|   Include commented lines in code sent to `source()`
-|R_latexcmd|          Command to run on .tex files
-|R_texerr|            Show a summary of LaTeX errors after compilation
-|R_sweaveargs|        Arguments do `Sweave()`
-|R_rmd_environment|   Environment in which to save evaluated rmd code
-|R_rmarkdown_args|    Further options to be passed to `rmarkdown::render()`
-|R_never_unmake_menu| Do not unmake the menu when switching buffers
-|R_clear_line|        Clear R Console line before sending a command
-|R_editing_mode|      The mode defined in your `~/.inputrc`
-|R_pdfviewer|         PDF application used to open PDF documents
-|R_openpdf|           Open PDF after processing rnoweb file
-|R_openhtml|          Open HTML after processing either Rrst or Rmd
-|R_strict_rst|        Code style for generated rst files
-|R_insert_mode_cmds|  Allow R commands in insert mode
-|R_rmhidden|          Remove hidden objects from R workspace
-|R_source|            Source additional scripts
-|R_non_r_compl|       Bibliography completion
-|R_wait|              Time to wait for nvimcom loading
-|R_wait_reply|        Time to wait for R reply
-|R_nvim_wd|           Start R in Vim's working directory
-|R_after_start|       Commands to be executed after R startup
-|R_after_ob_open|     Commands to be executed after the Object Browser opening
-|R_debug|             Support for debugging functions
-|R_user_maps_only|    Only user specified key bindings
-|R_disable_cmds|      List of commands to be disabled
-|R_tmpdir|            Where temporary files are created
-|R_compldir|          Where lists for omni completion are stored
-|R_set_omnifunc|      Should Nvim-R set the 'omnifunc'?
-|R_auto_omni|         List of files with auto omni completion enabled
-|R_remote_tmpdir|     Mount point of remote temporary directory
-|R_nvimcom_home|      Mount point of remote R library
-|Nvim-R-df-view|      Options for visualizing a data.frame or matrix
-|Nvim-R-SyncTeX|      Options for SyncTeX
+|R_auto_start|          Start R automatically
+|R_objbr_auto_start|    Start the Object Browser automatically
+|R-built-in-terminal|   Options to control Vim/Neovim's built-in terminal
+|R_external_term|       Command to run R in an external terminal emulator
+|R_silent_term|         Do not show terminal errors
+|R_set_home_env|        Set the value of $HOME for R (Windows only)
+|R_save_win_pos|        Save positions of R and GVim windows (Windows only)
+|R_arrange_windows|     Restore positions of R and GVim windows (Windows only)
+|R_assign|              Convert '_' into ' <- '
+|R_assign_map|          Choose what to convert into ' <- '
+|R_rnowebchunk|         Convert '<' into '<<>>=\n@' in Rnoweb files
+|R_rmdchunk|            Convert grave accent chunk into delimiters
+|R_objbr_place|         Placement of Object Browser
+|R_objbr_w|             Initial width of Object Browser window
+|R_objbr_h|             Initial height of Object Browser window
+|R_objbr_opendf|        Display data.frames open in the Object Browser
+|R_objbr_openlist|      Display lists open in the Object Browser
+|R_objbr_allnames|      Display hidden objects in the Object Browser
+|R_nvimpager|           Use Vim to see R documentation
+|R_open_example|        Use Vim to display R examples
+|R_editor_w|            Minimum width of R script buffer
+|R_help_w|              Desired width of R documentation buffer
+|R_path|                Directory where R is
+|R_app|, |R_cmd|          Names of R applications
+|R_args|                Arguments to pass to R
+|R_start_libs|          Objects for omni completion and syntax highlight
+|Rout_more_colors|      More syntax highlighting in R output
+|R_hi_fun|              Highlight R functions
+|R_hi_fun_paren|        Highlight R functions only if followed by a `(`
+|R_hi_fun_globenv|      Highlight R functions from .GlobalEnv
+|R_routnotab|           Show output of R CMD BATCH in new window
+|R_indent_commented|    Indent lines commented with the \xx command
+|R_rcomment_string|     String to comment code with \xx and \o
+|R_notmuxconf|          Don't use a specially built Tmux config file
+|R_rconsole_height|     Number of lines of R Console
+|R_rconsole_width|      Number of columns of R Console
+|R_min_editor_width|    Minimum number of columns of editor after R start
+|R_applescript|         Use osascript in Mac OS X to run R.app
+|RStudio_cmd|           Run RStudio instead of R.
+|R_listmethods|         Do `nvim.list.args()` instead of `args()`
+|R_specialplot|         Do `nvim.plot()` instead of `plot()`
+|R_paragraph_begin|     Send paragraph from its beginning
+|R_parenblock|          Send lines until closing parenthesis
+|R_bracketed_paste|     Bracket R code in special escape sequences
+|R_clear_console|       Send <C-L> to clear R's console
+|R_source_args|         Arguments to R `source()` function
+|R_commented_lines|     Include commented lines in code sent to `source()`
+|R_latexcmd|            Command to run on .tex files
+|R_texerr|              Show a summary of LaTeX errors after compilation
+|R_sweaveargs|          Arguments do `Sweave()`
+|R_rmd_environment|     Environment in which to save evaluated rmd code
+|R_rmarkdown_args|      Further options to be passed to `rmarkdown::render()`
+|R_quarto_render_args|  Options to be passed to `quarto::quarto_render()`
+|R_quarto_preview_args| Options to be passed to `quarto::quarto_preview()`
+|R_never_unmake_menu|   Do not unmake the menu when switching buffers
+|R_clear_line|          Clear R Console line before sending a command
+|R_editing_mode|        The mode defined in your `~/.inputrc`
+|R_pdfviewer|           PDF application used to open PDF documents
+|R_openpdf|             Open PDF after processing rnoweb file
+|R_openhtml|            Open HTML after processing either Rrst or Rmd
+|R_strict_rst|          Code style for generated rst files
+|R_insert_mode_cmds|    Allow R commands in insert mode
+|R_rmhidden|            Remove hidden objects from R workspace
+|R_source|              Source additional scripts
+|R_non_r_compl|         Bibliography completion
+|R_wait|                Time to wait for nvimcom loading
+|R_wait_reply|          Time to wait for R reply
+|R_nvim_wd|             Start R in Vim's working directory
+|R_after_start|         Commands to be executed after R startup
+|R_after_ob_open|       Commands executed after the Object Browser opening
+|R_debug|               Support for debugging functions
+|R_user_maps_only|      Only user specified key bindings
+|R_disable_cmds|        List of commands to be disabled
+|R_tmpdir|              Where temporary files are created
+|R_compldir|            Where lists for omni completion are stored
+|R_set_omnifunc|        Should Nvim-R set the 'omnifunc'?
+|R_auto_omni|           List of files with auto omni completion enabled
+|R_remote_tmpdir|       Mount point of remote temporary directory
+|R_nvimcom_home|        Mount point of remote R library
+|Nvim-R-df-view|        Options for visualizing a data.frame or matrix
+|Nvim-R-SyncTeX|        Options for SyncTeX
 
 
 ------------------------------------------------------------------------------
@@ -1879,8 +1887,22 @@ Other options to be passed to `rmarkdown::render()` might be defined with
 <
 
 ------------------------------------------------------------------------------
+							*R_quarto_render_args*
+						       *R_quarto_preview_args*
+6.21. Quarto's render and preview options~
+
+If you want to send the commands `quarto::quarto_render()` and
+`quarto::quarto_preview()` to R with additional arguments, you should define
+the values of `R_quarto_render_args` and `R_quarto_preview_args` in your
+|vimrc|, as in the examples:
+>
+   let R_quarto_render_args = ', quiet = TRUE'
+   let R_quarto_preview_args = ', browse = FALSE'
+<
+
+------------------------------------------------------------------------------
 							 *R_never_unmake_menu*
-6.21. Never unmake the R menu~
+6.22. Never unmake the R menu~
 
 Use this option if you want that the "R" menu item in GVim is not deleted when
 you change from one buffer to another, for example, when going from a .R file
@@ -1895,7 +1917,7 @@ type.
 ------------------------------------------------------------------------------
 							      *R_clear_line*
 							      *R_editing_mode*
-6.22. Clear R Console line before sending commands~
+6.23. Clear R Console line before sending commands~
 
 When one types <C-a> in the R Console the cursor goes to the beginning of the
 line and when one types <C-k> the characters to the right of the cursor are
@@ -1928,7 +1950,7 @@ and to not run in Rgui.
 							   *R_pdfviewer*
 							   *R_openpdf*
 							   *R_openhtml*
-6.23. Open PDF after processing rnoweb, rmd or rrst files~
+6.24. Open PDF after processing rnoweb, rmd or rrst files~
 
 The plugin can automatically open the pdf file generated by pdflatex, after
 either `Sweave()` or `knit()`. This behavior is controlled by the variable
@@ -1943,7 +1965,7 @@ that you generate the pdf, you should put in put in your |vimrc|:
 If you use Linux or other Unix and eventually use the system console (without
 the X server) you may want to put in your |vimrc|:
 >
-   if $DISPLAY != ""
+   if $DISPLAY != "" || $WAYLAND_DISPLAY != ""
        let R_openpdf = 1
    endif
 <
@@ -1979,13 +2001,20 @@ your |vimrc|:
 >
    let R_openhtml = 0
 <
+For Quarto documents, the available key bindings are <LocalLeader>qr (render
+document), <LocalLeader>qp (preview document), and <LocalLeader>qs (stop
+previewing). The command <LocalLeader>kr achieves basically the same result of
+<LocalLeader>kr. The difference is that the generated document is open after
+<LocalLeader>kr, and <LocalLeader>qr allows Quarto specific
+options (see |R_quarto_render_args|).
+
 
 ------------------------------------------------------------------------------
 							      *R_rrstcompiler*
 							      *R_strict_rst*
 							      *R_rst2pdfpath*
 							      *R_rst2pdfargs*
-6.24. Support to RreStructuredText file~
+6.25. Support to RreStructuredText file~
 
 By default, Nvim-R sends the command `render_rst(strict=TRUE)` to R
 before using R's `knit()` function to convert an Rrst file into an rst one. If
@@ -2001,7 +2030,7 @@ to R function knit2pdf).
 
 ------------------------------------------------------------------------------
 							  *R_insert_mode_cmds*
-6.25. Allow R commands in insert mode~
+6.26. Allow R commands in insert mode~
 
 Nvim-R commands are enabled for Normal mode, but most of them can also be
 enabled in Insert mode. However, depending on your <LocalLeader>, this can
@@ -2019,7 +2048,7 @@ See also: |Nvim-R-localleader|.
 
 ------------------------------------------------------------------------------
 								  *R_rmhidden*
-6.26. Show/remove hidden objects~
+6.27. Show/remove hidden objects~
 
 Hidden objects are removed from R workspace when you do <LocalLeader>rm. If
 you prefer to remove only visible objects, put in your |vimrc|:
@@ -2034,7 +2063,7 @@ https://unix.stackexchange.com/questions/104094/is-there-any-way-to-enable-ctrll
 
 ------------------------------------------------------------------------------
 								    *R_source*
-6.27. Source additional scripts~
+6.28. Source additional scripts~
 
 This variable should contain a comma separated list of Vim scripts to be
 sourced by Nvim-R. These scripts may provide additional
@@ -2051,7 +2080,7 @@ Currently, there is only one script known to extend Nvim-R features:
 
 ------------------------------------------------------------------------------
 							       *R_non_r_compl*
-6.28. Completion of non R code~
+6.29. Completion of non R code~
 
 Rnoweb~
 
@@ -2072,10 +2101,10 @@ begin with the substring "tab:".
 If the reference includes the field "file", you can open this file by typing
 <LocalLeader>od in Normal mode with the cursor over the citation key.
 
-Rmarkdown~
+Rmarkdown and Quarto~
 
-For RMarkdown documents it is recommended to install zotcite for
-completing citation keys directly from Zotero database:
+For either RMarkdown or Quarto documents it is recommended to install zotcite
+for completing citation keys directly from Zotero database:
 
    https://github.com/jalvesaq/zotcite
 
@@ -2135,7 +2164,7 @@ Note: On Windows, Nvim-R's bibliographic completion works only with ascii letter
 
 ------------------------------------------------------------------------------
 								      *R_wait*
-6.29. Time to wait for nvimcom loading~
+6.30. Time to wait for nvimcom loading~
 
 Nvim-R asynchronously waits 60 seconds for the nvimcom package to be loaded
 during R startup. If 60 seconds are not enough to your R startup, then set a
@@ -2146,7 +2175,7 @@ higher value for the variable in your |vimrc|. Example:
 
 ------------------------------------------------------------------------------
 								*R_wait_reply*
-6.30. Time to wait for R reply~
+6.31. Time to wait for R reply~
 
 By default Nvim-R waits 2 seconds for R to reply after a request for omni
 completion is issued. You can set the amount of time Nvim-R waits (in seconds)
@@ -2157,7 +2186,7 @@ in your |vimrc|.  Example:
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
-6.31 Start R in working directory of Vim~
+6.32 Start R in working directory of Vim~
 
 When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
 package nvimcom runs the command `setwd()` with the directory of the file
@@ -2178,7 +2207,7 @@ in |vimrc|:
 ------------------------------------------------------------------------------
 							       *R_after_start*
 							     *R_after_ob_open*
-6.32 Commands to be executed after either R startup or Object Browser opening~
+6.33 Commands to be executed after either R startup or Object Browser opening~
 
 If you want that Vim executes either Vim or external commands right after R
 startup, set the value of R_after_start in your |vimrc|. The `R_after_start`
@@ -2233,7 +2262,7 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 
 ------------------------------------------------------------------------------
 								     *R_debug*
-6.33 Support for debugging functions~
+6.34 Support for debugging functions~
 
 Put the line below in your |vimrc| if do not want that the cursor jumps to the
 line being debugged (when `browser()` is run). Highlighting of the line being
@@ -2250,7 +2279,7 @@ not want this, put in your |vimrc|:
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
 							    *R_disable_cmds*
-6.34 Disable Nvim-R commands~
+6.35 Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
@@ -2270,7 +2299,7 @@ Below is an example on how to disable the commands that sends `setwd()` and
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.35 Temporary files directories~
+6.36 Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of R_tmpdir and
@@ -2289,7 +2318,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 ------------------------------------------------------------------------------
 								 *R_auto_omni*
 							      *R_set_omnifunc*
-6.36 Omni completion~
+6.37 Omni completion~
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
 (`CompleteR`), but if you prefer to use another function or system (such as
@@ -2323,7 +2352,7 @@ aborted.
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
 							      *R_nvimcom_home*
-6.37 Options for accessing Remote R from local Vim~
+6.38 Options for accessing Remote R from local Vim~
 
 See |Nvim-R-remote|.
 
@@ -2331,7 +2360,7 @@ See |Nvim-R-remote|.
 							      *Nvim-R-df-view*
 							      *R_csv_app*
 							      *R_csv_delim*
-6.38 View a data.frame or matrix~
+6.39 View a data.frame or matrix~
 
 
 You can see data.frames and matrices in external applications. You should
@@ -2369,7 +2398,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.39 SyncTeX support~
+6.40 SyncTeX support~
 
 SyncTeX is a communication system used by some PDF viewers and by some text
 editors which allow users to jump from a specific line in the text editor to
@@ -2417,7 +2446,7 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 
 ------------------------------------------------------------------------------
-6.39.1 Okular configuration~
+6.40.1 Okular configuration~
 
 In Okular, do the mouse clicks described below and fill the field "Command"
 from "Custom Text Editor" as exemplified:
@@ -2434,7 +2463,7 @@ of Okular will be started.
 
 
 ------------------------------------------------------------------------------
-6.39.2 Skim configuration~
+6.40.2 Skim configuration~
 
 In Skim, click in the drop down menu and fill the fields:
 >
@@ -2447,7 +2476,7 @@ In Skim, click in the drop down menu and fill the fields:
 <
 
 ------------------------------------------------------------------------------
-6.39.3 Qpdfview configuration~
+6.40.3 Qpdfview configuration~
 
 Qpdfview is only partially supported: SyncTeX backward does not work with file
 paths containing spaces, and the qpdfview window is not automatically raised
@@ -2587,6 +2616,11 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RNextRChunk
    RPreviousRChunk
 
+   Support to Quarto~
+   RQuartoRender
+   RQuartoPreview
+   RQuartoStop
+
    Open attachment of bib item~
    ROpenRefFile
 
@@ -2670,6 +2704,10 @@ automatically when quiting Vim, put in your |vimrc| (replace `"nosave"` with
 >
    autocmd VimLeave * if exists("g:SendCmdToR") && string(g:SendCmdToR) != "function('SendCmdToR_fake')" | call RQuit("nosave") | endif
 <
+If R is running in the built-in terminal, sending the command
+`quit(save = "no")` while leaving the editor will be meaningless because
+R will be killed by Vim/Neovim before having time to quit gracefully.
+
 
 9.2. Is it possible to stop R from within Vim?~
 
@@ -2833,7 +2871,7 @@ develop a better algorithm in the future.
 ------------------------------------------------------------------------------
 9.10. Highlight chunk header as R code~
 
-By default, Vim will highlight chunk headers of RMarkdown and
+By default, Vim will highlight chunk headers of RMarkdown, Quarto and
 RreStructuredText with a single color. When the code is processed by knitr,
 chunk headers should contain valid R code and, thus, you may want to highlight
 them as such. You can do this by putting in your |vimrc|:
@@ -2900,7 +2938,8 @@ And add this to your `~/.Rprofile` if you want to use `w3m`, a text based web
 browser, to navigate through R docs after `help.start()` when you cannot run a
 graphical web browser (e.g. when you are in the Linux console):
 >
-   if(interactive() && Sys.info()[["sysname"]] == "Linux" && Sys.getenv("DISPLAY") == ""){
+   if(interactive() && Sys.info()[["sysname"]] == "Linux" &&
+       Sys.getenv("DISPLAY") == "" && Sys.getenv("WAYLAND_DISPLAY") == ""){
        if(Sys.getenv("TMUX") != "")
            options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
        else if(Sys.getenv("NVIMR_TMPDIR") != "")
@@ -3172,7 +3211,7 @@ Examples:
 10. News~
 
  * New options: R_set_omnifunc, R_auto_omni, R_rmarkdown_args,
-   R_objbr_auto_start. 
+   R_objbr_auto_start, R_quarto_render_args, and R_quarto_preview_args.
  * Delete options: R_omni_tmp_file and R_omni_size
 
 0.9.16 (2021-04-29)
