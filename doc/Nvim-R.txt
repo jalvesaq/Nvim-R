@@ -2923,7 +2923,7 @@ lines in your `~/.Rprofile` if you are using Linux:
                           xpos = 1000, pointsize = 10)
 <
 The `X11.options()` is used to choose the position and dimensions of the X11
-graphical device. I running on the X Server (not on Wayland) You can also
+graphical device. On the X Server (not on Wayland) you can also
 install the application wmctrl and create shortcuts in your desktop
 environment to the command:
 >
