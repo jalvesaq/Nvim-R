@@ -145,7 +145,6 @@ Additional dependencies for editing Rnoweb documents:~
 
    wmctrl:       http://tomas.styblo.name/wmctrl/
                  Required for better SyncTeX support under X Server.
-		 (Not required on either Windows or OS X)
 
    Python 3 and python3-pybtex library: required for omni completion of
    citation keys (following |R_cite_pattern|) in Rnoweb documents.
@@ -1261,6 +1260,7 @@ terminal. Examples:
    let R_external_term = 'xterm -title R -e'
    let R_external_term = 'tilix -a session-add-right -e'
    let R_external_term = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
+   let R_external_term = 'foot -a R -T R --login-shell --log-level warning'
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
@@ -2221,9 +2221,10 @@ startup, put in your |vimrc|:
 <
 Nvim-R stores the environment variable $WINDOWID of the terminal where R is
 running as $RCONSOLE. Thus, if you are running R in a external terminal
-emulator on Linux, `~/bin` is in your path, and you want to resize and change
-the positions of the terminals containing Vim and R, you may create a
-script `~/bin/after_R_start` similar to the following:
+emulator on the X server (not on Wayland) on Linux, `~/bin` is in your path,
+and you want to resize and change the positions of the terminals containing
+Vim and R, you may create a script `~/bin/after_R_start` similar to the
+following:
 >
    #!/bin/sh
    wmctrl -i -r $RCONSOLE -e 0,0,200,1200,800
@@ -2409,8 +2410,8 @@ for SyncTeX in five applications:
    OS X:    Skim
    Windows: SumatraPDF
 
-On Linux, the application `wmctrl` is required to raise both the PDF viewer
-and Vim windows.
+On Linux, if running on the X server (not on Wayland), the application
+`wmctrl` is required to raise both the PDF viewer and Vim windows.
 
 To completely disable SyncTeX support, put in your |vimrc|:
 >
@@ -2922,8 +2923,9 @@ lines in your `~/.Rprofile` if you are using Linux:
                           xpos = 1000, pointsize = 10)
 <
 The `X11.options()` is used to choose the position and dimensions of the X11
-graphical device. You can also install the application wmctrl and create
-shortcuts in your desktop environment to the command:
+graphical device. I running on the X Server (not on Wayland) You can also
+install the application wmctrl and create shortcuts in your desktop
+environment to the command:
 >
    wmctrl -r "R Graphics" -b toggle,above
 <
