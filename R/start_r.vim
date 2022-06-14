@@ -752,6 +752,10 @@ function FindDebugFunc(srcref)
 endfunction
 
 function RDebugJump(fnm, lnum)
+    let saved_so = &scrolloff
+    if g:R_debug_center == 1
+        set so=999
+    endif
     if a:fnm == '' || a:fnm == '<text>'
         " Functions sent directly to R Console have no associated source file
         " and functions sourced by knitr have '<text>' as source reference.
@@ -810,6 +814,7 @@ function RDebugJump(fnm, lnum)
         exe 'sb ' . bname
     endif
     let s:rdebugging = 1
+    exe 'set so=' . saved_so
 endfunction
 
 
@@ -2102,6 +2107,7 @@ let g:R_esc_term          = get(g:, "R_esc_term",           1)
 let g:R_close_term        = get(g:, "R_close_term",         1)
 let g:R_buffer_opts       = get(g:, "R_buffer_opts", "winfixwidth winfixheight nobuflisted")
 let g:R_debug             = get(g:, "R_debug",              1)
+let g:R_debug_center      = get(g:, "R_debug_center",       0)
 let g:R_dbg_jump          = get(g:, "R_dbg_jump",           1)
 let g:R_wait              = get(g:, "R_wait",              60)
 let g:R_wait_reply        = get(g:, "R_wait_reply",         2)
