@@ -886,14 +886,6 @@ defined by your colorscheme, but you can change them in your |vimrc| (see
    hi QuickFixLine ctermfg=231 ctermbg=23 guifg=white guibg=#005f5f
 <
 
-The QuickFixLine incrementally moves down the buffer with code execution and
-with long scripts it may stay at the bottom of the buffer as you debug. You
-can hold the highlighted line in the middle of the buffer with
-
->
-    let R_debug_center = 1
-<
-
 ==============================================================================
 							   *Nvim-R-known-bugs*
 5. Known bugs and workarounds~
@@ -2283,6 +2275,14 @@ Nvim-R puts the cursor in the R Console when the debugging starts. If you do
 not want this, put in your |vimrc|:
 >
    let R_dbg_jump = 0
+<
+
+The highlighted debugged line incrementally moves down the buffer with code
+execution and, with long scripts, it may stay at the bottom of the buffer as you
+debug. You can hold the highlighted line in the middle of the buffer with
+
+>
+    let R_debug_center = 1
 <
 
 ------------------------------------------------------------------------------
