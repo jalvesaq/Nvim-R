@@ -43,7 +43,7 @@ function! s:GetBibFileName()
     else
         let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
     endif
-    if newbibf != b:rplugin_bibf
+    if newbibf != b:rplugin_bibf && newbibf !~ 'zotcite.bib$'
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
             call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
