@@ -1494,15 +1494,8 @@ RTools `bin` directories on Windows. Example:
 >
    let R_path = 'C:\rtools40\mingw64\bin;C:\rtools40\usr\bin;C:\Program Files\R\R-4.0.1\bin\x64'
 <
-By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
-Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
-buffer and `"Rgui.exe"` otherwise. Nvim-R cannot send messages to `Rterm.exe`
-in an external `cmd` window. If your R binary has a different name (for
-example, if it is called by a custom script), you should set the value of
-`R_app` in your |vimrc|.
-
-By default the plugin will call the application `R` to run the following
-commands:
+By default `R_cmd` is `"R"` (but it might be the same as `R_app`) and will
+be used to run some scripts in the background, such as:
 >
    R CMD build nvimcom
    R CMD install nvimcom
@@ -1511,6 +1504,16 @@ commands:
 If it is necessary to call a different application to run the above commands
 in your system, you should set the value of `R_cmd` in your |vimrc|.
 
+By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
+Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
+buffer and `"Rgui.exe"` otherwise. Nvim-R cannot send messages to `Rterm.exe`
+in an external `cmd` window. If your R binary has a different name (for
+example, if it is called by a custom script), you should set the value of
+`R_app` in your |vimrc| (and, perhaps, `R_cmd` too). Example:
+>
+   let R_app = 'radian'
+   let R_cmd = 'R'
+<
 
 ------------------------------------------------------------------------------
 								      *R_args*

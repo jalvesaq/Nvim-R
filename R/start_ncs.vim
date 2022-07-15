@@ -77,7 +77,8 @@ function CheckNvimcomVersion()
         call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_path.R')
         let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
         if v:shell_error
-            call RWarningMsg(g:rplugin.debug_info['.libPaths()'])
+            call RWarningMsg('Error trying to run .libPaths(): ' .
+                        \ substitute(g:rplugin.debug_info['.libPaths()'], "\n", " ", "g"))
             if has("win32")
                 call UnsetRHome()
             endif
