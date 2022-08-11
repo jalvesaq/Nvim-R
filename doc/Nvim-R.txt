@@ -1556,8 +1556,10 @@ scripts, put the following in your |vimrc|:
 <
 When syntax highlighting .Rout files, Nvim-R considers "> " as the prompt
 string and "+ " as the continuation string. If you have defined different
-prompt and continuation strings in your `~./Rprofile`, you should do the same
-in your |vimrc|. Example:
+prompt and continuation strings in your `~./Rprofile`, Nvim-R will try to get
+them from R, but if they include special characters, you may have do the
+define them in your |vimrc| too to avoid errors and get them properly
+highlighted. Example:
 >
    let g:Rout_prompt_str = '» '
    let g:Rout_continue_str = '… '

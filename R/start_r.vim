@@ -249,10 +249,14 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     if !exists("g:R_OutDec")
         let g:R_OutDec = Rinfo[1]
     endif
-    let g:Rout_prompt_str = substitute(Rinfo[2], ' $', '', '')
-    let g:Rout_continue_str = substitute(Rinfo[3], ' $', '', '')
-    let g:Rout_prompt_str = substitute(g:Rout_prompt_str, '.*#N#', '', '')
-    let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
+    if !exists('g:Rout_prompt_str')
+        let g:Rout_prompt_str = substitute(Rinfo[2], ' $', '', '')
+        let g:Rout_prompt_str = substitute(g:Rout_prompt_str, '.*#N#', '', '')
+    endif
+    if !exists('g:Rout_continue_str')
+        let g:Rout_continue_str = substitute(Rinfo[3], ' $', '', '')
+        let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
+    endif
 
     if has('nvim') && has_key(g:rplugin, "R_bufname")
         " Put the cursor and the end of the buffer to ensure automatic scrolling
