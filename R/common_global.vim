@@ -480,12 +480,13 @@ function RGetKeyword(...)
         let i -= 1
     endwhile
     " Go to the beginning of the word
-    while i > 0 && line[i-1] =~ '\k\|@\|\$\|\:\|_\|\.'
+    " See https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
+    while i > 0 && line[i-1] =~ '\k\|@\|\$\|\:\|_\|\.' || (line[i-1] > "\x80" && line[i-1] < "\xf5")
         let i -= 1
     endwhile
     " Go to the end of the word
     let j = i
-    while line[j] =~ '\k\|@\|\$\|\:\|_\|\.'
+    while line[j] =~ '\k\|@\|\$\|\:\|_\|\.' || (line[j] > "\x80" && line[j] < "\xf5")
         let j += 1
     endwhile
     let rkeyword = strpart(line, i, j - i)
