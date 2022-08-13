@@ -579,14 +579,17 @@ static void nvimcom_globalenv_list()
     PROTECT(envVarsSEXP = R_lsInternal(R_GlobalEnv, allnames));
     for(int i = 0; i < Rf_length(envVarsSEXP); i++){
         varName = CHAR(STRING_ELT(envVarsSEXP, i));
-        PROTECT(varSEXP = Rf_findVar(Rf_install(varName), R_GlobalEnv));
-        if (varSEXP != R_UnboundValue) // should never be unbound
-        {
-            p = nvimcom_glbnv_line(&varSEXP, varName, "", p, 0);
-        } else {
-            REprintf("nvimcom_globalenv_list: Unexpected R_UnboundValue returned from R_lsInternal.\n");
+        if (!R_BindingIsActive(Rf_install(varName), R_GlobalEnv)) {
+            // See: https://github.com/jalvesaq/Nvim-R/issues/686
+            PROTECT(varSEXP = Rf_findVar(Rf_install(varName), R_GlobalEnv));
+            if (varSEXP != R_UnboundValue) // should never be unbound
+            {
+                p = nvimcom_glbnv_line(&varSEXP, varName, "", p, 0);
+            } else {
+                REprintf("nvimcom_globalenv_list: Unexpected R_UnboundValue returned from R_lsInternal.\n");
+            }
+            UNPROTECT(1);
         }
-        UNPROTECT(1);
     }
     UNPROTECT(1);
 
