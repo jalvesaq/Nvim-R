@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.16
-For Neovim >= 0.4.3 and Vim >= 8.1.1705
+For Neovim >= 0.5.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -31,10 +31,7 @@ available at:
     https://github.com/jalvesaq/Nvim-R/releases
 
 Feedback is welcomed. Please submit bug reports to the developers. Do not like
-a feature? Tell us and we may add an option to disable it. If you have any
-comments or questions, please post them at:
-
-    https://groups.google.com/forum/#!forum/vim-r-plugin
+a feature? Tell us and we may add an option to disable it.
 
 The plugin should emit useful warnings if you do things it was not programmed
 to deal with. Cryptic error message are bugs... Please report them at:
@@ -102,11 +99,11 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.4.3
+   Neovim >= 0.5.0
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
-   or Vim >= 8.1.1705:
+   or Vim >= 8.2.84:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
       In Normal mode, do `:version` to check if your Vim has these features.
@@ -142,9 +139,6 @@ Additional dependencies for editing Rnoweb documents:~
       On Linux and other Unix systems: Zathura (recommended), Evince or Okular.
       On OS X: Skim.
       On Windows: SumatraPDF.
-
-   wmctrl:       http://tomas.styblo.name/wmctrl/
-                 Required for better SyncTeX support under X Server.
 
    Python 3 and python3-pybtex library: required for omni completion of
    citation keys (following |R_cite_pattern|) in Rnoweb documents.
@@ -719,6 +713,9 @@ Notes:
 
   - Names of objects are stupidly truncated if they occupy more than 62 bytes.
     This means that Unicode sequences might be split and become invalid.
+
+  - Active bindings are not included in the list of objects for omni
+    completion. Also, they are not included in the Object Browser.
 
 
 ------------------------------------------------------------------------------
@@ -1556,15 +1553,17 @@ scripts, put the following in your |vimrc|:
 <
 When syntax highlighting .Rout files, Nvim-R considers "> " as the prompt
 string and "+ " as the continuation string. If you have defined different
-prompt and continuation strings in your `~./Rprofile`, Nvim-R will try to get
-them from R, but if they include special characters, you may have do the
-define them in your |vimrc| too to avoid errors and get them properly
-highlighted. Example:
+prompt and continuation strings in your `~/.Rprofile`, Nvim-R will try to get
+them from R, but if they include special characters, you may have to define
+them in your |vimrc| too to avoid errors and get them properly highlighted.
+For example, if you have in your `~/.Rprofile`
 >
-   let g:Rout_prompt_str = '» '
-   let g:Rout_continue_str = '… '
+   options(prompt = '\u1b[34m»\u1b[0m ')
 <
-							    *R_hi_fun_paren*
+you should put in your |vimrc|:
+>
+   let g:Rout_prompt_str = '»'
+<
 By default, Nvim-R highlights the names of R functions even if they are not
 followed by a parenthesis. If you prefer to highlight R functions only if
 the `(` is typed, put in your |vimrc|:
@@ -3225,6 +3224,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
+ * Require either Neovim 0.5.0 or Vim 8.2.84.
  * New options: R_set_omnifunc, R_auto_omni, R_rmarkdown_args,
    R_objbr_auto_start, R_quarto_render_args, and R_quarto_preview_args,
    R_debug_center.

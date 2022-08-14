@@ -268,12 +268,9 @@ endfunction
 
 function OnCompleteDone()
     call CloseFloatWin()
-    let s:user_data = {}
     let s:auto_compl_col = 0
 endfunction
 
-" TODO: delete s:user_data when Ubuntu has('nvim-0.5.0') && has('patch-8.2.84')
-let s:user_data = {}
 function AskForComplInfo()
     if ! pumvisible()
         return
@@ -281,10 +278,6 @@ function AskForComplInfo()
     " Other plugins fill the 'user_data' dictionary
     if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
         let s:compl_event = deepcopy(v:event)
-        if s:user_data != {}
-            " TODO: Delete this code when Neovim 0.5 is released
-            let s:compl_event['completed_item']['user_data'] = deepcopy(s:user_data[v:event['completed_item']['word']])
-        endif
         if has_key(s:compl_event['completed_item'], 'user_data') &&
                     \ type(s:compl_event['completed_item']['user_data']) == v:t_dict
             if has_key(s:compl_event['completed_item']['user_data'], 'pkg')
@@ -372,12 +365,7 @@ function GetListOfRLibs(base)
             let lin = readfile(fl)[0]
             let dsc = substitute(lin, ".*\t", "", "")
             let ttl = substitute(lin, "\t.*", "", "")
-            if has('nvim-0.5.0') || has('patch-8.2.84')
-                call add(argls, {'word': pnm, 'user_data': {'ttl': ttl, 'descr': dsc, 'cls': 'l'}})
-            else
-                call add(argls, {'word': pnm})
-                let s:user_data[pnm] = {'ttl': ttl, 'descr': dsc, 'cls': 'l'}
-            endif
+            call add(argls, {'word': pnm, 'user_data': {'ttl': ttl, 'descr': dsc, 'cls': 'l'}})
         endif
     endfor
     return argls
@@ -482,7 +470,6 @@ endfunction
 let s:completion_id = 0
 let s:is_auto_completing = 0
 function RTriggerCompletion()
-    let s:user_data = {}
     let s:completion_id += 1
 
     " We are within the InsertCharPre event
@@ -547,7 +534,6 @@ endfunction
 
 function CompleteR(findstart, base)
     if a:findstart
-        let s:user_data = {}
         let line = getline(".")
         if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
             let s:compl_type = 3
@@ -613,20 +599,6 @@ function WaitRCompletion()
     endwhile
     if exists('s:compl_menu')
         let s:is_completing = 1
-        if has('nvim-0.5.0') || has('patch-8.2.84')
-            " 'user_data' might be a dictionary
-            return s:compl_menu
-        else
-            " 'user_data' must be string (Ubuntu 20.04)
-            let s:user_data = {}
-            for item in s:compl_menu
-                let wrd = item['word']
-                if has_key(item, 'user_data')
-                    let s:user_data[wrd] = deepcopy(item['user_data'])
-                    let item['user_data'] = ''
-                endif
-            endfor
-        endif
         return s:compl_menu
     endif
     return []
@@ -656,12 +628,7 @@ function CompleteChunkOptions(base)
 
     call sort(ktopt)
     for kopt in ktopt
-        if has('nvim-0.5.0') || has('patch-8.2.84')
-            call add(rr, kopt)
-        else
-            let s:user_data[kopt['word']] = remove(kopt, 'user_data')
-            call add(rr, kopt)
-        endif
+        call add(rr, kopt)
     endfor
     return rr
 endfunction

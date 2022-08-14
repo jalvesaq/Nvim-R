@@ -133,7 +133,7 @@ function RWarningMsg(wmsg)
         exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
         return
     endif
-    if mode() == 'i' && (has('nvim-0.4.3') || has('patch-8.1.1705'))
+    if mode() == 'i' && (has('nvim-0.5.0') || has('patch-8.2.84'))
         call RFloatWarn(a:wmsg)
     endif
     echohl WarningMsg
@@ -147,17 +147,17 @@ endfunction
 "==============================================================================
 
 if has("nvim")
-    if !has("nvim-0.4.3")
-        call RWarningMsg("Nvim-R requires Neovim >= 0.4.3.")
+    if !has("nvim-0.5.0")
+        call RWarningMsg("Nvim-R requires Neovim >= 0.5.0.")
         let g:rplugin.failed = 1
         finish
     endif
-elseif v:version < "801"
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.4.3 or Vim >= 8.1.1705")
+elseif v:version < "802"
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.5.0 or Vim >= 8.2.84")
     let g:rplugin.failed = 1
     finish
-elseif !has("channel") || !has("job") || !has('patch-8.1.1705')
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.4.3 or Vim >= 8.1.1705\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+elseif !has("channel") || !has("job") || !has('patch-8.2.84')
+    call RWarningMsg("Nvim-R requires either Neovim >= 0.5.0 or Vim >= 8.2.84\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin.failed = 1
     finish
 endif

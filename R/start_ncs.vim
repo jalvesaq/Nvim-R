@@ -516,11 +516,6 @@ else
     endfunction
 endif
 
-" 2018-03-27: Delete this warning before releasing the next version
-if g:R_openhtml == 2
-    call RWarningMsg("Valid values of R_openhtml are only 0 and 1. The value 2 is no longer valid.")
-endif
-
 " 2018-03-31
 if exists('g:R_tmux_split')
     call RWarningMsg('The option R_tmux_split no longer exists. Please see https://github.com/jalvesaq/Nvim-R/blob/master/R/tmux_split.md')
