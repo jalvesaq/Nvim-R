@@ -385,7 +385,8 @@ function FindStartRObj()
     else
         let idx1 = idx2
         while line[idx1] =~ '\w' || line[idx1] == '.' || line[idx1] == '_' ||
-                    \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@'
+                    \ line[idx1] == ':' || line[idx1] == '$' || line[idx1] == '@' ||
+                    \ (line[idx1] > "\x80" && line[idx1] < "\xf5")
             let idx1 -= 1
         endwhile
         let idx1 += 1
