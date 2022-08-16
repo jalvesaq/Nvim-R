@@ -23,7 +23,7 @@ elseif $USERNAME != ""
 elseif $HOME != ""
     let g:rplugin.userlogin = substitute($HOME, '.*/', '', '')
 elseif executable("whoami")
-    let g:rplugin.userlogin = system('whoami')
+    silent let g:rplugin.userlogin = system('whoami')
 else
     call RWarningMsg("Could not determine user name.")
     let g:rplugin.failed = 1
@@ -63,7 +63,7 @@ endif
 if filereadable(g:rplugin.compldir . "/uname")
     let g:rplugin.is_darwin = readfile(g:rplugin.compldir . "/uname")[0] =~ "Darwin"
 else
-    let s:uname = system("uname")
+    silent let s:uname = system("uname")
     let g:rplugin.is_darwin = s:uname  =~ "Darwin"
     call writefile([s:uname], g:rplugin.compldir . "/uname")
     unlet s:uname

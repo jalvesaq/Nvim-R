@@ -69,11 +69,11 @@ function s:HasPython3()
         endif
         return 0
     endif
-    let out = system('python3 --version')
+    silent let out = system('python3 --version')
     if v:shell_error == 0 && out =~ 'Python 3'
         let g:rplugin.py3 = 'python3'
     else
-        let out = system('python --version')
+        silent let out = system('python --version')
         if v:shell_error == 0 && out =~ 'Python 3'
             let g:rplugin.py3 = 'python'
         else
@@ -90,7 +90,7 @@ function CheckPyBTeX(...)
         if !s:HasPython3()
             return
         endif
-        call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
+        silent call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
         if v:shell_error == 0
             let g:rplugin.debug_info['BibComplete'] = "PyBTex OK"
         else

@@ -33,7 +33,7 @@ function CheckNvimcomVersion()
                 let g:rplugin.debug_info['Why build nvimcom'] = 'Nvimcom version mismatch'
             else
                 " Nvimcom is up to date. Check if R version changed.
-                let rversion = system(g:rplugin.Rcmd . ' --version')
+                silent let rversion = system(g:rplugin.Rcmd . ' --version')
                 let rversion = substitute(rversion, '.*R version \(\S\{-}\) .*', '\1', '')
                 if rversion < '4.0.0'
                     call RWarningMsg("Nvim-R requires R >= 4.0.0")
@@ -75,7 +75,7 @@ function CheckNvimcomVersion()
                     \ '    sep = "\n")',
                     \ 'sink()' ]
         call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_path.R')
-        let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
+        silent let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
         if v:shell_error
             call RWarningMsg('Error trying to run .libPaths(): ' .
                         \ substitute(g:rplugin.debug_info['.libPaths()'], "\n", " ", "g"))
@@ -244,9 +244,9 @@ function StartNClientServer()
     " numbers and we use it to set both $NVIMR_ID and $NVIMR_SECRET
     if $NVIMR_ID == ""
         if has('nvim')
-            let randstr = system(['randint2'])
+            silent let randstr = system(['randint2'])
         else
-            let randstr = system('randint2')
+            silent let randstr = system('randint2')
         endif
         if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
             call RWarningMsg('Using insecure communication with R due to failure to get random numbers: '
