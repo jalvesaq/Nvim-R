@@ -20,6 +20,7 @@
 # Modified to Nvim-R by Jakson Aquino
 
 import dbus, dbus.mainloop.glib, sys
+import signal
 from nvimr import nvimr_cmd, nvimr_warn
 from gi.repository import GLib
 
@@ -110,6 +111,12 @@ class EvinceWindowProxy:
         input_file = input_file.replace("%20", " ")
         nvimr_cmd("call SyncTeX_backward('" + input_file + "', " + str(source_link[0]) + ")\n")
 
+def sigint_handler(sig, frame):
+    if sig == signal.SIGTERM:
+        loop.quit()
+
+signal.signal(signal.SIGTERM, sigint_handler)
+
 path_output = sys.argv[1]
 path_output = path_output.replace(" ", "%20")
 
@@ -119,4 +126,3 @@ a = EvinceWindowProxy('file://' + path_output, True)
 
 loop = GLib.MainLoop()
 loop.run()
-
