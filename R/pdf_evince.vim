@@ -24,9 +24,7 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
     else
         let g:rplugin.evince_loop = 0
     endif
-    if g:rplugin.has_wmctrl
-        call system("wmctrl -a '" . substitute(a:ppath, ".*/", "", "") . "'")
-    endif
+    call RaiseWindow(substitute(a:ppath, ".*/", "", ""))
 endfunction
 
 function Run_EvinceBackward()

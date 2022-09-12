@@ -33,12 +33,34 @@ function RSetPDFViewer()
         if executable("wmctrl")
             let g:rplugin.has_wmctrl = 1
         else
-            let g:rplugin.has_wmctrl = 0
             if &filetype == "rnoweb" && g:R_synctex
-
                 call RWarningMsg("The application wmctrl must be installed to edit Rnoweb effectively.")
             endif
         endif
+    endif
+
+    if $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != ""
+        if executable('busctl')
+            let sout = system('busctl --user call org.gnome.Shell.Extensions ' .
+                        \ '/org/gnome/Shell/Extensions org.gnome.Shell.Extensions ' .
+                        \ 'GetExtensionInfo "s" "activate-window-by-title@lucaswerkmeister.de"')
+            if sout =~ 'Activate Window'
+                let g:rplugin.has_awbt = 1
+            endif
+        endif
+    endif
+endfunction
+
+let g:rplugin.has_wmctrl = 0
+let g:rplugin.has_awbt = 0
+function RaiseWindow(wttl)
+    if g:rplugin.has_wmctrl
+        call system("wmctrl -a '" . a:wttl . "'")
+    elseif $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != "" && g:rplugin.has_awbt
+        call system("busctl --user call org.gnome.Shell " .
+                    \ "/de/lucaswerkmeister/ActivateWindowByTitle " .
+                    \ "de.lucaswerkmeister.ActivateWindowByTitle " .
+                    \ "activateBySubstring s '" . a:wttl . "'")
     endif
 endfunction
 

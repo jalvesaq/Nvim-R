@@ -17,6 +17,28 @@ else
 endif
 
 function ROpenPDF2(fullpath)
+    if g:R_openpdf == 1
+        call RStart_Zathura(a:fullpath)
+        return
+    endif
+
+    if $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != ""
+        if g:rplugin.has_awbt
+            sleep 200m " Time to Zathura reload the PDF
+            let fname = substitute(a:fullpath, ".*/", "", "")
+            let sout = system("busctl --user call org.gnome.Shell " .
+                        \ "/de/lucaswerkmeister/ActivateWindowByTitle " .
+                        \ "de.lucaswerkmeister.ActivateWindowByTitle " .
+                        \ "activateBySubstring s '" . fname . "'")
+            if sout =~ 'false'
+                call RStart_Zathura(a:fullpath)
+            endif
+        else
+            call RStart_Zathura(a:fullpath)
+        endif
+        return
+    endif
+
     if !has_key(g:rplugin.zathura_pid, a:fullpath)
         let g:rplugin.zathura_pid[a:fullpath] = 0
     endif
@@ -57,9 +79,7 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
         endif
     endif
 
-    if g:rplugin.has_wmctrl
-        call system("wmctrl -a '" . shortp . "'")
-    endif
+    call RaiseWindow(shortp)
 endfunction
 
 function StartZathuraNeovim(fullpath)

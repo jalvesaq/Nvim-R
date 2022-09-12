@@ -4,10 +4,6 @@ if exists("*SumatraInPath")
 endif
 
 function ROpenPDF2(fullpath)
-    if g:R_synctex && g:rplugin.nvimcom_bin_dir != "" && IsJobRunning("ClientServer") == 0
-        call StartNClientServer('ROpenPDFSumatra')
-    endif
-
     if SumatraInPath()
         let pdir = substitute(a:fullpath, '\(.*\)/.*', '\1', '')
         let pname = substitute(a:fullpath, '.*/\(.*\)', '\1', '')
