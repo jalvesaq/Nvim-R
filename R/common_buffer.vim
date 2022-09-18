@@ -14,21 +14,24 @@ endif
 
 " Plugins that automatically run omni completion will work better if they
 " don't have to wait for the omni list to be built.
-augroup RBuffer
-    " Required to avoid the autocmd being registered three times
-    autocmd!
-    autocmd InsertEnter <buffer> call ROnInsertEnter()
-    if index(g:R_auto_omni, &filetype) > -1
-        let b:rplugin_saved_completeopt = &completeopt
-        autocmd InsertCharPre <buffer> call RTriggerCompletion()
-        autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
-        autocmd BufEnter <buffer> set completeopt=menuone,noselect
-    endif
-    if index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1
-        autocmd CompleteChanged <buffer> call AskForComplInfo()
-        autocmd CompleteDone <buffer> call OnCompleteDone()
-    endif
-augroup END
+" Test whether the autocommands were already defined to avoid getting them
+" registered three times
+if !exists('b:did_RBuffer_au')
+    augroup RBuffer
+        autocmd InsertEnter <buffer> call ROnInsertEnter()
+        if index(g:R_auto_omni, &filetype) > -1
+            let b:rplugin_saved_completeopt = &completeopt
+            autocmd InsertCharPre <buffer> call RTriggerCompletion()
+            autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
+            autocmd BufEnter <buffer> set completeopt=menuone,noselect
+        endif
+        if index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1
+            autocmd CompleteChanged <buffer> call AskForComplInfo()
+            autocmd CompleteDone <buffer> call OnCompleteDone()
+        endif
+    augroup END
+endif
+let b:did_RBuffer_au = 1
 
 let b:rplugin_knitr_pattern = ''
 if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
