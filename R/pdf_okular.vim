@@ -10,7 +10,7 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
     call system("NVIMR_PORT=" . g:rplugin.myport . " okular --unique " .
                 \ pdfname . "#src:" . a:texln . texname . " 2> /dev/null >/dev/null &")
     if g:rplugin.has_awbt
-        call RaiseWindow(pdfname)
+        call RRaiseWindow(pdfname)
     endif
 endfunction
 

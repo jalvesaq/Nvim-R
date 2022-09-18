@@ -24,7 +24,7 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
     else
         let g:rplugin.evince_loop = 0
     endif
-    call RaiseWindow(substitute(a:ppath, ".*/", "", ""))
+    call RRaiseWindow(substitute(a:ppath, ".*/", "", ""))
 endfunction
 
 function Run_EvinceBackward()

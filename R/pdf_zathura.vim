@@ -26,11 +26,7 @@ function ROpenPDF2(fullpath)
         if g:rplugin.has_awbt
             sleep 200m " Time to Zathura reload the PDF
             let fname = substitute(a:fullpath, ".*/", "", "")
-            let sout = system("busctl --user call org.gnome.Shell " .
-                        \ "/de/lucaswerkmeister/ActivateWindowByTitle " .
-                        \ "de.lucaswerkmeister.ActivateWindowByTitle " .
-                        \ "activateBySubstring s '" . fname . "'")
-            if sout =~ 'false'
+            if RRaiseWindow(fname) == 0
                 call RStart_Zathura(a:fullpath)
             endif
         else
@@ -79,7 +75,7 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
         endif
     endif
 
-    call RaiseWindow(shortp)
+    call RRaiseWindow(shortp)
 endfunction
 
 function StartZathuraNeovim(fullpath)

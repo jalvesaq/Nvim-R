@@ -374,7 +374,7 @@ function SyncTeX_backward(fname, ln)
                 call system("wmctrl -ia " . $WINDOWID)
             endif
         elseif g:rplugin.has_awbt && exists('g:R_term_title')
-            call RaiseWindow(g:R_term_title)
+            call RRaiseWindow(g:R_term_title)
         elseif has("gui_running")
             if has("win32")
                 " Attempt 1

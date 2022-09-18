@@ -12,5 +12,5 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
     let pdfname = substitute(a:ppath, ' ', '\\ ', 'g')
     call system("NVIMR_PORT=" . g:rplugin.myport . " qpdfview --unique " .
                 \ pdfname . "#src:" . texname . ":" . a:texln . ":1 2> /dev/null >/dev/null &")
-    call RaiseWindow(substitute(substitute(a:ppath, ".*/", "", ""), ".pdf$", "", ""))
+    call RRaiseWindow(substitute(substitute(a:ppath, ".*/", "", ""), ".pdf$", "", ""))
 endfunction
