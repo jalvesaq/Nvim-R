@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.16
+Version: 0.9.17
 For Neovim >= 0.5.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
@@ -2151,8 +2151,7 @@ Python code when the cursor is within a Python chunk:
    https://github.com/davidhalter/jedi-vim
 
 Lines of Python code are sent to R Console as arguments to
-`reticulate::py_run_string()`. Hence, you must send to R the command
-`library(reticulate)` before sending lines of Python code.
+`reticulate::py_run_string()`.
 
 
 How to disable~
@@ -2294,7 +2293,6 @@ not want this, put in your |vimrc|:
 The highlighted debugged line incrementally moves down the buffer with code
 execution and, with long scripts, it may stay at the bottom of the buffer as you
 debug. You can hold the highlighted line in the middle of the buffer with
-
 >
     let R_debug_center = 1
 <
@@ -2350,11 +2348,11 @@ a language server) for omni completion, set in your |vimrc| the value of
 `CompleteR` as the function for omni completion. Example with the default
 value:
 >
-   let R_set_omnifunc = ["r",  "rmd", "rnoweb", "rhelp", "rrst"]
+   let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
 <
 Similarly, you can define what files will get Nvim-R's auto omni completion:
 >
-   let R_auto_omni = ["r",  "rmd", "rnoweb", "rhelp", "rrst"]
+   let R_auto_omni = ["r", "rnoweb", "rhelp"]
 <
 You should use empty lists if you do not want to use Nvim-R's omni completion
 in any file type:
@@ -2466,8 +2464,9 @@ Note: The current knitr package (version 1.7) has at least two limitations:
 
 								*R_term_title*
 If running Gnome Shell on Wayland, you have to install the extension "Activate
-Window by Title" and set the title of your terminal emulator in order to have
-the terminal window raised on SyncTeX backward events. Example:
+Window by Title" and set the title of your terminal emulator in your |vimrc|
+in order to have the terminal window raised on SyncTeX backward events.
+Example:
 >
    let R_term_title = 'Terminal'
 <
@@ -3237,6 +3236,8 @@ Examples:
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+0.9.17 (2022-09-29)
 
  * Require either Neovim 0.5.0 or Vim 8.2.84.
  * New options: R_set_omnifunc, R_auto_omni, R_rmarkdown_args,
