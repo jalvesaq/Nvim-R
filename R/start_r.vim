@@ -1950,7 +1950,9 @@ endfunction
 
 " Call R functions for the word under cursor
 function RAction(rcmd, ...)
-    if &filetype == "rbrowser"
+    if &filetype == "rdoc"
+        let rkeyword = expand('<cword>')
+    elseif &filetype == "rbrowser"
         let rkeyword = RBrowserGetName()
     elseif a:0 == 1 && a:1 == "v" && line("'<") == line("'>")
         let rkeyword = strpart(getline("'>"), col("'<") - 1, col("'>") - col("'<") + 1)
