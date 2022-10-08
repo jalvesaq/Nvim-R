@@ -3,6 +3,10 @@ if exists("g:disable_r_ftplugin")
     finish
 endif
 
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'quarto') == -1
+    finish
+endif
+
 let g:R_quarto_preview_args = get(g:, 'R_quarto_preview_args', '')
 let g:R_quarto_render_args = get(g:, 'R_quarto_render_args', '')
 

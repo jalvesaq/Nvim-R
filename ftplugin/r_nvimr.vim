@@ -3,6 +3,10 @@ if exists("g:disable_r_ftplugin")
     finish
 endif
 
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'r') == -1
+    finish
+endif
+
 " Define some buffer variables common to R, Rnoweb, Rmd, Rrst, Rhelp and rdoc:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 

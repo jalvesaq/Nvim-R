@@ -2300,6 +2300,7 @@ debug. You can hold the highlighted line in the middle of the buffer with
 ------------------------------------------------------------------------------
 							    *R_user_maps_only*
 							    *R_disable_cmds*
+							    *R_filetypes*
 6.35 Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
@@ -2316,6 +2317,14 @@ Below is an example on how to disable the commands that sends `setwd()` and
 >
    let R_disable_cmds = ['RSetwd', 'RDputObj']
 <
+If you want to disable Nvim-R for a specific file type, create the variable
+`R_filetypes` with a list of file types that should be supported. Example:
+>
+   let R_filetypes = ['r', 'rmd', 'rrst', 'rnoweb', 'quarto', 'rhelp']
+<
+If the variable `R_filetypes` does not exist, all file types from the above
+list will be supported.
+
 
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
@@ -3236,6 +3245,8 @@ Examples:
 ==============================================================================
 								 *Nvim-R-news*
 10. News~
+
+ * New option: R_filetypes.
 
 0.9.17 (2022-09-29)
 
