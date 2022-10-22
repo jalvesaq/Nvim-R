@@ -482,7 +482,13 @@ function RTriggerCompletion()
         let s:auto_compl_col = col(".")
     endif
 
-    if b:IsInRCode(0) == 2
+    let isInR = b:IsInRCode(0)
+
+    if isInR == 0
+        return
+    endif
+
+    if isInR == 2
         if wrd == ''
             return
         endif
