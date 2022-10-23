@@ -1662,6 +1662,7 @@ function RParenDiff(str)
     return llen1 - llen2
 endfunction
 
+let g:rplugin.op_pattern = get(g:, r_indent_op_pattern, '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\||>\)\s*$')
 " Send current line to R.
 function SendLineToR(godown, ...)
     let lnum = get(a:, 1, ".")
@@ -1759,7 +1760,7 @@ function SendLineToR(godown, ...)
             let chunkend = ".. .."
         endif
         let rpd = RParenDiff(line)
-        let has_op = line =~ '\(%>%\|+\)\s*$'
+        let has_op = substitute(line, '#.*', '', '') =~ g:rplugin.op_pattern
         if rpd < 0
             let line1 = line(".")
             let cline = line1 + 1
@@ -1770,7 +1771,7 @@ function SendLineToR(godown, ...)
                 endif
                 let rpd += RParenDiff(txt)
                 if rpd == 0
-                    let has_op = getline(cline) =~ '\(%>%\|+\)\s*$'
+                    let has_op = substitute(getline(cline), '#.*', '', '') =~ g:rplugin.op_pattern
                     for lnum in range(line1, cline)
                         if g:R_bracketed_paste
                             if lnum == line1 && lnum == cline
