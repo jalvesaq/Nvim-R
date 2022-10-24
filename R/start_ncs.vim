@@ -33,8 +33,8 @@ function CheckNvimcomVersion()
                 let g:rplugin.debug_info['Why build nvimcom'] = 'Nvimcom version mismatch'
             else
                 " Nvimcom is up to date. Check if R version changed.
-                silent let rversion = system(g:rplugin.Rcmd . ' --version')
-                let rversion = substitute(rversion, '.*R version \(\S\{-}\) .*', '\1', '')
+                silent let rversion = system(g:rplugin.Rcmd .
+                            \ ' --no-restore --no-save --slave -e ''cat(paste0(version[c("major", "minor")], collapse = "."))''')
                 if rversion < '4.0.0'
                     call RWarningMsg("Nvim-R requires R >= 4.0.0")
                 endif
