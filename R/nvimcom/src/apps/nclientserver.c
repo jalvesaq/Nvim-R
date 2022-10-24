@@ -139,7 +139,7 @@ int str_here(const char *o, const char *b)
     return 1;
 }
 
-static void HandleSigTerm(int s)
+static void HandleSigTerm(__attribute__((unused))int s)
 {
     exit(0);
 }
@@ -210,7 +210,7 @@ static void ParseMsg(char *buf)
 }
 
 #ifndef WIN32
-static void *NeovimServer(void *arg)
+static void *NeovimServer(__attribute__((unused))void *arg)
 {
     unsigned short bindportn = 10100;
     ssize_t nread;
