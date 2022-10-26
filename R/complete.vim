@@ -343,7 +343,6 @@ function SetComplInfo(dctnr)
 endfunction
 
 function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
-    cal writefile(['GetRArgs: base=' . a:base . ', rkeyw=' . a:rkeyword0 . ', firstobj='. a:firstobj . ', pkg=' . a:pkg . ', isfarg=' . a:isfarg], "/dev/shm/nvimr_log", "a")
     if a:rkeyword0 == ""
         return
     endif
@@ -406,7 +405,6 @@ endfunction
 
 " TODO: Transfer this function to nclientserver.c
 function NeedRArguments(line, cpos)
-    call writefile(['NeedRArguments'], '/dev/shm/nvimr_log', 'a')
     " Check if we need function arguments
     let line = a:line
     let lnum = line(".")
@@ -451,7 +449,6 @@ function NeedRArguments(line, cpos)
                     endfor
                     if listdf == 2
                         " Get first object of nesting function, if any
-                        call writefile(['listdf2: >>' . line . '<< [' . lnum . ', ' . idx . ']'], '/dev/shm/nvimr_log', 'a')
                         if line =~ rkeyword1 . '\s*('
                             let idx = stridx(line, rkeyword1)
                         else
@@ -513,7 +510,6 @@ endfunction
 let s:completion_id = 0
 let s:is_auto_completing = 0
 function RTriggerCompletion()
-    call writefile(['', 'RTriggerCompletion'], '/dev/shm/nvimr_log', 'a')
     let s:completion_id += 1
 
     let isInR = b:IsInRCode(0)

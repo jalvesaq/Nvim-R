@@ -463,7 +463,6 @@ endfunction
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
 function RGetKeyword(...)
-    call writefile(['RGetKeyword'], '/dev/shm/nvimr_log', 'a')
     " Go back some columns if character under cursor is not valid
     if a:0 == 2
         let line = getline(a:1)
@@ -499,47 +498,37 @@ endfunction
 function RGetFirstObj(rkeyword, ...)
     let firstobj = ""
     if a:0 == 3
-        call writefile(['RGetFirstObj: rkeyw=' . a:rkeyword . ' a1=' . a:1 . ' a2=' . a:2 . ' a3=' . a:3], '/dev/shm/nvimr_log', 'a')
         let line = substitute(a:1, '#.*', '', "")
         let begin = a:2
         let listdf = a:3
     else
-        call writefile(['RGetFirstObj: rkeyw=' . a:rkeyword], '/dev/shm/nvimr_log', 'a')
         let line = substitute(getline("."), '#.*', '', "")
         let begin = col(".")
         let listdf = v:false
     endif
-    call writefile(['strlen(line) = ' . strlen(line) . ' | begin = ' . begin . ' | [' . line[begin] . ']'], '/dev/shm/nvimr_log', 'a')
     if strlen(line) > begin
         let piece = strpart(line, begin)
         while piece !~ '^' . a:rkeyword && begin >= 0
             let begin -= 1
             let piece = strpart(line, begin)
-            call writefile(['piece = ' . piece], '/dev/shm/nvimr_log', 'a')
         endwhile
 
-        call writefile(['line = ' . line . ' | begin = ' . begin], '/dev/shm/nvimr_log', 'a')
         " check if the first argument is being passed through a pipe operator
         if begin > 2
             let part1 = strpart(line, 0, begin)
-            call writefile(['part1 = "' . part1 . '"'], '/dev/shm/nvimr_log', 'a')
             if part1 =~ '\k\+\s*\(|>\|%>%\)'
                 let pipeobj = substitute(part1, '.\{-}\(\k\+\)\s*\(|>\|%>%\)\s*', '\1', '')
-                call writefile(['part1_pipeobj = >>' . pipeobj . '<<'], '/dev/shm/nvimr_log', 'a')
                 return [pipeobj, v:true]
             endif
         endif
         let pline = substitute(getline(line('.') - 1), '#.*$', '', '')
         if pline =~ '\k\+\s*\(|>\|%>%\)\s*$'
             let pipeobj = substitute(pline, '.\{-}\(\k\+\)\s*\(|>\|%>%\)\s*$', '\1', '')
-            call writefile(['pline_pipeobj = >>' . pipeobj . '<<'], '/dev/shm/nvimr_log', 'a')
             return [pipeobj, v:true]
         endif
 
         let line = piece
-        call writefile(['line1='.line], '/dev/shm/nvimr_log', 'a')
         if line !~ '^\k*\s*('
-            call writefile(['RGetFirstObj_1: ' . firstobj], '/dev/shm/nvimr_log', 'a')
             return [firstobj, v:false]
         endif
         let begin = 1
@@ -550,7 +539,6 @@ function RGetFirstObj(rkeyword, ...)
         let begin += 1
         let line = strpart(line, begin)
         let line = substitute(line, '^\s*', '', "")
-        call writefile(['line2='.line], '/dev/shm/nvimr_log', 'a')
         if (line =~ '^\k*\s*(' || line =~ '^\k*\s*=\s*\k*\s*(') && line !~ '[.*('
             let idx = 0
             while line[idx] != '('
@@ -567,7 +555,6 @@ function RGetFirstObj(rkeyword, ...)
                         let lnum += 1
                     endwhile
                     if lnum > line("$")
-                        call writefile(['RGetFirstObj_2'], '/dev/shm/nvimr_log', 'a')
                         return ["", v:false]
                     endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
@@ -599,7 +586,6 @@ function RGetFirstObj(rkeyword, ...)
                         let lnum += 1
                     endwhile
                     if lnum > line("$")
-                        call writefile(['RGetFirstObj_3'], '/dev/shm/nvimr_log', 'a')
                         return ["", v:false]
                     endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
@@ -637,7 +623,6 @@ function RGetFirstObj(rkeyword, ...)
         let firstobj = substitute(firstobj, '"', '\\"', "g")
     endif
 
-    call writefile(['RGetFirstObj_4: ' . firstobj], '/dev/shm/nvimr_log', 'a')
     return [firstobj, v:false]
 endfunction
 
