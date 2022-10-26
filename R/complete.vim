@@ -22,6 +22,9 @@ if g:R_hi_fun_globenv == 0
     let g:R_hi_fun_globenv = 1
 endif
 
+let g:R_fun_data_1 = get(g:, 'R_fun_data_1', ['select', 'rename', 'mutate', 'filter'])
+let g:R_fun_data_2 = get(g:, 'R_fun_data_2', {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']})
+
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
     let g:rplugin.compl_cls = ud['cls']
@@ -339,7 +342,8 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-function GetRArgs(id, base, rkeyword0, firstobj, pkg)
+function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
+    cal writefile(['GetRArgs: base=' . a:base . ', rkeyw=' . a:rkeyword0 . ', firstobj='. a:firstobj . ', pkg=' . a:pkg . ', isfarg=' . a:isfarg], "/dev/shm/nvimr_log", "a")
     if a:rkeyword0 == ""
         return
     endif
@@ -349,6 +353,9 @@ function GetRArgs(id, base, rkeyword0, firstobj, pkg)
         let msg .= ', firstobj = "' . a:firstobj . '"'
     elseif a:pkg != ""
         let msg .= ', pkg = ' . a:pkg
+    endif
+    if a:firstobj != '' && (a:listdf == 1 && !a:isfarg) || a:listdf == 2
+        let msg .= ', ldf = TRUE'
     endif
     let msg .= ')'
 
@@ -399,6 +406,7 @@ endfunction
 
 " TODO: Transfer this function to nclientserver.c
 function NeedRArguments(line, cpos)
+    call writefile(['NeedRArguments'], '/dev/shm/nvimr_log', 'a')
     " Check if we need function arguments
     let line = a:line
     let lnum = line(".")
@@ -419,16 +427,50 @@ function NeedRArguments(line, cpos)
             " The opening parenthesis was found
             let rkeyword0 = RGetKeyword(lnum, idx)
             let firstobj = ""
+            let ispiped = v:false
+            let listdf = 0
             if rkeyword0 =~ "::"
                 let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                 let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
+                let rkeyword1 = rkeyword0
             else
+                let rkeyword1 = rkeyword0
                 if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                    let firstobj = RGetFirstObj(rkeyword0, lnum, idx)
+                    for fnm in g:R_fun_data_1
+                        if fnm == rkeyword0
+                            let listdf = 1
+                            break
+                        endif
+                    endfor
+                    for key in keys(g:R_fun_data_2)
+                        if index(g:R_fun_data_2[key], rkeyword0) > -1
+                            let listdf = 2
+                            let rkeyword1 = key
+                            break
+                        endif
+                    endfor
+                    if listdf == 2
+                        " Get first object of nesting function, if any
+                        call writefile(['listdf2: >>' . line . '<< [' . lnum . ', ' . idx . ']'], '/dev/shm/nvimr_log', 'a')
+                        if line =~ rkeyword1 . '\s*('
+                            let idx = stridx(line, rkeyword1)
+                        else
+                            let line = getline(lnum - 1)
+                            if line =~ rkeyword1 . '\s*('
+                                let idx = stridx(line, rkeyword1)
+                            else
+                                let rkeyword1 = rkeyword0
+                                let listdf = v:false
+                            endif
+                        endif
+                    endif
+                    let ro = RGetFirstObj(rkeyword1, line, idx, listdf)
+                    let firstobj = ro[0]
+                    let ispiped = ro[1]
                 endif
                 let pkg = ""
             endif
-            return [rkeyword0, firstobj, pkg, lnum, cpos]
+            return [rkeyword0, listdf, firstobj, ispiped, pkg, lnum, cpos]
         endif
         let idx -= 1
         if idx <= 0
@@ -471,16 +513,8 @@ endfunction
 let s:completion_id = 0
 let s:is_auto_completing = 0
 function RTriggerCompletion()
+    call writefile(['', 'RTriggerCompletion'], '/dev/shm/nvimr_log', 'a')
     let s:completion_id += 1
-
-    " We are within the InsertCharPre event
-    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
-        let s:auto_compl_col = FindStartRObj()
-        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
-    else
-        let wrd = ""
-        let s:auto_compl_col = col(".")
-    endif
 
     let isInR = b:IsInRCode(0)
 
@@ -504,13 +538,24 @@ function RTriggerCompletion()
         return
     endif
 
+    " We are within the InsertCharPre event
+    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
+        let s:auto_compl_col = FindStartRObj()
+        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
+    else
+        let wrd = ""
+        let s:auto_compl_col = col(".")
+    endif
+
     let lin = getline(".")
     let lin = strpart(lin, 0, col(".")) . v:char
     let cpos = getpos(".")
     let cpos[2] = cpos[2] + 1
     let nra = NeedRArguments(lin, cpos)
     if len(nra) > 0
-        if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(lin, nra[3], nra[4])
+        " Is the first object the first argument or was it piped?
+        let isfa = nra[3] ? v:false : IsFirstRArg(lin, nra[6])
+        if (nra[0] == "library" || nra[0] == "require") && isfa
             let s:libnames_list = GetListOfRLibs(wrd)
             if len(s:libnames_list)
                 " Can't call complete() here [E523]
@@ -525,7 +570,7 @@ function RTriggerCompletion()
 
         let s:is_auto_completing = 1
         if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-            call GetRArgs(s:completion_id, wrd, nra[0], nra[1], nra[2])
+            call GetRArgs(s:completion_id, wrd, nra[0], nra[1], nra[2], nra[4], isfa)
         endif
         return
     endif
@@ -566,7 +611,8 @@ function CompleteR(findstart, base)
 
         let nra = NeedRArguments(getline("."), getpos("."))
         if len(nra) > 0
-            if (nra[0] == "library" || nra[0] == "require") && IsFirstRArg(getline("."), nra[3], nra[4])
+            let isfa = nra[3] ? v:false : IsFirstRArg(getline("."), nra[6])
+            if (nra[0] == "library" || nra[0] == "require") && isfa
                 let argls = GetListOfRLibs(a:base)
                 if len(argls)
                     let s:is_completing = 1
@@ -577,7 +623,7 @@ function CompleteR(findstart, base)
             call UpdateRGlobalEnv(1)
             let s:waiting_compl_menu = 1
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-                call GetRArgs(s:completion_id, a:base, nra[0], nra[1], nra[2])
+                call GetRArgs(s:completion_id, a:base, nra[0], nra[1], nra[2], nra[4], isfa)
                 return WaitRCompletion()
             endif
         endif
@@ -640,16 +686,16 @@ function CompleteChunkOptions(base)
     return rr
 endfunction
 
-function IsFirstRArg(line, lnum, cpos)
-    let line = a:line
+function IsFirstRArg(line, cpos)
     let ii = a:cpos[2] - 2
-    let cchar = line[ii]
-    while ii > 0 && cchar != '('
-        let cchar = line[ii]
-        if cchar == ','
+    while ii > 0
+        if a:line[ii] == '('
+            return 1
+        endif
+        if a:line[ii] == ','
             return 0
         endif
         let ii -= 1
     endwhile
-    return 1
+    return 0
 endfunction

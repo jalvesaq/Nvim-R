@@ -1051,7 +1051,7 @@ function AskRDoc(rkeyword, package, getclass)
         exe "set switchbuf=" . savesb
     else
         if a:getclass
-            let firstobj = RGetFirstObj(a:rkeyword)
+            let firstobj = RGetFirstObj(a:rkeyword)[0]
         endif
     endif
 
@@ -1911,7 +1911,7 @@ function PrintRObject(rkeyword)
     if bufname("%") =~ "Object_Browser"
         let firstobj = ""
     else
-        let firstobj = RGetFirstObj(a:rkeyword)
+        let firstobj = RGetFirstObj(a:rkeyword)[0]
     endif
     if firstobj == ""
         call g:SendCmdToR("print(" . a:rkeyword . ")")
