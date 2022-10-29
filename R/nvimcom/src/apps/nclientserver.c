@@ -48,11 +48,11 @@ static char *compl_buffer;
 static int compl_buffer_size = 32768;
 static int building_omnils;
 static int more_to_build;
-void omni2ob();
-void lib2ob();
-void update_pkg_list();
-void update_glblenv_buffer();
-static void build_omnils();
+void omni2ob(void);
+void lib2ob(void);
+void update_pkg_list(void);
+void update_glblenv_buffer(void);
+static void build_omnils(void);
 void complete(const char *id, const char *base, const char *funcnm);
 
 // Is a list or library open or closed in the Object Browser?
@@ -691,7 +691,7 @@ void Windows_setup()
 }
 #endif
 
-void start_server()
+void start_server(void)
 {
     if(!getenv("NVIMR_SECRET")){
         fprintf(stderr, "NVIMR_SECRET not found\n");
@@ -1080,7 +1080,7 @@ static void fake_libnames(const char *s)
 
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_, fun_ and descr_ files in compldir.
-static void build_omnils()
+static void build_omnils(void)
 {
     if (building_omnils) {
         more_to_build = 1;
@@ -1157,7 +1157,7 @@ static void build_omnils()
     fflush(stdout);
 }
 
-void update_pkg_list()
+void update_pkg_list(void)
 {
     char buf[512];
     char *s, *vrsn;
@@ -1447,7 +1447,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     return p;
 }
 
-void hi_glbenv_fun()
+void hi_glbenv_fun(void)
 {
     char *p = glbnv_buffer;
     char *s;
@@ -1468,7 +1468,7 @@ void hi_glbenv_fun()
     fflush(stdout);
 }
 
-void update_glblenv_buffer()
+void update_glblenv_buffer(void)
 {
     if(glbnv_buffer)
         free(glbnv_buffer);
@@ -1490,7 +1490,7 @@ void update_glblenv_buffer()
     }
 }
 
-void omni2ob()
+void omni2ob(void)
 {
     FILE *f = fopen(globenv, "w");
     if(!f){
@@ -1514,7 +1514,7 @@ void omni2ob()
     }
 }
 
-void lib2ob()
+void lib2ob(void)
 {
     FILE *f = fopen(liblist, "w");
     if(!f){
@@ -1577,7 +1577,7 @@ void print_listTree(ListStatus *root, FILE *f)
     }
 }
 
-void objbr_setup()
+void objbr_setup(void)
 {
     char envstr[1024];
     envstr[0] = 0;

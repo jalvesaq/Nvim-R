@@ -37,7 +37,7 @@ extern int (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
 static int (*save_ptr_R_ReadConsole)(const char *, unsigned char *, int, int);
 static int debugging;
 LibExtern SEXP  R_SrcfileSymbol; // Defn.h
-static void SrcrefInfo();
+static void SrcrefInfo(void);
 #endif
 static int debug_r;
 
@@ -92,7 +92,7 @@ typedef struct pkg_info_ {
 PkgInfo *pkgList;
 
 
-static int nvimcom_checklibs();
+static int nvimcom_checklibs(void);
 static void nvimcom_nvimclient(const char *msg, char *port);
 static void nvimcom_eval_expr(const char *buf);
 
@@ -112,7 +112,7 @@ static char *nvimcom_strcat(char* dest, const char* src)
     return --dest;
 }
 
-static char *nvimcom_grow_buffers()
+static char *nvimcom_grow_buffers(void)
 {
     lastglbnvbsz = glbnvbufsize;
     glbnvbufsize += 32768;
@@ -561,7 +561,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     return p;
 }
 
-static void nvimcom_globalenv_list()
+static void nvimcom_globalenv_list(void)
 {
     const char *varName;
     SEXP envVarsSEXP, varSEXP;
@@ -667,7 +667,7 @@ static void nvimcom_eval_expr(const char *buf)
     UNPROTECT(2);
 }
 
-static int nvimcom_checklibs()
+static int nvimcom_checklibs(void)
 {
     const char *libname;
     char *libn;
@@ -737,8 +737,11 @@ static int nvimcom_checklibs()
     return(newnlibs);
 }
 
-static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
-        Rboolean visible, void *userData)
+static Rboolean nvimcom_task(__attribute__((unused))SEXP expr,
+        __attribute__((unused))SEXP value,
+        __attribute__((unused))Rboolean succeeded,
+        __attribute__((unused))Rboolean visible,
+        __attribute__((unused))void *userData)
 {
 #ifdef WIN32
     r_is_busy = 0;
@@ -777,7 +780,7 @@ static Rboolean nvimcom_task(SEXP expr, SEXP value, Rboolean succeeded,
 }
 
 #ifndef WIN32
-static void nvimcom_exec(void *nothing){
+static void nvimcom_exec(__attribute__((unused))void *nothing){
     if(*flag_eval){
         nvimcom_eval_expr(flag_eval);
         *flag_eval = 0;
@@ -794,7 +797,7 @@ static void nvimcom_exec(void *nothing){
 
 /* Code adapted from CarbonEL.
  * Thanks to Simon Urbanek for the suggestion on r-devel mailing list. */
-static void nvimcom_uih(void *data) {
+static void nvimcom_uih(__attribute__((unused))void *data) {
     char buf[16];
     if(read(ifd, buf, 1) < 1)
         REprintf("nvimcom error: read < 1\n");
@@ -802,7 +805,7 @@ static void nvimcom_uih(void *data) {
     fired = 0;
 }
 
-static void nvimcom_fire()
+static void nvimcom_fire(void)
 {
     if(fired)
         return;
@@ -814,7 +817,7 @@ static void nvimcom_fire()
 }
 
 // Adapted from SrcrefPrompt(), at src/main/eval.c
-static void SrcrefInfo()
+static void SrcrefInfo(void)
 {
     if(debugging == 0){
         nvimcom_nvimclient("StopRDebugging()", edsrvr);
@@ -967,7 +970,7 @@ static void nvimcom_parse_received_msg(char *buf)
 }
 
 #ifndef WIN32
-static void *nvimcom_server_thread(void *arg)
+static void *nvimcom_server_thread(__attribute__((unused))void *arg)
 {
     unsigned short bindportn = 10000;
     ssize_t nread;
@@ -1230,7 +1233,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 }
 
-void nvimcom_Stop()
+void nvimcom_Stop(void)
 {
 #ifndef WIN32
     if(ih){
