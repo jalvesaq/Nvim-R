@@ -362,21 +362,6 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     call SendToNvimcom("E", msg)
 endfunction
 
-function GetListOfRLibs(base)
-    let argls = []
-    let lsd = glob(g:rplugin.compldir . '/descr_*', 0, 1)
-    for fl in lsd
-        if fl =~ 'descr_' . a:base
-            let pnm = substitute(fl, '.*/descr_\(.\{-}\)_.*', '\1', 'g')
-            let lin = readfile(fl)[0]
-            let dsc = substitute(lin, ".*\t", "", "")
-            let ttl = substitute(lin, "\t.*", "", "")
-            call add(argls, {'word': pnm, 'user_data': {'ttl': ttl, 'descr': dsc, 'cls': 'l'}})
-        endif
-    endfor
-    return argls
-endfunction
-
 " TODO: Create a copy of this function at nclientserver.c
 " We still need this here for omnifunc
 function FindStartRObj()
@@ -497,11 +482,6 @@ function SetComplMenu(id, cmn)
     endif
 endfunction
 
-function AutoComplLibname(...)
-    let s:is_completing = 1
-    call complete(s:auto_compl_col + 1, s:libnames_list)
-endfunction
-
 function AutoComplChunkOpts(...)
     let s:is_completing = 1
     call complete(s:auto_compl_col + 1, s:chunk_opt_list)
@@ -552,12 +532,9 @@ function RTriggerCompletion()
         " Is the first object the first argument or was it piped?
         let isfa = nra[3] ? v:false : IsFirstRArg(lin, nra[6])
         if (nra[0] == "library" || nra[0] == "require") && isfa
-            let s:libnames_list = GetListOfRLibs(wrd)
-            if len(s:libnames_list)
-                " Can't call complete() here [E523]
-                call timer_start(1, 'AutoComplLibname', {})
-                return
-            endif
+            let s:is_auto_completing = 1
+            call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . "\004" . wrd . "\n")
+            return
         endif
 
         if snm == "rString"
@@ -609,11 +586,9 @@ function CompleteR(findstart, base)
         if len(nra) > 0
             let isfa = nra[3] ? v:false : IsFirstRArg(getline("."), nra[6])
             if (nra[0] == "library" || nra[0] == "require") && isfa
-                let argls = GetListOfRLibs(a:base)
-                if len(argls)
-                    let s:is_completing = 1
-                    return argls
-                endif
+                let s:waiting_compl_menu = 1
+                call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . "\004" . a:base . "\n")
+                return WaitRCompletion()
             endif
 
             call UpdateRGlobalEnv(1)

@@ -45,7 +45,7 @@ static int glbnv_size;
 static int auto_obbr;
 static char *glbnv_buffer;
 static char *compl_buffer;
-static int compl_buffer_size = 32768;
+static unsigned long compl_buffer_size = 32768;
 static int building_omnils;
 static int more_to_build;
 void omni2ob(void);
@@ -54,6 +54,24 @@ void update_pkg_list(void);
 void update_glblenv_buffer(void);
 static void build_omnils(void);
 void complete(const char *id, const char *base, const char *funcnm);
+
+// List of paths to libraries
+typedef struct libpaths_ {
+    char *path;
+    struct libpaths_ *next;
+} LibPath;
+
+LibPath *libpaths;
+
+// List of installed libraries
+typedef struct instlibs_ {
+    char *name;
+    char *title;
+    char *descr;
+    struct instlibs_ *next;
+} InstLibs;
+
+InstLibs *instlibs;
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
@@ -116,7 +134,28 @@ static char *str_cat(char* dest, const char* src)
     return --dest;
 }
 
-static char *grow_buffer(char **b, int *sz)
+static int ascii_ic_cmp(const char *a, const char *b)
+{
+    int d;
+    unsigned x, y;
+    while (*a && *b) {
+        x = (unsigned char)*a;
+        y = (unsigned char)*b;
+        if (x <= 'Z')
+            x += 32;
+        if (y <= 'Z')
+            y += 32;
+        d =  x - y;
+        if (d != 0)
+            return d;
+        a++;
+        b++;
+    }
+    return 0;
+}
+
+
+static char *grow_buffer(char **b, unsigned long *sz)
 {
     *sz += 32768;
     char *tmp = calloc(*sz, sizeof(char));
@@ -124,6 +163,32 @@ static char *grow_buffer(char **b, int *sz)
     free(*b);
     *b = tmp;
     return tmp;
+}
+
+static char *fix_single_quote(char *s) {
+    int n = 0;
+    char *p = s;
+    while (*p != 0) {
+        if (*p == '\'')
+            n++;
+        p++;
+    }
+    if (n == 0)
+        return s;
+
+    int l = strlen(s);
+    p = calloc(l + n + 1, sizeof(char));
+    int j = 0;
+    for (int i = 0; i < l; i++) {
+        if (s[i] == '\'') {
+            p[j] = '\'';
+            j++;
+        }
+        p[j] = s[i];
+        j++;
+    }
+    free(s);
+    return p;
 }
 
 int str_here(const char *o, const char *b)
@@ -1577,7 +1642,7 @@ void print_listTree(ListStatus *root, FILE *f)
     }
 }
 
-void objbr_setup(void)
+static void init_vars(void)
 {
     char envstr[1024];
     envstr[0] = 0;
@@ -1623,6 +1688,27 @@ void objbr_setup(void)
     listTree = new_ListStatus("base:", 0);
 
     compl_buffer = calloc(compl_buffer_size, sizeof(char));
+
+    char fname[512];
+    snprintf(fname, 511, "%s/libPaths", tmpdir);
+    char *b = read_file(fname);
+    if (b) {
+        libpaths = calloc(1, sizeof(LibPath));
+        libpaths->path = b;
+        LibPath *p = libpaths;
+        while (*b) {
+            if (*b == '\n') {
+                *b = 0;
+                b++;
+                if (*b > '\n') {
+                    p->next = calloc(1, sizeof(LibPath));
+                    p = p->next;
+                    p->path = b;
+                }
+            }
+            b++;
+        }
+    }
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -1638,11 +1724,162 @@ int count_twice(const char *b1, const char *b2, const char ch)
     return n1 == n2;
 }
 
+int read_field_data(char *s, int i) {
+    while (s[i]) {
+        if (s[i] == '\n' && s[i + 1] == ' ') {
+            s[i] = ' ';
+            i++;
+            while (s[i] == ' ')
+                i++;
+        }
+        if (s[i] == '\n') {
+            s[i] = 0;
+            break;
+        }
+        i++;
+    }
+    return i;
+}
+
+// Read the DESCRIPTION file to get Title and Description fields.
+void parse_descr(char *descr, const char *fnm) {
+    int m, n;
+    int z = 0;
+    int k = 0;
+    int l = strlen(descr);
+    char *ttl, *dsc;
+    ttl = NULL;
+    dsc = NULL;
+    InstLibs *lib, *ptr, *prev;
+    while (k < l) {
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Title: ")) {
+            k += 7;
+            ttl = descr + k;
+            k = read_field_data(descr, k);
+            descr[k] = 0;
+        }
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Description: ")) {
+            k += 13;
+            dsc = descr + k;
+            k = read_field_data(descr, k);
+            descr[k] = 0;
+        }
+        k++;
+    }
+    if (ttl && dsc) {
+        if (instlibs == NULL) {
+            instlibs = calloc(1, sizeof(InstLibs));
+            lib = instlibs;
+        } else {
+            lib = calloc(1, sizeof(InstLibs));
+            if (ascii_ic_cmp(instlibs->name, fnm) > 0) {
+                lib->next = instlibs;
+                instlibs = lib;
+            } else {
+                ptr = instlibs;
+                prev = NULL;
+                while (ptr && ascii_ic_cmp(fnm, ptr->name) > 0) {
+                    prev = ptr;
+                    ptr = ptr->next;
+                }
+                if (prev)
+                    prev->next = lib;
+                lib->next = ptr;
+            }
+        }
+        lib->name = calloc(strlen(fnm) + 1, sizeof(char));
+        strcpy(lib->name, fnm);
+        lib->title = calloc(strlen(ttl) + 1, sizeof(char));
+        strcpy(lib->title, ttl);
+        lib->descr = calloc(strlen(dsc) + 1 - z, sizeof(char));
+        m = 0;
+        n = 0;
+        while (dsc[m] != 0) {
+            while (dsc[m] == ' ' && dsc[m + 1] == ' ')
+                m++;
+            lib->descr[n] = dsc[m];
+            m++;
+            n++;
+        }
+        lib->title = fix_single_quote(lib->title);
+        lib->descr = fix_single_quote(lib->descr);
+    } else {
+        if (ttl)
+            fprintf(stderr, "Failed to get Description from %s. ", fnm);
+        else
+            fprintf(stderr, "Failed to get Title from %s. ", fnm);
+        fflush(stderr);
+    }
+}
+
+// Read the DESCRIPTION of all installed libraries
+char *complete_instlibs(char *p, const char *base) {
+    DIR *d;
+    struct dirent *dir;
+    char fname[512];
+    char *descr;
+    InstLibs *il;
+    int r;
+    unsigned long len = 0;
+
+    LibPath *lp = libpaths;
+    while (lp) {
+        d = opendir(lp->path);
+        if (d) {
+            while ((dir = readdir(d)) != NULL) {
+                if (dir->d_name[0] != '.' && dir->d_type == DT_DIR) {
+                    il = instlibs;
+                    r = 0;
+                    while (il) {
+                        if (strcmp(il->name, dir->d_name) == 0) {
+                            r = 1; // Repeated library
+                            break;
+                        }
+                        il = il->next;
+                    }
+                    if (r)
+                        continue;
+                    snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
+                    descr = read_file(fname);
+                    if (descr) {
+                        len += strlen(descr) + (p - compl_buffer);
+                        while (compl_buffer_size < len) {
+                            p = grow_buffer(&compl_buffer, &compl_buffer_size);
+                        }
+                        parse_descr(descr, dir->d_name);
+                        free(descr);
+                    }
+                }
+            }
+            closedir(d);
+        }
+        lp = lp->next;
+    }
+
+    if (instlibs) {
+        il = instlibs;
+        while (il) {
+            if (str_here(il->name, base)) {
+                p = str_cat(p, "{'word': '");
+                p = str_cat(p, il->name);
+                p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
+                p = str_cat(p, il->title);
+                p = str_cat(p, "', 'descr': '");
+                p = str_cat(p, il->descr);
+                p = str_cat(p, "', 'cls': 'l'}},");
+            }
+            il = il->next;
+        }
+    }
+    return p;
+}
+
 // Return user_data of a specific item with function usage, title and
 // description to be displayed in the float window
 void compl_info(const char *wrd, const char *pkg)
 {
-    int i, nsz, len;
+    int i;
+    unsigned long nsz;
     const char *f[7];
     char *s;
 
@@ -1690,12 +1927,9 @@ void compl_info(const char *wrd, const char *pkg)
             }
 
             // Avoid buffer overflow if the information is bigger than compl_buffer.
-            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 256;
-            len = p - compl_buffer;
-            while((compl_buffer_size - nsz - len) < 0){
+            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 256 + (p - compl_buffer);
+            while(compl_buffer_size < nsz)
                 p = grow_buffer(&compl_buffer, &compl_buffer_size);
-                len = strlen(compl_buffer);
-            }
 
             p = str_cat(p, "{'cls': '");
             if(f[1][0] == '\003')
@@ -1826,44 +2060,60 @@ char *parse_omnls(const char *s, const char *base, char *p)
     return p;
 }
 
+char *get_arg_compl(char *p, const char *base)
+{
+    char *s, *t;
+    unsigned long sz;
+    // Get documentation info for each item
+    char buf[512];
+    snprintf(buf, 511, "%s/args_for_completion", tmpdir);
+    s = read_file(buf);
+    if(s){
+        sz = strlen(s) + 4;
+        while(sz > compl_buffer_size)
+            p = grow_buffer(&compl_buffer, &compl_buffer_size);
+        snprintf(buf, 511, "{'word': '%s", base);
+#ifdef WIN32
+        t = strtok(s, "\n\r");
+#else
+        t = strtok(s, "\n");
+#endif
+        while(t){
+            if(strstr(t, buf))
+                p = str_cat(p, t);
+#ifdef WIN32
+            t = strtok(NULL, "\n\r");
+#else
+            t = strtok(NULL, "\n");
+#endif
+        }
+        free(s);
+    }
+    return p;
+}
+
 void complete(const char *id, const char *base, const char *funcnm)
 {
-    char *p, *s, *t;
-    int sz;
+    char *p;
 
     memset(compl_buffer, 0, compl_buffer_size);
     p = compl_buffer;
 
     // Complete function arguments
     if(funcnm){
-        // Get documentation info for each item
-        char buf[512];
-        snprintf(buf, 511, "%s/args_for_completion", tmpdir);
-        s = read_file(buf);
-        if(s){
-            sz = strlen(s) + 4;
-            while(sz > compl_buffer_size)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size);
-            snprintf(buf, 511, "{'word': '%s", base);
-#ifdef WIN32
-            t = strtok(s, "\n\r");
-#else
-            t = strtok(s, "\n");
-#endif
-            while(t){
-                if(strstr(t, buf))
-                    p = str_cat(p, t);
-#ifdef WIN32
-                t = strtok(NULL, "\n\r");
-#else
-                t = strtok(NULL, "\n");
-#endif
-            }
-            free(s);
+        if (*funcnm == '\004') {
+            // Get menu completion for installed libraries
+            p = complete_instlibs(p, base);
+            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            fflush(stdout);
+            return;
+        } else {
+            // Normal completion of arguments
+            p = get_arg_compl(p, base);
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -1879,7 +2129,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         pd = pd->next;
     }
 
-    printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+    printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
     fflush(stdout);
 }
 
@@ -1899,7 +2149,7 @@ int main(int argc, char **argv){
     memset(line, 0, 1024);
     strcpy(NvimcomPort, "0");
 
-    objbr_setup();
+    init_vars();
 
 #ifdef WIN32
     Windows_setup();
@@ -2001,7 +2251,12 @@ int main(int argc, char **argv){
                     msg++;
                 *msg = 0;
                 msg++;
-                complete(id, msg, NULL);
+                if (*msg == '\004') {
+                    msg++;
+                    complete(id, msg, "\004");
+                } else {
+                    complete(id, msg, NULL);
+                }
                 break;
             case '6':
                 msg++;
