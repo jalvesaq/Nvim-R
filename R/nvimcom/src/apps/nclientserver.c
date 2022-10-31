@@ -979,8 +979,8 @@ static int run_R_code(const char *s, int senderror)
     }
 
 #ifdef WIN32
-    char tdir[1024];
-    snprintf(tdir, 1023, "%s", tmpdir);
+    char tdir[512];
+    snprintf(tdir, 511, "%s", tmpdir);
     char *p = tdir;
     while (*p) {
         if (*p == '/')
@@ -1692,15 +1692,22 @@ static void init_vars(void)
     char fname[512];
     snprintf(fname, 511, "%s/libPaths", tmpdir);
     char *b = read_file(fname);
+#ifdef WIN32
+    for (int i = 0; i < strlen(b); i++)
+        if (b[i] == '\\')
+            b[i] = '/';
+#endif
     if (b) {
         libpaths = calloc(1, sizeof(LibPath));
         libpaths->path = b;
         LibPath *p = libpaths;
         while (*b) {
             if (*b == '\n') {
-                *b = 0;
-                b++;
-                if (*b > '\n') {
+                while (*b == '\n' || *b == '\r') {
+                    *b = 0;
+                    b++;
+                }
+                if (*b) {
                     p->next = calloc(1, sizeof(LibPath));
                     p = p->next;
                     p->path = b;
@@ -1827,7 +1834,11 @@ char *complete_instlibs(char *p, const char *base) {
         d = opendir(lp->path);
         if (d) {
             while ((dir = readdir(d)) != NULL) {
+#ifdef _DIRENT_HAVE_D_TYPE
                 if (dir->d_name[0] != '.' && dir->d_type == DT_DIR) {
+#else
+                if (dir->d_name[0] != '.') {
+#endif
                     il = instlibs;
                     r = 0;
                     while (il) {
@@ -2104,7 +2115,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         if (*funcnm == '\004') {
             // Get menu completion for installed libraries
             p = complete_instlibs(p, base);
-            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
             fflush(stdout);
             return;
         } else {
@@ -2113,7 +2124,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -2129,7 +2140,7 @@ void complete(const char *id, const char *base, const char *funcnm)
         pd = pd->next;
     }
 
-    printf("\005%lu\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+    printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
     fflush(stdout);
 }
 

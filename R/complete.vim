@@ -743,7 +743,7 @@ function! FillQuartoComplMenu()
     endif
 
     if quarto_yaml_intel != ''
-        let intel = json_decode(readfile(quarto_yaml_intel))
+        let intel = json_decode(join(readfile(quarto_yaml_intel), "\n"))
         for key in ['schema/cell-attributes.yml',
                     \ 'schema/cell-cache.yml',
                     \ 'schema/cell-codeoutput.yml',
