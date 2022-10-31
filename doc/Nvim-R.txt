@@ -1049,6 +1049,7 @@ of
 |R_auto_omni|           List of files with auto omni completion enabled
 |R_fun_data_1|          What the data.frame to complete function arguments is
 |R_fun_data_2|          Where the data.frame to complete function arguments is
+|R_quarto_intel|        Where the Quarto completion data is
 |R_remote_tmpdir|       Mount point of remote temporary directory
 |R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
@@ -2352,6 +2353,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 								 *R_auto_omni*
 								*R_fun_data_1*
 								*R_fun_data_2*
+							      *R_quarto_intel*
 6.37 Omni completion~
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
@@ -2418,6 +2420,14 @@ job running in the background. If the list is too big to be transmitted
 through nclientserver's stdout in a single chunk of data, the completion is
 aborted.
 
+If editing Quarto documents, Nvim-R will try to find the file
+`yaml-intelligence-resources.json` which is part of `quarto` application and
+has all necessary information for completion of valid YAML options in an
+Quarto document. If Nvim-R fails to find the file, you can set the value of
+`R_quarto_intel` in your |vimrc|. Example:
+>
+   let R_quarto_intel = '~/Downloads/quarto-1.1.251/share/editor/tools/yaml/yaml-intelligence-resources.json'
+<
 
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
@@ -3286,7 +3296,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
- * New options: R_filetypes, R_fun_data_1 and R_fun_data_2.
+ * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel.
 
 0.9.17 (2022-09-29)
 

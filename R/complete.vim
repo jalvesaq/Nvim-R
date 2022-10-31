@@ -498,6 +498,15 @@ function RTriggerCompletion()
         return
     endif
 
+    " We are within the InsertCharPre event
+    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
+        let s:auto_compl_col = FindStartRObj()
+        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
+    else
+        let wrd = ""
+        let s:auto_compl_col = col(".")
+    endif
+
     if isInR == 2
         if wrd == ''
             return
@@ -509,22 +518,31 @@ function RTriggerCompletion()
         return
     endif
 
+    let lin = getline(".")
+    let lin = strpart(lin, 0, col(".")) . v:char
+
+    if &filetype == 'quarto' && isInR == 1 && lin =~ '^#| '
+        if lin !~ '^#| \k.*:'
+            " Yaml might include '-' which isn't a keyword character in R
+            let ywrd = substitute(lin, '^#| *', '', '')
+            if ywrd == ''
+                let s:auto_compl_col = len(lin)
+            else
+                let s:auto_compl_col = stridx(lin, ywrd)
+            endif
+            call CompleteQuartoCellOptions(ywrd)
+            call timer_start(1, 'AutoComplQCellOpts', {})
+        endif
+        if lin !~ '^#| \k.*: !expr '
+            return
+        endif
+    endif
+
     let snm = synIDattr(synID(line("."), col(".") - 1, 1), "name")
     if snm == "rComment"
         return
     endif
 
-    " We are within the InsertCharPre event
-    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
-        let s:auto_compl_col = FindStartRObj()
-        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
-    else
-        let wrd = ""
-        let s:auto_compl_col = col(".")
-    endif
-
-    let lin = getline(".")
-    let lin = strpart(lin, 0, col(".")) . v:char
     let cpos = getpos(".")
     let cpos[2] = cpos[2] + 1
     let nra = NeedRArguments(lin, cpos)
@@ -559,11 +577,16 @@ endfunction
 
 function CompleteR(findstart, base)
     if a:findstart
-        let line = getline(".")
-        if b:rplugin_knitr_pattern != '' && line =~ b:rplugin_knitr_pattern
+        let lin = getline(".")
+        let isInR = b:IsInRCode(0)
+        if &filetype == 'quarto' && isInR == 1 && lin =~ '^#| ' && lin !~ '^#| \k.*:'
+            let s:compl_type = 4
+            let ywrd = substitute(lin, '^#| *', '', '')
+            return stridx(lin, ywrd)
+        elseif b:rplugin_knitr_pattern != '' && lin =~ b:rplugin_knitr_pattern
             let s:compl_type = 3
             return FindStartRObj()
-        elseif b:IsInRCode(0) == 0 && b:rplugin_non_r_omnifunc != ''
+        elseif isInR == 0 && b:rplugin_non_r_omnifunc != ''
             let s:compl_type = 2
             let Ofun = function(b:rplugin_non_r_omnifunc)
             return Ofun(a:findstart, a:base)
@@ -572,7 +595,9 @@ function CompleteR(findstart, base)
             return FindStartRObj()
         endif
     else
-        if s:compl_type == 3
+        if s:compl_type == 4
+            return CompleteQuartoCellOptions(a:base)
+        elseif s:compl_type == 3
             return CompleteChunkOptions(a:base)
         elseif s:compl_type == 2
             let Ofun = function(b:rplugin_non_r_omnifunc)
@@ -657,6 +682,23 @@ function CompleteChunkOptions(base)
     return rr
 endfunction
 
+function AutoComplQCellOpts(...)
+    let s:is_completing = 1
+    call complete(s:auto_compl_col + 1, s:cell_opt_list)
+endfunction
+
+function CompleteQuartoCellOptions(base)
+    if !exists('s:qchunk_opt_list')
+        call FillQuartoComplMenu()
+    endif
+    let s:cell_opt_list = deepcopy(s:qchunk_opt_list)
+    if strlen(a:base) > 0
+        let newbase = '^' . substitute(a:base, "\\$$", "", "")
+        call filter(s:cell_opt_list, 'v:val["abbr"] =~ newbase')
+    endif
+    return s:cell_opt_list
+endfunction
+
 function IsFirstRArg(line, cpos)
     let ii = a:cpos[2] - 2
     while ii > 0
@@ -669,4 +711,58 @@ function IsFirstRArg(line, cpos)
         let ii -= 1
     endwhile
     return 0
+endfunction
+
+function! FillQuartoComplMenu()
+    let s:qchunk_opt_list = []
+
+    if exists('g:R_quarto_intel')
+        let quarto_yaml_intel = g:R_quarto_intel
+    else
+        let quarto_yaml_intel = ''
+        if executable('quarto')
+            let quarto_bin = system('which quarto')
+            let quarto_dir1 = substitute(quarto_bin, '\(.*\)/.\{-}/.*', '\1', 'g')
+            let quarto_yaml_intel = ''
+            if filereadable(quarto_dir1 . '/share/editor/tools/yaml/yaml-intelligence-resources.json')
+                let quarto_yaml_intel = quarto_dir1 . '/share/editor/tools/yaml/yaml-intelligence-resources.json'
+            else
+                let quarto_bin = system('readlink ' . quarto_bin)
+                let quarto_dir2 = substitute(quarto_bin, '\(.*\)/.\{-}/.*', '\1', 'g')
+                if quarto_dir2 =~ '^\.\./'
+                    while quarto_dir2 =~ '^\.\./'
+                        let quarto_dir2 = substitute(quarto_dir2, '^\.\./*', '', '')
+                    endwhile
+                    let quarto_dir2 = quarto_dir1 . '/' . quarto_dir2
+                endif
+                if filereadable(quarto_dir2 . '/share/editor/tools/yaml/yaml-intelligence-resources.json')
+                    let quarto_yaml_intel = quarto_dir2 . '/share/editor/tools/yaml/yaml-intelligence-resources.json'
+                endif
+            endif
+        endif
+    endif
+
+    if quarto_yaml_intel != ''
+        let intel = json_decode(readfile(quarto_yaml_intel))
+        for key in ['schema/cell-attributes.yml',
+                    \ 'schema/cell-cache.yml',
+                    \ 'schema/cell-codeoutput.yml',
+                    \ 'schema/cell-figure.yml',
+                    \ 'schema/cell-include.yml',
+                    \ 'schema/cell-layout.yml',
+                    \ 'schema/cell-pagelayout.yml',
+                    \ 'schema/cell-table.yml',
+                    \ 'schema/cell-textoutput.yml']
+            let tmp = intel[key]
+            for item in tmp
+                let abr = item['name']
+                let wrd = abr . ': '
+                let descr = type(item['description']) == v:t_string ? item['description'] : item['description']['long']
+                let descr = substitute(descr, '\n', ' ', 'g')
+                let dict = {'word': wrd, 'abbr': abr, 'menu': '[opt]', 'user_data': {'cls': 'k', 'descr': descr}}
+                call add(s:qchunk_opt_list, dict)
+            endfor
+        endfor
+        " TODO: Completion of YAML fields at the header of the document ...
+    endif
 endfunction
