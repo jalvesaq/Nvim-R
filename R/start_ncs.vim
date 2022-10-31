@@ -11,26 +11,25 @@ function CheckNvimcomVersion()
     endif
 
     " We need R version and libPaths
+    " $R_LIBS_USER will be part of .libPaths() output only if the directory alread exists.
+    call AddForDeletion(g:rplugin.tmpdir . "/vlibp.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/Rversion")
     call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
-    if has('nvim')
-        silent let rversion = system([g:rplugin.Rcmd, '--no-restore', '--no-save', '--slave', '-e',  'cat(paste0(version[c("major", "minor")], collapse = "."));' .
-                    \ 'cat(.libPaths(), unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep)),' .
-                    \ ' sep = "\n", colapse = "\n", file = "' . g:rplugin.tmpdir . '/libPaths")'])
-    else
-        silent let rversion = system(g:rplugin.Rcmd .
-                    \ ' --no-restore --no-save --slave -e "cat(paste0(version[c(''major'', ''minor'')], collapse = ''.''));' .
-                    \ 'cat(.libPaths(), unlist(strsplit(Sys.getenv(''R_LIBS_USER''), .Platform$path.sep)),' .
-                    \ ' sep = ''\n'', colapse = ''\n'', file = ''' . g:rplugin.tmpdir . '/libPaths'')"')
-
-    endif
-    let g:rplugin.debug_info['R_version'] = rversion
+    call writefile(['cat(paste0(version[c("major", "minor")], collapse = "."), ' .
+                \ 'file = "' . g:rplugin.tmpdir . '/Rversion")',
+                \ 'cat(unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep)), .libPaths())), ' .
+                \ 'sep = "\n", colapse = "\n", file = "' . g:rplugin.tmpdir . '/libPaths")',
+                \ 'quit(save = "no")'],
+                \ g:rplugin.tmpdir . '/vlibp.R')
+    silent let rout = system(g:rplugin.Rcmd . ' CMD BATCH "' . g:rplugin.tmpdir . '/vlibp.R' . '"')
     if v:shell_error
-        call RWarningMsg('Error trying to get R version and lib paths.')
-        if has("win32")
-            call UnsetRHome()
-        endif
+        let g:rplugin.debug_info['R CMD version and libPaths error'] = rout
+        call RWarningMsg('Error trying to get R version and lib paths: ' . substitute(rout, "\n", " ", "g"))
         return 0
     endif
+
+    let rversion = readfile(g:rplugin.tmpdir . '/Rversion')[0]
+    let g:rplugin.debug_info['R_version'] = rversion
 
     " Compare version of nvimcom source with the installed version
 
@@ -60,7 +59,8 @@ function CheckNvimcomVersion()
                 endif
                 if g:rplugin.nvimcom_info['Rversion'] != rversion
                     let neednew = 1
-                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch'
+                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch (' .
+                                \ g:rplugin.nvimcom_info['Rversion'] . ' x ' . rversion . ')'
                 endif
             endif
         endif
@@ -99,7 +99,7 @@ function CheckNvimcomVersion()
         else
             let dw = 0
             for path in libpaths
-                if isdirectory(path) && filewritable(path . '/x')
+                if isdirectory(path) && filewritable(path)
                     let dw = 1
                     break
                 endif
@@ -107,11 +107,11 @@ function CheckNvimcomVersion()
         endif
         if !dw
             redraw
-            let resp = input('"' . path . '" is not writable. Should "' . path . '" be created now? [y/n] ')
+            let resp = input('"' . libpaths[0] . '" is not writable. Create it now? [y/n] ')
             if resp[0] ==? "y"
-                let dw = mkdir(path, "p")
+                let dw = mkdir(libpaths[0], "p")
                 if !dw
-                    call RWarningMsg('Failed creating "' . path . '"')
+                    call RWarningMsg('Failed creating "' . libpaths[0] . '"')
                     return
                 endif
             endif
