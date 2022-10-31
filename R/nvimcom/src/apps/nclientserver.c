@@ -561,8 +561,8 @@ static void SendToRConsole(char *aString){
     if(!NvimHwnd)
         NvimHwnd = GetForegroundWindow();
 
-    char msg[512];
-    snprintf(msg, 510, "C%s%s", getenv("NVIMR_ID"), aString);
+    char msg[1024];
+    snprintf(msg, 1023, "C%s%s", getenv("NVIMR_ID"), aString);
     SendToServer(NvimcomPort, msg);
     Sleep(0.02);
 
@@ -612,8 +612,8 @@ static void SaveWinPos(char *cachedir){
     rcV.right = rcV.right - rcV.left;
     rcV.bottom = rcV.bottom - rcV.top;
 
-    char fname[512];
-    snprintf(fname, 511, "%s/win_pos", cachedir);
+    char fname[1032];
+    snprintf(fname, 1031, "%s/win_pos", cachedir);
     FILE *f = fopen(fname, "w");
     if(f == NULL){
         fprintf(stderr, "Could not write to '%s'\n", fname);
@@ -633,8 +633,8 @@ static void ArrangeWindows(char *cachedir){
         return;
     }
 
-    char fname[512];
-    snprintf(fname, 511, "%s/win_pos", cachedir);
+    char fname[1032];
+    snprintf(fname, 1031, "%s/win_pos", cachedir);
     FILE *f = fopen(fname, "r");
     if(f == NULL){
         fprintf(stderr, "Could not read '%s'\n", fname);
@@ -966,9 +966,9 @@ void add_pkg(const char *nm, const char *vrsn)
 // Get a string with R code, save it in a file and source the file with R.
 static int run_R_code(const char *s, int senderror)
 {
-    char fnm[512];
+    char fnm[1024];
 
-    snprintf(fnm, 511, "%s/bo_code.R", tmpdir);
+    snprintf(fnm, 1023, "%s/bo_code.R", tmpdir);
     FILE *f = fopen(fnm, "w");
     if (f) {
         fwrite(s, sizeof(char), strlen(s), f);
@@ -1067,7 +1067,7 @@ static int run_R_code(const char *s, int senderror)
     char chBuf[1024];
     res = FALSE;
 
-    snprintf(fnm, 511, "%s\\run_R_stderr", tdir);
+    snprintf(fnm, 1023, "%s\\run_R_stderr", tdir);
     f = fopen(fnm, "w");
     for (;;) {
         res = ReadFile(g_hChildStd_OUT_Rd, chBuf, 1024, &dwRead, NULL);
