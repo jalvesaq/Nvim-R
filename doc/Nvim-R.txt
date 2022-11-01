@@ -940,7 +940,19 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Vim~
+5.5. Error if there is no package installed (Neovim on Windows only)~
+
+On Windows, Neovim fails to recognize that a directory is not writable, and
+this is required by Nvim-R to detect if it is necessary to create the
+directory defined by `$R_LIBS_USER` environment variable. Consequently, Nvim-R
+does no try to create the directory and nvimcom installation fails. This
+problem will happen if you have just installed or upgraded R. The workaround
+is to manually open R and install any package with the `install.packages()`
+command before using Nvim-R.
+
+
+------------------------------------------------------------------------------
+5.6. R must be started by Vim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -1337,7 +1349,7 @@ put in your |vimrc|:
 While editing R code, `_` is replaced with `<-`. If you want to bind other
 keys to be replaced by `<-`, set the value of |R_assign_map| in your
 |vimrc|, as in the example below which emulates RStudio behavior (may only
-work on GVim):
+work on GVim or Neovim):
 >
    let R_assign_map = '<M-->'
 <
