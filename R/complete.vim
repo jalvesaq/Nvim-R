@@ -720,7 +720,17 @@ function! FillQuartoComplMenu()
         let quarto_yaml_intel = g:R_quarto_intel
     else
         let quarto_yaml_intel = ''
-        if executable('quarto')
+        if has('win32')
+            let paths = split($PATH, ';')
+            call filter(paths, 'v:val =~? "quarto"')
+            if len(paths) > 0
+                let qjson = substitute(paths[0], 'bin$', 'share/editor/tools/yaml/yaml-intelligence-resources.json', '')
+                let qjson = substitute(qjson, '\\', '/', 'g')
+                if filereadable(qjson)
+                    let quarto_yaml_intel = qjson
+                endif
+            endif
+        elseif executable('quarto')
             let quarto_bin = system('which quarto')
             let quarto_dir1 = substitute(quarto_bin, '\(.*\)/.\{-}/.*', '\1', 'g')
             let quarto_yaml_intel = ''
