@@ -115,7 +115,8 @@ static pthread_t Tid;
 static char myport[128];
 #endif
 
-/*
+// #define Debug_NCS
+#ifdef Debug_NCS
 static void Log(const char *fmt, ...)
 {
     va_list argptr;
@@ -125,7 +126,8 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}*/
+}
+#endif
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -155,9 +157,9 @@ static int ascii_ic_cmp(const char *a, const char *b)
 }
 
 
-static char *grow_buffer(char **b, unsigned long *sz)
+static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
 {
-    *sz += 32768;
+    *sz += inc;
     char *tmp = calloc(*sz, sizeof(char));
     strcpy(tmp, *b);
     free(*b);
@@ -235,7 +237,6 @@ static void ParseMsg(char *buf)
         }
 
         if (str_here(b, "+FinishArgsCompletion")) {
-            // Log("%s", b);
             // strtok doesn't work here because "base" might be empty.
             char *id = b + 22;
             char *base = id;
@@ -252,7 +253,6 @@ static void ParseMsg(char *buf)
             while (*b != 0 && *b != '\n')
                 b++;
             *b = 0;
-            //Log("%s | %s | %s\n", id, base, fnm);
             complete(id, base, fnm);
             return;
         }
@@ -1644,6 +1644,14 @@ void print_listTree(ListStatus *root, FILE *f)
 
 static void init_vars(void)
 {
+#ifdef Debug_NCS
+    time_t t;
+    time(&t);
+    FILE *f = fopen("/dev/shm/nclientserver_log", "w");
+    fprintf(f, "NCLIENTSERVER LOG | %s\n\n", ctime(&t));
+    fclose(f);
+#endif
+
     char envstr[1024];
     envstr[0] = 0;
     if(getenv("LC_MESSAGES"))
@@ -1711,6 +1719,8 @@ static void init_vars(void)
                     p->next = calloc(1, sizeof(LibPath));
                     p = p->next;
                     p->path = b;
+                } else {
+                    break;
                 }
             }
             b++;
@@ -1853,9 +1863,9 @@ char *complete_instlibs(char *p, const char *base) {
                     snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
                     descr = read_file(fname);
                     if (descr) {
-                        len += strlen(descr) + (p - compl_buffer);
+                        len += strlen(descr) + (p - compl_buffer) + 1024;
                         while (compl_buffer_size < len) {
-                            p = grow_buffer(&compl_buffer, &compl_buffer_size);
+                            p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
                         }
                         parse_descr(descr, dir->d_name);
                         free(descr);
@@ -1938,9 +1948,9 @@ void compl_info(const char *wrd, const char *pkg)
             }
 
             // Avoid buffer overflow if the information is bigger than compl_buffer.
-            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 256 + (p - compl_buffer);
-            while(compl_buffer_size < nsz)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size);
+            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 1024 + (p - compl_buffer);
+            if (compl_buffer_size < nsz)
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
 
             p = str_cat(p, "{'cls': '");
             if(f[1][0] == '\003')
@@ -1975,7 +1985,8 @@ void compl_info(const char *wrd, const char *pkg)
 // too big it will be truncated.
 char *parse_omnls(const char *s, const char *base, char *p)
 {
-    int i, nsz, len;
+    int i;
+    unsigned long nsz;
     const char *f[7];
 
     while(*s != 0){
@@ -2003,12 +2014,9 @@ char *parse_omnls(const char *s, const char *base, char *p)
                 continue;
 
             // Avoid buffer overflow if the information is bigger than compl_buffer.
-            nsz = strlen(f[0]) + 256;
-            len = p - compl_buffer;
-            while((compl_buffer_size - nsz - len) < 0){
-                p = grow_buffer(&compl_buffer, &compl_buffer_size);
-                len = strlen(compl_buffer);
-            }
+            nsz = strlen(f[0]) + 1024 + (p - compl_buffer);
+            if (compl_buffer_size < nsz)
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
 
             p = str_cat(p, "{'word': '");
             p = str_cat(p, f[0]);
@@ -2074,15 +2082,15 @@ char *parse_omnls(const char *s, const char *base, char *p)
 char *get_arg_compl(char *p, const char *base)
 {
     char *s, *t;
-    unsigned long sz;
+    unsigned long nsz;
     // Get documentation info for each item
     char buf[512];
     snprintf(buf, 511, "%s/args_for_completion", tmpdir);
     s = read_file(buf);
     if(s){
-        sz = strlen(s) + 4;
-        while(sz > compl_buffer_size)
-            p = grow_buffer(&compl_buffer, &compl_buffer_size);
+        nsz = strlen(s) + 1024 + (p - compl_buffer);
+        if (compl_buffer_size < nsz)
+            p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
         snprintf(buf, 511, "{'word': '%s", base);
 #ifdef WIN32
         t = strtok(s, "\n\r");
