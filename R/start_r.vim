@@ -1662,7 +1662,12 @@ function RParenDiff(str)
     return llen1 - llen2
 endfunction
 
-let g:rplugin.op_pattern = get(g:, r_indent_op_pattern, '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\||>\)\s*$')
+if exists('g:r_indent_op_pattern')
+    let g:rplugin.op_pattern = g:r_indent_op_pattern
+else
+    let g:rplugin.op_pattern = '\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\||>\)\s*$'
+endif
+
 " Send current line to R.
 function SendLineToR(godown, ...)
     let lnum = get(a:, 1, ".")
