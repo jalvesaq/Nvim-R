@@ -342,6 +342,9 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
+" We can't transfer this function to the nclientserver because
+" nvimcom:::nvim_complete_args runs the function methods(), and we couldn't do
+" something similar in the nclientserver.
 function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     if a:rkeyword0 == ""
         return
@@ -362,8 +365,6 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     call SendToNvimcom("E", msg)
 endfunction
 
-" TODO: Create a copy of this function at nclientserver.c
-" We still need this here for omnifunc
 function FindStartRObj()
     let line = getline(".")
     let lnum = line(".")
@@ -388,7 +389,6 @@ function FindStartRObj()
     return idx2 - 1
 endfunction
 
-" TODO: Transfer this function to nclientserver.c
 function NeedRArguments(line, cpos)
     " Check if we need function arguments
     let line = a:line
@@ -653,7 +653,6 @@ function WaitRCompletion()
     return []
 endfunction
 
-" TODO: Transfer this function to nclientserver.c
 function CompleteChunkOptions(base)
     " https://yihui.org/knitr/options/#chunk-options (2021-04-19)
     let lines = readfile(g:rplugin.home . '/R/chunk_options')
