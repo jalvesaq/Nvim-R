@@ -234,6 +234,8 @@ static void ParseMsg(char *buf)
         if(str_here(b, "+BuildOmnils")){
             update_pkg_list();
             build_omnils();
+            if (auto_obbr)
+                lib2ob();
         }
 
         if (str_here(b, "+FinishArgsCompletion")) {
@@ -1147,6 +1149,8 @@ static void fake_libnames(const char *s)
 // the omnils_, fun_ and descr_ files in compldir.
 static void build_omnils(void)
 {
+    unsigned long nsz;
+
     if (building_omnils) {
         more_to_build = 1;
         return;
@@ -1166,10 +1170,13 @@ static void build_omnils(void)
     int k = 0;
     while (pkg) {
         if (pkg->to_build == 0) {
+            nsz = strlen(pkg->name) + 1024 + (p - compl_buffer);
+            if (compl_buffer_size < nsz)
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
             if (k == 0)
                 snprintf(buf, 63, "'%s'", pkg->name);
             else
-                snprintf(buf, 63, ", '%s'", pkg->name);
+                snprintf(buf, 63, ",\n'%s'", pkg->name);
             p = str_cat(p, buf);
             pkg->to_build = 1;
             k++;
