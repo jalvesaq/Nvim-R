@@ -21,7 +21,7 @@ function CheckNvimcomVersion()
                 \ 'sep = "\n", colapse = "\n", file = "' . g:rplugin.tmpdir . '/libPaths")',
                 \ 'quit(save = "no")'],
                 \ g:rplugin.tmpdir . '/vlibp.R')
-    silent let rout = system(g:rplugin.Rcmd . ' CMD BATCH "' . g:rplugin.tmpdir . '/vlibp.R' . '"')
+    silent let rout = system(g:rplugin.Rcmd . ' --quiet --no-restore --no-save --no-echo --slave -f "' . g:rplugin.tmpdir . '/vlibp.R' . '"')
     if v:shell_error
         let g:rplugin.debug_info['R CMD version and libPaths error'] = rout
         call RWarningMsg('Error trying to get R version and lib paths: ' . substitute(rout, "\n", " ", "g"))
