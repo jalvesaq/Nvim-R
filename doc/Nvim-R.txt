@@ -1062,6 +1062,7 @@ of
 |R_fun_data_1|          What the data.frame to complete function arguments is
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
+|R_bib_compl|           Lis of file types for bib completion
 |R_remote_tmpdir|       Mount point of remote temporary directory
 |R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
@@ -1889,7 +1890,7 @@ Example:
    let R_cite_pattern = '\\\(cite\|bibentry\)\S*{'
 <
 You do not need to set `R_cite_pattern` if you have already set the value of
-`LatexBox_cite_pattern`.
+`LatexBox_cite_pattern`. See also |R_bib_compl|.
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*
@@ -2160,11 +2161,6 @@ below in your |vimrc| to get them highlighted:
    let g:markdown_fenced_languages = ['r', 'python']
    let g:rmd_fenced_languages = ['r', 'python']
 <
-You may also want to install the jedi-vim plugin to get omni completion of
-Python code when the cursor is within a Python chunk:
-
-   https://github.com/davidhalter/jedi-vim
-
 Lines of Python code are sent to R Console as arguments to
 `reticulate::py_run_string()`.
 
@@ -2188,6 +2184,7 @@ variable `b:rplugin_non_r_omnifunc`. Examples:
    autocmd FileType rmd let b:rplugin_non_r_omnifunc = "pandoc#completion#Complete"
 <
 Note: On Windows, Nvim-R's bibliographic completion works only with ascii letters.
+See also |R_bib_compl|.
 
 
 ------------------------------------------------------------------------------
@@ -2366,6 +2363,7 @@ want to know what they are, while editing an R file, do in Normal mode:
 								*R_fun_data_1*
 								*R_fun_data_2*
 							      *R_quarto_intel*
+							         *R_bib_compl*
 6.37 Omni completion~
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
@@ -2439,6 +2437,10 @@ Quarto document. If Nvim-R fails to find the file, you can set the value of
 `R_quarto_intel` in your |vimrc|. Example:
 >
    let R_quarto_intel = '~/Downloads/quarto-1.1.251/share/editor/tools/yaml/yaml-intelligence-resources.json'
+<
+Omni completion in Rnoweb files will include results from bib files entries. Completion of bib file entries might also be enabled to `rmd` and `quarto` file types if you include them in the list `R_bib_compl`. Example:
+>
+   let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
 <
 
 ------------------------------------------------------------------------------
@@ -3308,7 +3310,8 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
- * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel.
+ * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
+   R_bib_compl.
 
 0.9.17 (2022-09-29)
 

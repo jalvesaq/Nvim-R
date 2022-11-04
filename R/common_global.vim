@@ -1120,6 +1120,11 @@ let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 let g:R_auto_omni         = get(g:, "R_auto_omni",    [])
+let g:R_bib_compl         = get(g:, "R_bib_compl", ["rnoweb"])
+
+if type(g:R_bib_compl) == v:t_string
+    let g:R_bib_compl = [g:R_bib_compl]
+endif
 
 if exists(":terminal") != 2
     let g:R_external_term = get(g:, "R_external_term", 1)

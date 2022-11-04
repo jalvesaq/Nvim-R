@@ -7,7 +7,9 @@ endif
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 " Bibliographic completion
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+if index(g:R_bib_compl, 'rmd') > -1
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+endif
 
 let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
 
@@ -219,7 +221,7 @@ if !exists('b:rplugin_bibf')
     let b:rplugin_bibf = ''
 endif
 
-if g:R_non_r_compl
+if g:R_non_r_compl && index(g:R_bib_compl, 'rmd') > -1
     call timer_start(1, "CheckPyBTeX")
 endif
 
