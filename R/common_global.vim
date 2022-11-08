@@ -497,12 +497,14 @@ endfunction
 " call a specific print, summary, ..., method instead of the generic one.
 function RGetFirstObj(rkeyword, ...)
     let firstobj = ""
-    if a:0 == 2
-        let line = substitute(getline(a:1), '#.*', '', "")
+    if a:0 == 3
+        let line = substitute(a:1, '#.*', '', "")
         let begin = a:2
+        let listdf = a:3
     else
         let line = substitute(getline("."), '#.*', '', "")
         let begin = col(".")
+        let listdf = v:false
     endif
     if strlen(line) > begin
         let piece = strpart(line, begin)
@@ -510,9 +512,24 @@ function RGetFirstObj(rkeyword, ...)
             let begin -= 1
             let piece = strpart(line, begin)
         endwhile
+
+        " check if the first argument is being passed through a pipe operator
+        if begin > 2
+            let part1 = strpart(line, 0, begin)
+            if part1 =~ '\k\+\s*\(|>\|%>%\)'
+                let pipeobj = substitute(part1, '.\{-}\(\k\+\)\s*\(|>\|%>%\)\s*', '\1', '')
+                return [pipeobj, v:true]
+            endif
+        endif
+        let pline = substitute(getline(line('.') - 1), '#.*$', '', '')
+        if pline =~ '\k\+\s*\(|>\|%>%\)\s*$'
+            let pipeobj = substitute(pline, '.\{-}\(\k\+\)\s*\(|>\|%>%\)\s*$', '\1', '')
+            return [pipeobj, v:true]
+        endif
+
         let line = piece
         if line !~ '^\k*\s*('
-            return firstobj
+            return [firstobj, v:false]
         endif
         let begin = 1
         let linelen = strlen(line)
@@ -538,7 +555,7 @@ function RGetFirstObj(rkeyword, ...)
                         let lnum += 1
                     endwhile
                     if lnum > line("$")
-                        return ""
+                        return ["", v:false]
                     endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
                     let len = strlen(line)
@@ -569,7 +586,7 @@ function RGetFirstObj(rkeyword, ...)
                         let lnum += 1
                     endwhile
                     if lnum > line("$")
-                        return ""
+                        return ["", v:false]
                     endif
                     let line = line . substitute(getline(lnum), '#.*', '', "")
                     let len = strlen(line)
@@ -606,7 +623,7 @@ function RGetFirstObj(rkeyword, ...)
         let firstobj = substitute(firstobj, '"', '\\"', "g")
     endif
 
-    return firstobj
+    return [firstobj, v:false]
 endfunction
 
 function ROpenPDF(fullpath)
@@ -1103,6 +1120,11 @@ let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 let g:R_auto_omni         = get(g:, "R_auto_omni",    [])
+let g:R_bib_compl         = get(g:, "R_bib_compl", ["rnoweb"])
+
+if type(g:R_bib_compl) == v:t_string
+    let g:R_bib_compl = [g:R_bib_compl]
+endif
 
 if exists(":terminal") != 2
     let g:R_external_term = get(g:, "R_external_term", 1)

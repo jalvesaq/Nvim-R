@@ -39,6 +39,9 @@ function RSetPDFViewer()
         endif
     endif
 
+    " FIXME: The ActivateWindowByTitle extension is no longer working
+    return
+
     if $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != ""
         if executable('busctl')
             let sout = system('busctl --user call org.gnome.Shell.Extensions ' .

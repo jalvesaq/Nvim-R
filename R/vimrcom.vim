@@ -16,6 +16,18 @@ function GetJobTitle(job_id)
     return "Job"
 endfunction
 
+function StopWaitingNCS(...)
+    if s:waiting_more_input
+        let s:waiting_more_input = 0
+        call RWarningMsg('Incomplete string received. Expected ' .
+                    \ s:incomplete_input['size'] . ' bytes; received ' .
+                    \ s:incomplete_input['received'] . '.')
+    endif
+    let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
+endfunction
+
+let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
+let s:waiting_more_input = 0
 function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
@@ -25,8 +37,19 @@ function ROnJobStdout(job_id, msg)
         if str2nr(cmdsplt[0]) == strlen(cmdsplt[1])
             exe cmdsplt[1]
         else
-            call SetComplMenu(0, [])
-            call RWarningMsg("Wrong string length (menu for completion): " . str2nr(cmdsplt[0]) . " x " . strlen(cmdsplt[1]))
+            let s:waiting_more_input = 1
+            let s:incomplete_input['size'] = size
+            let s:incomplete_input['received'] = received
+            let s:incomplete_input['str'] = cmdsplt[1]
+            call timer_start(20, 'StopWaitingNCS')
+        endif
+    elseif s:waiting_more_input
+        let s:incomplete_input['received'] += strlen(cmd)
+        if s:incomplete_input['received'] == s:incomplete_input['size']
+            let s:waiting_more_input = 0
+            exe s:incomplete_input['str'] . cmd
+        else
+            let s:incomplete_input['str'] .= cmd
         endif
     elseif cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
         exe cmd

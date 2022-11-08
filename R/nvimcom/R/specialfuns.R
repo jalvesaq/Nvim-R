@@ -405,8 +405,7 @@ nvim.getclass <- function(x)
     return(cls)
 }
 
-nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL)
-{
+nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL, ldf = FALSE) {
     if(firstobj == ""){
         res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
     } else {
@@ -415,6 +414,22 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL)
             res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
         else
             res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
+    }
+    if (ldf && exists(firstobj)) {
+        dtfrm <- get(firstobj)
+        if (is.data.frame(dtfrm)) {
+            for (n in names(dtfrm)) {
+                nlab <- attr(dtfrm[[n]], "label")
+                if (is.null(nlab)) {
+                    res <- append(res,
+                                  paste0("{'word': '", n, "', 'menu': '[", firstobj, "]'}, \n"))
+                } else {
+                    res <- append(res, paste0("{'word': '", n, "', 'menu': '[", firstobj,
+                                              "]', 'user_data': {'cls': 'v', 'descr': '",
+                                              nvim.fix.string(nlab), "'}},\n"))
+                }
+            }
+        }
     }
     writeLines(text = res,
                con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))

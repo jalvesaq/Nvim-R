@@ -10,6 +10,27 @@ function CheckNvimcomVersion()
                     \ g:rplugin.nvimcom_info['home'] . '/00LOCK-nvimcom"')
     endif
 
+    " We need R version and libPaths
+    " $R_LIBS_USER will be part of .libPaths() output only if the directory alread exists.
+    call AddForDeletion(g:rplugin.tmpdir . "/vlibp.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/Rversion")
+    call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
+    call writefile(['cat(paste0(version[c("major", "minor")], collapse = "."), ' .
+                \ 'file = "' . g:rplugin.tmpdir . '/Rversion")',
+                \ 'cat(unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep)), .libPaths())), ' .
+                \ 'sep = "\n", colapse = "\n", file = "' . g:rplugin.tmpdir . '/libPaths")',
+                \ 'quit(save = "no")'],
+                \ g:rplugin.tmpdir . '/vlibp.R')
+    silent let rout = system(g:rplugin.Rcmd . ' --quiet --no-restore --no-save --no-echo --slave -f "' . g:rplugin.tmpdir . '/vlibp.R' . '"')
+    if v:shell_error
+        let g:rplugin.debug_info['R CMD version and libPaths error'] = rout
+        call RWarningMsg('Error trying to get R version and lib paths: ' . substitute(rout, "\n", " ", "g"))
+        return 0
+    endif
+
+    let rversion = readfile(g:rplugin.tmpdir . '/Rversion')[0]
+    let g:rplugin.debug_info['R_version'] = rversion
+
     " Compare version of nvimcom source with the installed version
 
     " Get version of current source code
@@ -33,22 +54,18 @@ function CheckNvimcomVersion()
                 let g:rplugin.debug_info['Why build nvimcom'] = 'Nvimcom version mismatch'
             else
                 " Nvimcom is up to date. Check if R version changed.
-                silent let rversion = system(g:rplugin.Rcmd .
-                            \ ' --no-restore --no-save --slave -e ''cat(paste0(version[c("major", "minor")], collapse = "."))''')
                 if rversion < '4.0.0'
                     call RWarningMsg("Nvim-R requires R >= 4.0.0")
                 endif
-                let g:rplugin.debug_info['R_version'] = rversion
                 if g:rplugin.nvimcom_info['Rversion'] != rversion
                     let neednew = 1
-                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch'
+                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch (' .
+                                \ g:rplugin.nvimcom_info['Rversion'] . ' x ' . rversion . ')'
                 endif
             endif
         endif
     endif
 
-    " Nvim-R might have been installed as root in a non writable directory.
-    " We have to build nvimcom in a writable directory before installing it.
     if neednew
         echon "Building nvimcom..."
         call delete(g:rplugin.compldir . '/nvimcom_info')
@@ -69,36 +86,36 @@ function CheckNvimcomVersion()
         else
             let tmpdir = g:rplugin.tmpdir
         endif
-        let rcode = [ 'sink("' . tmpdir . '/libpaths")',
-                    \ 'cat(.libPaths()[1L],',
-                    \ '    unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L],',
-                    \ '    sep = "\n")',
-                    \ 'sink()' ]
-        call writefile(rcode, g:rplugin.tmpdir . '/nvimcom_path.R')
-        silent let g:rplugin.debug_info['.libPaths()'] = system(g:rplugin.Rcmd . ' --no-restore --no-save --slave -f "' . g:rplugin.tmpdir . '/nvimcom_path.R"')
-        if v:shell_error
-            call RWarningMsg('Error trying to run .libPaths(): ' .
-                        \ substitute(g:rplugin.debug_info['.libPaths()'], "\n", " ", "g"))
-            if has("win32")
-                call UnsetRHome()
-            endif
-            return 0
-        endif
-        let libpaths = readfile(g:rplugin.tmpdir . "/libpaths")
+
+        " Nvim-R might have been installed as root in a non writable directory.
+        " We have to build nvimcom in a writable directory before installing it.
+        let libpaths = readfile(g:rplugin.tmpdir . "/libPaths")
         call map(libpaths, 'substitute(expand(v:val), "\\", "/", "g")')
+        call filter(libpaths, 'strlen(v:val) > 2')
         let g:rplugin.debug_info['libPaths'] = libpaths
-        if !(isdirectory(libpaths[0]) && filewritable(libpaths[0]) == 2) && !exists("g:R_remote_tmpdir")
-            if !isdirectory(libpaths[1])
-                redraw
-                let resp = input('"' . libpaths[0] . '" is not writable. Should "' . libpaths[1] . '" be created now? [y/n] ')
-                if resp[0] ==? "y"
-                    call mkdir(libpaths[1], "p")
+
+        if exists("g:R_remote_tmpdir")
+            let dw = 1
+        else
+            let dw = 0
+            for path in libpaths
+                if isdirectory(path) && filewritable(path)
+                    let dw = 1
+                    break
                 endif
-                echo " "
+            endfor
+        endif
+        if !dw
+            redraw
+            let resp = input('"' . libpaths[0] . '" is not writable. Create it now? [y/n] ')
+            if resp[0] ==? "y"
+                let dw = mkdir(libpaths[0], "p")
+                if !dw
+                    call RWarningMsg('Failed creating "' . libpaths[0] . '"')
+                    return
+                endif
             endif
         endif
-        call delete(g:rplugin.tmpdir . '/nvimcom_path.R')
-        call delete(g:rplugin.tmpdir . "/libpaths")
 
         " Now that we ensured the existence of the directory where nvimcom is
         " going to be installed, write a script to:
@@ -106,6 +123,7 @@ function CheckNvimcomVersion()
         "   2. Install nvimcom
         "   3. Save nvimcom_info in the cache directory (~/.cache/Nvim-R/ on Linux)
 
+        call AddForDeletion(g:rplugin.tmpdir . '/' .  "nvimcom_" . s:required_nvimcom . ".tar.gz")
         if !exists("g:R_remote_tmpdir")
             let cmds = [g:rplugin.Rcmd . ' CMD build "' . g:rplugin.home . '/R/nvimcom"']
         else
@@ -119,8 +137,7 @@ function CheckNvimcomVersion()
         else
             let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . s:required_nvimcom . ".tar.gz"]
         endif
-        let cmds += ["rm nvimcom_" . s:required_nvimcom . ".tar.gz",
-                    \ g:rplugin.Rcmd . ' --no-restore --no-save --slave -e "' .
+        let cmds += [g:rplugin.Rcmd . ' --no-restore --no-save --slave -e "' .
                     \ "cat(installed.packages()['nvimcom', c('Version', 'LibPath', 'Built')], sep = '\\n', file = '" . cmpldir . "/nvimcom_info')" . '"']
 
         call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)

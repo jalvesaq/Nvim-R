@@ -940,7 +940,19 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.5. R must be started by Vim~
+5.5. Error if there is no package installed (Neovim on Windows only)~
+
+On Windows, Neovim fails to recognize that a directory is not writable, and
+this is required by Nvim-R to detect if it is necessary to create the
+directory defined by `$R_LIBS_USER` environment variable. Consequently, Nvim-R
+does no try to create the directory and nvimcom installation fails. This
+problem will happen if you have just installed or upgraded R. The workaround
+is to manually open R and install any package with the `install.packages()`
+command before using Nvim-R.
+
+
+------------------------------------------------------------------------------
+5.6. R must be started by Vim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
@@ -1047,6 +1059,10 @@ of
 |R_compldir|            Where lists for omni completion are stored
 |R_set_omnifunc|        Should Nvim-R set the 'omnifunc'?
 |R_auto_omni|           List of files with auto omni completion enabled
+|R_fun_data_1|          What the data.frame to complete function arguments is
+|R_fun_data_2|          Where the data.frame to complete function arguments is
+|R_quarto_intel|        Where the Quarto completion data is
+|R_bib_compl|           Lis of file types for bib completion
 |R_remote_tmpdir|       Mount point of remote temporary directory
 |R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
@@ -1334,7 +1350,7 @@ put in your |vimrc|:
 While editing R code, `_` is replaced with `<-`. If you want to bind other
 keys to be replaced by `<-`, set the value of |R_assign_map| in your
 |vimrc|, as in the example below which emulates RStudio behavior (may only
-work on GVim):
+work on GVim or Neovim):
 >
    let R_assign_map = '<M-->'
 <
@@ -1874,7 +1890,7 @@ Example:
    let R_cite_pattern = '\\\(cite\|bibentry\)\S*{'
 <
 You do not need to set `R_cite_pattern` if you have already set the value of
-`LatexBox_cite_pattern`.
+`LatexBox_cite_pattern`. See also |R_bib_compl|.
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*
@@ -2145,11 +2161,6 @@ below in your |vimrc| to get them highlighted:
    let g:markdown_fenced_languages = ['r', 'python']
    let g:rmd_fenced_languages = ['r', 'python']
 <
-You may also want to install the jedi-vim plugin to get omni completion of
-Python code when the cursor is within a Python chunk:
-
-   https://github.com/davidhalter/jedi-vim
-
 Lines of Python code are sent to R Console as arguments to
 `reticulate::py_run_string()`.
 
@@ -2173,6 +2184,7 @@ variable `b:rplugin_non_r_omnifunc`. Examples:
    autocmd FileType rmd let b:rplugin_non_r_omnifunc = "pandoc#completion#Complete"
 <
 Note: On Windows, Nvim-R's bibliographic completion works only with ascii letters.
+See also |R_bib_compl|.
 
 
 ------------------------------------------------------------------------------
@@ -2346,8 +2358,12 @@ want to know what they are, while editing an R file, do in Normal mode:
 <
 
 ------------------------------------------------------------------------------
-								 *R_auto_omni*
 							      *R_set_omnifunc*
+								 *R_auto_omni*
+								*R_fun_data_1*
+								*R_fun_data_2*
+							      *R_quarto_intel*
+							         *R_bib_compl*
 6.37 Omni completion~
 
 Nvim-R sets the 'omnifunc' option to its built-in omni completion function
@@ -2361,7 +2377,14 @@ value:
 <
 Similarly, you can define what files will get Nvim-R's auto omni completion:
 >
-   let R_auto_omni = ["r", "rnoweb", "rhelp"]
+   let R_auto_omni = ["r", "rmd", "quarto", "rnoweb", "rhelp"]
+<
+Note: If you are using the `languageserver` package, you should disable its
+omni completion feature in your `~/.Rprofile`:
+>
+   options(languageserver.server_capabilities =
+           list(completionProvider = FALSE,
+	        completionItemResolve = FALSE))
 <
 You should use empty lists if you do not want to use Nvim-R's omni completion
 in any file type:
@@ -2373,11 +2396,52 @@ Automatic omni completion does not include results from previously defined
 non-R function, such as `htmlcomplete#CompleteTags` when editing Rmd files.
 You should trigger these functions manually with CTRL-X CTRL-O.
 
+While completing function arguments, Nvim-R may include column names from the
+data.frame passed as the first argument, and you may set in your |vimrc| the
+list of functions that might benefit from this kind of completion. The example
+below sets `R_fun_data_1` to its default value:
+>
+   let R_fun_data_1 = ['select', 'rename', 'mutate', 'filter']
+
+Nvim-R can also include column names from a data.frame passed as the first
+argument of the parent function. For example, if you were typing
+>
+   with(my_data_frame, lm(
+<
+and, then, trigger omni completion, the column names of `my_data_frame` would
+be included in the completion menu. By default, only the function `aes` (if
+passed as argument for `ggplot`) and the functions `lm`, `glm` or `lmer` (if
+passed as argument for `with`) will have column names of the first argument of
+the parent function included in the completion menu. You have to set the value
+of `R_fun_data_2` in your |vimrc| to include more functions. `R_fun_data_2` is a
+dictionary with parent functions as keys. The value of each key is a list of
+functions that are expected to be nested in the parent function. Example:
+>
+   let R_fun_data_2 = {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']}
+<
+Note: The algorithm for finding the first argument of the parent function is
+very simple and would wrongly recognize `data` as the name of the
+`data.frame` in the following code:
+>
+   ggplot(data = my_data_frame, mapping = aes(
+<
 Nvim-R receives the list of objects for omni completion from the nclientserver
 job running in the background. If the list is too big to be transmitted
 through nclientserver's stdout in a single chunk of data, the completion is
 aborted.
 
+If editing Quarto documents, Nvim-R will try to find the file
+`yaml-intelligence-resources.json` which is part of `quarto` application and
+has all necessary information for completion of valid YAML options in an
+Quarto document. If Nvim-R fails to find the file, you can set the value of
+`R_quarto_intel` in your |vimrc|. Example:
+>
+   let R_quarto_intel = '~/Downloads/quarto-1.1.251/share/editor/tools/yaml/yaml-intelligence-resources.json'
+<
+Omni completion in Rnoweb files will include results from bib files entries. Completion of bib file entries might also be enabled to `rmd` and `quarto` file types if you include them in the list `R_bib_compl`. Example:
+>
+   let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
+<
 
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
@@ -3246,7 +3310,8 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
- * New option: R_filetypes.
+ * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
+   R_bib_compl.
 
 0.9.17 (2022-09-29)
 
