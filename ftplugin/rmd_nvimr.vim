@@ -7,7 +7,7 @@ endif
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 " Bibliographic completion
-if index(g:R_bib_compl, 'rmd') > -1
+if index(g:R_bib_compl, &filetype) > -1
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
 endif
 
@@ -221,7 +221,7 @@ if !exists('b:rplugin_bibf')
     let b:rplugin_bibf = ''
 endif
 
-if g:R_non_r_compl && index(g:R_bib_compl, 'rmd') > -1
+if g:R_non_r_compl && index(g:R_bib_compl, &filetype) > -1
     call timer_start(1, "CheckPyBTeX")
 endif
 
