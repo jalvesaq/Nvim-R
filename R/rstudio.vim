@@ -31,8 +31,11 @@ endfunction
 function SendCmdToRStudio(...)
     if !IsJobRunning("RStudio")
         call RWarningMsg("Is RStudio running?")
+        return 0
     endif
     let cmd = substitute(a:1, '"', '\\"', "g")
-    call SendToNvimcom("T", 'sendToConsole("' . cmd . '", execute=TRUE)')
+    call SendToNvimcom("E", 'sendToConsole("' . cmd . '", execute=TRUE)')
     return 1
 endfunction
+
+let g:R_bracketed_paste = 0
