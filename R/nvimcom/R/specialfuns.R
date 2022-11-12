@@ -420,14 +420,12 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
         if (is.data.frame(dtfrm)) {
             for (n in names(dtfrm)) {
                 nlab <- attr(dtfrm[[n]], "label")
-                if (is.null(nlab)) {
-                    res <- append(res,
-                                  paste0("{'word': '", n, "', 'menu': '[", firstobj, "]'}, \n"))
-                } else {
-                    res <- append(res, paste0("{'word': '", n, "', 'menu': '[", firstobj,
-                                              "]', 'user_data': {'cls': 'v', 'descr': '",
-                                              nvim.fix.string(nlab), "'}},\n"))
-                }
+                res <- append(res, paste0("{'word': '", n, "', 'menu': '[", firstobj,
+                                          "]', 'user_data': {'word': '", firstobj, "$", n,
+                                          "', 'env': '", ifelse(is.null(pkg), ".GlobalEnv", pkg),
+                                          "', 'cls': 'v', 'descr': '",
+                                          ifelse(is.null(nlab), "", nvim.fix.string(nlab)),
+                                          "'}},\n"))
             }
         }
     }

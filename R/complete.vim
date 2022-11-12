@@ -52,7 +52,7 @@ function FormatInfo(width, needblank)
                 let info .= ' ' . usg . ' '
             endif
         endif
-        if a:width > 59 && has_key(ud, 'summary')
+        if a:width > 29 && has_key(ud, 'summary')
             if ud['descr'] != ''
                 let info .= "\n————\n"
             endif
@@ -278,6 +278,7 @@ function AskForComplInfo()
     if ! pumvisible()
         return
     endif
+
     " Other plugins fill the 'user_data' dictionary
     if has_key(v:event, 'completed_item') && has_key(v:event['completed_item'], 'word')
         let s:compl_event = deepcopy(v:event)
@@ -289,8 +290,14 @@ function AskForComplInfo()
                 " Request function description and usage
                 call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
             elseif has_key(s:compl_event['completed_item']['user_data'], 'cls')
-                " Neovim doesn't allow to open a float window from here:
-                call timer_start(1, 'CreateNewFloat', {})
+                if s:compl_event['completed_item']['user_data']['cls'] == 'v'
+                    let pkg = s:compl_event['completed_item']['user_data']['env']
+                    let wrd = s:compl_event['completed_item']['user_data']['word']
+                    call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+                else
+                    " Neovim doesn't allow to open a float window from here:
+                    call timer_start(1, 'CreateNewFloat', {})
+                endif
             elseif s:float_win
                 call CloseFloatWin()
             endif
