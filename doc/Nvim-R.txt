@@ -1921,7 +1921,7 @@ If you want to send the commands `quarto::quarto_render()` and
 the values of `R_quarto_render_args` and `R_quarto_preview_args` in your
 |vimrc|, as in the examples:
 >
-   let R_quarto_render_args = ', quiet = TRUE'
+   let R_quarto_render_args = ', pandoc_args = c("-F", "apafix.py")'
    let R_quarto_preview_args = ', browse = FALSE'
 <
 
@@ -2137,12 +2137,6 @@ For either RMarkdown or Quarto documents it is recommended to install zotcite
 for completing citation keys directly from Zotero database:
 
    https://github.com/jalvesaq/zotcite
-
-You can also use another plugin to insert citation keys if they use the same
-@zotero_key#your_citation_key scheme for building citation keys. The
-citation.vim plugin does just this, providing a source for Unite:
-
-   https://github.com/rafaqz/citation.vim
 
 If zotcite is not installed, Nvim-R will do omni completion of bibliographic
 citation keys from `.bib` files, requiring Python 3 and the PyBTeX library for
