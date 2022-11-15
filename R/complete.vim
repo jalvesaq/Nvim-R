@@ -779,6 +779,5 @@ function! FillQuartoComplMenu()
                 call add(s:qchunk_opt_list, dict)
             endfor
         endfor
-        " TODO: Completion of YAML fields at the header of the document ...
     endif
 endfunction
