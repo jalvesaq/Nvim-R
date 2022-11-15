@@ -3,18 +3,18 @@ NvimcomEnv <- new.env()
 NvimcomEnv$pkgdescr <- list()
 
 .onLoad <- function(libname, pkgname) {
-    if(Sys.getenv("NVIMR_TMPDIR") == "")
+    if (Sys.getenv("NVIMR_TMPDIR") == "")
         return(invisible(NULL))
     library.dynam("nvimcom", pkgname, libname, local = FALSE)
 
-    if(is.null(getOption("nvimcom.verbose")))
+    if (is.null(getOption("nvimcom.verbose")))
         options(nvimcom.verbose = 0)
 
     # The remaining options are set by Neovim. Don't try to set them in your
     # ~/.Rprofile because they will be overridden here:
-    if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options_utf8.R"))){
+    if (file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options_utf8.R"))) {
         source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options_utf8.R"), encoding = "UTF-8")
-    } else if(file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))){
+    } else if (file.exists(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))) {
         source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/start_options.R"))
     } else {
         options(nvimcom.allnames = FALSE)
@@ -25,19 +25,19 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.nvimpager = TRUE)
         options(nvimcom.delim = "\t")
     }
-    if(getOption("nvimcom.nvimpager"))
+    if (getOption("nvimcom.nvimpager"))
         options(pager = nvim.hmsg)
 }
 
 .onAttach <- function(libname, pkgname) {
-    if(Sys.getenv("NVIMR_TMPDIR") == "")
+    if (Sys.getenv("NVIMR_TMPDIR") == "")
         return(invisible(NULL))
-    if(version$os == "mingw32")
+    if (version$os == "mingw32")
         termenv <- "MinGW"
     else
         termenv <- Sys.getenv("TERM")
 
-    if(interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != ""){
+    if (interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != "") {
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
         nvinf <- utils::installed.packages()["nvimcom", c("Version", "LibPath", "Built")]
         .C("nvimcom_Start",
@@ -54,18 +54,19 @@ NvimcomEnv$pkgdescr <- list()
                  getOption("continue"),
                  paste(.packages(), collapse = " "),
                  sep = "\x02"),
-           PACKAGE="nvimcom")
+           PACKAGE = "nvimcom")
     }
-    if(!is.na(utils::localeToCharset()[1]) && utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin")
+    if (!is.na(utils::localeToCharset()[1]) &&
+        utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin")
         NvimcomEnv$isAscii <- FALSE
     else
         NvimcomEnv$isAscii <- TRUE
 }
 
 .onUnload <- function(libpath) {
-    if(is.loaded("nvimcom_Stop", PACKAGE = "nvimcom")){
-        .C("nvimcom_Stop", PACKAGE="nvimcom")
-        if(Sys.getenv("NVIMR_TMPDIR") != "" && .Platform$OS.type == "windows"){
+    if (is.loaded("nvimcom_Stop", PACKAGE = "nvimcom")) {
+        .C("nvimcom_Stop", PACKAGE = "nvimcom")
+        if (Sys.getenv("NVIMR_TMPDIR") != "" && .Platform$OS.type == "windows") {
                 unlink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/rconsole_hwnd_",
                               Sys.getenv("NVIMR_SECRET")))
         }
@@ -73,4 +74,3 @@ NvimcomEnv$pkgdescr <- list()
         library.dynam.unload("nvimcom", libpath)
     }
 }
-
