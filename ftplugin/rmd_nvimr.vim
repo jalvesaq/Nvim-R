@@ -24,8 +24,13 @@ function! RWriteRmdChunk()
     if getline(".") =~ "^\\s*$" && RmdIsInRCode(0) == 0
         let curline = line(".")
         call setline(curline, "```{r}")
-        call append(curline, ["```", ""])
-        call cursor(curline, 5)
+        if &filetype == 'quarto'
+            call append(curline, ["", "```", ""])
+            call cursor(curline + 1, 1)
+        else
+            call append(curline, ["```", ""])
+            call cursor(curline, 5)
+        endif
     else
         exe "normal! a`"
     endif

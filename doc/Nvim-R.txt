@@ -1062,7 +1062,7 @@ of
 |R_fun_data_1|          What the data.frame to complete function arguments is
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
-|R_bib_compl|           Lis of file types for bib completion
+|R_bib_compl|           List of file types for bib completion
 |R_remote_tmpdir|       Mount point of remote temporary directory
 |R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
