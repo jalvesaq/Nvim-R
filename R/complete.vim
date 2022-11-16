@@ -528,7 +528,7 @@ function RTriggerCompletion()
     let lin = getline(".")
     let lin = strpart(lin, 0, col(".")) . v:char
 
-    if &filetype == 'quarto' && isInR == 1 && lin =~ '^#| '
+    if (&filetype == 'quarto' || &filetype == 'rmd') && isInR == 1 && lin =~ '^#| '
         if lin !~ '^#| \k.*:'
             " Yaml might include '-' which isn't a keyword character in R
             let ywrd = substitute(lin, '^#| *', '', '')
@@ -586,7 +586,7 @@ function CompleteR(findstart, base)
     if a:findstart
         let lin = getline(".")
         let isInR = b:IsInRCode(0)
-        if &filetype == 'quarto' && isInR == 1 && lin =~ '^#| ' && lin !~ '^#| \k.*:'
+        if (&filetype == 'quarto' || &filetype == 'rmd') && isInR == 1 && lin =~ '^#| ' && lin !~ '^#| \k.*:'
             let s:compl_type = 4
             let ywrd = substitute(lin, '^#| *', '', '')
             return stridx(lin, ywrd)
