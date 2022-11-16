@@ -50,7 +50,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                 return("")
             }
             if (is.primitive(get(funcname)))
-                return(nvim.primitive.args(funcname))
+                frm <- formals(args(funcname))
             else
                 frm <- formals(get(funcname, envir = globalenv()))
         } else {
@@ -60,7 +60,10 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                 tr <- try(ff <- get(paste0(funcname, ".default"), pos = idx), silent = TRUE)
                 if (class(tr)[1] == "try-error")
                     ff <- get(funcname, pos = idx)
-                frm <- formals(ff)
+                if (is.primitive(ff))
+                    frm <- formals(args(ff))
+                else
+                    frm <- formals(ff)
             } else {
                 if (!isNamespaceLoaded(pkg))
                     loadNamespace(pkg)

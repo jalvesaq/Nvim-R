@@ -303,15 +303,6 @@ gbRd.args2txt <- function(rdo, arglist) {
 
 ###############################################################################
 
-nvim.primitive.args <- function(x) {
-    f <- capture.output(args(x))
-    f <- sub(") $", "", sub("^function \\(", "", f[1]))
-    f <- strsplit(f, ",")[[1]]
-    f <- sub("^ ", "", f)
-    f <- sub(" = ", "'], ['", f)
-    paste(f, collapse = "']], [['")
-}
-
 nvim.GlobalEnv.fun.args <- function(funcname) {
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     cat(nvim.args(funcname))
