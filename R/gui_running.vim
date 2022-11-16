@@ -303,14 +303,16 @@ function MakeRMenu()
         vmenu <silent> R.Edit.Indent\ (selected\ lines)<Tab>= =
         nmenu <silent> R.Edit.Indent\ (whole\ buffer)<Tab>gg=G gg=G
         menu R.Edit.-Sep42- <nul>
-        call RCreateMenuItem('ni', 'Edit.Toggle\ comment\ (line/sel)', 'RToggleComment', 'xx', ':call RComment("normal")')
-        call RCreateMenuItem('v',  'Edit.Toggle\ comment\ (line/sel)', 'RToggleComment', 'xx', ':call RComment("selection")')
-        call RCreateMenuItem('ni', 'Edit.Comment\ (line/sel)', 'RSimpleComment', 'xc', ':call RSimpleCommentLine("normal", "c")')
-        call RCreateMenuItem('v',  'Edit.Comment\ (line/sel)', 'RSimpleComment', 'xc', ':call RSimpleCommentLine("selection", "c")')
-        call RCreateMenuItem('ni', 'Edit.Uncomment\ (line/sel)', 'RSimpleUnComment', 'xu', ':call RSimpleCommentLine("normal", "u")')
-        call RCreateMenuItem('v',  'Edit.Uncomment\ (line/sel)', 'RSimpleUnComment', 'xu', ':call RSimpleCommentLine("selection", "u")')
-        call RCreateMenuItem('ni', 'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("normal")')
-        call RCreateMenuItem('v',  'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("selection")')
+        if g:R_enable_comment
+            call RCreateMenuItem('ni', 'Edit.Toggle\ comment\ (line/sel)', 'RToggleComment', 'xx', ':call RComment("normal")')
+            call RCreateMenuItem('v',  'Edit.Toggle\ comment\ (line/sel)', 'RToggleComment', 'xx', ':call RComment("selection")')
+            call RCreateMenuItem('ni', 'Edit.Comment\ (line/sel)', 'RSimpleComment', 'xc', ':call RSimpleCommentLine("normal", "c")')
+            call RCreateMenuItem('v',  'Edit.Comment\ (line/sel)', 'RSimpleComment', 'xc', ':call RSimpleCommentLine("selection", "c")')
+            call RCreateMenuItem('ni', 'Edit.Uncomment\ (line/sel)', 'RSimpleUnComment', 'xu', ':call RSimpleCommentLine("normal", "u")')
+            call RCreateMenuItem('v',  'Edit.Uncomment\ (line/sel)', 'RSimpleUnComment', 'xu', ':call RSimpleCommentLine("selection", "u")')
+            call RCreateMenuItem('ni', 'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("normal")')
+            call RCreateMenuItem('v',  'Edit.Add/Align\ right\ comment\ (line,\ sel)', 'RRightComment', ';', ':call MovePosRCodeComment("selection")')
+        endif
         if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto" || g:R_never_unmake_menu
             menu R.Edit.-Sep43- <nul>
             call RCreateMenuItem('n', 'Edit.Go\ (next\ R\ chunk)', 'RNextRChunk', 'gn', ':call b:NextRChunk()')

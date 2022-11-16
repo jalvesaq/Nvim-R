@@ -77,7 +77,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send commands with the object under cursor as argument.
       - Call R's `help()` with the object under cursor as argument.
       - Syntax highlighting of the Object Browser.
-  * SyncTeX support.
+  * SyncTeX support for Rnoweb.
   * Most of the plugin's behavior is customizable.
 
 
@@ -416,11 +416,6 @@ Edit
   . Indent (selected lines)                              =
   . Indent (whole buffer)                             gg=G
   --------------------------------------------------------
-  . Toggle comment (line, sel)                         \xx
-  . Comment (line, sel)                                \xc
-  . Uncomment (line, sel)                              \xu
-  . Add/Align right comment (line, sel)                 \;
-  --------------------------------------------------------
   . Go (next R chunk)                                  \gn
   . Go (previous R chunk)                              \gN
 -----------------------------------------------------------
@@ -723,82 +718,6 @@ Notes:
 
 
 ------------------------------------------------------------------------------
-4.5. Commenting and uncommenting lines~
-
-You can toggle the state of a line as either commented or uncommented by
-typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
-" or "### ", depending on the values of R_indent_commented and
-r_indent_ess_comments (see |R_rcomment_string|).
-
-You can also add the string "# " to the beginning of a line by typing
-<LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
-the value of R_rcomment_string to control what string will be added
-to the beginning of the line. Example:
->
-   let R_rcomment_string = '# '
-<
-Finally, you can also add comments to the right of a line with the
-<LocalLeader>; shortcut. By default, the comment starts at the 40th column,
-which can be changed by setting the value of r_indent_comment_column, as
-below:
->
-   let r_indent_comment_column = 20
-<
-If the line is longer than 38 characters, the comment will start two columns
-after the last character in the line. If you are running <LocalLeader>; over a
-selection of lines, the comments will be aligned according to the longest
-line.
-
-Note: While typing comments the leader comment string is automatically added
-to new lines when you reach 'textwidth' but not when you press <Enter>.
-Please, read the Vim help about 'formatoptions' and |fo-table|. For example,
-you can add the following line to your |vimrc| if you want the comment string
-being added after <Enter>:
->
-   autocmd FileType r setlocal formatoptions-=t formatoptions+=croql
-<
-If you are using a plugin to comment and uncomment lines of code and don't
-want the default single dash as the comment string, rather prefering two
-dashes as is usual in Emacs/ESS, put this in your |vimrc|:
->
-   function MyRmdCommentStr()
-     if b:IsInRCode(0)
-       setlocal commentstring=##\ %s
-     elseif ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
-       setlocal commentstring=#\ %s
-     else
-       setlocal commentstring=<!--\ %s\ -->
-     endif
-   endfunction
-
-   function MyRnwCommentStr()
-     if b:IsInRCode(0)
-       setlocal commentstring=##\ %s
-     else
-       setlocal commentstring=%\ %s
-     endif
-   endfunction
-
-   function InitMyRmdCmtStr()
-     augroup RmdCStr
-       autocmd!
-       autocmd CursorMoved <buffer> call MyRmdCommentStr()
-     augroup END
-   endfunction
-
-   function InitMyRnwCmtStr()
-     augroup RnwCStr
-       autocmd!
-       autocmd CursorMoved <buffer> call MyRnwCommentStr()
-     augroup END
-   endfunction
-
-   autocmd FileType rmd call InitMyRmdCmtStr()
-   autocmd FileType rnoweb call InitMyRnwCmtStr()
-   autocmd FileType r set commentstring=##\ %s
-<
-
-------------------------------------------------------------------------------
 								  *RBuildTags*
 4.6. Build a tags file to jump to function definitions~
 
@@ -1013,8 +932,7 @@ of
 |R_hi_fun_paren|        Highlight R functions only if followed by a `(`
 |R_hi_fun_globenv|      Highlight R functions from .GlobalEnv
 |R_routnotab|           Show output of R CMD BATCH in new window
-|R_indent_commented|    Indent lines commented with the \xx command
-|R_rcomment_string|     String to comment code with \xx and \o
+|R_enable_comment|      Enable ability of commenting code
 |R_notmuxconf|          Don't use a specially built Tmux config file
 |R_rconsole_height|     Number of lines of R Console
 |R_rconsole_width|      Number of columns of R Console
@@ -1654,14 +1572,50 @@ that the file is open in a new split window, put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
+							    *R_enable_comment*
 							  *R_indent_commented*
-						          *R_rcomment_string*
-6.12. Indent commented lines~
+							   *R_rcomment_string*
+6.12. Comment and uncomment code~
 
-You can type <LocalLeader>xx to comment out a line or selected lines. If the
-line already starts with a comment string, it will be removed. After adding
-the comment string, the line will be reindented by default. To turn off the
-automatic indentation, put in your |vimrc|:
+Nvim-R can comment and uncomment code, but this feature is turned off by
+default because most people use a comment plugin for this task. To turn it on,
+put in your |vimrc|:
+>
+   let R_enable_comment = 1
+<
+Then, you can toggle the state of a line as either commented or uncommented by
+typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
+" or "### ", depending on the values of `R_indent_commented` and
+`r_indent_ess_comments`.
+
+You can also add the string "# " to the beginning of a line by typing
+<LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
+the value of R_rcomment_string to control what string will be added
+to the beginning of the line. Example:
+>
+   let R_rcomment_string = '# '
+<
+Finally, you can also add comments to the right of a line with the
+<LocalLeader>; shortcut. By default, the comment starts at the 40th column,
+which can be changed by setting the value of r_indent_comment_column, as
+below:
+>
+   let r_indent_comment_column = 20
+<
+If the line is longer than 38 characters, the comment will start two columns
+after the last character in the line. If you are running <LocalLeader>; over a
+selection of lines, the comments will be aligned according to the longest
+line.
+
+Note: While typing comments the leader comment string is automatically added
+to new lines when you reach 'textwidth' but not when you press <Enter>.
+Please, read the Vim help about 'formatoptions' and |fo-table|. For example,
+you can add the following line to your |vimrc| if you want the comment string
+being added after <Enter>:
+>
+   autocmd FileType r setlocal formatoptions-=t formatoptions+=croql
+<
+To turn off the automatic indentation, put in your |vimrc|:
 >
    let R_indent_commented = 0
 <
@@ -2432,7 +2386,9 @@ Quarto document. If Nvim-R fails to find the file, you can set the value of
 >
    let R_quarto_intel = '~/Downloads/quarto-1.1.251/share/editor/tools/yaml/yaml-intelligence-resources.json'
 <
-Omni completion in Rnoweb files will include results from bib files entries. Completion of bib file entries might also be enabled to `rmd` and `quarto` file types if you include them in the list `R_bib_compl`. Example:
+Omni completion in Rnoweb files will include results from bib files entries.
+Completion of bib file entries might also be enabled to `rmd` and `quarto`
+file types if you include them in the list `R_bib_compl`. Example:
 >
    let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
 <
@@ -3305,7 +3261,7 @@ Examples:
 10. News~
 
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
-   R_bib_compl.
+   R_bib_compl, R_enable_comment.
 
 0.9.17 (2022-09-29)
 

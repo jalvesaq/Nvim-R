@@ -1263,6 +1263,25 @@ function RSourceLines(...)
     return ok
 endfunction
 
+function CleanOxygenLine(line)
+    let cline = a:line
+    if cline =~ "^\s*#\\{1,2}'"
+        let synName = synIDattr(synID(line("."), col("."), 1), "name")
+        if synName == "rOExamples"
+            let cline = substitute(cline, "^\s*#\\{1,2}'", "", "")
+        endif
+    endif
+    return cline
+endfunction
+
+function CleanCurrentLine()
+    let curline = substitute(getline("."), '^\s*', "", "")
+    if &filetype == "r"
+        let curline = CleanOxygenLine(curline)
+    endif
+    return curline
+endfunction
+
 " Skip empty lines and lines whose first non blank char is '#'
 function GoDown()
     if &filetype == "rnoweb"
@@ -1371,6 +1390,14 @@ function SendMBlockToR(e, m)
         call cursor(lineB, 1)
         call GoDown()
     endif
+endfunction
+
+" Count braces
+function CountBraces(line)
+    let line2 = substitute(a:line, "{", "", "g")
+    let line3 = substitute(a:line, "}", "", "g")
+    let result = strlen(line3) - strlen(line2)
+    return result
 endfunction
 
 " Send functions to R
@@ -2061,6 +2088,47 @@ function RAction(rcmd, ...)
 
         let raction = rfun . '(' . rkeyword . argmnts . ')'
         call g:SendCmdToR(raction)
+    endif
+endfunction
+
+function RLoadHTML(fullpath, browser)
+    if g:R_openhtml == 0
+        return
+    endif
+
+    if a:browser == ''
+        if has('win32') || g:rplugin.is_darwin
+            let cmd = ['open', a:fullpath]
+        else
+            let cmd = ['xdg-open', a:fullpath]
+        endif
+    else
+        let cmd = split(a:browser) + [a:fullpath]
+    endif
+
+    if has('nvim')
+        call jobstart(cmd, {'detach': 1})
+    else
+        call job_start(cmd)
+    endif
+endfunction
+
+function ROpenDoc(fullpath, browser)
+    if a:fullpath == ""
+        return
+    endif
+    if !filereadable(a:fullpath)
+        call RWarningMsg('The file "' . a:fullpath . '" does not exist.')
+        return
+    endif
+    if a:fullpath =~ '.odt$' || a:fullpath =~ '.docx$'
+        call system('lowriter ' . a:fullpath . ' &')
+    elseif a:fullpath =~ '.pdf$'
+        call ROpenPDF(a:fullpath)
+    elseif a:fullpath =~ '.html$'
+        call RLoadHTML(a:fullpath, a:browser)
+    else
+        call RWarningMsg("Unknown file type from nvim.interlace: " . a:fullpath)
     endif
 endfunction
 
