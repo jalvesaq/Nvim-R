@@ -103,6 +103,9 @@ Main dependencies:~
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
+      Also cmp-nvim-r if you want auto omni completion from Nvim-R:
+      https://github.com/jalvesaq/cmp-nvim-r
+
    or Vim >= 8.2.84:
       http://www.vim.org/download.php
       Vim must be compiled with |+channel|, |+job| and |+conceal| features.
@@ -139,15 +142,6 @@ Additional dependencies for editing Rnoweb documents:~
       On Linux and other Unix systems: Zathura (recommended), Evince or Okular.
       On OS X: Skim.
       On Windows: SumatraPDF.
-
-   Python 3 and python3-pybtex library: required for omni completion of
-   citation keys (following |R_cite_pattern|) in Rnoweb documents.
-
-
-Additional dependencies for editing Rmd documents:~
-
-   Python 3 and python3-pybtex library: required for omni completion of
-   citation keys (following the `@` symbol) if `zotcite` is not installed.
 
 
 Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
@@ -532,23 +526,20 @@ application to display the data.frame or matrix. All files involved in these
 operations are created in Nvim-R's temporary directory and deleted when R
 quits.
 
-When completing object names (CTRL-X CTRL-O) you have to press CTRL-N to go
-forward in the list and CTRL-P to go backward (see |popupmenu-completion|).
-For rnoweb, rmd and rrst file types, CTRL-X CTRL-O can also be used to
-complete knitr chunk options if the cursor is inside the chunk header.
-
-If R is not running the completion will be based on information from the
-packages listed by |R_start_libs| (provided that the libraries were loaded at
-least once during a session of Nvim-R usage). Otherwise, the pop up menu for
-completion of function arguments will include an additional line with the name
-of the library where the function is (if the function name can be found in
-more than one library) and the function method (if what is being shown are the
-arguments of a method and not of the function itself). For both `library()`
-and `require()`, when completing the first argument, the popup list shows the
-names of installed packages, but only if R is running.
+When completing object names, if R is not running the completion will be based
+on information from the packages listed by |R_start_libs| (provided that the
+libraries were loaded at least once during a session of Nvim-R usage).
+Otherwise, the pop up menu for completion of function arguments will include
+an additional line with the name of the library where the function is (if the
+function name can be found in more than one library) and the function method
+(if what is being shown are the arguments of a method and not of the function
+itself). For both `library()` and `require()`, when completing the first
+argument, the popup list shows the names of installed packages, but only if R
+is running.
 
 You can source all .R files in a directory with the Normal mode command
-`:RSourceDir`, which accepts an optional argument (the directory to be sourced).
+`:RSourceDir`, which accepts an optional argument (the directory to be
+sourced).
 
 
 ------------------------------------------------------------------------------
@@ -625,16 +616,7 @@ Note: If you have too many loaded packages Vim may be unable to load the
 list of functions for syntax highlight.
 
 Vim can automatically complete the names of R objects both as you type them
-and when CTRL-X CTRL-O is pressed in insert mode (to disable these features,
-see |R_auto_omni| and |R_set_omnifunc|; see also |omni-completion| for
-details). Omni completion shows in a pop up menu the name of the object, its
-class and its environment (most frequently, its package name). If the object
-is a function, the plugin also shows the function arguments in a attached
-float window.
-
-If a data.frame is found, while building the list of objects, the columns in
-the data.frame are added to the list but they are shown in the menu only after
-you have inserted the '$' symbol after the data.frame name.
+if `cmp-nvim-r` (a source for `nvim-cmp`) is installed.
 
 Only the names of objects in .GlobalEnv and in loaded libraries are completed.
 If R is not running, only objects of libraries listed in |R_start_libs| will
@@ -1837,14 +1819,7 @@ in the same directory as the Rnoweb, you should set the value of
 >
    let R_latex_build_dir = 'build'
 <
-If you are not using LaTeX-Box omni completion, you can set the value of
-`R_cite_pattern` to control when completion of citation keys is activated.
-Example:
->
-   let R_cite_pattern = '\\\(cite\|bibentry\)\S*{'
-<
-You do not need to set `R_cite_pattern` if you have already set the value of
-`LatexBox_cite_pattern`. See also |R_bib_compl|.
+See also |R_bib_compl|.
 
 ------------------------------------------------------------------------------
 							   *R_rmd_environment*
@@ -2071,16 +2046,14 @@ Rnoweb~
 The omni completion of bibliographic data from bib files requires Python 3 and
 the PyBTeX library for Python 3.
 
-For Rnoweb documents, omni completion of non R code is similar to that
-provided by LaTeX-Box, but better adjusted for an Rnoweb document. The
-completion of citation keys gathers data from `.bib` files in the same
-directory of the current Rnoweb document, and the completion works only if a
-pattern similar to "\cite{" precedes the cursor (see |R_cite_pattern|). Some
-of the most commonly used LaTeX commands are also completed. The completion of
-the argument for both `\ref{}` and `\pageref{}` includes both the label of R
-chunks where the option `fig.cap` was found prefixed with `fig:` and the
-string attributed to the argument `label` in the R code, but only if they
-begin with the substring "tab:".
+For Rnoweb documents, omni completion of citation keys gathers data from
+`.bib` files in the same directory of the current Rnoweb document, and the
+completion works only if a pattern similar to "\cite{" precedes the cursor
+(see |R_cite_pattern|). Some of the most commonly used LaTeX commands are also
+completed. The completion of the argument for both `\ref{}` and `\pageref{}`
+includes both the label of R chunks where the option `fig.cap` was found
+prefixed with `fig:` and the string attributed to the argument `label` in the
+R code, but only if they begin with the substring "tab:".
 
 If the reference includes the field "file", you can open this file by typing
 <LocalLeader>od in Normal mode with the cursor over the citation key.
@@ -2088,9 +2061,10 @@ If the reference includes the field "file", you can open this file by typing
 Rmarkdown and Quarto~
 
 For either RMarkdown or Quarto documents it is recommended to install zotcite
-for completing citation keys directly from Zotero database:
+and cmp-zotcite for completing citation keys directly from Zotero database:
 
    https://github.com/jalvesaq/zotcite
+   https://github.com/jalvesaq/cmp-zotcite
 
 If zotcite is not installed, Nvim-R will do omni completion of bibliographic
 citation keys from `.bib` files, requiring Python 3 and the PyBTeX library for
@@ -2126,13 +2100,12 @@ from vim-pandoc or LaTeX-Box
 If you want a different function for completion of non R code, you should not
 set the value 'omnifunc' in your |vimrc| because you would lose the completion
 of R objects. It is better to use an |autocmd| to set the value of the buffer
-variable `b:rplugin_non_r_omnifunc`. Examples:
+variable `b:rplugin_non_r_omnifunc`. Example:
 >
-   autocmd FileType rnoweb let b:rplugin_non_r_omnifunc = "g:LatexBox_Complete"
    autocmd FileType rmd let b:rplugin_non_r_omnifunc = "pandoc#completion#Complete"
 <
-Note: On Windows, Nvim-R's bibliographic completion works only with ascii letters.
-See also |R_bib_compl|.
+Note: On Windows, Nvim-R's bibliographic completion works only with ascii
+letters. See also |R_bib_compl|.
 
 
 ------------------------------------------------------------------------------
@@ -2314,35 +2287,39 @@ want to know what they are, while editing an R file, do in Normal mode:
 							         *R_bib_compl*
 6.37 Omni completion~
 
-Nvim-R sets the 'omnifunc' option to its built-in omni completion function
-(`CompleteR`), but if you prefer to use another function or system (such as
-a language server) for omni completion, set in your |vimrc| the value of
-`R_set_omnifunc` as a list including only the file types that must have
-`CompleteR` as the function for omni completion. Example with the default
-value:
->
-   let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
-<
-Similarly, you can define what files will get Nvim-R's auto omni completion:
->
-   let R_auto_omni = ["r", "rmd", "quarto", "rnoweb", "rhelp"]
-<
+There are two ways of getting automatic completion of R objects names while
+you type: using Nvim-R's built-in completion system with and using a language
+server. The advantage of Nvim-R's built-in system is the completion of objects
+of the R's workspace (`.GlobalEnv`), including column names of data.frames. If
+the `cmp-nvim-r` source for `nvim-cmp` is installed, you can benefit from
+Nvim-R' completions without sacrifing other sources of completion that you
+might consider useful.
+
 Note: If you are using the `languageserver` package, you should disable its
-omni completion feature in your `~/.Rprofile`:
+omni completion feature in your `~/.Rprofile` to get completions from
+`cmp-nvim-r`:
 >
    options(languageserver.server_capabilities =
            list(completionProvider = FALSE,
 	        completionItemResolve = FALSE))
 <
-You should use empty lists if you do not want to use Nvim-R's omni completion
-in any file type:
+If you prefer to get completions from the language server, you should set both
+`R_set_omnifunc` and `R_auto_omni` as empty lists in your |vimrc|:
 >
    let R_set_omnifunc = []
    let R_auto_omni = []
 <
-Automatic omni completion does not include results from previously defined
-non-R function, such as `htmlcomplete#CompleteTags` when editing Rmd files.
-You should trigger these functions manually with CTRL-X CTRL-O.
+Even without `cmp-nvim-r` or the `languageserver`, you still can use Nvim-R's
+omni completion if you define in your |vimrc| the list file types supported by
+Nvim-R that sould enable automatic omnic completion. Similarly, you can define
+what file types should have the traditions Vim's omni completion enabled.
+Example:
+>
+   let R_auto_omni = ["r", "rmd", "quarto", "rnoweb", "rhelp"]
+   let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
+<
+Note: the option `R_auto_omni` and its corresponding feature might be
+eliminatd in the near future.
 
 While completing function arguments, Nvim-R may include column names from the
 data.frame passed as the first argument, and you may set in your |vimrc| the
@@ -2375,8 +2352,7 @@ very simple and would wrongly recognize `data` as the name of the
 <
 Nvim-R receives the list of objects for omni completion from the nclientserver
 job running in the background. If the list is too big to be transmitted
-through nclientserver's stdout in a single chunk of data, the completion is
-aborted.
+through nclientserver's stdout, the completion might be aborted.
 
 If editing Quarto documents, Nvim-R will try to find the file
 `yaml-intelligence-resources.json` which is part of `quarto` application and
@@ -2386,12 +2362,28 @@ Quarto document. If Nvim-R fails to find the file, you can set the value of
 >
    let R_quarto_intel = '~/Downloads/quarto-1.1.251/share/editor/tools/yaml/yaml-intelligence-resources.json'
 <
-Omni completion in Rnoweb files will include results from bib files entries.
+Omni completion in Rnoweb files will include results from bib files entries
+(requiring Python 3 and python3-pybtex): required for omni completion of
+   citation keys (following |R_cite_pattern|) in Rnoweb documents.
+
 Completion of bib file entries might also be enabled to `rmd` and `quarto`
 file types if you include them in the list `R_bib_compl`. Example:
 >
    let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
 <
+There are many alternatives to Nvim-R completion of bib keys. Examples:
+
+   - `zotcite` with `cmp-zotice` (for Markdown, Rmd and Quarto):
+     https://github.com/jalvesaq/zotcite
+     https://github.com/jalvesaq/cmp-zotcite
+
+   - `VimTeX` (for Rnoweb):
+     https://github.com/lervag/vimtex/
+
+   - Either `cmp-pandoc-references` or `cmp-pandoc.nvim` source for `nvim-cmp`:
+     https://github.com/jc-doyle/cmp-pandoc-references
+     https://github.com/aspeddro/cmp-pandoc.nvim
+
 
 ------------------------------------------------------------------------------
 							      *R_remote_tmpdir*
@@ -2797,27 +2789,10 @@ lines have marks defined. The plugins are available at:
    http://www.vim.org/scripts/script.php?script_id=152
    https://github.com/kshenoy/vim-signature
 
-------------------------------------------------------------------------------
-							     *Nvim-R-snippets*
-9.5. Use snipMate~
-
-You probably will want to use the snipMate plugin to insert snippets of code
-in your R script. The plugin may be downloaded from:
-
-   http://www.vim.org/scripts/script.php?script_id=2540
-
-The snipMate plugin does not come with snippets for R, but you can copy the
-files r.snippets and rmd.snippets that ship with Nvim-R (look at the R
-directory) to the snippets directory. The files have only a few snippets, but
-they will help you to get started. If you usually edit rnoweb files, you may
-also want to create an rnoweb.snippets by concatenating both tex.snippets and
-r.snippets. If you edit R documentation, you may want to create an
-rhelp.snippets
-
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-bindings*
-9.6. Easier key bindings for most used commands~
+9.5. Easier key bindings for most used commands~
 
 The most used commands from Nvim-R probably are "Send line" and "Send
 selection". You may find it a good idea to map them to the space bar in your
@@ -2842,7 +2817,7 @@ in mappings are particularly problematic.
 
 ------------------------------------------------------------------------------
 							  *Nvim-R-localleader*
-9.7. Remap the <LocalLeader>~
+9.6. Remap the <LocalLeader>~
 
 People writing Rnoweb documents may find it better to use a comma or other key
 as the <LocalLeader> instead of the default backslash (see |maplocalleader|).
@@ -2854,7 +2829,7 @@ your |vimrc| (before any mapping command):
 
 ------------------------------------------------------------------------------
 							     *Nvim-R-tagsfile*
-9.8. Use a tags file to jump to function definitions~
+9.7. Use a tags file to jump to function definitions~
 
 Vim can jump to a function definition if it finds a "tags" file with the
 information about the place where the function is defined. To generate the
@@ -2892,7 +2867,7 @@ Example on how to test whether your setup is ok:
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-folding*
-9.9. Folding setup~
+9.8. Folding setup~
 
 Vim has several methods of folding text (see |fold-methods| and
 |fold-commands|). To enable the syntax method of folding for R files, put in
@@ -2918,7 +2893,7 @@ develop a better algorithm in the future.
 
 
 ------------------------------------------------------------------------------
-9.10. Highlight chunk header as R code~
+9.9. Highlight chunk header as R code~
 
 By default, Vim will highlight chunk headers of RMarkdown, Quarto and
 RreStructuredText with a single color. When the code is processed by knitr,
@@ -2930,136 +2905,8 @@ them as such. You can do this by putting in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-9.11. Automatically close parenthesis~
-
-Some people want Vim automatically inserting a closing parenthesis, bracket
-or brace when an open one has being typed. The page below explains how to
-achieve this goal:
-
-   http://vim.wikia.com/wiki/Automatically_append_closing_characters
-
-
-------------------------------------------------------------------------------
-9.12. Automatic line breaks~
-
-By default, while editing R code, Vim does not break lines when you are
-typing if you reach the column defined by the 'textwidth' option. If you
-prefer that Vim breaks the R code automatically put in your |vimrc|:
->
-   autocmd FileType r setlocal formatoptions+=t
-<
-
-------------------------------------------------------------------------------
-9.13. Run your Makefile from within R~
-
-Do you have many Rnoweb files included in a master tex or Rnoweb file and use
-a Makefile to build the pdf? You may consider it useful to put the following
-line in your |vimrc|:
->
-   nmap <LocalLeader>sm :update<CR>:call g:SendCmdToR('system("make")')<CR>
-<
-
-------------------------------------------------------------------------------
-							     *Nvim-R-Rprofile*
-9.14. Edit your ~/.Rprofile~
-
-You may want to edit your `~/.Rprofile` in addition to considering the
-suggestions of |Nvim-R-R-setup| you may also want to put the following
-lines in your `~/.Rprofile` if you are using Linux:
->
-   grDevices::X11.options(width = 4.5, height = 4, ypos = 0,
-                          xpos = 1000, pointsize = 10)
-<
-The `X11.options()` is used to choose the position and dimensions of the X11
-graphical device. On the X Server (not on Wayland) you can also
-install the application wmctrl and create shortcuts in your desktop
-environment to the command:
->
-   wmctrl -r "R Graphics" -b toggle,above
-<
-which will toggle the "always on top" state of the X11 device window.
-Alternatively, you can right click on the X11 device window title bar and
-choose "Always on top". This is useful to emulate a feature present in R IDEs
-which can display R plots in a separate panel. Although we can not embed an R
-graphical device in Vim, we can at least make it always visible over the
-terminal emulator or the GVim window.
-
-And add this to your `~/.Rprofile` if you want to use `w3m`, a text based web
-browser, to navigate through R docs after `help.start()` when you cannot run a
-graphical web browser (e.g. when you are in the Linux console):
->
-   if(interactive() && Sys.info()[["sysname"]] == "Linux" &&
-       Sys.getenv("DISPLAY") == "" && Sys.getenv("WAYLAND_DISPLAY") == ""){
-       if(Sys.getenv("TMUX") != "")
-           options(browser = function(u) system(paste0("tmux new-window 'w3m ", u, "'")))
-       else if(Sys.getenv("NVIMR_TMPDIR") != "")
-           options(browser = function(u) .C("nvimcom_msg_to_nvim",
-                                            paste0('StartTxtBrowser("w3m", "', u, '")')))
-   }
-<
-
-------------------------------------------------------------------------------
-							    *Nvim-R-latex-box*
-9.15. Integration with LaTeX-Box~
-
-LaTeX-Box does not automatically recognize Rnoweb files as a valid LaTeX file.
-You have to tell LaTeX-Box that the .tex file compiled by either `knitr()` or
-`Sweave()` is the main LaTeX file. You can do this in two ways. Suppose that
-your Rnoweb file is called report.Rnw... You can:
-
-   (1) Create an empty file called "report.tex.latexmain".
-
-   or
-
-   (2) Put in the first 5 lines of report.Rnw:
->
-   % For LaTeX-Box: root = report.tex
-<
-   or
-
-   (3) If you do not use child rnoweb documents, put in your |vimrc|:
->
-   autocmd FileType rnoweb let b:main_tex_file = substitute(expand("%"), "\....$", ".tex", "")
-<
-Of course you must run either `knitr()` or `Sweave()` before trying LaTeX-Box
-omni completion. Please, read LaTeX-Box documentation for more information.
-
-
-See also: |R_latexcmd|.
-
-
-------------------------------------------------------------------------------
-							  *Nvim-R-quick-setup*
-9.16. Suggested setup for Nvim-R~
-
-Please, look at section |Nvim-R-options| if you want information about the
-Nvim-R customization.
-
-Here are some suggestions of configuration for Vim/Neovim. To understand what
-you are doing, and change the configuration to your taste, please read this
-document from the beginning.
-
-   ~/.vimrc or ~/.config/nvim/init.vim or ~\AppData\Local\nvim\init.vim~
->
-   " Change Leader and LocalLeader keys:
-   let maplocalleader = ','
-   let mapleader = ';'
-
-   " Use Ctrl+Space to do omni completion:
-   if has('nvim') || has('gui_running')
-       inoremap <C-Space> <C-x><C-o>
-   else
-       inoremap <Nul> <C-x><C-o>
-   endif
-
-   " Press the space bar to send lines and selection to R:
-   vmap <Space> <Plug>RDSendSelection
-   nmap <Space> <Plug>RDSendLine
-<
-
-------------------------------------------------------------------------------
 								 *rout_colors*
-9.17. Syntax highlight of .Rout files~
+9.10 Syntax highlight of .Rout files~
 
 You can set both foreground and background colors of R output in your |vimrc|.
 The example below is for either a gui version of Vim or a terminal
@@ -3114,7 +2961,7 @@ put in your |vimrc|:
 
 ------------------------------------------------------------------------------
 							       *Nvim-R-global*
-9.18 Enable the plugin when editing any file type~
+9.11 Enable the plugin when editing any file type~
 
 Nvim-R is a file-type plugin. This means that its functionalities will be
 available only when an R file type is being edited (R, Rnoweb, Rhelp, Rmd,
@@ -3137,21 +2984,8 @@ run will:
 
 
 ------------------------------------------------------------------------------
-							  *Nvim-R-reload-html*
-9.19 Auto refresh HTML page~
-
-Nvim-R gets the value of R's "browser" option (as returned by
-`getOption("browser")` to open an HTML document. The problem is that most
-browsers always open a new tab instead of refreshing a tab where the document
-is already open. One solution for this issue is to create a Firefox profile
-which behaves differently, as suggested by Joss Wright at:
-
-   https://github.com/jalvesaq/Nvim-R/issues/630
-
-
-------------------------------------------------------------------------------
 							       *Nvim-R-remote*
-9.20 Remote access~
+9.12 Remote access (tested years ago)~
 
 The easiest way of running R in a remote machine is logging into the remote
 machine through ssh, starting Neovim and running R in a Neovim's terminal (the
@@ -3239,7 +3073,7 @@ goal (tested on April, 2017).
 ------------------------------------------------------------------------------
 						     *Nvim-R-df-view-mappings*
 
-9.21 Create custom mappings for viewing data.frames or matrices~
+9.13 Create custom mappings for viewing data.frames or matrices~
 
 Using the method described in |Nvim-R-key-bindings|, you can customize how
 data.frames or matrices are viewed by passing a string of optional arguments
@@ -3260,6 +3094,7 @@ Examples:
 								 *Nvim-R-news*
 10. News~
 
+ * Integration with cmp-nvim-r, a source for nvim-cmp.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
 

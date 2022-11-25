@@ -801,6 +801,7 @@ let g:SendMBlockToR = function('RNotRunning')
 let g:SendParagraphToR = function('RNotRunning')
 let g:SendSelectionToR = function('RNotRunning')
 let g:SendCmdToR = function('SendCmdToR_fake')
+let g:SendFileToR = function('SendCmdToR_fake')
 
 
 
@@ -880,13 +881,14 @@ let g:R_enable_comment    = get(g:, "R_enable_comment",     0)
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
 let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
-let g:R_set_omnifunc      = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
-let g:R_auto_omni         = get(g:, "R_auto_omni",    ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 let g:R_bib_compl         = get(g:, "R_bib_compl", ["rnoweb"])
 
 if type(g:R_bib_compl) == v:t_string
     let g:R_bib_compl = [g:R_bib_compl]
 endif
+
+let g:R_fun_data_1 = get(g:, 'R_fun_data_1', ['select', 'rename', 'mutate', 'filter'])
+let g:R_fun_data_2 = get(g:, 'R_fun_data_2', {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']})
 
 if exists(":terminal") != 2
     let g:R_external_term = get(g:, "R_external_term", 1)
@@ -1086,9 +1088,6 @@ endif
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)
-    if len(g:R_auto_omni) > 0 || len(g:R_set_omnifunc) > 0
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
-    endif
     exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
     call CheckNvimcomVersion()
 endfunction

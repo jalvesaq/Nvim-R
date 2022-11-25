@@ -307,7 +307,14 @@ nvim.GlobalEnv.fun.args <- function(funcname) {
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     cat(nvim.args(funcname))
     sink()
-    .C("nvimcom_msg_to_nvim", paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
+    if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
+        .C("nvimcom_msg_to_nvim",
+           paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim",
+           paste0("v:lua.require'cmp_nvim_r'.finish_glbenv_fun()"),
+           PACKAGE = "nvimcom")
+    }
     return(invisible(NULL))
 }
 
@@ -315,10 +322,28 @@ nvim.get.summary <- function(obj, wdth) {
     owd <- getOption("width")
     options(width = wdth)
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
-    print(summary(obj))
+    if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
+        print(summary(obj))
+    } else {
+        if (!is.null(attr(obj, "label")))
+            cat("\n\n", attr(obj, "label"))
+        cat("\n\n```rout\n")
+        if (is.factor(obj) || is.numeric(obj)) {
+            print(summary(obj))
+        } else {
+            print(str(obj))
+        }
+        cat("```\n")
+    }
     sink()
     options(width = owd)
-    .C("nvimcom_msg_to_nvim", "FinishGetSummary()", PACKAGE = "nvimcom")
+
+    if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
+        .C("nvimcom_msg_to_nvim", "FinishGetSummary()", PACKAGE = "nvimcom")
+    } else {
+        .C("nvimcom_msg_to_nvim", "v:lua.require'cmp_nvim_r'.finish_get_summary()",
+           PACKAGE = "nvimcom")
+    }
     return(invisible(NULL))
 }
 

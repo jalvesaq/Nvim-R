@@ -5,8 +5,8 @@ R code.
 
 ## Installation
 
-If you use a plugin manager, such as [vim-plug], follow its instructions on
-how to install plugins from github.
+If you use a plugin manager, follow its instructions on how to install plugins
+from github.
 
 To install the stable version of the plugin, if using [vim-plug], put this in
 your `vimrc`/`init.vim`:

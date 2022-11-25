@@ -36,6 +36,8 @@ static int OpenLS;
 static int nvimcom_is_utf8;
 static int allnames;
 
+static char compl_cb[64];
+static char compl_info[64];
 static char compldir[256];
 static char tmpdir[256];
 static char liblist[576];
@@ -1680,6 +1682,8 @@ static void init_vars(void)
         strcpy(strT, "|- ");
     }
 
+    strncpy(compl_cb, getenv("NVIMR_COMPLCB"), 63);
+    strncpy(compl_info, getenv("NVIMR_COMPLInfo"), 63);
     strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
     strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
     snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
@@ -1904,7 +1908,7 @@ char *complete_instlibs(char *p, const char *base) {
 
 // Return user_data of a specific item with function usage, title and
 // description to be displayed in the float window
-void compl_info(const char *wrd, const char *pkg)
+void completion_info(const char *wrd, const char *pkg)
 {
     int i;
     unsigned long nsz;
@@ -1975,7 +1979,7 @@ void compl_info(const char *wrd, const char *pkg)
             p = str_cat(p, "', 'descr': '");
             p = str_cat(p, f[6]);
             p = str_cat(p, "'}");
-            printf("call SetComplInfo(%s)\n", compl_buffer);
+            printf("call %s(%s)\n", compl_info, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -1983,7 +1987,7 @@ void compl_info(const char *wrd, const char *pkg)
             s++;
         s++;
     }
-    printf("call SetComplInfo({})\n");
+    printf("call %s({})\n", compl_info);
     fflush(stdout);
 }
 
@@ -2130,7 +2134,8 @@ void complete(const char *id, const char *base, const char *funcnm)
         if (*funcnm == '\004') {
             // Get menu completion for installed libraries
             p = complete_instlibs(p, base);
-            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+                    strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
         } else {
@@ -2139,7 +2144,8 @@ void complete(const char *id, const char *base, const char *funcnm)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+            printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+                    strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
         }
@@ -2155,7 +2161,8 @@ void complete(const char *id, const char *base, const char *funcnm)
         pd = pd->next;
     }
 
-    printf("\005%" PRI_SIZET "\005call SetComplMenu(%s, [%s])\n", strlen(compl_buffer) + strlen(id) + 23, id, compl_buffer);
+    printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+            strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
     fflush(stdout);
 }
 
@@ -2291,7 +2298,7 @@ int main(int argc, char **argv){
                     msg++;
                 *msg = 0;
                 msg++;
-                compl_info(wrd, msg);
+                completion_info(wrd, msg);
                 break;
 #ifdef WIN32
             case '7':

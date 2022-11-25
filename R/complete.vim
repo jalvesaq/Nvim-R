@@ -22,9 +22,6 @@ if g:R_hi_fun_globenv == 0
     let g:R_hi_fun_globenv = 1
 endif
 
-let g:R_fun_data_1 = get(g:, 'R_fun_data_1', ['select', 'rename', 'mutate', 'filter'])
-let g:R_fun_data_2 = get(g:, 'R_fun_data_2', {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']})
-
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
     let g:rplugin.compl_cls = ud['cls']
@@ -402,10 +399,8 @@ function NeedRArguments(line, cpos)
     let lnum = line(".")
     let cpos = a:cpos
     let idx = cpos[2] - 2
-    let idx2 = cpos[2] - 2
     let np = 1
     let nl = 0
-    let argls = []
     " Look up to 10 lines above for an opening parenthesis
     while nl < 10
         if line[idx] == '('
@@ -422,7 +417,6 @@ function NeedRArguments(line, cpos)
             if rkeyword0 =~ "::"
                 let pkg = '"' . substitute(rkeyword0, "::.*", "", "") . '"'
                 let rkeyword0 = substitute(rkeyword0, ".*::", "", "")
-                let rkeyword1 = rkeyword0
             else
                 let rkeyword1 = rkeyword0
                 if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
@@ -558,7 +552,7 @@ function RTriggerCompletion()
         let isfa = nra[3] ? v:false : IsFirstRArg(lin, nra[6])
         if (nra[0] == "library" || nra[0] == "require") && isfa
             let s:is_auto_completing = 1
-            call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . "\004" . wrd . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003\004" . wrd . "\n")
             return
         endif
 
@@ -662,16 +656,15 @@ endfunction
 
 function CompleteChunkOptions(base)
     " https://yihui.org/knitr/options/#chunk-options (2021-04-19)
-    let lines = readfile(g:rplugin.home . '/R/chunk_options')
+    let lines = json_decode(join(readfile(g:rplugin.home . '/R/chunk_options.json')))
 
     let ktopt = []
     for lin in lines
-        let dict = eval(lin)
-        let dict['abbr'] = dict['word']
-        let dict['word'] = dict['word'] . '='
-        let dict['menu'] = '= ' . dict['menu']
-        let dict['user_data']['cls'] = 'k'
-        let ktopt += [deepcopy(dict)]
+        let lin['abbr'] = lin['word']
+        let lin['word'] = lin['word'] . '='
+        let lin['menu'] = '= ' . lin['menu']
+        let lin['user_data']['cls'] = 'k'
+        let ktopt += [deepcopy(lin)]
     endfor
 
     let rr = []

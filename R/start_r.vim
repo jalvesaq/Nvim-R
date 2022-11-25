@@ -17,6 +17,7 @@ unlet g:SendLineToRAndInsertOutput
 unlet g:SendMBlockToR
 unlet g:SendParagraphToR
 unlet g:SendSelectionToR
+unlet g:SendFileToR
 
 "==============================================================================
 " Functions to start and close R
