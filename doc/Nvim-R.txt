@@ -160,10 +160,6 @@ If running Gnome Shell on Wayland, you may also want to install the extension
 "Activate Window By Title" which will be used to raise Zathura window
 displaying the PDF file generated from Rnoweb, Rmd or Quarto documents.
 
-You may want to improve the configuration of your |vimrc| for a better use of
-the plugin. Please, see |Nvim-R-quick-setup| for some suggestions of
-configuration.
-
 
 ------------------------------------------------------------------------------
 3.2. Installation of the plugin~
@@ -1952,11 +1948,8 @@ command `getOption("browser")`, unless it is NULL. In this case, Nvim-R will
 call `open` on both Windows and Mac OS X, and `xdg-open` on Linux.
 
 Most browser will open a new tab each time they are called instead of
-refreshing a document that is already open. Please, see |Nvim-R-reload-html|
-for a workaround.
-
-If you rather prefer that Nvim-R never tries to open the web browser, put in
-your |vimrc|:
+refreshing a document that is already open. So, if you rather prefer that
+Nvim-R never tries to open the web browser, put in your |vimrc|:
 >
    let R_openhtml = 0
 <
@@ -2303,23 +2296,25 @@ omni completion feature in your `~/.Rprofile` to get completions from
            list(completionProvider = FALSE,
 	        completionItemResolve = FALSE))
 <
-If you prefer to get completions from the language server, you should set both
-`R_set_omnifunc` and `R_auto_omni` as empty lists in your |vimrc|:
+If you prefer to get completions from the language server, `cmp-nvim-r` should
+not be installed, and you should set both `R_set_omnifunc` and `R_auto_omni`
+as empty lists in your |vimrc|:
 >
    let R_set_omnifunc = []
    let R_auto_omni = []
 <
 Even without `cmp-nvim-r` or the `languageserver`, you still can use Nvim-R's
-omni completion if you define in your |vimrc| the list file types supported by
-Nvim-R that sould enable automatic omnic completion. Similarly, you can define
-what file types should have the traditions Vim's omni completion enabled.
-Example:
+omni completion if you define in your |vimrc| the list of file types supported
+by Nvim-R that sould enable automatic omnic completion. Similarly, you can
+define what file types should have the traditions Vim's omni completion
+enabled. Example:
 >
    let R_auto_omni = ["r", "rmd", "quarto", "rnoweb", "rhelp"]
    let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
 <
-Note: the option `R_auto_omni` and its corresponding feature might be
-eliminatd in the near future.
+Note: the option `R_auto_omni` option and its corresponding feature might be
+removed in the near future because I don't have time to maintain two
+different systems for the same functionality.
 
 While completing function arguments, Nvim-R may include column names from the
 data.frame passed as the first argument, and you may set in your |vimrc| the
