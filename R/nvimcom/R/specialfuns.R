@@ -218,7 +218,7 @@ gbRd.fun <- function(x) {
         return(NULL)
 
     tags <- tools:::RdTags(rdo)
-    keep_tags <- unique(c("\\title", "\\name", "\\arguments"))
+    keep_tags <- c("\\title", "\\name", "\\arguments")
     rdo[which(!(tags %in% keep_tags))] <-  NULL
 
     rdo
@@ -273,30 +273,45 @@ gbRd.args2txt <- function(rdo, arglist) {
 
     argl <- list()
     for (a in arglist) {
+
+        # Build a dummy documentation with only one item in the "arguments" section
         x <- list()
         class(x) <- "Rd"
         x[[1]] <- gbRd.set_sectag("Dummy name", sectag = "\\name", eltag = "VERB")
         x[[2]] <- gbRd.set_sectag("Dummy title", sectag = "\\title", eltag = "TEXT")
         x[[3]] <- gbRd.get_args(rdo, a)
-
         tags <- tools:::RdTags(x)
+
+        # We only need the section "arguments", but print(x) will result in
+        # nothing useful if either "title" or "name" section is missing
         keep_tags <- c("\\title", "\\name", "\\arguments")
         x[which(!(tags %in% keep_tags))] <-  NULL
 
-        temp <- tools::Rd2txt(x, out = tempfile("Rtxt"), package = "",
-                              outputEncoding = "UTF-8")
+        res <- capture.output(print(x))
 
-        res <- readLines(temp) # note: temp is a (temporary) file name.
-        unlink(temp)
+        # The result is (example from utils::available.packages()):
+        # \name{Dummy name}\title{Dummy title}\arguments{\item{max_repo_cache_age}{any cached values older than this in seconds     will be ignored. See \sQuote{Details}.   }}
 
-        # Omit \\title and sec header
-        res <- res[-c(1, 2, 3, 4)]
-
+        # Thes sections \title, \name and \arguments might be in any order.
+        # Delete one at a time:
         res <- paste(res, collapse = " ")
         res <- gsub("  *", " ", res)
+        res <- sub("\\\\name\\{Dummy name\\}", "", res)
+        res <- sub("\\\\title\\{Dummy title\\}", "", res)
+        res <- sub("\\\\arguments\\{", "", res)
         res <- sub(" $", "", res)
-        res <- sub(" *", "", res)
-        argl[[a]] <- res
+        res <- sub("\\}\\}$", "", res)
+
+        if (length(res) == 1 && grepl("\\\\item\\{", res)) {
+            # Now we have only the item to clean:
+            res <- sub("^\\\\item\\{(.+?)\\}\\{", "`\\1`: ", res)
+            res <- CleanOmniLine(res)
+            cat(paste0(a, " >> ", res, "\n"), file = "/dev/shm/arglist", append = TRUE)
+
+            argl[[a]] <- res
+        } else {
+            cat(a, " NO_ITEM\n", file = "/dev/shm/arglist", append = TRUE)
+        }
     }
     argl
 }

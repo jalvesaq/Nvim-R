@@ -36,24 +36,23 @@ function FormatInfo(width, needblank)
         let info .= ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1)
     else
         if ud['descr'] != ''
-            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1) . ' '
+            let info = ' ' . FormatTxt(ud['descr'], ' ', " \n ", a:width - 1)
         endif
         if ud['cls'] == 'f'
-            if ud['descr'] != '' && s:usage != ''
-                let info .= "\n————\n"
-            endif
             if s:usage != ''
+                if ud['descr'] != ''
+                    let info .= "\n————\n"
+                endif
+                let usg = "```{R} \n "
                 " Avoid the prefix ', \n  ' if function name + first argment is longer than a:width
-                let usg = FormatTxt(s:usage, ', ', ",  \n   ", a:width)
+                let usg .= FormatTxt(s:usage, ', ', ",  \n   ", a:width)
                 let usg = substitute(usg, "^,  \n   ", "", "")
-                let info .= ' ' . usg . ' '
+                let usg .= "\n```\n"
+                let info .= usg
             endif
         endif
         if a:width > 29 && has_key(ud, 'summary')
-            if ud['descr'] != ''
-                let info .= "\n————\n"
-            endif
-            let info .= " " . join(ud['summary'], "\n ") . " "
+            let info .= "\n```{Rout} \n" . join(ud['summary'], "\n ") . "\n```\n"
         endif
     endif
 
@@ -61,9 +60,9 @@ function FormatInfo(width, needblank)
         return []
     endif
     if a:needblank
-        let lines = [''] + split(info, "\n") + ['']
+        let lines = [''] + split(info, "\n")
     else
-        let lines = split(info, "\n") + ['']
+        let lines = split(info, "\n")
     endif
     return lines
 endfunction
@@ -224,6 +223,7 @@ function CreateNewFloat(...)
             call setwinvar(s:float_win, '&wrap', 1)
             call setwinvar(s:float_win, '&colorcolumn', 0)
             call setwinvar(s:float_win, '&signcolumn', 'no')
+            call setwinvar(s:float_win, '&conceallevel', 3)
         endif
     else
         if fanchor == 'NE'

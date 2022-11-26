@@ -34,8 +34,13 @@ function! RComplAutCmds()
     endif
     let b:did_RBuffer_au = 1
 endfunction
-if exists('g:R_set_omnifunc') && exists('g:R_auto_omni')
-    call RComplAutCmds()
+
+" This condition is repeated at start_ncs.vim
+if !(has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict)
+    let g:R_auto_omni = get(g:, "R_auto_omni", [])
+    if len(g:R_auto_omni) > 0
+        call RComplAutCmds()
+    endif
 endif
 
 let b:rplugin_knitr_pattern = ''

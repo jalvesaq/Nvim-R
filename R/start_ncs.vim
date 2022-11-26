@@ -1,15 +1,17 @@
 " Functions to start nclientserver or that are called only after the
 " nclientserver is running
 
-let g:R_auto_omni = get(g:, "R_auto_omni", [])
-if exists('g:CmpNvimR_running')
+" This condition is repeated at common_buffer.vim
+if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
     let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
     let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
     let g:R_set_omnifunc = get(g:, "R_set_omnifunc", [])
+    let g:R_auto_omni = []
     let g:R_hi_fun_globenv = 2
 else
     let $NVIMR_COMPLCB = 'SetComplMenu'
     let $NVIMR_COMPLInfo = "SetComplInfo"
+    let g:R_auto_omni = get(g:, "R_auto_omni", [])
     let g:R_set_omnifunc = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 endif
 
