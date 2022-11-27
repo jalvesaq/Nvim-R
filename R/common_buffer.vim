@@ -19,19 +19,7 @@ if g:R_assign == 3
     iabb <buffer> _ <-
 endif
 
-if (index(g:R_auto_omni, &filetype) > -1 || index(g:R_auto_omni, &filetype) > -1)
-    if !exists("*CompleteR")
-        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
-    endif
-    if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
-        if &omnifunc == "CompleteR"
-            let b:rplugin_non_r_omnifunc = ""
-        else
-            let b:rplugin_non_r_omnifunc = &omnifunc
-        endif
-    endif
-endif
-if index(g:R_auto_omni, &filetype) > -1
-    let g:R_hi_fun_globenv = 2
+if (index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1)
+    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
     call RComplAutCmds()
 endif

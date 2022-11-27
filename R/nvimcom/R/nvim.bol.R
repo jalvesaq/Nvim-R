@@ -36,14 +36,14 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     }
 
     if (is.null(pkg))
-        pkgname <- find(funcname, mode = "function")
+        pkgname <- sub(".*:", "", find(funcname, mode = "function")[1])
     else
         pkgname <- pkg
 
     if (is.na(frm[1])) {
         if (is.null(pkg)) {
             deffun <- paste0(funcname, ".default")
-            if (existsFunction(deffun) && pkgname[1] != ".GlobalEnv") {
+            if (existsFunction(deffun) && pkgname != ".GlobalEnv") {
                 funcname <- deffun
                 funcmeth <- deffun
             } else if (!existsFunction(funcname)) {
@@ -76,7 +76,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     }
 
     if (pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0) {
-        arglist <- gbRd.args2txt(funcname, names(frm))
+        arglist <- gbRd.args2txt(pkgname, funcname, names(frm))
         arglist <- lapply(arglist, nvim.fix.string, sdq)
     }
 
@@ -99,7 +99,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else {
                 str2 <- paste0("', 'menu': ' '")
             }
-            if (pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0)
+            if (pkgname != ".GlobalEnv" && extrainfo && length(frm) > 0)
                 res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '",
                                           arglist[[field]], "'}}, "))
             else
@@ -133,9 +133,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         res <- "[]"
     } else {
         if (is.null(pkg)) {
-            info <- ""
-            if (length(pkgname) > 1)
-                info <- pkgname[1]
+            info <- pkgname
             if (!is.na(funcmeth)) {
                 if (info != "")
                     info <- paste0(info, ", ")
@@ -347,17 +345,17 @@ CleanOmniLine <- function(x) {
     x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
     x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\2\u2019 <\\1>", x)
     x <- gsub("\\\\ldots", "...", x)
     x <- gsub("\\\\dots", "...", x)
     x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
     x <- gsub("\\\\verb\\{(.*?)\\}", "`\\1`", x)
     x <- gsub("\\\\out\\{(.*?)\\}", "\\1", x)
+    x <- gsub("\\\\figure\\{.+?\\}\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\figure\\{(.+?)\\}", "\\1", x)
+    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\2\u2019 <\\1>", x)
+    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.+?\\}\\{(.+?)\\}\\}", "\\1", x)
+    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.+?\\}\\{(.+?)\\}\\}", "\\1", x)
     x <- gsub("\\\\if\\{html\\}\\{.+?\\}", "", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
-    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.*?\\}\\{(.*?)\\}\\}", "\\1", x)
-    x <- gsub("\\\\figure\\{.*?\\}\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\figure\\{(.*?)\\}", "\\1", x)
     x <- gsub("\\\\tabular\\{.*?\\}\\{(.*?)\\}", "\\1\002", x)
     x <- gsub("\\\\tab ", "\t", x)
     x <- gsub("\\\\item\\{(.+?)\\}", "\002\\1", x)
@@ -366,6 +364,7 @@ CleanOmniLine <- function(x) {
     x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1\002", x)
     x <- gsub("\\\\cr\\b", "\002", x)
     x <- gsub("\\\\sspace\\{\\}", " ", x)
+    x <- gsub("\\\\\\{\\}", "", x)
     if (grepl("\\\\describe\\{", x)) {
         x <- sub("\\\\describe\\{(.*)}", "\\1", x)
         x <- sub("\\\\describe\\{(.*)}", "\\1", x)

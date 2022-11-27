@@ -8,7 +8,7 @@
 " That is, we can call a function in nvimcom to get the contents of the float
 " window.
 
-if exists("*FormatInfo")
+if exists("*CompleteR")
     finish
 endif
 
@@ -775,16 +775,25 @@ function FillQuartoComplMenu()
     endif
 endfunction
 
-" Plugins that automatically run omni completion will work better if they
-" don't have to wait for the omni list to be built.
-" Test whether the autocommands were already defined to avoid getting them
-" registered three times
-" For the first buffer, the function is called from start_ncs.vim
 function RComplAutCmds()
-    " Set omni completion (both automatic and triggered by CTRL-X CTRL-O)
+    if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
+        if &omnifunc == "CompleteR"
+            let b:rplugin_non_r_omnifunc = ""
+        else
+            let b:rplugin_non_r_omnifunc = &omnifunc
+        endif
+    endif
     if index(g:R_set_omnifunc, &filetype) > -1
         setlocal omnifunc=CompleteR
     endif
+    if index(g:R_auto_omni, &filetype) > -1
+        " Plugins that automatically run omni completion will work better if they
+        " don't have to wait for the omni list to be built.
+        let g:R_hi_fun_globenv = 2
+    endif
+
+    " Test whether the autocommands were already defined to avoid getting them
+    " registered three times
     if !exists('b:did_RBuffer_au')
         augroup RBuffer
             autocmd InsertEnter <buffer> call ROnInsertEnter()

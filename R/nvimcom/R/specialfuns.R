@@ -195,9 +195,11 @@ gbRd.set_sectag <- function(s, sectag, eltag) {
     res
 }
 
-gbRd.fun <- function(x) {
+help("stats::filter", help_type = "text")
+
+gbRd.fun <- function(x, pkg) {
     rdo <- NULL # prepare the "Rd" object rdo
-    x <- do.call(utils::help, list(x, help_type = "text",
+    x <- do.call(utils::help, list(x, pkg, help_type = "text",
                                verbose = FALSE,
                                try.all.packages = FALSE))
     if (length(x) == 0)
@@ -265,8 +267,8 @@ gbRd.get_args <- function(rdo, arg) {
     rdargs
 }
 
-gbRd.args2txt <- function(rdo, arglist) {
-    rdo <- gbRd.fun(rdo)
+gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
+    rdo <- gbRd.fun(rdo, pkg)
 
     if (is.null(rdo))
         return(list())
