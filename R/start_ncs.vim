@@ -1,20 +1,6 @@
 " Functions to start nclientserver or that are called only after the
 " nclientserver is running
 
-" This condition is repeated at common_buffer.vim
-if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
-    let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
-    let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
-    let g:R_set_omnifunc = get(g:, "R_set_omnifunc", [])
-    let g:R_auto_omni = []
-    let g:R_hi_fun_globenv = 2
-else
-    let $NVIMR_COMPLCB = 'SetComplMenu'
-    let $NVIMR_COMPLInfo = "SetComplInfo"
-    let g:R_auto_omni = get(g:, "R_auto_omni", [])
-    let g:R_set_omnifunc = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
-endif
-
 " Check if it's necessary to build and install nvimcom before attempting o load it
 function CheckNvimcomVersion()
     let neednew = 0
@@ -513,11 +499,6 @@ if len(s:ff) > 1
     endif
 endif
 unlet s:ff
-
-if len(g:R_auto_omni) > 0 || len(g:R_set_omnifunc) > 0
-    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
-    call RComplAutCmds()
-endif
 
 " 2016-08-25
 if exists("g:R_nvimcom_wait")

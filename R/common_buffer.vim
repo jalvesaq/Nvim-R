@@ -6,52 +6,7 @@
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_global.vim"
 
-
-" Plugins that automatically run omni completion will work better if they
-" don't have to wait for the omni list to be built.
-" Test whether the autocommands were already defined to avoid getting them
-" registered three times
-" For the first buffer, the function is called from start_ncs.vim
-function! RComplAutCmds()
-    " Set omni completion (both automatic and triggered by CTRL-X CTRL-O)
-    if index(g:R_set_omnifunc, &filetype) > -1
-        setlocal omnifunc=CompleteR
-    endif
-    if !exists('b:did_RBuffer_au')
-        augroup RBuffer
-            autocmd InsertEnter <buffer> call ROnInsertEnter()
-            if index(g:R_auto_omni, &filetype) > -1
-                let b:rplugin_saved_completeopt = &completeopt
-                autocmd InsertCharPre <buffer> call RTriggerCompletion()
-                autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
-                autocmd BufEnter <buffer> set completeopt=menuone,noselect
-            endif
-            if index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1
-                autocmd CompleteChanged <buffer> call AskForComplInfo()
-                autocmd CompleteDone <buffer> call OnCompleteDone()
-            endif
-        augroup END
-    endif
-    let b:did_RBuffer_au = 1
-endfunction
-
-" This condition is repeated at start_ncs.vim
-if !(has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict)
-    let g:R_auto_omni = get(g:, "R_auto_omni", [])
-    if len(g:R_auto_omni) > 0
-        call RComplAutCmds()
-    endif
-endif
-
 let b:rplugin_knitr_pattern = ''
-if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
-    if &omnifunc == "CompleteR"
-        let b:rplugin_non_r_omnifunc = ""
-    else
-        let b:rplugin_non_r_omnifunc = &omnifunc
-    endif
-endif
-
 
 let g:rplugin.lastft = &filetype
 
@@ -62,4 +17,21 @@ endif
 
 if g:R_assign == 3
     iabb <buffer> _ <-
+endif
+
+if (index(g:R_auto_omni, &filetype) > -1 || index(g:R_auto_omni, &filetype) > -1)
+    if !exists("*CompleteR")
+        exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
+    endif
+    if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
+        if &omnifunc == "CompleteR"
+            let b:rplugin_non_r_omnifunc = ""
+        else
+            let b:rplugin_non_r_omnifunc = &omnifunc
+        endif
+    endif
+endif
+if index(g:R_auto_omni, &filetype) > -1
+    let g:R_hi_fun_globenv = 2
+    call RComplAutCmds()
 endif
