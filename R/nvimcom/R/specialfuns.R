@@ -308,11 +308,7 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
             # Now we have only the item to clean:
             res <- sub("^\\\\item\\{(.+?)\\}\\{", "`\\1`: ", res)
             res <- CleanOmniLine(res)
-            cat(paste0(a, " >> ", res, "\n"), file = "/dev/shm/arglist", append = TRUE)
-
             argl[[a]] <- res
-        } else {
-            cat(a, " NO_ITEM\n", file = "/dev/shm/arglist", append = TRUE)
         }
     }
     argl
