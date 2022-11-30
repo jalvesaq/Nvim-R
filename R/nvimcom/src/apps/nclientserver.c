@@ -55,7 +55,7 @@ void lib2ob(void);
 void update_pkg_list(void);
 void update_glblenv_buffer(void);
 static void build_omnils(void);
-void complete(const char *id, const char *base, const char *funcnm);
+void complete(const char *id, char *base, const char *funcnm);
 
 // List of paths to libraries
 typedef struct libpaths_ {
@@ -1994,7 +1994,7 @@ void completion_info(const char *wrd, const char *pkg)
 // Return the menu items for omni completion, but don't include function
 // usage, and tittle and description of objects because if the buffer becomes
 // too big it will be truncated.
-char *parse_omnls(const char *s, const char *base, char *p)
+char *parse_omnls(const char *s, const char *base, const char *pkg, char *p)
 {
     int i;
     unsigned long nsz;
@@ -2030,6 +2030,10 @@ char *parse_omnls(const char *s, const char *base, char *p)
                 p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
 
             p = str_cat(p, "{'word': '");
+            if (pkg) {
+                p = str_cat(p, pkg);
+                p = str_cat(p, "::");
+            }
             p = str_cat(p, f[0]);
             p = str_cat(p, "', 'menu': '");
             if(f[2][0] != 0){
@@ -2122,7 +2126,7 @@ char *get_arg_compl(char *p, const char *base)
     return p;
 }
 
-void complete(const char *id, const char *base, const char *funcnm)
+void complete(const char *id, char *base, const char *funcnm)
 {
     char *p;
 
@@ -2153,11 +2157,22 @@ void complete(const char *id, const char *base, const char *funcnm)
 
     // Finish filling the compl_buffer
     if(glbnv_buffer)
-        p = parse_omnls(glbnv_buffer, base, p);
+        p = parse_omnls(glbnv_buffer, base, NULL, p);
     PkgData *pd = pkgList;
+
+    // Check if base is "pkg::fun"
+    char *pkg = NULL;
+    if (strstr(base, "::")) {
+        pkg = base;
+        base = strstr(base, "::");
+        *base = 0;
+        base++;
+        base++;
+    }
+
     while(pd){
-        if(pd->omnils)
-            p = parse_omnls(pd->omnils, base, p);
+        if (pd->omnils && (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0)))
+            p = parse_omnls(pd->omnils, base, pkg, p);
         pd = pd->next;
     }
 
@@ -2298,6 +2313,8 @@ int main(int argc, char **argv){
                     msg++;
                 *msg = 0;
                 msg++;
+                if (strstr(wrd, "::"))
+                    wrd = strstr(wrd, "::") + 2;
                 completion_info(wrd, msg);
                 break;
 #ifdef WIN32

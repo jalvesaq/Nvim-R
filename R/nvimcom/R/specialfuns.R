@@ -273,9 +273,9 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
     if (is.null(rdo))
         return(list())
 
-    argl <- list()
-    for (a in arglist) {
-
+    get_items <- function(a, rdo) {
+        if (is.null(a) || is.na(a))
+            return(NA)
         # Build a dummy documentation with only one item in the "arguments" section
         x <- list()
         class(x) <- "Rd"
@@ -289,28 +289,16 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
         keep_tags <- c("\\title", "\\name", "\\arguments")
         x[which(!(tags %in% keep_tags))] <-  NULL
 
-        res <- capture.output(print(x))
+        res <- paste0(x, collapse = "", sep = "")
 
         # The result is (example from utils::available.packages()):
-        # \name{Dummy name}\title{Dummy title}\arguments{\item{max_repo_cache_age}{any cached values older than this in seconds     will be ignored. See \sQuote{Details}.   }}
+        # \name{Dummy name}\title{Dummy title}\arguments{\item{max_repo_cache_age}{any
+        # cached values older than this in seconds     will be ignored. See \sQuote{Details}.   }}
 
-        # Thes sections \title, \name and \arguments might be in any order.
-        # Delete one at a time:
-        res <- paste(res, collapse = " ")
-        res <- gsub("  *", " ", res)
-        res <- sub("\\\\name\\{Dummy name\\}", "", res)
-        res <- sub("\\\\title\\{Dummy title\\}", "", res)
-        res <- sub("\\\\arguments\\{", "", res)
-        res <- sub(" $", "", res)
-        res <- sub("\\}\\}$", "", res)
-
-        if (length(res) == 1 && grepl("\\\\item\\{", res)) {
-            # Now we have only the item to clean:
-            res <- sub("^\\\\item\\{(.+?)\\}\\{", "`\\1`: ", res)
-            res <- CleanOmniLine(res)
-            argl[[a]] <- res
-        }
+        .Call("get_section", as.character(res), "arguments", PACKAGE = "nvimcom")
     }
+    argl <- lapply(arglist, get_items, rdo)
+    names(argl) <- arglist
     argl
 }
 
@@ -344,7 +332,7 @@ nvim.get.summary <- function(obj, wdth) {
         if (is.factor(obj) || is.numeric(obj)) {
             print(summary(obj))
         } else {
-            print(str(obj))
+            print(utils::str(obj))
         }
         cat("```\n")
     }
