@@ -883,6 +883,9 @@ function FinishRInsert(type)
     silent exe "read " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
 
     if a:type == "comment"
+        if !exists('*RSimpleCommentLine')
+            exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/comment.vim"
+        endif
         let curpos = getpos(".")
         " comment the output
         let ilines = readfile(g:rplugin.tmpdir . "/Rinsert")
