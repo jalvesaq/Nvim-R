@@ -28,7 +28,7 @@ typedef struct pattern {
 
 */
 
-// Optmized by frequency in titles and description of objects in default R
+// Optimized by frequency in titles and description of objects in default R
 // packages : \code (1814), \R (220), \emph (97), sQuote (76), \eqn (59),
 // \dQuote (41), \link (30), \pkg (29) etc...
 static struct pattern rd[] = {

@@ -89,6 +89,8 @@ shows the three paths of communication between Vim/Neovim and R:
     libraries and open the PDF output after knitting an Rnoweb file and
     compiling the LaTeX result.
 
+![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
+
 ## See also:
 
    - [cmp-nvim-r](https://github.com/jalvesaq/cmp-nvim-r): [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) source using Nvim-R as backend.
@@ -99,8 +101,6 @@ shows the three paths of communication between Vim/Neovim and R:
 
    - [R-Vim-runtime](https://github.com/jalvesaq/R-Vim-runtime): development version of some Vim runtime files for R,
      including `ftplugin/quarto.vim` and `syntax/quarto.vim`.
-
-![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
 
 [vim-plug]: https://github.com/junegunn/vim-plug
 [Neovim]: https://github.com/neovim/neovim

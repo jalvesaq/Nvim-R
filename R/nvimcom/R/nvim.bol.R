@@ -366,7 +366,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             sink(omnilist, append = FALSE)
             for (obj in obj.list) {
                 if (!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", obj) &&
-                    !grepl("^\\.__", obj)) { # FIXME: check if "function" and "return" should be here or not
+                    !grepl("^\\.__", obj)) {
                     ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
                     if (inherits(ol, "try-error"))
                         warning(paste0("Error while generating omni completion line for: ",
