@@ -61,7 +61,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Send to R the Sweave, knit and pdflatex commands.
   * Omni completion of:
       - R objects (.GlobalEnv and loaded packages).
-      - function arguments.
+      - function arguments (if R is running).
       - knitr chunk options.
       - python code in knitr chunks if the jedi-vim plugin is installed (Rmd).
   * Limited support for debugging R functions.
@@ -530,8 +530,7 @@ an additional line with the name of the library where the function is (if the
 function name can be found in more than one library) and the function method
 (if what is being shown are the arguments of a method and not of the function
 itself). For both `library()` and `require()`, when completing the first
-argument, the popup list shows the names of installed packages, but only if R
-is running.
+argument, the popup list shows the names of installed packages.
 
 You can source all .R files in a directory with the Normal mode command
 `:RSourceDir`, which accepts an optional argument (the directory to be
@@ -1520,21 +1519,6 @@ in your |vimrc|:
    let R_hi_fun = 0
 <
 A float window with addtional information is shown during omni completion.
-In Neovim only, if you want to change the highlighting of the float window,
-you should choose what highlighting groups you want to use (see
-|highlight-groups|) and put in your |init.vim| lines as in the example:
->
-   " text describing the object whose name is being completed
-   hi def link previewDescr Title
-
-   " the line separating the description from either the function arguments or
-   " the object summary
-   hi def link previewSep   PreProc
-
-   " the name of the argument (when completing function arguments)
-   hi def link previewArg Statement
-<
-The default values are, respectively, NormalFloat, NormalFloat and Special.
 
 
 ------------------------------------------------------------------------------
@@ -2217,8 +2201,8 @@ not want this, put in your |vimrc|:
 <
 
 The highlighted debugged line incrementally moves down the buffer with code
-execution and, with long scripts, it may stay at the bottom of the buffer as you
-debug. You can hold the highlighted line in the middle of the buffer with
+execution and, with long scripts, it may stay at the bottom of the window as you
+debug. You can hold the highlighted line in the middle of the window with
 >
     let R_debug_center = 1
 <

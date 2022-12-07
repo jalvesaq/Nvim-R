@@ -70,6 +70,7 @@ typedef struct instlibs_ {
     char *name;
     char *title;
     char *descr;
+    int si; // still installed?
     struct instlibs_ *next;
 } InstLibs;
 
@@ -169,30 +170,12 @@ static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
     return tmp;
 }
 
-static char *fix_single_quote(char *s) {
-    int n = 0;
-    char *p = s;
-    while (*p != 0) {
-        if (*p == '\'')
-            n++;
-        p++;
+void fix_single_quote(char *s) {
+    while (*s != 0) {
+        if (*s == '\'')
+            *s = '\004';
+        s++;
     }
-    if (n == 0)
-        return s;
-
-    int l = strlen(s);
-    p = calloc(l + n + 1, sizeof(char));
-    int j = 0;
-    for (int i = 0; i < l; i++) {
-        if (s[i] == '\'') {
-            p[j] = '\'';
-            j++;
-        }
-        p[j] = s[i];
-        j++;
-    }
-    free(s);
-    return p;
 }
 
 int str_here(const char *o, const char *b)
@@ -817,12 +800,14 @@ char *count_sep(char *b1, int *size)
     return b1;
 }
 
-char *read_file(const char *fn)
+char *read_file(const char *fn, int verbose)
 {
     FILE *f = fopen(fn, "rb");
     if(!f){
-        fprintf(stderr, "Error opening '%s'", fn);
-        fflush(stderr);
+        if (verbose) {
+            fprintf(stderr, "Error opening '%s'", fn);
+            fflush(stderr);
+        }
         return NULL;
     }
     fseek(f, 0L, SEEK_END);
@@ -853,7 +838,7 @@ char *read_file(const char *fn)
 
 char *read_omnils_file(const char *fn, int *size)
 {
-    char * buffer = read_file(fn);
+    char * buffer = read_file(fn, 1);
     if(!buffer)
         return NULL;
 
@@ -881,7 +866,7 @@ char *read_pkg_descr(const char *pkgnm, const char *version)
     char *s, *d;
     snprintf(b, 511, "%s/descr_%s_%s", compldir, pkgnm, version);
 
-    d = read_file(b);
+    d = read_file(b, 1);
     if (d) {
         s = d;
         while(*s != '\t' && *s != 0)
@@ -1131,7 +1116,7 @@ static void fake_libnames(const char *s)
         build_omnils();
         snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
         if (access(b, F_OK) == 0) {
-            char *lnames = read_file(b);
+            char *lnames = read_file(b, 1);
             if (lnames) {
                 snprintf(b, 512, "%s/last_default_libnames", compldir);
                 FILE *f = fopen(b, "w");
@@ -1651,6 +1636,67 @@ void print_listTree(ListStatus *root, FILE *f)
     }
 }
 
+static void fill_inst_libs(void)
+{
+    InstLibs *il = NULL;
+    char fname[1032];
+    snprintf(fname, 1031, "%s/inst_libs", compldir);
+    char *b = read_file(fname, 0);
+    if (!b)
+        return;
+    char *s = b;
+    char *n, *t, *d;
+    while (*s) {
+        n = s;
+        t = NULL;
+        d = NULL;
+        while (*s && *s != '\006')
+            s++;
+        if (*s && *s == '\006') {
+            *s = 0;
+            s++;
+            if (*s) {
+                t = s;
+                while (*s && *s != '\006')
+                    s++;
+                if (*s && *s == '\006') {
+                    *s = 0;
+                    s++;
+                    if (*s) {
+                        d = s;
+                        while (*s && *s != '\n')
+                            s++;
+                        if (*s && *s == '\n') {
+                            *s = 0;
+                            s++;
+                        } else
+                            break;
+                    } else
+                        break;
+                } else
+                    break;
+            }
+            if (d) {
+                if (il) {
+                    il->next = calloc(1, sizeof(InstLibs));
+                    il = il->next;
+                } else {
+                    il = calloc(1, sizeof(InstLibs));
+                }
+                if (instlibs == NULL)
+                    instlibs = il;
+                il->name = malloc((strlen(n) + 1) * sizeof(char));
+                strcpy(il->name, n);
+                il->title = malloc((strlen(t) + 1) * sizeof(char));
+                strcpy(il->title, t);
+                il->descr = malloc((strlen(d) + 1) * sizeof(char));
+                strcpy(il->descr, d);
+            }
+        }
+    }
+    free(b);
+}
+
 static void init_vars(void)
 {
 #ifdef Debug_NCS
@@ -1703,6 +1749,10 @@ static void init_vars(void)
     else
         allnames = 0;
 
+    // Fill immediately the list of installed libraries. Each entry still has
+    // to be confirmed by listing the directories in .libPaths.
+    fill_inst_libs();
+
     // List tree sentinel
     listTree = new_ListStatus("base:", 0);
 
@@ -1710,7 +1760,7 @@ static void init_vars(void)
 
     char fname[512];
     snprintf(fname, 511, "%s/libPaths", tmpdir);
-    char *b = read_file(fname);
+    char *b = read_file(fname, 1);
 #ifdef WIN32
     for (int i = 0; i < strlen(b); i++)
         if (b[i] == '\\')
@@ -1820,6 +1870,7 @@ void parse_descr(char *descr, const char *fnm) {
         lib->title = calloc(strlen(ttl) + 1, sizeof(char));
         strcpy(lib->title, ttl);
         lib->descr = calloc(strlen(dsc) + 1 - z, sizeof(char));
+        lib->si = 1;
         m = 0;
         n = 0;
         while (dsc[m] != 0) {
@@ -1829,8 +1880,8 @@ void parse_descr(char *descr, const char *fnm) {
             m++;
             n++;
         }
-        lib->title = fix_single_quote(lib->title);
-        lib->descr = fix_single_quote(lib->descr);
+        fix_single_quote(lib->title);
+        fix_single_quote(lib->descr);
     } else {
         if (ttl)
             fprintf(stderr, "Failed to get Description from %s. ", fnm);
@@ -1848,7 +1899,8 @@ char *complete_instlibs(char *p, const char *base) {
     char *descr;
     InstLibs *il;
     int r;
-    unsigned long len = 0;
+    int n = 0;
+    unsigned long len;
 
     LibPath *lp = libpaths;
     while (lp) {
@@ -1864,6 +1916,7 @@ char *complete_instlibs(char *p, const char *base) {
                     r = 0;
                     while (il) {
                         if (strcmp(il->name, dir->d_name) == 0) {
+                            il->si = 1;
                             r = 1; // Repeated library
                             break;
                         }
@@ -1872,12 +1925,9 @@ char *complete_instlibs(char *p, const char *base) {
                     if (r)
                         continue;
                     snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
-                    descr = read_file(fname);
+                    descr = read_file(fname, 1);
                     if (descr) {
-                        len += strlen(descr) + (p - compl_buffer) + 1024;
-                        while (compl_buffer_size < len) {
-                            p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
-                        }
+                        n++;
                         parse_descr(descr, dir->d_name);
                         free(descr);
                     }
@@ -1888,10 +1938,35 @@ char *complete_instlibs(char *p, const char *base) {
         lp = lp->next;
     }
 
+
+    // New libraries found. Overwrite ~/.cache/Nvim-R/inst_libs
+    if (n) {
+        char fname[1032];
+        snprintf(fname, 1031, "%s/inst_libs", compldir);
+        FILE *f = fopen(fname, "w");
+        if(f == NULL){
+            fprintf(stderr, "Could not write to '%s'\n", fname);
+            fflush(stderr);
+        } else {
+            il = instlibs;
+            while (il) {
+                if (il->si)
+                    fprintf(f, "%s\006%s\006%s\n", il->name, il->title, il->descr);
+                il = il->next;
+            }
+            fclose(f);
+        }
+    }
+
     if (instlibs) {
         il = instlibs;
         while (il) {
-            if (str_here(il->name, base)) {
+            len = strlen(il->descr) + (p - compl_buffer) + 1024;
+            while (compl_buffer_size < len) {
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
+            }
+
+            if (str_here(il->name, base) && il->si) {
                 p = str_cat(p, "{'word': '");
                 p = str_cat(p, il->name);
                 p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
@@ -2101,7 +2176,7 @@ char *get_arg_compl(char *p, const char *base)
     // Get documentation info for each item
     char buf[512];
     snprintf(buf, 511, "%s/args_for_completion", tmpdir);
-    s = read_file(buf);
+    s = read_file(buf, 1);
     if(s){
         nsz = strlen(s) + 1024 + (p - compl_buffer);
         if (compl_buffer_size < nsz)
