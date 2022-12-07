@@ -201,6 +201,9 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 
+    # The magrittr package has (or used to have) an alias named `n'est pas`
+    x <- gsub("'", "\004", x)
+
     if (is.null(xx)) {
         x.class <- ""
         x.group <- "*"
