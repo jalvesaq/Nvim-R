@@ -860,20 +860,15 @@ char *read_omnils_file(const char *fn, int *size)
     return buffer;
 }
 
-char *read_pkg_descr(const char *pkgnm, const char *version)
+char *get_pkg_descr(const char *pkgnm)
 {
-    char b[512];
-    char *s, *d;
-    snprintf(b, 511, "%s/descr_%s_%s", compldir, pkgnm, version);
-
-    d = read_file(b, 1);
-    if (d) {
-        s = d;
-        while(*s != '\t' && *s != 0)
-            s++;
-        *s = 0;
+    InstLibs *il = instlibs;
+    while (il) {
+        if (strcmp(il->name, pkgnm) == 0)
+            return il->title;
+        il = il->next;
     }
-    return d;
+    return NULL;
 }
 
 void pkg_delete(PkgData *pd)
@@ -891,7 +886,7 @@ void pkg_delete(PkgData *pd)
 void load_pkg_data(PkgData *pd)
 {
     int size;
-    pd->descr = read_pkg_descr(pd->name, pd->version);
+    pd->descr = get_pkg_descr(pd->name);
     pd->omnils = read_omnils_file(pd->fname, &size);
     pd->nobjs = 0;
     if(pd->omnils){
@@ -1133,7 +1128,7 @@ static void fake_libnames(const char *s)
 }
 
 // Read the list of libraries loaded in R, and run another R instance to build
-// the omnils_, fun_ and descr_ files in compldir.
+// the omnils_ and fun_ files in compldir.
 static void build_omnils(void)
 {
     unsigned long nsz;
@@ -1216,8 +1211,197 @@ static void build_omnils(void)
     fflush(stdout);
 }
 
+int read_field_data(char *s, int i) {
+    while (s[i]) {
+        if (s[i] == '\n' && s[i + 1] == ' ') {
+            s[i] = ' ';
+            i++;
+            while (s[i] == ' ')
+                i++;
+        }
+        if (s[i] == '\n') {
+            s[i] = 0;
+            break;
+        }
+        i++;
+    }
+    return i;
+}
+
+// Read the DESCRIPTION file to get Title and Description fields.
+void parse_descr(char *descr, const char *fnm) {
+    int m, n;
+    int z = 0;
+    int k = 0;
+    int l = strlen(descr);
+    char *ttl, *dsc;
+    ttl = NULL;
+    dsc = NULL;
+    InstLibs *lib, *ptr, *prev;
+    while (k < l) {
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Title: ")) {
+            k += 7;
+            ttl = descr + k;
+            k = read_field_data(descr, k);
+            descr[k] = 0;
+        }
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Description: ")) {
+            k += 13;
+            dsc = descr + k;
+            k = read_field_data(descr, k);
+            descr[k] = 0;
+        }
+        k++;
+    }
+    if (ttl && dsc) {
+        if (instlibs == NULL) {
+            instlibs = calloc(1, sizeof(InstLibs));
+            lib = instlibs;
+        } else {
+            lib = calloc(1, sizeof(InstLibs));
+            if (ascii_ic_cmp(instlibs->name, fnm) > 0) {
+                lib->next = instlibs;
+                instlibs = lib;
+            } else {
+                ptr = instlibs;
+                prev = NULL;
+                while (ptr && ascii_ic_cmp(fnm, ptr->name) > 0) {
+                    prev = ptr;
+                    ptr = ptr->next;
+                }
+                if (prev)
+                    prev->next = lib;
+                lib->next = ptr;
+            }
+        }
+        lib->name = calloc(strlen(fnm) + 1, sizeof(char));
+        strcpy(lib->name, fnm);
+        lib->title = calloc(strlen(ttl) + 1, sizeof(char));
+        strcpy(lib->title, ttl);
+        lib->descr = calloc(strlen(dsc) + 1 - z, sizeof(char));
+        lib->si = 1;
+        m = 0;
+        n = 0;
+        while (dsc[m] != 0) {
+            while (dsc[m] == ' ' && dsc[m + 1] == ' ')
+                m++;
+            lib->descr[n] = dsc[m];
+            m++;
+            n++;
+        }
+        fix_single_quote(lib->title);
+        fix_single_quote(lib->descr);
+    } else {
+        if (ttl)
+            fprintf(stderr, "Failed to get Description from %s. ", fnm);
+        else
+            fprintf(stderr, "Failed to get Title from %s. ", fnm);
+        fflush(stderr);
+    }
+}
+
+void update_inst_libs(void)
+{
+    DIR *d;
+    struct dirent *dir;
+    char fname[512];
+    char *descr;
+    InstLibs *il;
+    int r;
+    int n = 0;
+
+    LibPath *lp = libpaths;
+    while (lp) {
+        d = opendir(lp->path);
+        if (d) {
+            while ((dir = readdir(d)) != NULL) {
+#ifdef _DIRENT_HAVE_D_TYPE
+                if (dir->d_name[0] != '.' && dir->d_type == DT_DIR) {
+#else
+                if (dir->d_name[0] != '.') {
+#endif
+                    il = instlibs;
+                    r = 0;
+                    while (il) {
+                        if (strcmp(il->name, dir->d_name) == 0) {
+                            il->si = 1;
+                            r = 1; // Repeated library
+                            break;
+                        }
+                        il = il->next;
+                    }
+                    if (r)
+                        continue;
+                    snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
+                    descr = read_file(fname, 1);
+                    if (descr) {
+                        n++;
+                        parse_descr(descr, dir->d_name);
+                        free(descr);
+                    }
+                }
+            }
+            closedir(d);
+        }
+        lp = lp->next;
+    }
+
+
+    // New libraries found. Overwrite ~/.cache/Nvim-R/inst_libs
+    if (n) {
+        char fname[1032];
+        snprintf(fname, 1031, "%s/inst_libs", compldir);
+        FILE *f = fopen(fname, "w");
+        if(f == NULL){
+            fprintf(stderr, "Could not write to '%s'\n", fname);
+            fflush(stderr);
+        } else {
+            il = instlibs;
+            while (il) {
+                if (il->si)
+                    fprintf(f, "%s\006%s\006%s\n", il->name, il->title, il->descr);
+                il = il->next;
+            }
+            fclose(f);
+        }
+    }
+
+}
+
+// Read the DESCRIPTION of all installed libraries
+char *complete_instlibs(char *p, const char *base) {
+    update_inst_libs();
+
+    unsigned long len;
+    InstLibs *il;
+
+    if (instlibs) {
+        il = instlibs;
+        while (il) {
+            len = strlen(il->descr) + (p - compl_buffer) + 1024;
+            while (compl_buffer_size < len) {
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
+            }
+
+            if (str_here(il->name, base) && il->si) {
+                p = str_cat(p, "{'word': '");
+                p = str_cat(p, il->name);
+                p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
+                p = str_cat(p, il->title);
+                p = str_cat(p, "', 'descr': '");
+                p = str_cat(p, il->descr);
+                p = str_cat(p, "', 'cls': 'l'}},");
+            }
+            il = il->next;
+        }
+    }
+    return p;
+}
+
 void update_pkg_list(void)
 {
+    update_inst_libs();
+
     char buf[512];
     char *s, *vrsn;
     char lbnm[128];
@@ -1800,185 +1984,6 @@ int count_twice(const char *b1, const char *b2, const char ch)
         if(b2[i] == ch)
             n2++;
     return n1 == n2;
-}
-
-int read_field_data(char *s, int i) {
-    while (s[i]) {
-        if (s[i] == '\n' && s[i + 1] == ' ') {
-            s[i] = ' ';
-            i++;
-            while (s[i] == ' ')
-                i++;
-        }
-        if (s[i] == '\n') {
-            s[i] = 0;
-            break;
-        }
-        i++;
-    }
-    return i;
-}
-
-// Read the DESCRIPTION file to get Title and Description fields.
-void parse_descr(char *descr, const char *fnm) {
-    int m, n;
-    int z = 0;
-    int k = 0;
-    int l = strlen(descr);
-    char *ttl, *dsc;
-    ttl = NULL;
-    dsc = NULL;
-    InstLibs *lib, *ptr, *prev;
-    while (k < l) {
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Title: ")) {
-            k += 7;
-            ttl = descr + k;
-            k = read_field_data(descr, k);
-            descr[k] = 0;
-        }
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Description: ")) {
-            k += 13;
-            dsc = descr + k;
-            k = read_field_data(descr, k);
-            descr[k] = 0;
-        }
-        k++;
-    }
-    if (ttl && dsc) {
-        if (instlibs == NULL) {
-            instlibs = calloc(1, sizeof(InstLibs));
-            lib = instlibs;
-        } else {
-            lib = calloc(1, sizeof(InstLibs));
-            if (ascii_ic_cmp(instlibs->name, fnm) > 0) {
-                lib->next = instlibs;
-                instlibs = lib;
-            } else {
-                ptr = instlibs;
-                prev = NULL;
-                while (ptr && ascii_ic_cmp(fnm, ptr->name) > 0) {
-                    prev = ptr;
-                    ptr = ptr->next;
-                }
-                if (prev)
-                    prev->next = lib;
-                lib->next = ptr;
-            }
-        }
-        lib->name = calloc(strlen(fnm) + 1, sizeof(char));
-        strcpy(lib->name, fnm);
-        lib->title = calloc(strlen(ttl) + 1, sizeof(char));
-        strcpy(lib->title, ttl);
-        lib->descr = calloc(strlen(dsc) + 1 - z, sizeof(char));
-        lib->si = 1;
-        m = 0;
-        n = 0;
-        while (dsc[m] != 0) {
-            while (dsc[m] == ' ' && dsc[m + 1] == ' ')
-                m++;
-            lib->descr[n] = dsc[m];
-            m++;
-            n++;
-        }
-        fix_single_quote(lib->title);
-        fix_single_quote(lib->descr);
-    } else {
-        if (ttl)
-            fprintf(stderr, "Failed to get Description from %s. ", fnm);
-        else
-            fprintf(stderr, "Failed to get Title from %s. ", fnm);
-        fflush(stderr);
-    }
-}
-
-// Read the DESCRIPTION of all installed libraries
-char *complete_instlibs(char *p, const char *base) {
-    DIR *d;
-    struct dirent *dir;
-    char fname[512];
-    char *descr;
-    InstLibs *il;
-    int r;
-    int n = 0;
-    unsigned long len;
-
-    LibPath *lp = libpaths;
-    while (lp) {
-        d = opendir(lp->path);
-        if (d) {
-            while ((dir = readdir(d)) != NULL) {
-#ifdef _DIRENT_HAVE_D_TYPE
-                if (dir->d_name[0] != '.' && dir->d_type == DT_DIR) {
-#else
-                if (dir->d_name[0] != '.') {
-#endif
-                    il = instlibs;
-                    r = 0;
-                    while (il) {
-                        if (strcmp(il->name, dir->d_name) == 0) {
-                            il->si = 1;
-                            r = 1; // Repeated library
-                            break;
-                        }
-                        il = il->next;
-                    }
-                    if (r)
-                        continue;
-                    snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
-                    descr = read_file(fname, 1);
-                    if (descr) {
-                        n++;
-                        parse_descr(descr, dir->d_name);
-                        free(descr);
-                    }
-                }
-            }
-            closedir(d);
-        }
-        lp = lp->next;
-    }
-
-
-    // New libraries found. Overwrite ~/.cache/Nvim-R/inst_libs
-    if (n) {
-        char fname[1032];
-        snprintf(fname, 1031, "%s/inst_libs", compldir);
-        FILE *f = fopen(fname, "w");
-        if(f == NULL){
-            fprintf(stderr, "Could not write to '%s'\n", fname);
-            fflush(stderr);
-        } else {
-            il = instlibs;
-            while (il) {
-                if (il->si)
-                    fprintf(f, "%s\006%s\006%s\n", il->name, il->title, il->descr);
-                il = il->next;
-            }
-            fclose(f);
-        }
-    }
-
-    if (instlibs) {
-        il = instlibs;
-        while (il) {
-            len = strlen(il->descr) + (p - compl_buffer) + 1024;
-            while (compl_buffer_size < len) {
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
-            }
-
-            if (str_here(il->name, base) && il->si) {
-                p = str_cat(p, "{'word': '");
-                p = str_cat(p, il->name);
-                p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
-                p = str_cat(p, il->title);
-                p = str_cat(p, "', 'descr': '");
-                p = str_cat(p, il->descr);
-                p = str_cat(p, "', 'cls': 'l'}},");
-            }
-            il = il->next;
-        }
-    }
-    return p;
 }
 
 // Return user_data of a specific item with function usage, title and

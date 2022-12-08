@@ -357,12 +357,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
                 next
         }
 
-        # Save title of package in its decr_ file:
-        writeLines(paste(gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Title),
-                         gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Description), sep = "\t"),
-                   paste0(Sys.getenv("NVIMR_COMPLDIR"), "/descr_", curlib,
-                          "_", utils::packageDescription(curlib)$Version))
-
         obj.list <- objects(curpack, all.names = allnames)
         l <- length(obj.list)
         if (l > 0) {
@@ -418,8 +412,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     return(invisible(NULL))
 }
 
-# This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
-#   - descr_  : package description for the object browser
+# This function calls nvim.bol which writes two files in ~/.cache/Nvim-R:
 #   - fun_    : function names for syntax highlighting
 #   - omnils_ : data for omni completion and object browser
 nvim.buildomnils <- function(p) {
