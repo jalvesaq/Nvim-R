@@ -1090,127 +1090,6 @@ static int run_R_code(const char *s, int senderror)
 #endif
 }
 
-// Build the fun_ and omnils_ files required for syntax highlighting and omni
-// completion before starting R. This function is called by Nvim-R
-static void fake_libnames(const char *s)
-{
-    char b[2048];
-    snprintf(b, 1500,
-            "nms <- c(%s)\n"
-            "pkgs <- utils::installed.packages()\n"
-            "nms <- nms[nms %%in%% rownames(pkgs)]\n"
-            "cat(paste(nms, utils::installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
-            "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
-
-    int stt = run_R_code(b, 0);
-
-    // Don't rely only in the return vale of run_R_code because it's wrong on Windows
-    snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    if (stt && access(b, F_OK) == 0) {
-        update_pkg_list();
-        build_omnils();
-        snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
-        if (access(b, F_OK) == 0) {
-            char *lnames = read_file(b, 1);
-            if (lnames) {
-                snprintf(b, 512, "%s/last_default_libnames", compldir);
-                FILE *f = fopen(b, "w");
-                if (f){
-                    fwrite(lnames, sizeof(char), strlen(lnames), f);
-                    fclose(f);
-                }
-                free(lnames);
-            }
-        }
-    } else {
-        printf("call ShowBuildOmnilsError('%d')\n", stt);
-    }
-}
-
-// Read the list of libraries loaded in R, and run another R instance to build
-// the omnils_ and fun_ files in compldir.
-static void build_omnils(void)
-{
-    unsigned long nsz;
-
-    if (building_omnils) {
-        more_to_build = 1;
-        return;
-    }
-    building_omnils = 1;
-
-    char buf[1024];
-
-    memset(compl_buffer, 0, compl_buffer_size);
-    char *p = compl_buffer;
-
-    PkgData *pkg = pkgList;
-
-    // It would be easier to call R once for each library, but we will build
-    // all cache files at once to avoid the cost of starting R many times.
-    p = str_cat(p, "library('nvimcom')\nnvimcom:::nvim.buildomnils(c(");
-    int k = 0;
-    while (pkg) {
-        if (pkg->to_build == 0) {
-            nsz = strlen(pkg->name) + 1024 + (p - compl_buffer);
-            if (compl_buffer_size < nsz)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
-            if (k == 0)
-                snprintf(buf, 63, "'%s'", pkg->name);
-            else
-                snprintf(buf, 63, ",\n'%s'", pkg->name);
-            p = str_cat(p, buf);
-            pkg->to_build = 1;
-            k++;
-        }
-        pkg = pkg->next;
-    }
-    p = str_cat(p, "))");
-
-    if (k)
-        run_R_code(compl_buffer, 1);
-
-    // Don't check the return value of run_R_code because some packages might
-    // have been successfully built before R exiting with status > 0.
-
-    // Check if all files were really built before trying to load them.
-    pkg = pkgList;
-    while (pkg) {
-        if (pkg->built == 0 && access(pkg->fname, F_OK) == 0)
-            pkg->built = 1;
-        if (pkg->built && !pkg->omnils)
-            load_pkg_data(pkg);
-        pkg = pkg->next;
-    }
-
-    // If this function was called while it was running, build the remaining cache
-    // files before saving the list of libraries whose cache files were built.
-    building_omnils = 0;
-    if (more_to_build) {
-        more_to_build = 0;
-        build_omnils();
-        return;
-    }
-
-    // Finally create a list of built omnils_ because libnames_ might have
-    // already changed and Nvim-R would try to read omnils_ files not built yet.
-    snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *f = fopen(buf, "w");
-    if (f) {
-        PkgData *pkg = pkgList;
-        while (pkg) {
-            if (pkg->loaded && pkg->built && pkg->omnils)
-                fprintf(f, "%s_%s\n", pkg->name, pkg->version);
-            pkg = pkg->next;
-        }
-        fclose(f);
-    }
-
-    // Message to Neovim: Update both syntax and Rhelp_list
-    printf("call UpdateSynRhlist()\n");
-    fflush(stdout);
-}
-
 int read_field_data(char *s, int i) {
     while (s[i]) {
         if (s[i] == '\n' && s[i + 1] == ' ') {
@@ -1365,7 +1244,129 @@ void update_inst_libs(void)
             fclose(f);
         }
     }
+}
 
+// Build the fun_ and omnils_ files required for syntax highlighting and omni
+// completion before starting R. This function is called by Nvim-R
+static void fake_libnames(const char *s)
+{
+    char b[2048];
+    snprintf(b, 1500,
+            "nms <- c(%s)\n"
+            "pkgs <- utils::installed.packages()\n"
+            "nms <- nms[nms %%in%% rownames(pkgs)]\n"
+            "cat(paste(nms, utils::installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
+            "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
+
+    int stt = run_R_code(b, 0);
+
+    // Don't rely only in the return vale of run_R_code because it's wrong on Windows
+    snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+    if (stt && access(b, F_OK) == 0) {
+        update_pkg_list();
+        build_omnils();
+        snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+        if (access(b, F_OK) == 0) {
+            char *lnames = read_file(b, 1);
+            if (lnames) {
+                snprintf(b, 512, "%s/last_default_libnames", compldir);
+                FILE *f = fopen(b, "w");
+                if (f){
+                    fwrite(lnames, sizeof(char), strlen(lnames), f);
+                    fclose(f);
+                }
+                free(lnames);
+            }
+        }
+    } else {
+        printf("call ShowBuildOmnilsError('%d')\n", stt);
+    }
+}
+
+// Read the list of libraries loaded in R, and run another R instance to build
+// the omnils_ and fun_ files in compldir.
+static void build_omnils(void)
+{
+    unsigned long nsz;
+
+    if (building_omnils) {
+        more_to_build = 1;
+        return;
+    }
+    building_omnils = 1;
+
+    char buf[1024];
+
+    memset(compl_buffer, 0, compl_buffer_size);
+    char *p = compl_buffer;
+
+    PkgData *pkg = pkgList;
+
+    // It would be easier to call R once for each library, but we will build
+    // all cache files at once to avoid the cost of starting R many times.
+    p = str_cat(p, "library('nvimcom')\nnvimcom:::nvim.buildomnils(c(");
+    int k = 0;
+    while (pkg) {
+        if (pkg->to_build == 0) {
+            nsz = strlen(pkg->name) + 1024 + (p - compl_buffer);
+            if (compl_buffer_size < nsz)
+                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
+            if (k == 0)
+                snprintf(buf, 63, "'%s'", pkg->name);
+            else
+                snprintf(buf, 63, ",\n'%s'", pkg->name);
+            p = str_cat(p, buf);
+            pkg->to_build = 1;
+            k++;
+        }
+        pkg = pkg->next;
+    }
+    p = str_cat(p, "))");
+
+    if (k) {
+        update_inst_libs();
+        run_R_code(compl_buffer, 1);
+    }
+
+    // Don't check the return value of run_R_code because some packages might
+    // have been successfully built before R exiting with status > 0.
+
+    // Check if all files were really built before trying to load them.
+    pkg = pkgList;
+    while (pkg) {
+        if (pkg->built == 0 && access(pkg->fname, F_OK) == 0)
+            pkg->built = 1;
+        if (pkg->built && !pkg->omnils)
+            load_pkg_data(pkg);
+        pkg = pkg->next;
+    }
+
+    // If this function was called while it was running, build the remaining cache
+    // files before saving the list of libraries whose cache files were built.
+    building_omnils = 0;
+    if (more_to_build) {
+        more_to_build = 0;
+        build_omnils();
+        return;
+    }
+
+    // Finally create a list of built omnils_ because libnames_ might have
+    // already changed and Nvim-R would try to read omnils_ files not built yet.
+    snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+    FILE *f = fopen(buf, "w");
+    if (f) {
+        PkgData *pkg = pkgList;
+        while (pkg) {
+            if (pkg->loaded && pkg->built && pkg->omnils)
+                fprintf(f, "%s_%s\n", pkg->name, pkg->version);
+            pkg = pkg->next;
+        }
+        fclose(f);
+    }
+
+    // Message to Neovim: Update both syntax and Rhelp_list
+    printf("call UpdateSynRhlist()\n");
+    fflush(stdout);
 }
 
 // Read the DESCRIPTION of all installed libraries
@@ -1400,8 +1401,6 @@ char *complete_instlibs(char *p, const char *base) {
 
 void update_pkg_list(void)
 {
-    update_inst_libs();
-
     char buf[512];
     char *s, *vrsn;
     char lbnm[128];
