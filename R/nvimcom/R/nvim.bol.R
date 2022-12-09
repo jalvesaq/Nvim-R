@@ -417,9 +417,13 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 #   - omnils_ : data for omni completion and object browser
 nvim.buildomnils <- function(p) {
     if (length(p) > 1) {
+        n <- 0
         for (pkg in p)
-            nvim.buildomnils(pkg)
-        return(invisible(NULL))
+            n <- n + nvim.buildomnils(pkg)
+        if (n > 0)
+            return(invisible(1))
+        else
+            return(invisible(0))
     }
     # No verbosity because running as Neovim job
     options(nvimcom.verbose = 0)
@@ -435,7 +439,7 @@ nvim.buildomnils <- function(p) {
         # omnils is either duplicated or inexistent
         unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
-        return(invisible(NULL))
+        return(invisible(1))
     }
 
     pvb <- sub(".*_.*_", "", pbuilt)
@@ -444,5 +448,7 @@ nvim.buildomnils <- function(p) {
         # omnils is either outdated or older than the README
         unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
+        return(invisible(1))
     }
+    return(invisible(0))
 }

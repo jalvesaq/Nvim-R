@@ -48,13 +48,16 @@ static int auto_obbr;
 static char *glbnv_buffer;
 static char *compl_buffer;
 static unsigned long compl_buffer_size = 32768;
+static int n_omnils_build;
 static int building_omnils;
 static int more_to_build;
 void omni2ob(void);
 void lib2ob(void);
+void update_inst_libs(void);
 void update_pkg_list(void);
 void update_glblenv_buffer(void);
 static void build_omnils(void);
+static void finish_bol(int nob);
 void complete(const char *id, char *base, const char *funcnm);
 
 // List of paths to libraries
@@ -170,7 +173,17 @@ static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
     return tmp;
 }
 
-void fix_single_quote(char *s) {
+void fix_004(char *s)
+{
+    while (*s != 0) {
+        if (*s == '\004')
+            *s = '\'';
+        s++;
+    }
+}
+
+void fix_single_quote(char *s)
+{
     while (*s != 0) {
         if (*s == '\'')
             *s = '\004';
@@ -203,62 +216,70 @@ static void RegisterPort(int bindportn)
     fflush(stdout);
 }
 
-static void ParseMsg(char *buf)
+static void ParseMsg(char *b)
 {
-    char *b = buf;
-    if(strstr(b, VimSecret) == b){
-        b += VimSecretLen;
-
-        // Log("tcp:   %s", b);
-
-        // Update the GlobalEnv buffer before sending the message to Nvim-R
-        // because it must be ready for omni completion
-        if(str_here(b, "call GlblEnvUpdated(1)"))
-            update_glblenv_buffer();
-
-        if(str_here(b, "+BuildOmnils")){
-            update_pkg_list();
-            build_omnils();
-            if (auto_obbr)
-                lib2ob();
-        }
-
-        if (str_here(b, "+FinishArgsCompletion")) {
-            // strtok doesn't work here because "base" might be empty.
-            char *id = b + 22;
-            char *base = id;
-            while (*base != ';')
-                base++;
-            *base = 0;
-            base++;
-            char *fnm = base;
-            while (*fnm != ';')
-                fnm++;
-            *fnm = 0;
-            fnm++;
-            b = fnm;
-            while (*b != 0 && *b != '\n')
-                b++;
-            *b = 0;
-            complete(id, base, fnm);
-            return;
-        }
-
-
-        if (*b != '+'){
-            // Send the command to Nvim-R
-            printf("%s\n", b);
-            fflush(stdout);
-        }
-
-        // Update the Object Browser after sending the message to Nvim-R to
-        // avoid unnecessary delays in omni completion
-        if(auto_obbr && str_here(b, "call GlblEnvUpdated(1)"))
-            omni2ob();
-    } else {
+    if(strstr(b, VimSecret) != b){
         fprintf(stderr, "Strange string received: \"%s\"\n", b);
         fflush(stderr);
+        return;
     }
+
+    b += VimSecretLen;
+
+    // Log("tcp:   %s", b);
+
+    // Update the GlobalEnv buffer before sending the message to Nvim-R
+    // because it must be ready for omni completion
+    if(str_here(b, "call GlblEnvUpdated(1)"))
+        update_glblenv_buffer();
+
+    if(str_here(b, "+BuildOmnils")){
+        update_pkg_list();
+        build_omnils();
+        if (auto_obbr)
+            lib2ob();
+    }
+
+    if (str_here(b, "+FinishBOL")) {
+        b += 10;
+        if (*b == '1')
+            update_inst_libs();
+        b++;
+        finish_bol(atoi(b));
+        return;
+    }
+
+    if (str_here(b, "+FinishArgsCompletion")) {
+        // strtok doesn't work here because "base" might be empty.
+        char *id = b + 22;
+        char *base = id;
+        while (*base != ';')
+            base++;
+        *base = 0;
+        base++;
+        char *fnm = base;
+        while (*fnm != ';')
+            fnm++;
+        *fnm = 0;
+        fnm++;
+        b = fnm;
+        while (*b != 0 && *b != '\n')
+            b++;
+        *b = 0;
+        complete(id, base, fnm);
+        return;
+    }
+
+    // Send the command to Nvim-R
+    if (*b != '+'){
+        printf("%s\n", b);
+        fflush(stdout);
+    }
+
+    // Update the Object Browser after sending the message to Nvim-R to
+    // avoid unnecessary delays in omni completion
+    if(auto_obbr && str_here(b, "call GlblEnvUpdated(1)"))
+        omni2ob();
 }
 
 #ifndef WIN32
@@ -864,8 +885,12 @@ char *get_pkg_descr(const char *pkgnm)
 {
     InstLibs *il = instlibs;
     while (il) {
-        if (strcmp(il->name, pkgnm) == 0)
-            return il->title;
+        if (strcmp(il->name, pkgnm) == 0) {
+            char *s = malloc((strlen(il->title) + 1) * sizeof(char));
+            strcpy(s, il->title);
+            fix_004(s);
+            return s;
+        }
         il = il->next;
     }
     return NULL;
@@ -886,7 +911,8 @@ void pkg_delete(PkgData *pd)
 void load_pkg_data(PkgData *pd)
 {
     int size;
-    pd->descr = get_pkg_descr(pd->name);
+    if (!pd->descr)
+        pd->descr = get_pkg_descr(pd->name);
     pd->omnils = read_omnils_file(pd->fname, &size);
     pd->nobjs = 0;
     if(pd->omnils){
@@ -907,6 +933,7 @@ PkgData *new_pkg_data(const char *nm, const char *vrsn)
     strcpy(pd->name, nm);
     pd->version = malloc((strlen(vrsn)+1) * sizeof(char));
     strcpy(pd->version, vrsn);
+    pd->descr = get_pkg_descr(pd->name);
     pd->loaded = 1;
 
     snprintf(buf, 1023, "%s/omnils_%s_%s", compldir, nm, vrsn);
@@ -1304,7 +1331,7 @@ static void build_omnils(void)
 
     // It would be easier to call R once for each library, but we will build
     // all cache files at once to avoid the cost of starting R many times.
-    p = str_cat(p, "library('nvimcom')\nnvimcom:::nvim.buildomnils(c(");
+    p = str_cat(p, "library('nvimcom')\nb <- nvimcom:::nvim.buildomnils(c(");
     int k = 0;
     while (pkg) {
         if (pkg->to_build == 0) {
@@ -1321,33 +1348,45 @@ static void build_omnils(void)
         }
         pkg = pkg->next;
     }
-    p = str_cat(p, "))");
 
     if (k) {
-        update_inst_libs();
+        n_omnils_build++;
+        p = str_cat(p, "))\n.C('nvimcom_send_msg_to_port', paste0('+FinishBOL', b, '");
+        snprintf(buf, 63, "%d", n_omnils_build);
+        p = str_cat(p, buf);
+        p = str_cat(p, "'), '");
+        p = str_cat(p, myport);
+        p = str_cat(p, "', PACKAGE = 'nvimcom')\n");
         run_R_code(compl_buffer, 1);
     }
+    building_omnils = 0;
+
+    // If this function was called while it was running, build the remaining cache
+    // files before saving the list of libraries whose cache files were built.
+    if (more_to_build) {
+        more_to_build = 0;
+        build_omnils();
+    }
+}
+
+static void finish_bol(int nob)
+{
+    if (n_omnils_build > nob)
+        return;
+
+    char buf[1024];
 
     // Don't check the return value of run_R_code because some packages might
     // have been successfully built before R exiting with status > 0.
 
     // Check if all files were really built before trying to load them.
-    pkg = pkgList;
+    PkgData *pkg = pkgList;
     while (pkg) {
         if (pkg->built == 0 && access(pkg->fname, F_OK) == 0)
             pkg->built = 1;
         if (pkg->built && !pkg->omnils)
             load_pkg_data(pkg);
         pkg = pkg->next;
-    }
-
-    // If this function was called while it was running, build the remaining cache
-    // files before saving the list of libraries whose cache files were built.
-    building_omnils = 0;
-    if (more_to_build) {
-        more_to_build = 0;
-        build_omnils();
-        return;
     }
 
     // Finally create a list of built omnils_ because libnames_ might have
