@@ -34,7 +34,7 @@ endfunction
 let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
 let s:waiting_more_input = 0
 function ROnJobStdout(job_id, data, etype)
-    " DEBUG: call writefile(a:data, "/tmp/nclientserver_stdout", "a")
+    " DEBUG: call writefile(a:data, "/dev/shm/nclientserver_stdout", "a")
     for cmd in a:data
         let cmd = substitute(cmd, '\r', '', 'g')
         if cmd == ""

@@ -522,24 +522,14 @@ application to display the data.frame or matrix. All files involved in these
 operations are created in Nvim-R's temporary directory and deleted when R
 quits.
 
-When completing object names, if R is not running the completion will be based
-on information from the packages listed by |R_start_libs| (provided that the
-libraries were loaded at least once during a session of Nvim-R usage).
-Otherwise, the pop up menu for completion of function arguments will include
-an additional line with the name of the library where the function is (if the
-function name can be found in more than one library) and the function method
-(if what is being shown are the arguments of a method and not of the function
-itself). For both `library()` and `require()`, when completing the first
-argument, the popup list shows the names of installed packages.
-
 You can source all .R files in a directory with the Normal mode command
 `:RSourceDir`, which accepts an optional argument (the directory to be
 sourced).
 
 
 ------------------------------------------------------------------------------
-								     *Rinsert*
-								     *Rformat*
+								    *:Rinsert*
+								    *:Rformat*
 The command `:Rinsert` <cmd> inserts one or more lines with the output of the
 R command sent to R. By using this command we can avoid the need of copying
 and pasting the output R from its console to Vim. For example, to insert
@@ -603,9 +593,7 @@ In any case, the pdf viewer must be started by the Nvim-R plugin. See
 4.3. Omni completion and syntax highlighting~
 
 The plugin adds some features to the default syntax highlight of R code. One
-such feature is the highlight of R functions. However, functions are
-highlighted only if their libraries are loaded by R (but see
-|R_start_libs|).
+such feature is the highlight of R functions.
 
 Note: If you have too many loaded packages Vim may be unable to load the
 list of functions for syntax highlight.
@@ -613,15 +601,17 @@ list of functions for syntax highlight.
 Vim can automatically complete the names of R objects both as you type them
 if `cmp-nvim-r` (a source for `nvim-cmp`) is installed.
 
-Only the names of objects in .GlobalEnv and in loaded libraries are completed.
-If R is not running, only objects of libraries listed in |R_start_libs| will
-have their names completed.
+Nvim-R does not complete the names of all functions of all installed packages
+(see |R_start_libs|).
+
+For both `library()` and `require()`, when completing the first argument, the
+popup list shows the names of installed packages.
 
 Vim uses one file to store the names of .GlobalEnv objects and a list of files
 for all other objects. The .GlobalEnv list is stored in the `$NVIMR_TMPDIR`
 directory and is deleted when you quit Vim. The other files are stored in the
 `$NVIMR_COMPLDIR` directory, are automatically updated and remain available
-until you manually delete them.
+unless you manually delete them.
 
 
 ------------------------------------------------------------------------------
@@ -1290,7 +1280,6 @@ indicated direction. Examples:
    let R_objbr_place = 'LEFT'
    let R_objbr_place = 'RIGHT'
 <
-
 The minimum width of the Object Browser window is 9 columns. You can change
 the object browser's default width by setting the value of |R_objbr_w| in your
 |vimrc|, as below:
@@ -1447,6 +1436,10 @@ the SDI style of the graphical user interface.
 
 The list of functions to be highlighted and the list of objects for
 omni completion are built dynamically as the libraries are loaded by R.
+If R is running, only the names of objects in .GlobalEnv and in loaded
+libraries are completed. If R is not running, only objects of libraries listed
+in |R_start_libs| and as the first argument of either `library()` and
+`require()` commands in the current buffer will have their names completed.
 However, you can set the value of R_start_libs if you want that
 the functions and objects of specific packages are respectively highlighted
 and available for omni completion even if R is not running yet. By default,
@@ -1455,7 +1448,6 @@ value of R_start_libs:
 >
    let R_start_libs = 'base,stats,graphics,grDevices,utils,methods'
 <
-
 							    *Rout_more_colors*
 By default, the R commands in .Rout files are highlighted with the color of
 comments, and only the output of commands has some of its elements highlighted
@@ -2199,7 +2191,6 @@ not want this, put in your |vimrc|:
 >
    let R_dbg_jump = 0
 <
-
 The highlighted debugged line incrementally moves down the buffer with code
 execution and, with long scripts, it may stay at the bottom of the window as you
 debug. You can hold the highlighted line in the middle of the window with
@@ -3026,7 +3017,6 @@ goal (tested on April, 2017).
 	    R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
 	    NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS R $@"
 <
-
       - Add the following lines to your |vimrc| (replace `hostname -I` with a
 	command that works in your system):
 >

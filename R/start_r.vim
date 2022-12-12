@@ -74,7 +74,6 @@ function StartR(whatr)
     call AddForDeletion(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin.tmpdir . "/nvimbol_finished")
 
     if &encoding == "utf-8"
         call AddForDeletion(g:rplugin.tmpdir . "/start_options_utf8.R")
@@ -300,12 +299,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     if exists("g:RStudio_cmd")
         if has("win32") && g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "75" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif has("win32")
         if g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "75" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif g:R_applescript
         call foreground()
@@ -363,7 +362,7 @@ function RQuit(how)
 
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         " SaveWinPos
-        call JobStdin(g:rplugin.jobs["ClientServer"], "74" . $NVIMR_COMPLDIR . "\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "84" . $NVIMR_COMPLDIR . "\n")
     endif
 
     if bufloaded('Object_Browser')
@@ -391,6 +390,7 @@ function ClearRInfo()
     let g:SendCmdToR = function('SendCmdToR_fake')
     let s:R_pid = 0
     let g:rplugin.nvimcom_port = 0
+    call JobStdin(g:rplugin.jobs["ClientServer"], "10\n")
 
     " Legacy support for running R in a Tmux split pane
     if has_key(g:rplugin, "tmux_split") && exists('g:R_tmux_title') && g:rplugin.tmux_split
@@ -401,7 +401,6 @@ function ClearRInfo()
     if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && has("nvim")
         call CloseRTerm()
     endif
-
 endfunction
 
 let s:wait_nvimcom = 0
@@ -1881,9 +1880,9 @@ function RClearConsole()
         return
     endif
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "76\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "86\n")
         sleep 50m
-        call JobStdin(g:rplugin.jobs["ClientServer"], "77\n")
+        call JobStdin(g:rplugin.jobs["ClientServer"], "87\n")
     else
         call g:SendCmdToR("\014", 0)
     endif

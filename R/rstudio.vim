@@ -1,7 +1,6 @@
 
 function StartRStudio()
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        call JobStdin(g:rplugin.jobs["ClientServer"], "71Check if R is running\n")
         return
     endif
 

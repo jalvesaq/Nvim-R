@@ -58,7 +58,7 @@ void update_pkg_list(void);
 void update_glblenv_buffer(void);
 static void build_omnils(void);
 static void finish_bol(int nob);
-void complete(const char *id, char *base, const char *funcnm);
+void complete(const char *id, char *base, char *funcnm);
 
 // List of paths to libraries
 typedef struct libpaths_ {
@@ -96,6 +96,7 @@ typedef struct pkg_data_ {
     char *fname;     // omnils_ file name in the compldir
     char *descr;     // the package short description
     char *omnils;    // a copy of the omnils_ file
+    char *args;      // a copy of the args_ file
     int nobjs;       // number of objects in the omnils_
     int loaded;      // in libnames_
     int to_build;    // name sent to build list
@@ -766,14 +767,6 @@ void Windows_setup()
 
 void start_server(void)
 {
-    if(!getenv("NVIMR_SECRET")){
-        fprintf(stderr, "NVIMR_SECRET not found\n");
-        fflush(stderr);
-        exit(1);
-    }
-    strncpy(VimSecret, getenv("NVIMR_SECRET"), 127);
-    VimSecretLen = strlen(VimSecret);
-
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
 
@@ -1273,43 +1266,6 @@ void update_inst_libs(void)
     }
 }
 
-// Build the fun_ and omnils_ files required for syntax highlighting and omni
-// completion before starting R. This function is called by Nvim-R
-static void fake_libnames(const char *s)
-{
-    char b[2048];
-    snprintf(b, 1500,
-            "nms <- c(%s)\n"
-            "pkgs <- utils::installed.packages()\n"
-            "nms <- nms[nms %%in%% rownames(pkgs)]\n"
-            "cat(paste(nms, utils::installed.packages()[nms, 'Built'], collapse = '\\n', sep = '_'),\n"
-            "    '\\n', sep = '', file = '%s/libnames_%s')\n", s, tmpdir, getenv("NVIMR_ID"));
-
-    int stt = run_R_code(b, 0);
-
-    // Don't rely only in the return vale of run_R_code because it's wrong on Windows
-    snprintf(b, 512, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    if (stt && access(b, F_OK) == 0) {
-        update_pkg_list();
-        build_omnils();
-        snprintf(b, 512, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
-        if (access(b, F_OK) == 0) {
-            char *lnames = read_file(b, 1);
-            if (lnames) {
-                snprintf(b, 512, "%s/last_default_libnames", compldir);
-                FILE *f = fopen(b, "w");
-                if (f){
-                    fwrite(lnames, sizeof(char), strlen(lnames), f);
-                    fclose(f);
-                }
-                free(lnames);
-            }
-        }
-    } else {
-        printf("call ShowBuildOmnilsError('%d')\n", stt);
-    }
-}
-
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_ and fun_ files in compldir.
 static void build_omnils(void)
@@ -1331,7 +1287,7 @@ static void build_omnils(void)
 
     // It would be easier to call R once for each library, but we will build
     // all cache files at once to avoid the cost of starting R many times.
-    p = str_cat(p, "library('nvimcom')\nb <- nvimcom:::nvim.buildomnils(c(");
+    p = str_cat(p, "library('nvimcom')\np <- c(");
     int k = 0;
     while (pkg) {
         if (pkg->to_build == 0) {
@@ -1341,7 +1297,7 @@ static void build_omnils(void)
             if (k == 0)
                 snprintf(buf, 63, "'%s'", pkg->name);
             else
-                snprintf(buf, 63, ",\n'%s'", pkg->name);
+                snprintf(buf, 63, ",\n  '%s'", pkg->name);
             p = str_cat(p, buf);
             pkg->to_build = 1;
             k++;
@@ -1350,13 +1306,20 @@ static void build_omnils(void)
     }
 
     if (k) {
+        // Build all the omnils_ files before beginning to build the args_
+        // files because: 1. It's about three times faster to build the
+        // omnils_ than the args_. 2. During omni completion, omnils_ is used
+        // more frequently. 3. The Object Browser only needs the omnils_.
+
         n_omnils_build++;
-        p = str_cat(p, "))\n.C('nvimcom_send_msg_to_port', paste0('+FinishBOL', b, '");
+        p = str_cat(p, ")\nb <- nvimcom:::nvim.buildomnils(p)\n"
+                ".C('nvimcom_send_msg_to_port', paste0('+FinishBOL', b, '");
         snprintf(buf, 63, "%d", n_omnils_build);
         p = str_cat(p, buf);
         p = str_cat(p, "'), '");
         p = str_cat(p, myport);
-        p = str_cat(p, "', PACKAGE = 'nvimcom')\n");
+        p = str_cat(p, "', PACKAGE = 'nvimcom')\n"
+                "nvimcom:::nvim.buildargs(p)\n");
         run_R_code(compl_buffer, 1);
     }
     building_omnils = 0;
@@ -1367,8 +1330,27 @@ static void build_omnils(void)
         more_to_build = 0;
         build_omnils();
     }
+
+    pkg = pkgList;
+    while (pkg) {
+        if (!pkg->args) {
+            snprintf(buf, 1023, "%s/args_%s_%s", compldir, pkg->name, pkg->version);
+            pkg->args = read_file(buf, 0);
+            if (pkg->args) {
+                p = pkg->args;
+                while (*p) {
+                    if (*p == '\006')
+                        *p = 0;
+                    p++;
+                }
+            }
+        }
+        pkg = pkg->next;
+    }
+
 }
 
+// Called asynchronously and only if an omnils_ file was actually built.
 static void finish_bol(int nob)
 {
     if (n_omnils_build > nob)
@@ -1950,6 +1932,14 @@ static void init_vars(void)
         strcpy(strT, "|- ");
     }
 
+    if(!getenv("NVIMR_SECRET")){
+        fprintf(stderr, "NVIMR_SECRET not found\n");
+        fflush(stderr);
+        exit(1);
+    }
+    strncpy(VimSecret, getenv("NVIMR_SECRET"), 127);
+    VimSecretLen = strlen(VimSecret);
+
     strncpy(compl_cb, getenv("NVIMR_COMPLCB"), 63);
     strncpy(compl_info, getenv("NVIMR_COMPLInfo"), 63);
     strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
@@ -2009,6 +1999,10 @@ static void init_vars(void)
             b++;
         }
     }
+    update_inst_libs();
+    update_pkg_list();
+    build_omnils();
+    finish_bol(1);
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -2244,7 +2238,91 @@ char *get_arg_compl(char *p, const char *base)
     return p;
 }
 
-void complete(const char *id, char *base, const char *funcnm)
+void resolve_arg_item(char *pkg, char *fnm, char *itm)
+{
+    char item[128];
+    snprintf(item, 127, "%s\005", itm);
+    PkgData *p = pkgList;
+    while (p) {
+        if (strcmp(p->name, pkg) == 0) {
+            if (p->args) {
+                char *s = p->args;
+                while (*s) {
+                    if (strcmp(s, fnm) == 0) {
+                        while (*s)
+                            s++;
+                        s++;
+                        while (*s != '\n') {
+                            if (str_here(s, item)) {
+                                while (*s && *s != '\005')
+                                    s++;
+                                s++;
+                                printf("call v:lua.require'cmp_nvim_r'.finish_get_args('%s')\n", s);
+                                fflush(stdout);
+                            }
+                            s++;
+                        }
+                        return;
+                    } else {
+                        while (*s != '\n')
+                            s++;
+                        s++;
+                    }
+                }
+            }
+            break;
+        }
+        p = p->next;
+    }
+}
+
+char *complete_args(char *p, char *funcnm)
+{
+    // Check if function is "pkg::fun"
+    char *pkg = NULL;
+    if (strstr(funcnm, "::")) {
+        pkg = funcnm;
+        funcnm = strstr(funcnm, "::");
+        *funcnm = 0;
+        funcnm++;
+        funcnm++;
+    }
+
+    PkgData *pd = pkgList;
+    char *s;
+    while(pd){
+        if (pd->omnils && (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0))) {
+            s = pd->omnils;
+            while(*s != 0){
+                if(strcmp(s, funcnm) == 0){
+                    int i = 4;
+                    while (i) {
+                        s++;
+                        if (*s == 0)
+                            i--;
+                    }
+                    s++;
+                    p = str_cat(p, "{'pkg': '");
+                    p = str_cat(p, pd->name);
+                    p = str_cat(p, "', 'fnm': '");
+                    p = str_cat(p, funcnm);
+                    p = str_cat(p, "', 'args': [");
+                    p = str_cat(p, s);
+                    p = str_cat(p, "]},");
+                    break;
+                } else {
+                    while (*s != '\n')
+                        s++;
+                    s++;
+                }
+            }
+        }
+        pd = pd->next;
+    }
+    return p;
+}
+
+void complete(const char *id, char *base, char *funcnm)
 {
     char *p;
 
@@ -2262,7 +2340,10 @@ void complete(const char *id, char *base, const char *funcnm)
             return;
         } else {
             // Normal completion of arguments
-            p = get_arg_compl(p, base);
+            if (*NvimcomPort == '0')
+                p = complete_args(p, funcnm);
+            else
+                p = get_arg_compl(p, base);
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
@@ -2388,10 +2469,6 @@ int main(int argc, char **argv){
                         else
                             lib2ob();
                         break;
-                    case '5': // Save fake libnames_
-                        msg++;
-                        fake_libnames(msg);
-                        break;
                     case '7':
                         f = fopen("/tmp/listTree", "w");
                         print_listTree(listTree, f);
@@ -2420,6 +2497,14 @@ int main(int argc, char **argv){
                 if (*msg == '\004') {
                     msg++;
                     complete(id, msg, "\004");
+                } else if (*msg == '\005') {
+                    msg++;
+                    char *base = msg;
+                    while (*msg != '\005')
+                        msg++;
+                    *msg = 0;
+                    msg++;
+                    complete(id, base, msg);
                 } else {
                     complete(id, msg, NULL);
                 }
@@ -2435,8 +2520,22 @@ int main(int argc, char **argv){
                     wrd = strstr(wrd, "::") + 2;
                 completion_info(wrd, msg);
                 break;
-#ifdef WIN32
             case '7':
+                msg++;
+                char *p = msg;
+                while (*msg != '\002')
+                    msg++;
+                *msg = 0;
+                msg++;
+                char *f = msg;
+                while (*msg != '\002')
+                    msg++;
+                *msg = 0;
+                msg++;
+                resolve_arg_item(p, f, msg);
+                break;
+#ifdef WIN32
+            case '8':
                 // Messages related with the Rgui on Windows
                 msg++;
                 switch(*msg){
@@ -2471,7 +2570,7 @@ int main(int argc, char **argv){
                 }
                 break;
 #endif
-            case '8': // Quit now
+            case '9': // Quit now
                 exit(0);
                 break;
             default:

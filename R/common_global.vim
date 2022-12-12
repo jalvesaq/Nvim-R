@@ -687,7 +687,7 @@ function RVimLeave()
             if IsJobRunning(job)
                 if job == 'ClientServer' || job == 'BibComplete'
                     " Avoid warning of exit status 141
-                    call JobStdin(g:rplugin.jobs[job], "8\n")
+                    call JobStdin(g:rplugin.jobs[job], "9\n")
                     sleep 20m
                 endif
             endif

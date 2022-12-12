@@ -160,10 +160,8 @@ nvim.getInfo <- function(printenv, x) {
     info <- NULL
     als <- NvimcomEnv$pkgdescr[[printenv]]$alias[NvimcomEnv$pkgdescr[[printenv]]$alias[, "name"] == x, "alias"]
     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[als]], silent = TRUE)
-    if (length(info) == 1) {
-        info <- .Call("rd2md", info, PACKAGE = "nvimcom")
+    if (length(info) == 1)
         return(info)
-    }
     else
         return("\006\006")
 }
@@ -333,6 +331,57 @@ GetFunDescription <- function(pkg) {
                                        "alias" = als)
 }
 
+filter.objlist <- function(x) {
+    x[!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", x) & !grepl("^\\.__", x)]
+}
+
+nvim.buildargs <- function(pkg) {
+    if (length(pkg) > 1) {
+        for (p in pkg)
+            nvim.buildargs(p)
+        return(invisible(NULL))
+    }
+
+    afile <- paste0(Sys.getenv("NVIMR_COMPLDIR"), "/", "args_", pkg, "_",
+                utils::packageDescription(pkg)$Version)
+    if (file.exists(afile))
+        return(invisible(NULL))
+
+    ok <- try(require(pkg, warn.conflicts = FALSE,
+                      quietly = TRUE, character.only = TRUE))
+    if (!ok)
+        return(invisible(NULL))
+
+    pkgenv <- paste0("package:", pkg)
+    obj.list <- objects(pkgenv)
+    obj.list <- filter.objlist(obj.list)
+
+    sink(afile)
+    for (obj in obj.list) {
+        x <- try(get(obj, pkgenv, mode = "any"), silent = TRUE)
+        if (!is.function(x))
+            next
+        if (inherits(x, "try-error")) {
+            warning(paste0("Error while generating item completion for: ",
+                           obj, " (", pkgenv, ").\n"))
+            next
+        }
+        if (length(x) != 1) # base::letters
+            next
+        if (is.primitive(x))
+            frm <- formals(args(x))
+        else
+            frm <- formals(x)
+        arglist <- gbRd.args2txt(pkg, obj, names(frm))
+        arglist <- lapply(arglist, nvim.fix.string)
+        cat(obj, "\006",
+            paste(names(arglist), arglist, sep = "\005", collapse = "\006"),
+            "\006", sep = "", "\n")
+    }
+    sink()
+    return(invisible(NULL))
+}
+
 # Build Omni List
 nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     nvim.OutDec <- getOption("OutDec")
@@ -358,17 +407,16 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
         }
 
         obj.list <- objects(curpack, all.names = allnames)
+        obj.list <- filter.objlist(obj.list)
+
         l <- length(obj.list)
         if (l > 0) {
             sink(omnilist, append = FALSE)
             for (obj in obj.list) {
-                if (!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", obj) &&
-                    !grepl("^\\.__", obj)) {
-                    ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
-                    if (inherits(ol, "try-error"))
-                        warning(paste0("Error while generating omni completion line for: ",
-                                       obj, " (", curpack, ", ", curlib, ").\n"))
-                }
+                ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
+                if (inherits(ol, "try-error"))
+                    warning(paste0("Error while generating omni completion line for: ",
+                                   obj, " (", curpack, ", ", curlib, ").\n"))
             }
             sink()
             # Build list of functions for syntax highlight
@@ -407,8 +455,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             writeLines(text = '" No functions found.', con = sub("omnils_", "fun_", omnilist))
         }
     }
-    writeLines(text = "Finished",
-               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished"))
     return(invisible(NULL))
 }
 
@@ -433,11 +479,12 @@ nvim.buildomnils <- function(p) {
     odir <- dir(bdir)
     pbuilt <- odir[grep(paste0("omnils_", p, "_"), odir)]
     fbuilt <- odir[grep(paste0("fun_", p, "_"), odir)]
+    abuilt <- odir[grep(paste0("args_", p, "_"), odir)]
 
 
     if (length(fbuilt) > 1 || length(pbuilt) > 1 || length(fbuilt) == 0 || length(pbuilt) == 0) {
         # omnils is either duplicated or inexistent
-        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
         return(invisible(1))
     }
@@ -446,7 +493,7 @@ nvim.buildomnils <- function(p) {
     if (pvb != pvi ||
         file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime) {
         # omnils is either outdated or older than the README
-        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
         return(invisible(1))
     }

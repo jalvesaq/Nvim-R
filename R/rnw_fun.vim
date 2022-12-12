@@ -378,7 +378,7 @@ function SyncTeX_backward(fname, ln)
         elseif has("gui_running")
             if has("win32")
                 " Attempt 1
-                call JobStdin(g:rplugin.jobs["ClientServer"], "77\n")
+                call JobStdin(g:rplugin.jobs["ClientServer"], "87\n")
 
                 " Attempt 2
                 " if has("nvim")

@@ -95,8 +95,8 @@ static struct pattern rd[] = {
     {"ll",            2,   0,  "≪",             "\000"},
     {"gg",            2,   0,  "≫",             "\000"},
     {"infty",         5,   0,  "∞",             "\000"},
+    {"tabular",       7,   3,  "\002",          "\002"},
     {"tab",           3,   0,  "\t",            "\000"},
-    {"tabular",       7,   3,  "\000",          "\002"},
     {"cr",            2,   0,  "\002",          "\000"},
     {"sqrt",          4,   1,  "*√",             "*"},
     {"strong",        6,   1,  "**",            "**"},
@@ -220,12 +220,12 @@ static void rd_md(char **o1, char **o2)
                     return;
                 case 3: // \cmd{string1}{string2} -> <string2>
                     p2 += rd[i].len + 1;
-                    p1 = insert_str(p1, rd[i].before);
-                    p2 = p2 + find_matching_bracket(p2);
+                    p2 = p2 + find_matching_bracket(p2) + 1;
                     if (*p2 == '{') {
                         p2++;
                         p3 = p2 + find_matching_bracket(p2);
                         *p3 = 0;
+                        p1 = insert_str(p1, rd[i].before);
                         p1 = insert_str(p1, p2);
                         p1 = insert_str(p1, rd[i].after);
                         p2 = p3 + 1;
@@ -399,9 +399,9 @@ SEXP rd2md(SEXP txt)
     strcpy(b, s);
 
     // Run three times to convert nested \commands.
+
     char *p1 = a;
     char *p2 = b;
-
     pre_rd_md(&p1, &p2, a + maxp);
 
     p1 = b;
@@ -431,6 +431,12 @@ SEXP rd2md(SEXP txt)
                 *p1 = *p2; p1++; p2++;
             }
         } else {
+            if (p2[0] == ' ' && p2[1] == '`' && p2[2] == '`' && ((p2[3] >= 'a' &&
+                            p2[3] <= 'z') || (p2[3] >= 'A' && p2[3] <= 'Z'))) {
+                *p1 = ' '; p1++;
+                *p1 = '"'; p1++;
+                p2 += 3;
+            }
             if (*p2 == '\n' || *p2 == '\r')
                 *p2 = ' ';
             if (*p2 == ' ') {
