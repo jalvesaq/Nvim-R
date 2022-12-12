@@ -16,6 +16,8 @@ nvim.fix.string <- function(x, sdq = TRUE) {
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
 nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE) {
+    if (!exists(funcname))
+        return("")
     frm <- NA
     funcmeth <- NA
     if (!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE) {
@@ -49,10 +51,13 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else if (!existsFunction(funcname)) {
                 return("")
             }
-            if (is.primitive(get(funcname)))
+            if (is.primitive(get(funcname))) {
                 frm <- formals(args(funcname))
-            else
-                frm <- formals(get(funcname, envir = globalenv()))
+            } else {
+                try(frm <- formals(get(funcname, envir = globalenv())), silent = TRUE)
+                if (length(frm) == 1 && is.na(frm))
+                    return("")
+            }
         } else {
             idx <- grep(paste0(":", pkg, "$"), search())
             if (length(idx)) {
@@ -199,6 +204,9 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 
+    # The magrittr package has (or used to have) an alias named `n'est pas`
+    x <- gsub("'", "\004", x)
+
     if (is.null(xx)) {
         x.class <- ""
         x.group <- "*"
@@ -258,7 +266,8 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 if (info == "\006\006") {
                     xattr <- try(attr(xx, "label"), silent = TRUE)
                     if (!inherits(xattr, "try-error"))
-                        info <- paste0("\006\006", CleanOmniLine(xattr))
+                        if (!is.null(xattr) && length(xattr) == 1)
+                            info <- paste0("\006\006", .Call("rd2md", xattr, PACKAGE = "nvimcom"))
                 }
                 cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
                     "\006[]", info, "\006\n", sep = "")
@@ -286,100 +295,6 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 }
-
-# NOTE: This function takes only about 15% of the time to build an omnls_
-# file, but it would be better to rewrite it in C to fix a bug affecting
-# nested commands such as \strong{aaa \href{www}{www}} because the current
-# code finds the next brace and not the matching brace. However, this cannot
-# be a priority because the bug affects only about 0.01% of all omnils_ lines).
-CleanOmniLine <- function(x) {
-    if (length(x) == 0)
-        return(x)
-    x <- gsub("\n", " ", x)
-    x <- gsub("  *", " ", x)
-    if (!NvimcomEnv$isAscii) {
-        # Only the symbols found in a sample of omnls_ files
-        x <- gsub("\\\\Sigma\\b", "\u03a3", x)
-        x <- gsub("\\\\Delta\\b", "\u0394", x)
-        x <- gsub("\\\\alpha\\b", "\u03b1", x)
-        x <- gsub("\\\\beta\\b", "\u03b2", x)
-        x <- gsub("\\\\delta\\b", "\u03b4", x)
-        x <- gsub("\\\\epsilon[\\}\\b]", "\u03b5", x)
-        x <- gsub("\\\\eta\\b", "\u03b7", x)
-        x <- gsub("\\\\gamma\\b", "\u03b3", x)
-        x <- gsub("\\\\lambda\\b", "\u03b3", x)
-        x <- gsub("\\\\mu\\b", "\u03bc", x)
-        x <- gsub("\\\\omega\\b", "\u03bf", x)
-        x <- gsub("\\\\pi\\b", "\u03c0", x)
-        x <- gsub("\\\\phi\\b", "\u03c6", x)
-        x <- gsub("\\\\rho\\b", "\u03c1", x)
-        x <- gsub("\\\\sigma\\b", "\u03c3", x)
-        x <- gsub("\\\\le\\b", "\u2264", x)
-        x <- gsub("\\\\ge\\b", "\u2265", x)
-        x <- gsub("\\\\sqrt\\{(.*?)\\}", "\u221a\\1", x)
-    }
-    x <- gsub("\\\\R\\b", "*R*", x)
-    x <- gsub("\\\\emph\\{\\\\sQuote\\{(.+?)\\}\\}", "*\u2018\\1\u2019*", x)
-    x <- gsub("\\\\LinkA\\{(.+?)\\}\\{.+?\\}", "\\1", x)
-    x <- gsub("\\\\link\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\email\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\link\\[.+?\\]\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\code\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\samp\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\acronym\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\option\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\env\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\var\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\strong\\{(.*?)\\}", "**\\1**", x)
-    x <- gsub("\\\\special\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\file\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\sQuote\\{(.+?)\\}", "\u2018\\1\u2019", x)
-    x <- gsub("\\\\dQuote\\{(.+?)\\}", "\u201c\\1\u201d", x)
-    x <- gsub("\\\\emph\\{(.+?)\\}", "*\\1*", x)
-    x <- gsub("\\\\bold\\{(.+?)\\}", "**\\1**", x)
-    x <- gsub("\\\\pkg\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\eqn\\{.+?\\}\\{(.+?)\\}", "*\\1*", x)
-    x <- gsub("\\\\eqn\\{(.+?)\\}", "*\\1*", x)
-    x <- gsub("\\\\deqn\\{(.*?)\\}\\{(.*?)\\}", "*\\2*", x)
-    x <- gsub("\\\\cite\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\url\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\linkS4class\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\command\\{(.+?)\\}", "`\\1`", x)
-    x <- gsub("\\\\ldots", "...", x)
-    x <- gsub("\\\\dots", "...", x)
-    x <- gsub("\\\\preformatted\\{(.+?)\\}", " \\1 ", x)
-    x <- gsub("\\\\verb\\{(.*?)\\}", "`\\1`", x)
-    x <- gsub("\\\\out\\{(.*?)\\}", "\\1", x)
-    x <- gsub("\\\\figure\\{.+?\\}\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\figure\\{(.+?)\\}", "\\1", x)
-    x <- gsub("\\\\href\\{(.+?)\\}\\{(.+?)\\}", "\u2018\\2\u2019 <\\1>", x)
-    x <- gsub("\\\\ifelse\\{\\{latex\\}\\{.+?\\}\\{(.+?)\\}\\}", "\\1", x)
-    x <- gsub("\\\\ifelse\\{\\{html\\}\\{.+?\\}\\{(.+?)\\}\\}", "\\1", x)
-    x <- gsub("\\\\if\\{html\\}\\{.+?\\}", "", x)
-    x <- gsub("\\\\tabular\\{.*?\\}\\{(.*?)\\}", "\\1\002", x)
-    x <- gsub("\\\\tab ", "\t", x)
-    x <- gsub("\\\\item\\{(.+?)\\}", "\002\\1", x)
-    x <- gsub("\\\\item ", "\002\\\\item ", x)
-    x <- gsub("\\\\item ", " \u2022 ", x)
-    x <- gsub("\\\\itemize\\{(.+?)\\}", "\\1\002", x)
-    x <- gsub("\\\\cr\\b", "\002", x)
-    x <- gsub("\\\\sspace\\{\\}", " ", x)
-    x <- gsub("\\\\\\{\\}", "", x)
-    if (grepl("\\\\describe\\{", x)) {
-        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
-        x <- sub("\\\\describe\\{(.*)}", "\\1", x)
-    }
-    if (NvimcomEnv$isAscii) {
-        x <- gsub("\u2018", "\004", x)
-        x <- gsub("\u2019", "\004", x)
-        x <- gsub("\u201c", '"', x)
-        x <- gsub("\u201d", '"', x)
-        x <- gsub("\u2022", "-", x)
-    }
-    x <- gsub("'", "\004", x)
-    x
-}
-
 
 # Code adapted from the gbRd package
 GetFunDescription <- function(pkg) {
@@ -412,39 +327,64 @@ GetFunDescription <- function(pkg) {
 
     GetDescr <- function(x) {
         x <- paste0(x, collapse = "")
-        x <- sub("\\\\usage\\{.*", "", x)
-        x <- sub("\\\\details\\{.*", "", x)
-        x <- CleanOmniLine(x)
-        ttl <- sub(".*\\\\title\\{(.*?)\\}.*", "\\1", x)
-        ttl <- sub("^\\s*", "", sub("\\s*$", "", ttl))
-        x <- sub(".*\\\\description\\{", "", x)
-
-        # Get the matching bracket
-        xc <- charToRaw(x)
-        k <- 1
-        i <- 1
-        l <- length(xc)
-        while (i <= l) {
-            if (xc[i] == 123) {
-                k <- k + 1
-            }
-            if (xc[i] == 125) {
-                k <- k - 1
-            }
-            if (k == 0) {
-                x <- rawToChar(xc[1:i-1])
-                break
-            }
-            i <- i + 1
-        }
-
-        x <- sub("^\\s*", "", sub("\\s*$", "", x))
-        x <- gsub("\n\\s*", " ", x)
-        x <- paste0("\006", ttl, "\006", x)
+        ttl <- .Call("get_section", x, "title", PACKAGE = "nvimcom")
+        dsc <- .Call("get_section", x, "description", PACKAGE = "nvimcom")
+        x <- paste0("\006", ttl, "\006", dsc)
         x
     }
     NvimcomEnv$pkgdescr[[pkg]] <- list("descr" = sapply(pkgInfo, GetDescr),
                                        "alias" = als)
+}
+
+filter.objlist <- function(x) {
+    x[!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", x) & !grepl("^\\.__", x)]
+}
+
+nvim.buildargs <- function(pkg) {
+    if (length(pkg) > 1) {
+        for (p in pkg)
+            nvim.buildargs(p)
+        return(invisible(NULL))
+    }
+
+    afile <- paste0(Sys.getenv("NVIMR_COMPLDIR"), "/", "args_", pkg, "_",
+                utils::packageDescription(pkg)$Version)
+    if (file.exists(afile))
+        return(invisible(NULL))
+
+    ok <- try(require(pkg, warn.conflicts = FALSE,
+                      quietly = TRUE, character.only = TRUE))
+    if (!ok)
+        return(invisible(NULL))
+
+    pkgenv <- paste0("package:", pkg)
+    obj.list <- objects(pkgenv)
+    obj.list <- filter.objlist(obj.list)
+
+    sink(afile)
+    for (obj in obj.list) {
+        x <- try(get(obj, pkgenv, mode = "any"), silent = TRUE)
+        if (!is.function(x))
+            next
+        if (inherits(x, "try-error")) {
+            warning(paste0("Error while generating item completion for: ",
+                           obj, " (", pkgenv, ").\n"))
+            next
+        }
+        if (length(x) != 1) # base::letters
+            next
+        if (is.primitive(x))
+            frm <- formals(args(x))
+        else
+            frm <- formals(x)
+        arglist <- gbRd.args2txt(pkg, obj, names(frm))
+        arglist <- lapply(arglist, nvim.fix.string)
+        cat(obj, "\006",
+            paste(names(arglist), arglist, sep = "\005", collapse = "\006"),
+            "\006", sep = "", "\n")
+    }
+    sink()
+    return(invisible(NULL))
 }
 
 # Build Omni List
@@ -471,13 +411,9 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
                 next
         }
 
-        # Save title of package in its decr_ file:
-        writeLines(paste(gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Title),
-                         gsub("[\t\n\r ]+", " ", packageDescription(curlib)$Description), sep = "\t"),
-                   paste0(Sys.getenv("NVIMR_COMPLDIR"), "/descr_", curlib,
-                          "_", utils::packageDescription(curlib)$Version))
-
         obj.list <- objects(curpack, all.names = allnames)
+        obj.list <- filter.objlist(obj.list)
+
         l <- length(obj.list)
         if (l > 0) {
             sink(omnilist, append = FALSE)
@@ -485,7 +421,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
                 ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
                 if (inherits(ol, "try-error"))
                     warning(paste0("Error while generating omni completion line for: ",
-                                  obj, " (", curpack, ", ", curlib, ").\n"))
+                                   obj, " (", curpack, ", ", curlib, ").\n"))
             }
             sink()
             # Build list of functions for syntax highlight
@@ -524,20 +460,21 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
             writeLines(text = '" No functions found.', con = sub("omnils_", "fun_", omnilist))
         }
     }
-    writeLines(text = "Finished",
-               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/nvimbol_finished"))
     return(invisible(NULL))
 }
 
-# This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
-#   - descr_  : package description for the object browser
+# This function calls nvim.bol which writes two files in ~/.cache/Nvim-R:
 #   - fun_    : function names for syntax highlighting
 #   - omnils_ : data for omni completion and object browser
 nvim.buildomnils <- function(p) {
     if (length(p) > 1) {
+        n <- 0
         for (pkg in p)
-            nvim.buildomnils(pkg)
-        return(invisible(NULL))
+            n <- n + nvim.buildomnils(pkg)
+        if (n > 0)
+            return(invisible(1))
+        else
+            return(invisible(0))
     }
     # No verbosity because running as Neovim job
     options(nvimcom.verbose = 0)
@@ -547,20 +484,32 @@ nvim.buildomnils <- function(p) {
     odir <- dir(bdir)
     pbuilt <- odir[grep(paste0("omnils_", p, "_"), odir)]
     fbuilt <- odir[grep(paste0("fun_", p, "_"), odir)]
+    abuilt <- odir[grep(paste0("args_", p, "_"), odir)]
 
+    need_build <- FALSE
 
-    if (length(fbuilt) > 1 || length(pbuilt) > 1 || length(fbuilt) == 0 || length(pbuilt) == 0) {
-        # omnils is either duplicated or inexistent
-        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
-        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
-        return(invisible(NULL))
+    if (length(fbuilt) == 0 || length(pbuilt) == 0) {
+        # no omnils
+        need_build <- TRUE
+    } else {
+        if (length(fbuilt) > 1 || length(pbuilt) > 1) {
+            # omnils is duplicated (should never happen)
+            need_build <- TRUE
+        } else {
+            pvb <- sub(".*_.*_", "", pbuilt)
+            # omnils is either outdated or older than the README
+            if (pvb != pvi ||
+                file.info(paste0(bdir, "README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime)
+                need_build <- TRUE
+        }
     }
 
-    pvb <- sub(".*_.*_", "", pbuilt)
-    if (pvb != pvi ||
-        file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime) {
-        # omnils is either outdated or older than the README
-        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt)))
+    if (need_build) {
+        cat("echo 'Building completion list for \"", p, "\"'\n", sep = "")
+        flush(stdout())
+        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
+        return(invisible(1))
     }
+    return(invisible(0))
 }

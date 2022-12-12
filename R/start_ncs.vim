@@ -9,179 +9,48 @@ function CheckNvimcomVersion()
                     \ g:rplugin.nvimcom_info['home'] . '/00LOCK-nvimcom"')
     endif
 
-    " We need R version and libPaths
-    " $R_LIBS_USER will be part of .libPaths() output only if the directory alread exists.
-    call AddForDeletion(g:rplugin.tmpdir . "/vlibp.R")
-    call AddForDeletion(g:rplugin.tmpdir . "/Rversion")
-    call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
-    call writefile(['cat(paste0(version[c("major", "minor")], collapse = "."), ' .
-                \ 'file = "' . g:rplugin.tmpdir . '/Rversion")',
-                \ 'cat(unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep)), .libPaths())), ' .
-                \ 'sep = "\n", colapse = "\n", file = "' . g:rplugin.tmpdir . '/libPaths")',
-                \ 'quit(save = "no")'],
-                \ g:rplugin.tmpdir . '/vlibp.R')
-    silent let rout = system(g:rplugin.Rcmd . ' --quiet --no-restore --no-save --no-echo --slave -f "' . g:rplugin.tmpdir . '/vlibp.R' . '"')
-    if v:shell_error
-        let g:rplugin.debug_info['R CMD version and libPaths error'] = rout
-        call RWarningMsg('Error trying to get R version and lib paths: ' . substitute(rout, "\n", " ", "g"))
-        return 0
-    endif
+    let libs = ListRLibsFromBuffer()
+    let flines = ['nvim_r_home <- "' . g:rplugin.home . '"',
+                \ 'libs <- c(' . libs . ')']
+    let flines += readfile(g:rplugin.home . "/R/before_ncs.R")
+    let scrptnm = g:rplugin.tmpdir . "/before_ncs.R"
+    call writefile(flines, scrptnm)
 
-    let rversion = readfile(g:rplugin.tmpdir . '/Rversion')[0]
-    let g:rplugin.debug_info['R_version'] = rversion
-
-    " Compare version of nvimcom source with the installed version
-
-    " Get version of current source code
-    let flines = readfile(g:rplugin.home . "/R/nvimcom/DESCRIPTION")
-    let s:required_nvimcom = substitute(flines[1], "Version: ", "", "")
-    let g:rplugin.debug_info['Required nvimcom'] = s:required_nvimcom
-
-    if g:rplugin.nvimcom_info['home'] == ""
-        let neednew = 1
-        let g:rplugin.debug_info['Why build nvimcom'] = 'nvimcom_home = ""'
+    " Run the script as a job, setting callback functions to receive its
+    " stdout, stderr and exit code.
+    if has('nvim')
+        let jobh = {'on_stdout': function('RInitStdout'),
+                    \ 'on_stderr': function('RInitStderr'),
+                    \ 'on_exit': function('RInitExit')}
     else
-        if !filereadable(g:rplugin.nvimcom_info['home'] . "/nvimcom/DESCRIPTION")
-            let neednew = 1
-            let g:rplugin.debug_info['Why build nvimcom'] = 'No DESCRIPTION'
-        else
-            let ndesc = readfile(g:rplugin.nvimcom_info['home'] . "/nvimcom/DESCRIPTION")
-            let nvers = substitute(ndesc[1], "Version: ", "", "")
-            let g:rplugin.debug_info['Installed nvimcom'] = nvers
-            if nvers != s:required_nvimcom
-                let neednew = 1
-                let g:rplugin.debug_info['Why build nvimcom'] = 'Nvimcom version mismatch'
-            else
-                " Nvimcom is up to date. Check if R version changed.
-                if rversion < '4.0.0'
-                    call RWarningMsg("Nvim-R requires R >= 4.0.0")
-                endif
-                if g:rplugin.nvimcom_info['Rversion'] != rversion
-                    let neednew = 1
-                    let g:rplugin.debug_info['Why build nvimcom'] = 'R version mismatch (' .
-                                \ g:rplugin.nvimcom_info['Rversion'] . ' x ' . rversion . ')'
-                endif
-            endif
-        endif
+        let jobh = {'out_cb':  'RInitStdout',
+                    \ 'err_cb':  'RInitStderr',
+                    \ 'exit_cb': 'RInitExit'}
     endif
-
-    if neednew
-        echon "Building nvimcom..."
-        call delete(g:rplugin.compldir . '/nvimcom_info')
-        exe "cd " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g')
-
-        if has("win32")
-            call SetRHome()
-            let cmpldir = substitute(g:rplugin.compldir, '\\', '/', 'g')
-            let scrptnm = 'cmds.cmd'
-        else
-            let cmpldir = g:rplugin.compldir
-            let scrptnm = 'cmds.sh'
-        endif
-
-        " The user libs directory may not exist yet if R was just upgraded
-        if exists("g:R_remote_tmpdir")
-            let tmpdir = g:R_remote_tmpdir
-        else
-            let tmpdir = g:rplugin.tmpdir
-        endif
-
-        " Nvim-R might have been installed as root in a non writable directory.
-        " We have to build nvimcom in a writable directory before installing it.
-        let libpaths = readfile(g:rplugin.tmpdir . "/libPaths")
-        call map(libpaths, 'substitute(expand(v:val), "\\", "/", "g")')
-        call filter(libpaths, 'strlen(v:val) > 2')
-        let g:rplugin.debug_info['libPaths'] = libpaths
-
-        if exists("g:R_remote_tmpdir")
-            let dw = 1
-        else
-            let dw = 0
-            for path in libpaths
-                if isdirectory(path) && filewritable(path)
-                    let dw = 1
-                    break
-                endif
-            endfor
-        endif
-        if !dw
-            redraw
-            let resp = input('"' . libpaths[0] . '" is not writable. Create it now? [y/n] ')
-            if resp[0] ==? "y"
-                let dw = mkdir(libpaths[0], "p")
-                if !dw
-                    call RWarningMsg('Failed creating "' . libpaths[0] . '"')
-                    return
-                endif
-            endif
-        endif
-
-        " Now that we ensured the existence of the directory where nvimcom is
-        " going to be installed, write a script to:
-        "   1. Build nvimcom
-        "   2. Install nvimcom
-        "   3. Save nvimcom_info in the cache directory (~/.cache/Nvim-R/ on Linux)
-
-        call AddForDeletion(g:rplugin.tmpdir . '/' .  "nvimcom_" . s:required_nvimcom . ".tar.gz")
-        if !exists("g:R_remote_tmpdir")
-            let cmds = [g:rplugin.Rcmd . ' CMD build "' . g:rplugin.home . '/R/nvimcom"']
-        else
-            " Try to make it possible to run R and Vim in different machines
-            let cmds =['cp -R "' . g:rplugin.home . '/R/nvimcom" .',
-                        \ g:rplugin.Rcmd . ' CMD build "' . g:R_remote_tmpdir . '/nvimcom"',
-                        \ 'rm -rf "' . g:R_tmpdir . '/nvimcom"']
-        endif
-        if has("win32")
-            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-multiarch nvimcom_" . s:required_nvimcom . ".tar.gz"]
-        else
-            let cmds += [g:rplugin.Rcmd . " CMD INSTALL --no-lock nvimcom_" . s:required_nvimcom . ".tar.gz"]
-        endif
-        let cmds += [g:rplugin.Rcmd . ' --no-restore --no-save --slave -e "' .
-                    \ "cat(installed.packages()['nvimcom', c('Version', 'LibPath', 'Built')], sep = '\\n', file = '" . cmpldir . "/nvimcom_info')" . '"']
-
-        call writefile(cmds, g:rplugin.tmpdir . '/' .  scrptnm)
-        call AddForDeletion(g:rplugin.tmpdir . '/' .  scrptnm)
-        let g:rplugin.debug_info["Build_cmds"] = join(cmds, "\n")
-
-        " Run he script as a job, setting callback functions to receive its
-        " stdout, stderr and exit code.
-        if has('nvim')
-            let jobh = {'on_stdout': function('RBuildStdout'),
-                        \ 'on_stderr': function('RBuildStderr'),
-                        \ 'on_exit': function('RBuildExit')}
-        else
-            let jobh = {'out_cb':  'RBuildStdout',
-                        \ 'err_cb':  'RBuildStderr',
-                        \ 'exit_cb': 'RBuildExit'}
-        endif
-        if has('win32')
-            let g:rplugin.jobs["Build_R"] = StartJob([scrptnm], jobh)
-        else
-            let g:rplugin.jobs["Build_R"] = StartJob(['sh', g:rplugin.tmpdir . '/' . scrptnm], jobh)
-        endif
-
-        if has("win32")
-            call UnsetRHome()
-        endif
-        silent cd -
-    else
-        call StartNClientServer()
-    endif
+    let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
 let s:RBout = []
 let s:RBerr = []
 
 " Get the output of R CMD build and INSTALL
-function RBuildStdout(...)
+function RInitStdout(...)
     if has('nvim')
-        let s:RBout += [substitute(join(a:2), '\r', '', 'g')]
+        let rcmd = substitute(join(a:2), '\r', '', 'g')
     else
-        let s:RBout += [substitute(a:2, '\r', '', 'g')]
+        let rcmd = substitute(a:2, '\r', '', 'g')
+    endif
+    if rcmd =~ '^call ' || rcmd =~ '^let ' || rcmd =~ '^echo '
+        exe rcmd
+        if rcmd =~ '^echo'
+            redraw
+        endif
+    else
+    let s:RBout += [rcmd]
     endif
 endfunction
 
-function RBuildStderr(...)
+function RInitStderr(...)
     if has('nvim')
         let s:RBerr += [substitute(join(a:2), '\r', '', 'g')]
     else
@@ -191,31 +60,37 @@ endfunction
 
 " Check if the exit code of the script that built nvimcom was zero and if the
 " file nvimcom_info seems to be OK (has three lines).
-function RBuildExit(...)
-    if a:2 == 0 && filereadable(g:rplugin.compldir . '/nvimcom_info')
-        let info = readfile(g:rplugin.compldir . '/nvimcom_info')
-        if len(info) == 3
-            " Update nvimcom information
-            let g:rplugin.nvimcom_info['version'] = info[0]
-            let g:rplugin.nvimcom_info['home'] = info[1]
-            let s:ncs_path = FindNCSpath(info[1])
-            let g:rplugin.nvimcom_info['Rversion'] = info[2]
-            call StartNClientServer()
-            echon "OK"
+function RInitExit(...)
+    if a:2 == 0
+        if filereadable(g:rplugin.compldir . '/nvimcom_info')
+            let info = readfile(g:rplugin.compldir . '/nvimcom_info')
+            if len(info) == 3
+                " Update nvimcom information
+                let g:rplugin.nvimcom_info['version'] = info[0]
+                let g:rplugin.nvimcom_info['home'] = info[1]
+                let s:ncs_path = FindNCSpath(info[1])
+                let g:rplugin.nvimcom_info['Rversion'] = info[2]
+                call StartNClientServer()
+            else
+                call delete(g:rplugin.compldir . '/nvimcom_info')
+                call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
+            endif
         else
-            call delete(g:rplugin.compldir . '/nvimcom_info')
-            call RWarningMsg("ERROR! Please, do :RDebugInfo for details")
+            call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
         endif
     else
         if filereadable(expand("~/.R/Makevars"))
             call RWarningMsg("ERROR! Please, run :RDebugInfo for details, and check your '~/.R/Makevars'.")
         else
-            call RWarningMsg("ERROR! Please, run :RDebugInfo for details")
+            call RWarningMsg("ERROR: R exit code = " . a:2 . "! Please, run :RDebugInfo for details.")
         endif
-        call delete(g:rplugin.tmpdir . "nvimcom_" . s:required_nvimcom . ".tar.gz")
     endif
-    "let g:rplugin.debug_info["RBuildOut"] = join(s:RBout, "\n")
-    let g:rplugin.debug_info["RBuildErr"] = join(s:RBerr, "\n")
+    let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
+    let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
+    call delete(g:rplugin.tmpdir . "/before_ncs.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
 endfunction
 
 function FindNCSpath(libdir)
@@ -256,27 +131,6 @@ function StartNClientServer()
         endif
     endif
 
-    " The nvimcom package includes a small application to generate random
-    " numbers and we use it to set both $NVIMR_ID and $NVIMR_SECRET
-    if $NVIMR_ID == ""
-        if has('nvim')
-            silent let randstr = system(['randint2'])
-        else
-            silent let randstr = system('randint2')
-        endif
-        if v:shell_error || strlen(randstr) < 8 || (strlen(randstr) > 0 && randstr[0] !~ '[0-9]')
-            call RWarningMsg('Using insecure communication with R due to failure to get random numbers: '
-                        \ . substitute(randstr, "[\r\n]", ' ', 'g'))
-            let $NVIMR_ID = strftime('%m%d%Y%M%S%H')
-            let $NVIMR_SECRET = strftime('%m%H%M%d%Y%S')
-        else
-            let randlst = split(randstr)
-            let $NVIMR_ID = randlst[0]
-            let $NVIMR_SECRET = randlst[1]
-        endif
-    endif
-    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
-
     " Options in the nclientserver application are set through environment variables
     if g:R_objbr_opendf
         let $NVIMR_OPENDF = "TRUE"
@@ -294,7 +148,7 @@ function StartNClientServer()
         call SetRHome()
     endif
     let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/tmp/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     if has('win32')
         call UnsetRHome()
     endif
@@ -304,23 +158,31 @@ function StartNClientServer()
     unlet $NVIMR_OBJBR_ALLNAMES
 endfunction
 
+function ListRLibsFromBuffer()
+    if !exists("g:R_start_libs")
+        let g:R_start_libs = "base,stats,graphics,grDevices,utils,methods"
+    endif
+
+    let lines = getline(1, "$")
+    call filter(lines, 'v:val =~ "library\\|require"')
+    call map(lines, 'substitute(v:val, "\\s*).*", "", "")')
+    call map(lines, 'substitute(v:val, "\\s*,.*", "", "")')
+    call map(lines, 'substitute(v:val, "\\s*\\(library\\|require\\)\\s*(\\s*", "", "")')
+    call map(lines, 'substitute(v:val, "' . '[' . "'" . '\"]' . '", "", "g")')
+    let libs = ""
+    if len(g:R_start_libs) > 4
+        let libs = '"' . substitute(g:R_start_libs, ",", '", "', "g") . '", '
+    endif
+    let libs .= '"' . join(lines, '", "') . '"'
+    return libs
+endfunction
+
 " This function is called by nclientserver when its server binds to a specific port.
 function RSetMyPort(p)
     let g:rplugin.myport = a:p
     let $NVIMR_PORT = a:p
     let g:rplugin.starting_ncs = 0
-
-    " Now, build (if necessary) and load the default package before running R.
-    if !exists("g:R_start_libs")
-        let g:R_start_libs = "base,stats,graphics,grDevices,utils,methods"
-    endif
-    if !isdirectory(g:rplugin.tmpdir)
-        call mkdir(g:rplugin.tmpdir, "p", 0700)
-    endif
-    let pkgs = "'" . substitute(g:R_start_libs, ",", "', '", "g") . "'"
-    call JobStdin(g:rplugin.jobs["ClientServer"], "35" . pkgs . "\n")
-    call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
-    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    call delete(g:rplugin.tmpdir . "/libPaths")
 endfunction
 
 " Get information from nclientserver (currently only the names of loaded
@@ -415,16 +277,12 @@ endfunction
 
 " Get nvimcom_info from the last time that nvimcom was built
 let g:rplugin.nvimcom_info = {'home': '', 'version': '0', 'Rversion': '0'}
-let s:ncs_path = ""
 if filereadable(g:rplugin.compldir . "/nvimcom_info")
     let s:flines = readfile(g:rplugin.compldir . "/nvimcom_info")
     if len(s:flines) == 3
-        let s:ncs_path = FindNCSpath(s:flines[1])
-        if s:ncs_path != ''
-            let g:rplugin.nvimcom_info['version'] = s:flines[0]
-            let g:rplugin.nvimcom_info['home'] = s:flines[1]
-            let g:rplugin.nvimcom_info['Rversion'] = s:flines[2]
-        endif
+        let g:rplugin.nvimcom_info['version'] = s:flines[0]
+        let g:rplugin.nvimcom_info['home'] = s:flines[1]
+        let g:rplugin.nvimcom_info['Rversion'] = s:flines[2]
     endif
     unlet s:flines
 endif
@@ -499,11 +357,6 @@ if len(s:ff) > 1
     endif
 endif
 unlet s:ff
-
-" 2016-08-25
-if exists("g:R_nvimcom_wait")
-    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
-endif
 
 " 2017-02-07
 if exists("g:R_vsplit")

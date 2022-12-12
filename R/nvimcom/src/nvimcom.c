@@ -315,6 +315,12 @@ void nvimcom_msg_to_nvim(char **cmd)
     nvimcom_nvimclient(*cmd, edsrvr);
 }
 
+void nvimcom_send_msg_to_port(char **msg, char **port)
+{
+    strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);
+    nvimcom_nvimclient(*msg, *port);
+}
+
 static PkgInfo *nvimcom_pkg_info_new(const char *nm, const char *vrsn)
 {
     PkgInfo *pi = calloc(1, sizeof(PkgInfo));

@@ -6,13 +6,10 @@ else
 endif
 
 # Note: -lWs2_32 must be after the object files
-all: nclientserver.exe randint2.exe
+all: nclientserver.exe
 
 nclientserver.exe: nclientserver.c
 	$(CC) $(CFLAGS) nclientserver.c -o nclientserver.exe -lWs2_32
-
-randint2.exe: randint2.c
-	$(CC) $(CFLAGS) randint2.c -o randint2.exe
 
 clean:
 

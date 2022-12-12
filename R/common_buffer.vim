@@ -23,3 +23,9 @@ if (index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) >
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
     call RComplAutCmds()
 endif
+
+if !exists('b:did_unrll_au')
+    let b:did_unrll_au = 1
+    autocmd BufWritePost <buffer> if exists("*UpdateNoRLibList") | call UpdateNoRLibList() | endif
+    autocmd BufEnter <buffer> if exists("*UpdateNoRLibList") | call UpdateNoRLibList() | endif
+endif
