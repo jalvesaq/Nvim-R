@@ -486,18 +486,27 @@ nvim.buildomnils <- function(p) {
     fbuilt <- odir[grep(paste0("fun_", p, "_"), odir)]
     abuilt <- odir[grep(paste0("args_", p, "_"), odir)]
 
+    need_build <- FALSE
 
-    if (length(fbuilt) > 1 || length(pbuilt) > 1 || length(fbuilt) == 0 || length(pbuilt) == 0) {
-        # omnils is either duplicated or inexistent
-        unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
-        nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
-        return(invisible(1))
+    if (length(fbuilt) == 0 || length(pbuilt) == 0) {
+        # no omnils
+        need_build <- TRUE
+    } else {
+        if (length(fbuilt) > 1 || length(pbuilt) > 1) {
+            # omnils is duplicated (should never happen)
+            need_build <- TRUE
+        } else {
+            pvb <- sub(".*_.*_", "", pbuilt)
+            # omnils is either outdated or older than the README
+            if (pvb != pvi ||
+                file.info(paste0(bdir, "README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime)
+                need_build <- TRUE
+        }
     }
 
-    pvb <- sub(".*_.*_", "", pbuilt)
-    if (pvb != pvi ||
-        file.info(paste0(bdir, "/README"))$mtime > file.info(paste0(bdir, pbuilt))$mtime) {
-        # omnils is either outdated or older than the README
+    if (need_build) {
+        cat("echo 'Building completion list for \"", p, "\"'\n", sep = "")
+        flush(stdout())
         unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
         return(invisible(1))

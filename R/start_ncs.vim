@@ -27,7 +27,7 @@ function CheckNvimcomVersion()
                     \ 'err_cb':  'RInitStderr',
                     \ 'exit_cb': 'RInitExit'}
     endif
-    let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--slave", "--no-restore", "-f", scrptnm], jobh)
+    let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
 let s:RBout = []
@@ -45,8 +45,9 @@ function RInitStdout(...)
         if rcmd =~ '^echo'
             redraw
         endif
-    endif
+    else
     let s:RBout += [rcmd]
+    endif
 endfunction
 
 function RInitStderr(...)
@@ -87,6 +88,9 @@ function RInitExit(...)
     let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
     let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
     call delete(g:rplugin.tmpdir . "/before_ncs.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
 endfunction
 
 function FindNCSpath(libdir)
@@ -126,8 +130,6 @@ function StartNClientServer()
             let $PATH = ncspath . ':' . $PATH
         endif
     endif
-
-    call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
 
     " Options in the nclientserver application are set through environment variables
     if g:R_objbr_opendf
@@ -180,12 +182,7 @@ function RSetMyPort(p)
     let g:rplugin.myport = a:p
     let $NVIMR_PORT = a:p
     let g:rplugin.starting_ncs = 0
-    if !isdirectory(g:rplugin.tmpdir)
-        call mkdir(g:rplugin.tmpdir, "p", 0700)
-    endif
     call delete(g:rplugin.tmpdir . "/libPaths")
-    call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
-    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
 endfunction
 
 " Get information from nclientserver (currently only the names of loaded
@@ -280,16 +277,12 @@ endfunction
 
 " Get nvimcom_info from the last time that nvimcom was built
 let g:rplugin.nvimcom_info = {'home': '', 'version': '0', 'Rversion': '0'}
-let s:ncs_path = ""
 if filereadable(g:rplugin.compldir . "/nvimcom_info")
     let s:flines = readfile(g:rplugin.compldir . "/nvimcom_info")
     if len(s:flines) == 3
-        let s:ncs_path = FindNCSpath(s:flines[1])
-        if s:ncs_path != ''
-            let g:rplugin.nvimcom_info['version'] = s:flines[0]
-            let g:rplugin.nvimcom_info['home'] = s:flines[1]
-            let g:rplugin.nvimcom_info['Rversion'] = s:flines[2]
-        endif
+        let g:rplugin.nvimcom_info['version'] = s:flines[0]
+        let g:rplugin.nvimcom_info['home'] = s:flines[1]
+        let g:rplugin.nvimcom_info['Rversion'] = s:flines[2]
     endif
     unlet s:flines
 endif
@@ -364,11 +357,6 @@ if len(s:ff) > 1
     endif
 endif
 unlet s:ff
-
-" 2016-08-25
-if exists("g:R_nvimcom_wait")
-    call RWarningMsg("The option R_nvimcom_wait is deprecated. Use R_wait (in seconds) instead.")
-endif
 
 " 2017-02-07
 if exists("g:R_vsplit")

@@ -11,7 +11,6 @@ setwd(Sys.getenv("NVIMR_TMPDIR"))
 cat(unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
                              .Platform$path.sep)), .libPaths())),
     sep = "\n", colapse = "\n", file = "libPaths")
-flush(stdout())
 
 # Check R version
 R_version <- paste0(version[c("major", "minor")], collapse = ".")
@@ -104,8 +103,6 @@ if (need_new_nvimcom != "") {
         flush(stdout())
         quit(save = "no")
     }
-    cat("echo ''\n")
-    flush(stdout())
 }
 
 # Save ~/.cache/Nvim-R/nvimcom_info
@@ -118,12 +115,7 @@ pkgs <- utils::installed.packages()
 libs <- libs[libs %in% rownames(pkgs)]
 cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
     '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", nvimr_id))
-flush(stdout())
 
-for (lib in libs) {
-    cat("echo 'Building omnils file for \"", lib, "\"'\n", sep = "")
-    flush(stdout())
-    nvimcom:::nvim.buildomnils(lib)
-}
+nvimcom:::nvim.buildomnils(libs)
 cat("echo ''\n")
 flush(stdout())

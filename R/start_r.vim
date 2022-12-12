@@ -45,10 +45,6 @@ function StartR(whatr)
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
     endif
 
-    if !isdirectory(g:rplugin.tmpdir)
-        call mkdir(g:rplugin.tmpdir, "p", 0700)
-    endif
-
     " https://github.com/jalvesaq/Nvim-R/issues/157
     if !exists("*FunHiOtherBf")
         exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/functions.vim"
