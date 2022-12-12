@@ -295,7 +295,7 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
         # \name{Dummy name}\title{Dummy title}\arguments{\item{max_repo_cache_age}{any
         # cached values older than this in seconds     will be ignored. See \sQuote{Details}.   }}
 
-        .Call("get_section", as.character(res), "arguments", PACKAGE = "nvimcom")
+        .Call("get_section", res, "arguments", PACKAGE = "nvimcom")
     }
     argl <- lapply(arglist, get_items, rdo)
     names(argl) <- arglist

@@ -385,6 +385,9 @@ void pre_rd_md(char **b1, char **b2, char *maxp)
 
 SEXP rd2md(SEXP txt)
 {
+    if (Rf_isNull(txt))
+        return R_NilValue;
+
     const char *s = CHAR(STRING_ELT(txt, 0));
 
     // \R is the only command that expands for more characters than the
@@ -477,6 +480,9 @@ SEXP rd2md(SEXP txt)
 
 SEXP get_section(SEXP rtxt, SEXP rsec)
 {
+    if (Rf_isNull(rtxt) || Rf_isNull(rsec))
+        return R_NilValue;
+
     const char *str = CHAR(STRING_ELT(rtxt, 0));
     const char *sec = CHAR(STRING_ELT(rsec, 0));
     char *a = calloc(sizeof(char), (strlen(str) + 1));

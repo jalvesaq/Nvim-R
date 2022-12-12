@@ -16,6 +16,8 @@ nvim.fix.string <- function(x, sdq = TRUE) {
 
 # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
 nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE) {
+    if (!exists(funcname))
+        return("")
     frm <- NA
     funcmeth <- NA
     if (!missing(objclass) && nvim.grepl("[[:punct:]]", funcname) == FALSE) {
@@ -49,10 +51,13 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else if (!existsFunction(funcname)) {
                 return("")
             }
-            if (is.primitive(get(funcname)))
+            if (is.primitive(get(funcname))) {
                 frm <- formals(args(funcname))
-            else
-                frm <- formals(get(funcname, envir = globalenv()))
+            } else {
+                try(frm <- formals(get(funcname, envir = globalenv())), silent = TRUE)
+                if (length(frm) == 1 && is.na(frm))
+                    return("")
+            }
         } else {
             idx <- grep(paste0(":", pkg, "$"), search())
             if (length(idx)) {
