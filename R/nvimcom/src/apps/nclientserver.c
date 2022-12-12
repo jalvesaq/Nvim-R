@@ -116,6 +116,7 @@ static int VimSecretLen;
 #ifdef WIN32
 static SOCKET Sfd;
 static int Tid;
+static int winbindport;
 #else
 static int Sfd = -1;
 static pthread_t Tid;
@@ -423,6 +424,7 @@ static void NeovimServer(void *arg)
         return;
     }
 
+    winbindport = bindportn;
     RegisterPort(bindportn);
 
     /* Read datagrams and reply to sender */
@@ -1317,7 +1319,12 @@ static void build_omnils(void)
         snprintf(buf, 63, "%d", n_omnils_build);
         p = str_cat(p, buf);
         p = str_cat(p, "'), '");
+#ifdef WIN32
+        snprintf(buf, 63, "%d", winbindport);
+        p = str_cat(p, buf);
+#else
         p = str_cat(p, myport);
+#endif
         p = str_cat(p, "', PACKAGE = 'nvimcom')\n"
                 "nvimcom:::nvim.buildargs(p)\n");
         run_R_code(compl_buffer, 1);
@@ -2415,16 +2422,16 @@ int main(int argc, char **argv){
             case '1': // SetPort
                 msg++;
 #ifdef WIN32
-                char *p = msg;
-                while(*p != ' ')
-                    p++;
-                *p = 0;
-                p++;
+                char *r = msg;
+                while(*r != ' ')
+                    r++;
+                *r = 0;
+                r++;
                 memcpy(NvimcomPort, msg, 15);
 #ifdef _WIN64
-                RConsole = (HWND)atoll(p);
+                RConsole = (HWND)atoll(r);
 #else
-                RConsole = (HWND)atol(p);
+                RConsole = (HWND)atol(r);
 #endif
                 if(msg[0] == '0')
                     RConsole = NULL;
