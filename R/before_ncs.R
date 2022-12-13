@@ -1,35 +1,31 @@
+# R may break strings while sending them even if they are short
+out <- function(x) {
+    # Nvim-R will wait for more input if the string doesn't end with "\002"
+    y <- paste0(x, "\002\n")
+    cat(y)
+    flush(stdout())
+}
+
 # Set security variables
 set.seed(unclass(Sys.time()))
 nvimr_id <- as.character(round(runif(1, 1, 100000000)))
 nvimr_secr <- as.character(round(runif(1, 1, 100000000)))
-msg <- paste0("let $NVIMR_ID = '", nvimr_id, "' | let $NVIMR_SECRET = '", nvimr_secr, "'\n")
-cat(msg)
-flush(stdout())
+out(paste0("let $NVIMR_ID = '", nvimr_id, "' | let $NVIMR_SECRET = '", nvimr_secr, "'"))
 
 setwd(Sys.getenv("NVIMR_TMPDIR"))
 
 # Save libPaths for nclientserver
-cat(unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                             .Platform$path.sep)), .libPaths())),
-    sep = "\n", colapse = "\n", file = "libPaths")
+libp <- unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
+                                 .Platform$path.sep)), .libPaths()))
+cat(libp, sep = "\n", colapse = "\n", file = "libPaths")
 
 # Check R version
 R_version <- paste0(version[c("major", "minor")], collapse = ".")
 
-if (R_version < "4.0.0") {
-    cat("call RWarningMsg('Nvim-R requires R >= 4.0.0')\n")
-    flush(stdout())
-}
+if (R_version < "4.0.0")
+    out("RWarn: Nvim-R requires R >= 4.0.0")
 
 need_new_nvimcom <- ""
-
-if (file.exists(paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))) {
-    nvimcom_info <- readLines(paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))
-    if (nvimcom_info[3] != R_version)
-        need_new_nvimcom = "R version mismatch"
-} else {
-    need_new_nvimcom <- "nvimcom_info not found"
-}
 
 # Check nvimcom version
 nd <- readLines(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))
@@ -37,72 +33,69 @@ nd <- nd[grepl("Version:", nd)]
 needed_nvc_version <- sub("Version: ", "", nd)
 
 ip <- utils::installed.packages()
-if (length(grep("nvimcom", rownames(ip))) == 1) {
-    nvimcom_version <- ip[grep("nvimcom", rownames(ip)), "Version"]
-    if (nvimcom_version != needed_nvc_version)
-        need_new_nvimcom <- "nvimcom version mismatch"
+if (length(grep("^nvimcom$", rownames(ip))) == 1) {
+    nvimcom_info <- ip["nvimcom", c("Version", "LibPath", "Built")]
+    if (nvimcom_info["Built"] != R_version) {
+        need_new_nvimcom <- "R version mismatch"
+    } else {
+        if (nvimcom_info["Version"] != needed_nvc_version)
+            need_new_nvimcom <- "nvimcom version mismatch"
+    }
 } else {
-    need_new_nvimcom <- "Nvimcom not installed"
+    if (length(grep("^nvimcom$", rownames(ip))) > 1) {
+        # FIXME: what version would be loaded?
+        out(paste0("RWarn: nvimcom installed in more than one directory: ",
+                   paste0(ip[grep("^nvimcom$", rownames(ip)), "LibPath"], collapse = ", ")))
+    } else {
+        if (length(grep("^nvimcom$", rownames(ip))) == 0)
+            need_new_nvimcom <- "Nvimcom not installed"
+    }
 }
 
 # Build and install nvimcom if necessary
 if (need_new_nvimcom != "") {
-    msg <- paste0("let g:rplugin.debug_info['Why build nvimcom'] = '", need_new_nvimcom, "'\n")
-    cat(msg)
-    flush(stdout())
+    out(paste0("let g:rplugin.debug_info['Why build nvimcom'] = '", need_new_nvimcom, "'"))
 
     # Check if any directory in libPaths is writable
     ok <- FALSE
-    for (p in .libPaths())
+    for (p in libp)
         if (dir.exists(p) && file.access(p, mode = 2) == 0)
             ok <- TRUE
     if (!ok) {
-        for (p in .libPaths()) {
-            if (dir.create(p)) {
-                ok <- TRUE
-                msg <- paste0("call RWarningMsg('The directory \"", p,
-                              "\" was created to install nvimcom.')\n")
-                cat(msg)
-                flush(stdout())
-                break
-            }
-        }
+        out(paste0("let s:libd = '", libp[1], "'"))
+        quit(save = "no", status = 71)
     }
 
     if (!ok) {
-        cat("call RWarningMsg('No suitable directory found to install nvimcom')\n")
-        flush(stdout())
+        out("RWarn: No suitable directory found to install nvimcom")
         quit(save = "no")
     }
 
-    cat("echo \"Building nvimcom... \"\n")
-    flush(stdout())
+    out("echo \"Building nvimcom... \"")
     tools:::.build_packages(paste0(nvim_r_home, "/R/nvimcom"), no.q = TRUE)
     if (!file.exists(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))) {
-        cat("call RWarningMsg('Failed to build nvimcom.')\n")
-        flush(stdout())
+        out("RWarn: Failed to build nvimcom.")
         quit(save = "no")
     }
 
-    cat("echo \"Installing nvimcom... \"\n")
-    flush(stdout())
+    out("echo \"Installing nvimcom... \"")
     tools:::.install_packages(paste0("nvimcom_", needed_nvc_version, ".tar.gz"), no.q = TRUE)
     unlink(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))
     ip <- utils::installed.packages()
     if (length(grep("nvimcom", rownames(ip))) == 0) {
-        cat("call RWarningMsg('Failed to install nvimcom.')\n")
-        flush(stdout())
+        if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
+            out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
+        else
+            out("RWarn: Failed to install nvimcom.")
         quit(save = "no")
     }
     if (length(grep("nvimcom", rownames(ip))) > 1) {
-        cat("call RWarningMsg('More than one nvimcom versions installed.')\n")
-        flush(stdout())
+        out("RWarn: More than one nvimcom versions installed.")
         quit(save = "no")
     }
     nvimcom_version <- ip[grep("nvimcom", rownames(ip)), "Version"]
     if (nvimcom_version != needed_nvc_version) {
-        cat("call RWarningMsg('Failed to update nvimcom.')\n")
-        flush(stdout())
+        out("RWarn: Failed to update nvimcom.")
         quit(save = "no")
     }
 }
@@ -119,5 +112,4 @@ cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', s
     '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", nvimr_id))
 
 nvimcom:::nvim.buildomnils(libs)
-cat("echo ''\n")
-flush(stdout())
+out("echo ''")

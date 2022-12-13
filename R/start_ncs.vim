@@ -3,18 +3,13 @@
 
 " Check if it's necessary to build and install nvimcom before attempting o load it
 function CheckNvimcomVersion()
-    let neednew = 0
-    if isdirectory(g:rplugin.nvimcom_info['home'] . "/00LOCK-nvimcom")
-        call RWarningMsg('Perhaps you should delete the directory "' .
-                    \ g:rplugin.nvimcom_info['home'] . '/00LOCK-nvimcom"')
-    endif
-
     let libs = ListRLibsFromBuffer()
     let flines = ['nvim_r_home <- "' . g:rplugin.home . '"',
                 \ 'libs <- c(' . libs . ')']
     let flines += readfile(g:rplugin.home . "/R/before_ncs.R")
     let scrptnm = g:rplugin.tmpdir . "/before_ncs.R"
     call writefile(flines, scrptnm)
+    call AddForDeletion(g:rplugin.tmpdir . "/before_ncs.R")
 
     " Run the script as a job, setting callback functions to receive its
     " stdout, stderr and exit code.
@@ -27,26 +22,65 @@ function CheckNvimcomVersion()
                     \ 'err_cb':  'RInitStderr',
                     \ 'exit_cb': 'RInitExit'}
     endif
+
+    let s:RBout = []
+    let s:RBerr = []
+    let s:RWarn = []
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
-let s:RBout = []
-let s:RBerr = []
+function MkRdir()
+    redraw
+    let success = v:false
+    let resp = input('"' . s:libd . '" is not writable. Create it now? [y/n] ')
+    if resp[0] ==? "y"
+        let dw = mkdir(s:libd, "p")
+        if dw
+            " Try again
+            call CheckNvimcomVersion()
+        else
+            call RWarningMsg('Failed creating "' . s:libd . '"')
+        endif
+    else
+        echo ""
+        redraw
+    endif
+    unlet s:libd
+endfunction
 
 " Get the output of R CMD build and INSTALL
+let s:RoutLine = ''
 function RInitStdout(...)
     if has('nvim')
         let rcmd = substitute(join(a:2), '\r', '', 'g')
     else
         let rcmd = substitute(a:2, '\r', '', 'g')
     endif
-    if rcmd =~ '^call ' || rcmd =~ '^let ' || rcmd =~ '^echo '
-        exe rcmd
+    if s:RoutLine != ''
+        let rcmd = s:RoutLine . rcmd
+        if rcmd !~ "\002"
+            let s:RoutLine = rcmd
+            return
+        endif
+    endif
+    if rcmd =~ '^RWarn: ' || rcmd =~ '^let ' || rcmd =~ '^echo '
+        if rcmd !~ "\002"
+            " R has sent an incomplete line
+            let s:RoutLine .= rcmd
+            return
+        endif
+        let s:RoutLine = ''
+        let rcmd = substitute(rcmd, "\002", "", "")
+        if rcmd =~ '^RWarn: '
+            let s:RWarn += [substitute(rcmd, '^RWarn: ', '', '')]
+        else
+            exe rcmd
+        endif
         if rcmd =~ '^echo'
             redraw
         endif
     else
-    let s:RBout += [rcmd]
+        let s:RBout += [rcmd]
     endif
 endfunction
 
@@ -66,10 +100,9 @@ function RInitExit(...)
             let info = readfile(g:rplugin.compldir . '/nvimcom_info')
             if len(info) == 3
                 " Update nvimcom information
-                let g:rplugin.nvimcom_info['version'] = info[0]
-                let g:rplugin.nvimcom_info['home'] = info[1]
+                let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
+                let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
                 let s:ncs_path = FindNCSpath(info[1])
-                let g:rplugin.nvimcom_info['Rversion'] = info[2]
                 call StartNClientServer()
             else
                 call delete(g:rplugin.compldir . '/nvimcom_info')
@@ -78,6 +111,11 @@ function RInitExit(...)
         else
             call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
         endif
+    elseif a:2 == 71
+        " Avoid redraw of status line while waiting user input in MkRdir()
+        let s:RBerr += s:RWarn
+        let s:RWarn =[]
+        call MkRdir()
     else
         if filereadable(expand("~/.R/Makevars"))
             call RWarningMsg("ERROR! Please, run :RDebugInfo for details, and check your '~/.R/Makevars'.")
@@ -87,10 +125,16 @@ function RInitExit(...)
     endif
     let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
     let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
-    call delete(g:rplugin.tmpdir . "/before_ncs.R")
     call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
     call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
+    if len(s:RWarn) > 0
+        let g:rplugin.debug_info['RInit Warning'] = ''
+        for wrn in s:RWarn
+            let g:rplugin.debug_info['RInit Warning'] .= wrn . "\n"
+            call RWarningMsg(wrn)
+        endfor
+    endif
 endfunction
 
 function FindNCSpath(libdir)
@@ -274,18 +318,6 @@ function AddToRhelpList(lib)
         endif
     endfor
 endfunction
-
-" Get nvimcom_info from the last time that nvimcom was built
-let g:rplugin.nvimcom_info = {'home': '', 'version': '0', 'Rversion': '0'}
-if filereadable(g:rplugin.compldir . "/nvimcom_info")
-    let s:flines = readfile(g:rplugin.compldir . "/nvimcom_info")
-    if len(s:flines) == 3
-        let g:rplugin.nvimcom_info['version'] = s:flines[0]
-        let g:rplugin.nvimcom_info['home'] = s:flines[1]
-        let g:rplugin.nvimcom_info['Rversion'] = s:flines[2]
-    endif
-    unlet s:flines
-endif
 
 if exists("g:R_nvimcom_home")
     let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
