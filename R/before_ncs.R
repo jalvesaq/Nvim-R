@@ -2,7 +2,8 @@
 set.seed(unclass(Sys.time()))
 nvimr_id <- as.character(round(runif(1, 1, 100000000)))
 nvimr_secr <- as.character(round(runif(1, 1, 100000000)))
-cat("let $NVIMR_ID = '", nvimr_id, "' | let $NVIMR_SECRET = '", nvimr_secr, "'\n", sep = "")
+msg <- paste0("let $NVIMR_ID = '", nvimr_id, "' | let $NVIMR_SECRET = '", nvimr_secr, "'\n")
+cat(msg)
 flush(stdout())
 
 setwd(Sys.getenv("NVIMR_TMPDIR"))
@@ -46,8 +47,8 @@ if (length(grep("nvimcom", rownames(ip))) == 1) {
 
 # Build and install nvimcom if necessary
 if (need_new_nvimcom != "") {
-    cat("let g:rplugin.debug_info['Why build nvimcom'] = '",
-        need_new_nvimcom, "'\n", sep = "")
+    msg <- paste0("let g:rplugin.debug_info['Why build nvimcom'] = '", need_new_nvimcom, "'\n")
+    cat(msg)
     flush(stdout())
 
     # Check if any directory in libPaths is writable
@@ -59,8 +60,9 @@ if (need_new_nvimcom != "") {
         for (p in .libPaths()) {
             if (dir.create(p)) {
                 ok <- TRUE
-                cat("call RWarningMsg('The directory \"", p,
-                    "\" was created to install nvimcom.')\n", sep = "")
+                msg <- paste0("call RWarningMsg('The directory \"", p,
+                              "\" was created to install nvimcom.')\n")
+                cat(msg)
                 flush(stdout())
                 break
             }

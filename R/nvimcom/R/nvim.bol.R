@@ -505,7 +505,8 @@ nvim.buildomnils <- function(p) {
     }
 
     if (need_build) {
-        cat("echo 'Building completion list for \"", p, "\"'\n", sep = "")
+        msg <- paste0("echo 'Building completion list for \"", p, "\"'\n")
+        cat(msg)
         flush(stdout())
         unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))
         nvim.bol(paste0(bdir, "omnils_", p, "_", pvi), p, TRUE)
