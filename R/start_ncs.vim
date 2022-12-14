@@ -208,11 +208,12 @@ function ListRLibsFromBuffer()
     endif
 
     let lines = getline(1, "$")
-    call filter(lines, 'v:val =~ "library\\|require"')
+    call filter(lines, "v:val =~ '^\\s*library\\|require\\s*('")
     call map(lines, 'substitute(v:val, "\\s*).*", "", "")')
     call map(lines, 'substitute(v:val, "\\s*,.*", "", "")')
     call map(lines, 'substitute(v:val, "\\s*\\(library\\|require\\)\\s*(\\s*", "", "")')
     call map(lines, 'substitute(v:val, "' . '[' . "'" . '\"]' . '", "", "g")')
+    call map(lines, 'substitute(v:val, "\\", "", "g")')
     let libs = ""
     if len(g:R_start_libs) > 4
         let libs = '"' . substitute(g:R_start_libs, ",", '", "', "g") . '", '
