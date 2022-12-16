@@ -216,9 +216,14 @@ function ListRLibsFromBuffer()
     call map(lines, 'substitute(v:val, "\\", "", "g")')
     let libs = ""
     if len(g:R_start_libs) > 4
-        let libs = '"' . substitute(g:R_start_libs, ",", '", "', "g") . '", '
+        let libs = '"' . substitute(g:R_start_libs, ",", '", "', "g") . '"'
     endif
-    let libs .= '"' . join(lines, '", "') . '"'
+    if len(lines) > 0
+        if libs != ""
+            let libs .= ", "
+        endif
+        let libs .= '"' . join(lines, '", "') . '"'
+    endif
     return libs
 endfunction
 
