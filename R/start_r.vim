@@ -917,35 +917,31 @@ function RViewDF(oname, ...)
         call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
         call AddForDeletion(tsvnm)
 
-        if g:R_csv_app =~# '^terminal:'
-            let csv_app = split(g:R_csv_app, ':')[1]
-            if executable(csv_app)
-                tabnew
-                exe 'terminal ' . csv_app . ' ' . substitute(tsvnm, ' ', '\\ ', 'g')
-                startinsert
-            else
-                call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
-            endif
+        if g:R_csv_app =~ '%s'
+            let cmd = printf(g:R_csv_app, tsvnm)
+        else
+            let cmd = g:R_csv_app . ' ' . tsvnm
+        endif
+
+        if g:R_csv_app =~# '^:'
+            exe cmd
             return
-        elseif g:R_csv_app =~# '^tmux new-window '
-            let csv_app = substitute(g:R_csv_app, '^tmux new-window *', '', '')
-            if !executable(csv_app)
-                call RWarningMsg('R_csv_app ("' . csv_app . '") is not executable')
-                return
-            endif
-        elseif !executable(g:R_csv_app) && !executable(split(g:R_csv_app)[0])
-            call RWarningMsg('R_csv_app ("' . g:R_csv_app . '") is not executable')
+        elseif g:R_csv_app =~# '^terminal:'
+            let cmd = substitute(cmd, '^terminal:', '', '')
+            tabnew
+            exe 'terminal ' . cmd
+            startinsert
             return
         endif
 
         normal! :<Esc>
         if has("nvim")
-            let appcmd = split(g:R_csv_app) + [tsvnm]
+            let appcmd = split(cmd)
             call jobstart(appcmd, {'detach': v:true})
         elseif has("win32")
             silent exe '!start "' . g:R_csv_app . '" "' . tsvnm . '"'
         else
-            call system(g:R_csv_app . ' "' . tsvnm . '" >' . s:null . ' 2>' . s:null . ' &')
+            call system(cmd . ' >' . s:null . ' 2>' . s:null . ' &')
         endif
         return
     endif

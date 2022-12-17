@@ -2369,16 +2369,31 @@ See |Nvim-R-remote|.
 6.39 View a data.frame or matrix~
 
 
-You can see data.frames and matrices in external applications. You should
-prefix the application name with `terminal:` if it is a terminal application
-and you want to run it in Vim/Neovim's built in terminal emulator. For
-example, if you want to use Visidata to see tabular data put in your |vimrc|:
+You can see data.frames and matrices in external applications with
+<LocalLeader>rv. By default, Nvim-R will generate a `tsv` file from the
+`data.frame` or `matrix` and display it in a new tab. But you can change this
+by setting the value of `R_csv_app` which must be a string.
+
+If `R_csv_app` begins with "terminal:", Nvim-R will open a new tab with the
+application running in a terminal emulator. For example, if you want to use
+Visidata to see tabular data, put in your |vimrc|:
 >
    let R_csv_app = 'terminal:vd'
 <
 If you are running Vim/Neovim within Tmux, you may prefer:
 >
    let R_csv_app = 'tmux new-window vd'
+<
+If `R_csv_app` begins with ":", Nvim-R will append the name of the tsv file
+and |:execute| the command. Example:
+>
+   let R_csv_app = ':vsplit'
+<
+You may also include "%s" in R_csv_app to indicate the position of the tsv
+file name in the command to be executed. Example using the `toggleterm.nvim`
+plugin which requires the whole command within quotes:
+>
+   let R_csv_app = ':TermExec cmd="vd %s"'
 <
 You may also try to see the table in a graphical viewer such as LibreOffice
 Calc:
