@@ -254,12 +254,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         let g:Rout_continue_str = substitute(g:Rout_continue_str, '.*#N#', '', '')
     endif
 
-    if has('nvim') && has_key(g:rplugin, "R_bufname")
+    if has('nvim') && has_key(g:rplugin, "R_bufnr")
         " Put the cursor and the end of the buffer to ensure automatic scrolling
         " See: https://github.com/neovim/neovim/issues/2636
         let isnormal = mode() ==# 'n'
         let curwin = winnr()
-        exe 'sb ' . g:rplugin.R_bufname
+        exe 'sb ' . g:rplugin.R_bufnr
         if !exists('g:R_hl_term')
             if Rinfo[4] =~# 'colorout'
                 let g:R_hl_term = 0
@@ -585,7 +585,7 @@ function StartObjBrowser()
             sil exe 'botright split Object_Browser'
         else
             if g:R_objbr_place =~? 'console'
-                sil exe 'sb ' . g:rplugin.R_bufname
+                sil exe 'sb ' . g:rplugin.R_bufnr
             else
                 sil exe 'sb ' . g:rplugin.rscript_name
             endif
@@ -699,7 +699,7 @@ function FindDebugFunc(srcref)
         let curtab = tabpagenr()
         let isnormal = mode() ==# 'n'
         let curwin = winnr()
-        exe 'sb ' . g:rplugin.R_bufname
+        exe 'sb ' . g:rplugin.R_bufnr
         sleep 30m " Time to fill the buffer lines
         let rlines = getline(1, "$")
         exe 'sb ' . g:rplugin.rscript_name
@@ -808,7 +808,7 @@ function RDebugJump(fnm, lnum)
     sign unplace 1
     exe 'sign place 1 line=' . flnum . ' name=dbgline file=' . fname
     if g:R_dbg_jump && !s:rdebugging && type(g:R_external_term) == v:t_number && g:R_external_term == 0
-        exe 'sb ' . g:rplugin.R_bufname
+        exe 'sb ' . g:rplugin.R_bufnr
         startinsert
     elseif bname != expand("%")
         exe 'sb ' . bname
@@ -1039,7 +1039,7 @@ function AskRDoc(rkeyword, package, getclass)
     call AddForDeletion(s:docfile)
 
     let firstobj = ""
-    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname)
+    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufnr") && bufnr("%") == g:rplugin.R_bufnr)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . g:rplugin.rscript_name
@@ -1082,7 +1082,7 @@ function ShowRDoc(rkeyword)
         return
     endif
 
-    if has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname
+    if has_key(g:rplugin, "R_bufnr") && bufnr("%") == g:rplugin.R_bufnr
         " Exit Terminal mode and go to Normal mode
         stopinsert
     endif
@@ -1097,7 +1097,7 @@ function ShowRDoc(rkeyword)
     endif
     let s:running_rhelp = 0
 
-    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufname") && bufname("%") == g:rplugin.R_bufname)
+    if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufnr") && bufnr("%") == g:rplugin.R_bufnr)
         let savesb = &switchbuf
         set switchbuf=useopen,usetab
         exe "sb " . g:rplugin.rscript_name

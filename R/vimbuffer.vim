@@ -85,7 +85,7 @@ function StartR_InBuffer()
         redraw
         call UnsetRHome()
     endif
-    let g:rplugin.R_bufname = bufname("%")
+    let g:rplugin.R_bufnr = bufnr("%")
     let g:rplugin.R_winnr = win_getid()
     let s:R_width = 0
     if &number
