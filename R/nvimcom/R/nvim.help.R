@@ -13,12 +13,12 @@ nvim.hmsg <- function(files, header, title, delete.file) {
 nvim.help <- function(topic, w, firstobj, package) {
     if (!missing(firstobj) && firstobj != "") {
         objclass <- nvim.getclass(firstobj)
-        if (objclass != "#E#" && objclass != "") {
+        if (objclass[1] != "#E#" && objclass[1] != "") {
             saved.warn <- getOption("warn")
             options(warn = -1)
             on.exit(options(warn = saved.warn))
             mlen <- try(length(methods(topic)), silent = TRUE)
-            if (class(mlen) == "integer" && mlen > 0) {
+            if (class(mlen)[1] == "integer" && mlen > 0) {
                 for (i in seq_along(objclass)) {
                     newtopic <- paste0(topic, ".", objclass[i])
                     if (length(utils::help(newtopic))) {

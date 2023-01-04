@@ -353,7 +353,7 @@ nvim.list.args <- function(ff) {
     options(warn = -1)
     on.exit(options(warn = saved.warn))
     mm <- try(methods(ff), silent = TRUE)
-    if (class(mm) == "MethodsFunction" && length(mm) > 0) {
+    if (class(mm)[1] == "MethodsFunction" && length(mm) > 0) {
         for (i in seq_along(mm)) {
             if (exists(mm[i])) {
                 cat(ff, "[method ", mm[i], "]:\n", sep = "")

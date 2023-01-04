@@ -25,7 +25,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         options(warn = -1)
         on.exit(options(warn = saved.warn))
         mlen <- try(length(methods(funcname)), silent = TRUE) # Still get warns
-        if (class(mlen) == "integer" && mlen > 0) {
+        if (class(mlen)[1] == "integer" && mlen > 0) {
             for (i in seq_along(objclass)) {
                 funcmeth <- paste0(funcname, ".", objclass[i])
                 if (existsFunction(funcmeth)) {

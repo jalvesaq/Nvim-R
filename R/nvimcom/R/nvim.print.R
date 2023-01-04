@@ -9,7 +9,7 @@ nvim.print <- function(object, firstobj) {
             options(warn = -1)
             on.exit(options(warn = saved.warn))
             mlen <- try(length(methods(object)), silent = TRUE)
-            if (class(mlen) == "integer" && mlen > 0) {
+            if (class(mlen)[1] == "integer" && mlen > 0) {
                 for (cls in objclass) {
                     if (exists(paste0(object, ".", objclass))) {
                         .newobj <- get(paste0(object, ".", objclass))
