@@ -11,9 +11,9 @@ if index(g:R_bib_compl, &filetype) > -1
     exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
 endif
 
-let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
+let g:R_rmdchunk = get(g:, "R_rmdchunk", 2)
 
-if g:R_rmdchunk == 1
+if g:R_rmdchunk == 1 || g:R_rmdchunk == 2
     " Write code chunk in rnoweb files
     inoremap <buffer><silent> ` <Esc>:call RWriteRmdChunk()<CR>a
 elseif type(g:R_rmdchunk) == v:t_string
@@ -21,19 +21,26 @@ elseif type(g:R_rmdchunk) == v:t_string
 endif
 
 function! RWriteRmdChunk()
-    if getline(".") =~ "^\\s*$" && RmdIsInRCode(0) == 0
-        let curline = line(".")
-        call setline(curline, "```{r}")
-        if &filetype == 'quarto'
-            call append(curline, ["", "```", ""])
-            call cursor(curline + 1, 1)
+    if RmdIsInRCode(0) == 0
+        if getline(".") =~ "^\\s*$"
+            let curline = line(".")
+            call setline(curline, "```{r}")
+            if &filetype == 'quarto'
+                call append(curline, ["", "```", ""])
+                call cursor(curline + 1, 1)
+            else
+                call append(curline, ["```", ""])
+                call cursor(curline, 5)
+            endif
+            return
         else
-            call append(curline, ["```", ""])
-            call cursor(curline, 5)
+            if g:R_rmdchunk == 2
+                exe "normal! a`r `\<Esc>i"
+                return
+            endif
         endif
-    else
-        exe "normal! a`"
     endif
+    exe 'normal! a`'
 endfunction
 
 function! RmdGetYamlField(field)

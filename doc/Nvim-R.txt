@@ -1297,6 +1297,10 @@ put in your |vimrc|:
 >
    let R_rmdchunk = '``'
 <
+If `R_rmdchunk = 2` (the default), in addition to creating an empty chunk
+block, a single backtick will be converted in inline R delimiters if the
+cursor is not at the beginning of the line.
+
 While editing R code, `_` is replaced with `<-`. If you want to bind other
 keys to be replaced by `<-`, set the value of |R_assign_map| in your
 |vimrc|, as in the example below which emulates RStudio behavior (may only
