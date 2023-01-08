@@ -64,16 +64,7 @@ function CloseRTerm()
     endif
 endfunction
 
-function StartR_InBuffer()
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        return
-    endif
-
-    let g:SendCmdToR = function('SendCmdToR_NotYet')
-
-    let edbuf = bufname("%")
-    set switchbuf=useopen
-
+function SplitWindowToR()
     if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
         if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
             silent exe "belowright " . g:R_rconsole_width . "vnew"
@@ -87,6 +78,34 @@ function StartR_InBuffer()
             silent belowright new
         endif
     endif
+endfunction
+
+function ReOpenRWin()
+    let wlist = nvim_list_wins()
+    for wnr in wlist
+        if nvim_win_get_buf(wnr) == g:rplugin.R_bufnr
+            " The R buffer is visible
+            return
+        endif
+    endfor
+    let edbuf = bufname("%")
+    call SplitWindowToR()
+    call nvim_win_set_buf(0, g:rplugin.R_bufnr)
+    exe "sbuffer " . edbuf
+endfunction
+
+function StartR_InBuffer()
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        call ReOpenRWin()
+        return
+    endif
+
+    let g:SendCmdToR = function('SendCmdToR_NotYet')
+
+    let edbuf = bufname("%")
+    set switchbuf=useopen
+
+    call SplitWindowToR()
 
     if has("win32")
         call SetRHome()
