@@ -52,7 +52,10 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                 return("")
             }
             if (is.primitive(get(funcname))) {
-                frm <- formals(args(funcname))
+                a <- args(funcname)
+                if (is.null(a))
+                    return("")
+                frm <- formals(a)
             } else {
                 try(frm <- formals(get(funcname, envir = globalenv())), silent = TRUE)
                 if (length(frm) == 1 && is.na(frm))
@@ -65,9 +68,12 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
                 tr <- try(ff <- get(paste0(funcname, ".default"), pos = idx), silent = TRUE)
                 if (class(tr)[1] == "try-error")
                     ff <- get(funcname, pos = idx)
-                if (is.primitive(ff))
-                    frm <- formals(args(ff))
-                else
+                if (is.primitive(ff)) {
+                    a <- args(ff)
+                    if (is.null(a))
+                        return("")
+                    frm <- formals(a)
+                } else
                     frm <- formals(ff)
             } else {
                 if (!isNamespaceLoaded(pkg))
@@ -373,9 +379,12 @@ nvim.buildargs <- function(pkg) {
         }
         if (length(x) != 1) # base::letters
             next
-        if (is.primitive(x))
-            frm <- formals(args(x))
-        else
+        if (is.primitive(x)) {
+            a <- args(x)
+            if (is.null(a))
+                return(invisible(NULL))
+            frm <- formals(a)
+        } else
             frm <- formals(x)
         arglist <- gbRd.args2txt(pkg, obj, names(frm))
         arglist <- lapply(arglist, nvim.fix.string)
