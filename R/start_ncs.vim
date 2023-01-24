@@ -70,15 +70,20 @@ function RInitStdout(...)
             return
         endif
         let s:RoutLine = ''
-        let rcmd = substitute(rcmd, "\002", "", "")
-        if rcmd =~ '^RWarn: '
-            let s:RWarn += [substitute(rcmd, '^RWarn: ', '', '')]
-        else
-            exe rcmd
-        endif
-        if rcmd =~ '^echo'
-            redraw
-        endif
+
+        " In spite of flush(stdout()), rcmd might be concatenating two commands
+        " (https://github.com/jalvesaq/Nvim-R/issues/713)
+        let rcmdl = split(rcmd, "\002", 0)
+        for rcmd in rcmdl
+            if rcmd =~ '^RWarn: '
+                let s:RWarn += [substitute(rcmd, '^RWarn: ', '', '')]
+            else
+                exe rcmd
+            endif
+            if rcmd =~ '^echo'
+                redraw
+            endif
+        endfor
     else
         let s:RBout += [rcmd]
     endif
