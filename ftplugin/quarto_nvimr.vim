@@ -14,7 +14,7 @@ function! RQuarto(what)
         update
         call g:SendCmdToR('quarto::quarto_preview("' . expand('%') . '"' . g:R_quarto_preview_args . ')')
     else
-        call g:SendCmdToR('quarto::quarto_stop()')
+        call g:SendCmdToR('quarto::quarto_preview_stop()')
     endif
 endfunction
 
