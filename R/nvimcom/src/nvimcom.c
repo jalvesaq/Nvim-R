@@ -653,12 +653,7 @@ static void nvimcom_eval_expr(const char *buf)
 
     char buf2[80];
     nvimcom_squo(buf, buf2, 80);
-    if (status != PARSE_OK && verbose > 1) {
-        strcpy(rep, "RWarningMsg('Invalid command: ");
-        strncat(rep, buf2, 80);
-        strcat(rep, "')");
-        nvimcom_nvimclient(rep, edsrvr);
-    } else {
+    if (status == PARSE_OK) {
         /* Only the first command will be executed if the expression includes
          * a semicolon. */
         PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
@@ -669,6 +664,13 @@ static void nvimcom_eval_expr(const char *buf)
             nvimcom_nvimclient(rep, edsrvr);
         }
         UNPROTECT(1);
+    } else {
+        if (verbose > 1) {
+            strcpy(rep, "RWarningMsg('Invalid command: ");
+            strncat(rep, buf2, 80);
+            strcat(rep, "')");
+            nvimcom_nvimclient(rep, edsrvr);
+        }
     }
     UNPROTECT(2);
 }

@@ -320,19 +320,28 @@ nvim.GlobalEnv.fun.args <- function(funcname) {
 }
 
 nvim.get.summary <- function(obj, wdth) {
+    isnull <- try(is.null(obj), silent = TRUE)
+    if (class(isnull)[1] != "logical")
+        return(invisible(NULL))
+    if (isnull == TRUE)
+        return(invisible(NULL))
+
     owd <- getOption("width")
     options(width = wdth)
     sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
-        print(summary(obj))
+        sobj <- try(summary(obj), silent = TRUE)
+        print(sobj)
     } else {
         if (!is.null(attr(obj, "label")))
             cat("\n\n", attr(obj, "label"))
         cat("\n\n```rout\n")
         if (is.factor(obj) || is.numeric(obj)) {
-            print(summary(obj))
+            sobj <- try(summary(obj), silent = TRUE)
+            print(sobj)
         } else {
-            print(utils::str(obj))
+            sobj <- try(utils::str(obj), silent = TRUE)
+            print(sobj)
         }
         cat("```\n")
     }
