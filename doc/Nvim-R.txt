@@ -1008,7 +1008,6 @@ of
 |R_tmpdir|              Where temporary files are created
 |R_compldir|            Where lists for omni completion are stored
 |R_set_omnifunc|        Should Nvim-R set the 'omnifunc'?
-|R_auto_omni|           List of files with auto omni completion enabled
 |R_fun_data_1|          What the data.frame to complete function arguments is
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
@@ -2317,7 +2316,6 @@ want to know what they are, while editing an R file, do in Normal mode:
 
 ------------------------------------------------------------------------------
 							      *R_set_omnifunc*
-								 *R_auto_omni*
 								*R_fun_data_1*
 								*R_fun_data_2*
 							      *R_quarto_intel*
@@ -2325,12 +2323,14 @@ want to know what they are, while editing an R file, do in Normal mode:
 6.37 Omni completion~
 
 There are two ways of getting automatic completion of R objects names while
-you type: using Nvim-R's built-in completion system with and using a language
-server. The advantage of Nvim-R's built-in system is the completion of objects
-of the R's workspace (`.GlobalEnv`), including column names of data.frames. If
-the `cmp-nvim-r` source for `nvim-cmp` is installed, you can benefit from
-Nvim-R' completions without sacrifing other sources of completion that you
-might consider useful.
+you type: using Nvim-R's built-in completion system (as a source for
+`nvim-cmp`) and using a language server. See:
+
+   https://github.com/jalvesaq/cmp-nvim-r
+   https://github.com/REditorSupport/languageserver
+
+The advantage of Nvim-R's built-in system is the completion of objects
+of the R's workspace (`.GlobalEnv`), including column names of data.frames.
 
 Note: If you are using the `languageserver` package, you should disable its
 omni completion feature in your `~/.Rprofile` to get completions from
@@ -2341,25 +2341,17 @@ omni completion feature in your `~/.Rprofile` to get completions from
 	        completionItemResolve = FALSE))
 <
 If you prefer to get completions from the language server, `cmp-nvim-r` should
-not be installed, and you should set both `R_set_omnifunc` and `R_auto_omni`
-as empty lists in your |vimrc|:
+not be installed, and you should set `R_set_omnifunc` as an empty list in your
+|vimrc|:
 >
    let R_set_omnifunc = []
-   let R_auto_omni = []
 <
-Even without `cmp-nvim-r` or the `languageserver`, you still can use Nvim-R's
-omni completion if you define in your |vimrc| the list of file types supported
-by Nvim-R that sould enable automatic omnic completion. Similarly, you can
-define what file types should have the traditions Vim's omni completion
-enabled. Example:
+Even without `cmp-nvim-r` or the `languageserver`, you still can define in
+your |vimrc| the list of file types supported by Nvim-R that should have the
+traditional Vim's omni completion enabled. Example:
 >
-   let R_auto_omni = ["r", "rmd", "quarto", "rnoweb", "rhelp"]
    let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
 <
-Note: the option `R_auto_omni` option and its corresponding feature might be
-removed in the near future because I don't have time to maintain two
-different systems for the same functionality.
-
 While completing function arguments, Nvim-R may include column names from the
 data.frame passed as the first argument, and you may set in your |vimrc| the
 list of functions that might benefit from this kind of completion. The example
@@ -2391,7 +2383,7 @@ very simple and would wrongly recognize `data` as the name of the
 <
 Nvim-R receives the list of objects for omni completion from the nclientserver
 job running in the background. If the list is too big to be transmitted
-through nclientserver's stdout, the completion might be aborted.
+through nclientserver's `stdout`, the completion might be aborted.
 
 If editing Quarto documents, Nvim-R will try to find the file
 `yaml-intelligence-resources.json` which is part of `quarto` application and
@@ -2403,14 +2395,15 @@ Quarto document. If Nvim-R fails to find the file, you can set the value of
 <
 Omni completion in Rnoweb files will include results from bib files entries
 (requiring Python 3 and python3-pybtex): required for omni completion of
-   citation keys (following |R_cite_pattern|) in Rnoweb documents.
+citation keys (following |R_cite_pattern|) in Rnoweb documents.
 
 Completion of bib file entries might also be enabled to `rmd` and `quarto`
 file types if you include them in the list `R_bib_compl`. Example:
 >
    let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
 <
-There are many alternatives to Nvim-R completion of bib keys. Examples:
+However, there are many alternatives plugins for completing bib keys that work
+better than Nvim-R. Examples:
 
    - `zotcite` with `cmp-zotice` (for Markdown, Rmd and Quarto):
      https://github.com/jalvesaq/zotcite
@@ -2773,7 +2766,8 @@ See also: |R_source|.
 								 *Nvim-R-news*
 8. News~
 
- * Integration with cmp-nvim-r, a source for nvim-cmp.
+ * Integration with cmp-nvim-r, a source for nvim-cmp;
+   remove documentation on R_auto_omni.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
 
