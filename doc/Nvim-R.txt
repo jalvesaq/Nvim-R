@@ -995,7 +995,7 @@ of
 |R_strict_rst|          Code style for generated rst files
 |R_insert_mode_cmds|    Allow R commands in insert mode
 |R_rmhidden|            Remove hidden objects from R workspace
-|R_source|              Source additional scripts
+|R_source|              Source additional Vim scripts
 |R_non_r_compl|         Bibliography completion
 |R_wait|                Time to wait for nvimcom loading
 |R_wait_reply|          Time to wait for R reply
@@ -2059,7 +2059,7 @@ https://unix.stackexchange.com/questions/104094/is-there-any-way-to-enable-ctrll
 
 ------------------------------------------------------------------------------
 								    *R_source*
-6.28. Source additional scripts~
+6.28. Source additional Vim scripts~
 
 This variable should contain a comma separated list of Vim scripts to be
 sourced by Nvim-R. These scripts may provide additional
@@ -2192,13 +2192,34 @@ in |vimrc|:
 							     *R_after_ob_open*
 6.33 Commands to be executed after either R startup or Object Browser opening~
 
-If you want that Vim executes either Vim or external commands right after R
-startup, set the value of R_after_start in your |vimrc|. The `R_after_start`
+If you want the execution of Vim, R, or external commands right after R
+startup, set the value of `R_after_start` in your |vimrc|. The `R_after_start`
 variable must be a list of strings. Strings representing Vim commands must
-start with `:` and strings representing external commands must start with `!`.
+start with `:`, R commands must be prefixed with `R:`, and external commands
+must be prefixed with `!`.
 
-For example, if you want that the R script window is hidden right after R
-startup, put in your |vimrc|:
+You can put commands in your `~/.Rprofile` that will be run only if R was
+started by Nvim-R as in the example below:
+>
+   if (Sys.getenv("NVIMR_TMPDIR") == "")
+       cat("~/Rprofile: R was called by Nvim-R\n", file = stderr())
+>
+However, if for any reason you `~/.Rprofile` is not being sourced, you can
+include in `R_after_start` R commands that should be executed during R startup
+(more precisely, during `nvimcom` loading). Example:
+>
+   let R_after_start = ['R: cat("R_after_start: R was called by Nvim-R\n", file = stderr())']
+<
+If using `init.lua`:
+>
+   vim.g.R_after_start = {'R: cat("R_after_start: R was called by Nvim-R\\n", file = stderr())'}
+<
+Note: The loading of `nvimcom` will fail if the command to be executed is
+invalid. In the example above, we have had to use `\n` in VimScript but `\\n`
+in Lua.
+
+For an example of Vim command, if you want that the R script window is hidden
+right after R startup, put in your |vimrc|:
 >
    let R_after_start = [':hide']
 <
