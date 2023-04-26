@@ -195,8 +195,6 @@ gbRd.set_sectag <- function(s, sectag, eltag) {
     res
 }
 
-help("stats::filter", help_type = "text")
-
 gbRd.fun <- function(x, pkg) {
     rdo <- NULL # prepare the "Rd" object rdo
     x <- do.call(utils::help, list(x, pkg, help_type = "text",
