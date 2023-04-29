@@ -61,7 +61,6 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - R objects (.GlobalEnv and loaded packages).
       - function arguments (if R is running).
       - knitr chunk options.
-      - python code in knitr chunks if the jedi-vim plugin is installed (Rmd).
   * Limited support for debugging R functions.
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
@@ -130,6 +129,11 @@ Main dependencies:~
        package: https://cran.r-project.org/bin/windows/Rtools/
 
 
+Additional dependencies for automatic code completion (Neovim only):~
+
+   - https://github.com/hrsh7th/nvim-cmp
+   - https://github.com/jalvesaq/cmp-nvim-r
+
 Additional dependencies for editing Rnoweb documents:~
 
    latexmk:       Automate the compilation of LaTeX documents.
@@ -142,7 +146,7 @@ Additional dependencies for editing Rnoweb documents:~
       On Windows: SumatraPDF.
 
 
-Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
+Suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 
    Tmux >= 3.0:  http://tmux.sourceforge.net
 		 Tmux is required only if you want to run R in an external
@@ -157,6 +161,14 @@ Additional suggestions for Unix (Linux, OS X, Cygwin, etc.):~
 If running Gnome Shell on Wayland, you may also want to install the extension
 "Activate Window By Title" which will be used to raise Zathura window
 displaying the PDF file generated from Rnoweb, Rmd or Quarto documents.
+
+
+Suggestions for bibliographic completion from Zotero:~
+
+For RMarkdown (`.Rmd`) and Quarto (`.qmd`) documents:
+
+   - https://github.com/jalvesaq/zotcite
+   - https://github.com/jalvesaq/cmp-zotcite
 
 
 ------------------------------------------------------------------------------
@@ -243,9 +255,19 @@ VOoM - Outliner~
 
 To use VOoM as outliner for Rmd documents, you should configure it to use the
 "pandoc" engine for outlining the structure of Rmd documents, and "latex" for
-Rnoweb ones. Example:
+Rnoweb ones. Example for |vimrc|:
 >
-   let voom_ft_modes = {'rmd': 'pandoc', 'rnoweb': 'latex'}
+   let voom_ft_modes = {'markdown': 'pandoc', 'rmd': 'pandoc',
+                      \ 'quarto': 'pandoc', 'rnoweb': 'latex'}
+<
+And for |init.lua|:
+>
+   vim.g.voom_ft_modes = {
+       markdown = 'pandoc',
+       rmd = 'pandoc',
+       quarto = 'pandoc',
+       rnoweb = 'latex'
+   }
 <
 You can install VOoM from: https://github.com/vim-voom/VOoM
 

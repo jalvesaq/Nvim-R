@@ -128,9 +128,24 @@ function RFloatWarn(wmsg)
     endif
 endfunction
 
+function WarnAfterVimEnter1()
+    call timer_start(1000, 'WarnAfterVimEnter2')
+endfunction
+
+function WarnAfterVimEnter2(...)
+    for msg in s:start_msg
+        call RWarningMsg(msg)
+    endfor
+endfunction
+
 function RWarningMsg(wmsg)
     if v:vim_did_enter == 0
-        exe 'autocmd VimEnter * call RWarningMsg("' . escape(a:wmsg, '"') . '")'
+        if !exists('s:start_msg')
+            let s:start_msg = [a:wmsg]
+            exe 'autocmd VimEnter * call WarnAfterVimEnter1()'
+        else
+            let s:start_msg += [a:wmsg]
+        endif
         return
     endif
     if mode() == 'i' && (has('nvim-0.5.0') || has('patch-8.2.84'))
@@ -854,6 +869,12 @@ if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
     call RWarningMsg('"R_set_omnifunc" must be a list')
     unlet g:R_set_omnifunc
 endif
+
+if exists("g:R_auto_omni")
+    " 2023-04-29
+    call RWarningMsg('R_auto_omni is disabled. Alternative: https://github.com/jalvesaq/cmp-nvim-r')
+endif
+
 if exists("g:R_auto_omni") && type(g:R_auto_omni) != v:t_list
     call RWarningMsg('"R_auto_omni" must be a list')
     unlet g:R_auto_omni
@@ -977,6 +998,8 @@ else
     let g:R_set_omnifunc = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 endif
 
+" 2023-04-29
+let g:R_auto_omni = []
 
 " Look for invalid options
 
