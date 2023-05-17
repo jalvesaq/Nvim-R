@@ -23,6 +23,22 @@ unlet g:SendFileToR
 " Functions to start and close R
 "==============================================================================
 
+function s:RGetBufDir()
+    if has('nvim')
+        let rwd = nvim_buf_get_name(0)
+        if has("win32")
+            let rwd = substitute(rwd, '\\', '/', 'g')
+        endif
+        let rwd = substitute(rwd, '\(.*\)/.*', '\1', '')
+    else
+        let rwd = expand("%:p:h")
+        if has("win32")
+            let rwd = substitute(rwd, '\\', '/', 'g')
+        endif
+    endif
+    return rwd
+endfunction
+
 " Start R
 function StartR(whatr)
     let s:wait_nvimcom = 1
@@ -124,7 +140,7 @@ function StartR(whatr)
 
     let rwd = ""
     if g:R_nvim_wd == 0
-        let rwd = expand("%:p:h")
+        let rwd = s:RGetBufDir()
     elseif g:R_nvim_wd == 1
         let rwd = getcwd()
     endif
@@ -1329,7 +1345,7 @@ endfunction
 " Send file to R
 function SendFileToR(e)
     let flines = getline(1, "$")
-    let fpath = expand("%:p") . ".tmp.R"
+    let fpath = s:RGetBufDir() . '/' . bufname('.') . ".tmp.R"
 
     if filereadable(fpath)
         call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.')
@@ -1897,7 +1913,7 @@ endfunction
 
 " Set working directory to the path of current buffer
 function RSetWD()
-    let wdcmd = 'setwd("' . expand("%:p:h") . '")'
+    let wdcmd = 'setwd("' . s:RGetBufDir() . '")'
     if has("win32")
         let wdcmd = substitute(wdcmd, "\\", "/", "g")
     endif
@@ -1908,11 +1924,7 @@ endfunction
 " knit the current buffer content
 function RKnit()
     update
-    if has("win32")
-        call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . substitute(expand("%:p:h"), '\\', '/', 'g') . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
-    else
-        call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . expand("%:p:h") . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
-    endif
+    call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . s:RGetBufDir() . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
 endfunction
 
 function StartTxtBrowser(brwsr, url)
@@ -2139,10 +2151,7 @@ function RMakeRmd(t)
 
     update
 
-    let rmddir = expand("%:p:h")
-    if has("win32")
-        let rmddir = substitute(rmddir, '\\', '/', 'g')
-    endif
+    let rmddir = s:RGetBufDir()
     if a:t == "default"
         let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
     else
