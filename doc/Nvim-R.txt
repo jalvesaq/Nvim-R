@@ -50,7 +50,6 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Functions of loaded packages.
       - Special highlighting for R output (.Rout files).
       - Spell check only strings and comments.
-      - Fold code when foldmethod=syntax.
   * Integrated communication with R:
       - Start/Close R.
       - Send lines, selection, paragraphs, functions, blocks, entire file.
@@ -924,8 +923,16 @@ is to manually open R and install any package with the `install.packages()`
 command before using Nvim-R.
 
 
+5.6. The ~.Rprofile should not output anything (Windows only)~
+
+The compilation of `nvimcom` during R startup will fail on Windows if your
+`~/.Rprofile` outputs anything. Example of how to replicate the bug:
+>
+   print("Hello bug!")
+<
+
 ------------------------------------------------------------------------------
-5.6. R must be started by Vim~
+5.7. R must be started by Vim~
 
 The communication between Vim and R will work only if R was started by
 Vim through the <LocalLeader>rf command because the plugin was designed to
