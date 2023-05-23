@@ -1344,8 +1344,11 @@ endfunction
 
 " Send file to R
 function SendFileToR(e)
-    let flines = getline(1, "$")
-    let fpath = s:RGetBufDir() . '/' . bufname('.') . ".tmp.R"
+    if has('nvim')
+        let fpath = nvim_buf_get_name(0) . ".tmp.R"
+    else
+        let fpath = expand("%:p") . ".tmp.R"
+    endif
 
     if filereadable(fpath)
         call RWarningMsg('Error: cannot create "' . fpath . '" because it already exists. Please, delete it.')
@@ -1355,7 +1358,7 @@ function SendFileToR(e)
     if has("win32")
         let fpath = substitute(fpath, "\\", "/", "g")
     endif
-    call writefile(flines, fpath)
+    call writefile(getline(1, "$"), fpath)
     call AddForDeletion(fpath)
     let sargs = GetSourceArgs(a:e)
     let ok = g:SendCmdToR('nvimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
