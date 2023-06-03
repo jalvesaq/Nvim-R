@@ -457,3 +457,8 @@ endif
 if exists('g:R_term_cmd')
     call RWarningMsg('The option "R_term_cmd" was replaced with "R_external_term".')
 endif
+
+" 2023-06-03
+if exists("g:R_auto_omni")
+    call RWarningMsg('R_auto_omni no longer exists. Alternative: https://github.com/jalvesaq/cmp-nvim-r')
+endif

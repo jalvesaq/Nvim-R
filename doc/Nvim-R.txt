@@ -2816,8 +2816,8 @@ See also: |R_source|.
 								 *Nvim-R-news*
 8. News~
 
- * Integration with cmp-nvim-r, a source for nvim-cmp;
-   remove documentation on R_auto_omni.
+ * Integration with cmp-nvim-r, a source for nvim-cmp.
+ * Delete option R_auto_omni.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
 

@@ -268,7 +268,6 @@ endfunction
 
 function OnCompleteDone()
     call CloseFloatWin()
-    let s:auto_compl_col = 0
 endfunction
 
 function AskForComplInfo()
@@ -470,112 +469,11 @@ function NeedRArguments(line, cpos)
 endfunction
 
 function SetComplMenu(id, cmn)
-    if s:is_auto_completing
-        let s:is_auto_completing = 0
-        if a:id == s:completion_id
-            " The completion_id will be invalid if nclientserver is too slow
-            " and the user has already pressed another key
-            call complete(s:auto_compl_col + 1, a:cmn)
-        endif
-    else
-        let s:compl_menu = deepcopy(a:cmn)
-        let s:waiting_compl_menu = 0
-    endif
-endfunction
-
-function AutoComplChunkOpts(...)
-    let s:is_completing = 1
-    call complete(s:auto_compl_col + 1, s:chunk_opt_list)
+    let s:compl_menu = deepcopy(a:cmn)
+    let s:waiting_compl_menu = 0
 endfunction
 
 let s:completion_id = 0
-let s:is_auto_completing = 0
-function RTriggerCompletion()
-    let s:completion_id += 1
-
-    let isInR = b:IsInRCode(0)
-
-    if isInR == 0
-        return
-    endif
-
-    " We are within the InsertCharPre event
-    if v:char =~ '\k\|@\|\$\|\:\|_\|\.'
-        let s:auto_compl_col = FindStartRObj()
-        let wrd = RGetKeyword(line("."), s:auto_compl_col) . v:char
-    else
-        let wrd = ""
-        let s:auto_compl_col = col(".")
-    endif
-
-    if isInR == 2
-        if wrd == ''
-            return
-        endif
-        let s:compl_type = 3
-        let s:chunk_opt_list = CompleteChunkOptions(wrd)
-        " Can't call complete() here [E523]
-        call timer_start(1, 'AutoComplChunkOpts', {})
-        return
-    endif
-
-    let lin = getline(".")
-    let lin = strpart(lin, 0, col(".")) . v:char
-
-    if (&filetype == 'quarto' || &filetype == 'rmd') && isInR == 1 && lin =~ '^#| '
-        if lin !~ '^#| \k.*:'
-            " Yaml might include '-' which isn't a keyword character in R
-            let ywrd = substitute(lin, '^#| *', '', '')
-            if ywrd == ''
-                let s:auto_compl_col = len(lin)
-            else
-                let s:auto_compl_col = stridx(lin, ywrd)
-            endif
-            call CompleteQuartoCellOptions(ywrd)
-            call timer_start(1, 'AutoComplQCellOpts', {})
-        endif
-        if lin !~ '^#| \k.*: !expr '
-            return
-        endif
-    endif
-
-    let snm = synIDattr(synID(line("."), col(".") - 1, 1), "name")
-    if snm == "rComment"
-        return
-    endif
-
-    let cpos = getpos(".")
-    let cpos[2] = cpos[2] + 1
-    let nra = NeedRArguments(lin, cpos)
-    if len(nra) > 0
-        " Is the first object the first argument or was it piped?
-        let isfa = nra[3] ? v:false : IsFirstRArg(lin, nra[6])
-        if (nra[0] == "library" || nra[0] == "require") && isfa
-            let s:is_auto_completing = 1
-            call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003\004" . wrd . "\n")
-            return
-        endif
-
-        if snm == "rString"
-            return
-        endif
-
-        let s:is_auto_completing = 1
-        if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-            call GetRArgs(s:completion_id, wrd, nra[0], nra[1], nra[2], nra[4], isfa)
-        endif
-        return
-    endif
-
-    if wrd == '' || snm == "rString"
-        return
-    endif
-
-    let s:compl_type = 1
-    let s:is_auto_completing = 1
-    call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . wrd . "\n")
-endfunction
-
 function CompleteR(findstart, base)
     if a:findstart
         let lin = getline(".")
@@ -681,11 +579,6 @@ function CompleteChunkOptions(base)
     return rr
 endfunction
 
-function AutoComplQCellOpts(...)
-    let s:is_completing = 1
-    call complete(s:auto_compl_col + 1, s:cell_opt_list)
-endfunction
-
 function CompleteQuartoCellOptions(base)
     if !exists('s:qchunk_opt_list')
         call FillQuartoComplMenu()
@@ -786,24 +679,13 @@ function RComplAutCmds()
     if index(g:R_set_omnifunc, &filetype) > -1
         setlocal omnifunc=CompleteR
     endif
-    if index(g:R_auto_omni, &filetype) > -1
-        " Plugins that automatically run omni completion will work better if they
-        " don't have to wait for the omni list to be built.
-        let g:R_hi_fun_globenv = 2
-    endif
 
     " Test whether the autocommands were already defined to avoid getting them
     " registered three times
     if !exists('b:did_RBuffer_au')
         augroup RBuffer
             autocmd InsertEnter <buffer> call ROnInsertEnter()
-            if index(g:R_auto_omni, &filetype) > -1
-                let b:rplugin_saved_completeopt = &completeopt
-                autocmd InsertCharPre <buffer> call RTriggerCompletion()
-                autocmd BufLeave <buffer> exe 'set completeopt=' . b:rplugin_saved_completeopt
-                autocmd BufEnter <buffer> set completeopt=menuone,noselect
-            endif
-            if index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1
+            if index(g:R_set_omnifunc, &filetype) > -1
                 autocmd CompleteChanged <buffer> call AskForComplInfo()
                 autocmd CompleteDone <buffer> call OnCompleteDone()
             endif

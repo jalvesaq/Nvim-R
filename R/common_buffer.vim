@@ -19,7 +19,7 @@ if g:R_assign == 3
     iabb <buffer> _ <-
 endif
 
-if (index(g:R_auto_omni, &filetype) > -1 || index(g:R_set_omnifunc, &filetype) > -1)
+if index(g:R_set_omnifunc, &filetype) > -1
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/complete.vim"
     call RComplAutCmds()
 endif
