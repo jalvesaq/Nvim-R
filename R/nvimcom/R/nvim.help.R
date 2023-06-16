@@ -6,6 +6,7 @@ nvim.hmsg <- function(files, header, title, delete.file) {
     file.copy(files[1], dest, overwrite = TRUE)
     ttl <- sub("R Help on '(.*)'", "\\1 (help)", title)
     ttl <- sub("R Help on \u2018(.*)\u2019", "\\1 (help)", ttl)
+    ttl <- gsub("'", "''", ttl)
     .C("nvimcom_msg_to_nvim", paste0("ShowRDoc('", ttl, "')"), PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
