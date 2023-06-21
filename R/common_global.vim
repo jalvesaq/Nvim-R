@@ -976,7 +976,7 @@ endif
 if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
     let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
     let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
-    let g:R_set_omnifunc = get(g:, "R_set_omnifunc", [])
+    let g:R_set_omnifunc = []
     let g:R_hi_fun_globenv = 2
 else
     let $NVIMR_COMPLCB = 'SetComplMenu'

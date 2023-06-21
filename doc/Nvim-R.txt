@@ -630,8 +630,9 @@ such feature is the highlight of R functions.
 Note: If you have too many loaded packages Vim may be unable to load the
 list of functions for syntax highlight.
 
-Vim can automatically complete the names of R objects both as you type them
-if `cmp-nvim-r` (a source for `nvim-cmp`) is installed.
+If `cmp-nvim-r` (a source for `nvim-cmp`) is installed, Neovim can
+automatically complete the names of R objects as you type them (but
+conventional Vim omni completion does not work if `cmp-nvim-r` is installed).
 
 Nvim-R does not complete the names of all functions of all installed packages
 (see |R_start_libs|).
@@ -2396,9 +2397,9 @@ not be installed, and you should set `R_set_omnifunc` as an empty list in your
 >
    let R_set_omnifunc = []
 <
-Even without `cmp-nvim-r` or the `languageserver`, you still can define in
-your |vimrc| the list of file types supported by Nvim-R that should have the
-traditional Vim's omni completion enabled. Example:
+If `cmp-nvim-r` is not installed, you still can define in your |vimrc| the
+list of file types supported by Nvim-R that should have the traditional Vim's
+omni completion enabled. Example:
 >
    let R_set_omnifunc = ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"]
 <
