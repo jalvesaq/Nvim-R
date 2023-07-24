@@ -413,7 +413,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 
     for (curpack in listpack) {
         curlib <- sub("^package:", "", curpack)
-        if (nvim.grepl(curlib, loadpack) == FALSE) {
+        if (nvim.grepl(paste0(curpack, "$"), loadpack) == FALSE) {
             ok <- try(require(curlib, warn.conflicts = FALSE,
                                       quietly = TRUE, character.only = TRUE))
             if (!ok)
