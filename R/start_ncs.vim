@@ -462,3 +462,8 @@ endif
 if exists("g:R_auto_omni")
     call RWarningMsg('R_auto_omni no longer exists. Alternative: https://github.com/jalvesaq/cmp-nvim-r')
 endif
+
+" 2023-07-23
+if exists('g:R_commented_lines')
+    call RWarningMsg('R_commented_lines no longer exists. See: https://github.com/jalvesaq/Nvim-R/issues/743')
+endif

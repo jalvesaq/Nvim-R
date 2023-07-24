@@ -1843,11 +1843,11 @@ change the arguments passed to it. Examples:
    let R_source_args = 'echo = TRUE'
    let R_source_args = 'print.eval = FALSE, echo = TRUE, spaced = TRUE'
 <
-If you want that commented lines are included in the code to be sourced, put
-in your |vimrc|:
->
-   let R_commented_lines = 1
-<
+The option `R_commented_lines` was dropped because it unduly removed lines from
+multi-line raw strings if they included a hashtag. See:
+
+   https://github.com/jalvesaq/Nvim-R/issues/743
+
 
 ------------------------------------------------------------------------------
 							      *R_sweaveargs*

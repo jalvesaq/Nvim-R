@@ -1239,15 +1239,6 @@ function RSourceLines(...)
     if &filetype == "rmd" || &filetype == "quarto"
         let lines = map(copy(lines), 'substitute(v:val, "^(\\`\\`)\\?", "", "")')
     endif
-    if !g:R_commented_lines
-        let newlines = []
-        for line in lines
-            if line !~ '^\s*#'
-                call add(newlines, line)
-            endif
-        endfor
-        let lines = newlines
-    endif
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call writefile(lines, s:Rsource_write)
