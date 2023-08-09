@@ -1113,6 +1113,9 @@ autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\
 
 function GlobalRInit(...)
     exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
+    " Set security variables
+    let $NVIMR_ID = rand(srand())
+    let $NVIMR_SECRET = rand()
     call CheckNvimcomVersion()
 endfunction
 

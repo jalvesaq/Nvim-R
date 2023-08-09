@@ -101,21 +101,7 @@ endfunction
 " file nvimcom_info seems to be OK (has three lines).
 function RInitExit(...)
     if a:2 == 0
-        if filereadable(g:rplugin.compldir . '/nvimcom_info')
-            let info = readfile(g:rplugin.compldir . '/nvimcom_info')
-            if len(info) == 3
-                " Update nvimcom information
-                let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
-                let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-                let s:ncs_path = FindNCSpath(info[1])
-                call StartNClientServer()
-            else
-                call delete(g:rplugin.compldir . '/nvimcom_info')
-                call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
-            endif
-        else
-            call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
-        endif
+        call StartNClientServer()
     elseif a:2 == 71
         " Avoid redraw of status line while waiting user input in MkRdir()
         let s:RBerr += s:RWarn
@@ -163,6 +149,23 @@ endfunction
 " Check and set some variables and, finally, start the nclientserver
 function StartNClientServer()
     if IsJobRunning("ClientServer")
+        return
+    endif
+
+    if filereadable(g:rplugin.compldir . '/nvimcom_info')
+        let info = readfile(g:rplugin.compldir . '/nvimcom_info')
+        if len(info) == 3
+            " Update nvimcom information
+            let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
+            let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
+            let s:ncs_path = FindNCSpath(info[1])
+        else
+            call delete(g:rplugin.compldir . '/nvimcom_info')
+            call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
+            return
+        endif
+    else
+        call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
         return
     endif
 
