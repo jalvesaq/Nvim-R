@@ -1346,11 +1346,12 @@ To completely disable this feature, put in your |vimrc|:
 >
    let R_assign = 0
 <
-If you need to type many object names with underscores, you may want to change
-the value R_assign to 2. Then, you will have to type two `_` to get
-them converted into `<-`. Alternatively, if the value of R_assign is 3, the
-plugin will run the following command in each buffer containing R code (R,
-Rnoweb, Rhelp, Rrst, and Rmd):
+If you need to type many object names with underscores and still want to use
+`_` as the trigger for the assign symbol, you may want to set the value of
+R_assign as 2. Then, you will have to type two `_` to get them converted into
+`<-`. Alternatively, if the value of R_assign is 3, the plugin will run the
+following command in each buffer containing R code (R, Rnoweb, Rhelp, Rrst,
+and Rmd):
 >
    iabb <buffer> _ <-
 <

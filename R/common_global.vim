@@ -870,9 +870,14 @@ if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
     unlet g:R_set_omnifunc
 endif
 
-" Variables whose default value are fixed
+" Default values of some variables
+
 let g:R_assign            = get(g:, "R_assign",             1)
+if type(g:R_assign) == v:t_number && g:R_assign == 2
+    let g:R_assign_map != '_'
+endif
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
+
 let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
 let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
@@ -1004,7 +1009,6 @@ for pos in objbrplace
 endfor
 unlet pos
 unlet objbrplace
-
 
 "==============================================================================
 " Check if default mean of communication with R is OK
