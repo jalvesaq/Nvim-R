@@ -874,7 +874,7 @@ endif
 
 let g:R_assign            = get(g:, "R_assign",             1)
 if type(g:R_assign) == v:t_number && g:R_assign == 2
-    let g:R_assign_map != '_'
+    let g:R_assign_map = '_'
 endif
 let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 
