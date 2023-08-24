@@ -22,6 +22,10 @@ function StartR_ExternalTerm(rcmd)
                     \ 'set -g default-terminal "screen-256color"',
                     \ "set -g terminal-overrides 'xterm*:smcup@:rmcup@'" ]
 
+        if executable('/bin/sh')
+            let cnflines += ['set-option -g default-shell "/bin/sh"']
+        endif
+
         if s:term_name == "rxvt" || s:term_name == "urxvt"
             let cnflines = cnflines + [
                         \ "set terminal-overrides 'rxvt*:smcup@:rmcup@'" ]
