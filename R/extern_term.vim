@@ -37,24 +37,42 @@ function StartR_ExternalTerm(rcmd)
         let tmuxcnf = '-f "' . g:rplugin.tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') .
-                \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
-                \ ' NVIMR_ID=' . $NVIMR_ID .
-                \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
-                \ ' NVIMR_PORT=' . $NVIMR_PORT .
-                \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES
+	let rcmd_init = ''
+	let rcmd_end = ''
+	let rcmd_env_init = ' '
+	let rcmd_split = ' '
+	let rcmd_space = ''
+
+	if match($SHELL, "elvish") != -1
+		let rcmd_init = '{ '
+		let rcmd_end = ' }'
+		let rcmd_env_init = '; tmp E:'
+		let rcmd_split = '; '
+		let rcmd_space = ' '
+	endif
+
+    let rcmd = rcmd_env_init . 'NVIMR_TMPDIR' . rcmd_space . '=' . rcmd_space . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') .
+                \ rcmd_env_init . 'NVIMR_COMPLDIR' . rcmd_space . '=' . rcmd_space . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
+                \ rcmd_env_init . 'NVIMR_ID' . rcmd_space . '=' . rcmd_space . $NVIMR_ID .
+                \ rcmd_env_init . 'NVIMR_SECRET' . rcmd_space . '=' . rcmd_space . $NVIMR_SECRET .
+                \ rcmd_env_init . 'NVIMR_PORT' . rcmd_space . '=' . rcmd_space . $NVIMR_PORT .
+                \ rcmd_env_init . 'R_DEFAULT_PACKAGES' . rcmd_space . '=' . rcmd_space . $R_DEFAULT_PACKAGES
 
     if $NVIM_IP_ADDRESS != ""
-        let rcmd .= ' NVIM_IP_ADDRESS='. $NVIM_IP_ADDRESS
+        let rcmd .= ' NVIM_IP_ADDRESS' . rcmd_space . '=' . rcmd_space. $NVIM_IP_ADDRESS
     endif
 
-    let rcmd .= ' ' . a:rcmd
+    let rcmd .= rcmd_split . a:rcmd
 
+	if g:rplugin.is_darwin
+        let rcmd = rcmd_env_init .  'TERM' . rcmd_space . '=' . rcmd_space. 'screen-256color' . rcmd
+	endif
+
+	let rcmd = rcmd_init . rcmd . rcmd_end
 
     call system("tmux -L NvimR has-session -t " . g:rplugin.tmuxsname)
     if v:shell_error
         if g:rplugin.is_darwin
-            let rcmd = 'TERM=screen-256color ' . rcmd
             let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'",
                         \ tmuxcnf, g:rplugin.tmuxsname, rcmd)
             call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
@@ -118,10 +136,17 @@ function SendCmdToR_Term(...)
     if str =~ '^-'
         let str = ' ' . str
     endif
+
+	let cmd_split = "&&"
+
+	if match($SHELL, "elvish") != -1
+		let cmd_split = ";"
+	endif
+
     if a:0 == 2 && a:2 == 0
-        let scmd = "tmux -L NvimR set-buffer '" . str . "' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L NvimR set-buffer '" . str . "'" . cmd_split . " tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     else
-        let scmd = "tmux -L NvimR set-buffer '" . str . "\<CR>' && tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L NvimR set-buffer '" . str . "\<CR>' " . cmd_split . " tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     endif
     let rlog = system(scmd)
     if v:shell_error
