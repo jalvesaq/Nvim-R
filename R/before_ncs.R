@@ -15,10 +15,11 @@ cat(libp, sep = "\n", colapse = "\n", file = "libPaths")
 
 # Check R version
 R_version <- paste0(version[c("major", "minor")], collapse = ".")
-R_version <- sub("[0-9]$", "", R_version)
 
 if (R_version < "4.0.0")
     out("RWarn: Nvim-R requires R >= 4.0.0")
+
+R_version <- sub("[0-9]$", "", R_version)
 
 need_new_nvimcom <- ""
 
@@ -34,7 +35,7 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
     ip <- utils::installed.packages()
     if (length(grep("^nvimcom$", rownames(ip))) == 1) {
         nvimcom_info <- ip["nvimcom", c("Version", "LibPath", "Built")]
-        if (grep(R_version, nvimcom_info["Built"]) != 1) {
+        if (!grepl(paste0('^', R_version), nvimcom_info["Built"])) {
             need_new_nvimcom <- "R version mismatch"
         } else {
             if (nvimcom_info["Version"] != needed_nvc_version)
