@@ -38,8 +38,17 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
         if (!grepl(paste0('^', R_version), nvimcom_info["Built"])) {
             need_new_nvimcom <- "R version mismatch"
         } else {
-            if (nvimcom_info["Version"] != needed_nvc_version)
+            if (nvimcom_info["Version"] != needed_nvc_version) {
                 need_new_nvimcom <- "nvimcom version mismatch"
+                fi <- file.info(paste0(nvimcom_info["LibPath"], "/nvimcom/DESCRIPTION"))
+                if (sum(grepl("uname", names(fi))) == 1 &&
+                    Sys.getenv("USER") != "" &&
+                    Sys.getenv("USER") != fi[["uname"]]) {
+                    need_new_nvimcom <-
+                        paste0(need_new_nvimcom, " (nvimcom ", nvimcom_info[["Version"]],
+                               " was installed in `", nvimcom_info[["LibPath"]], "` by \"", fi[["uname"]], "\")")
+                }
+            }
         }
     } else {
         if (length(grep("^nvimcom$", rownames(ip))) > 1) {
