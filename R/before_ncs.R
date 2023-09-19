@@ -91,18 +91,18 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
         tools:::.install_packages(paste0("nvimcom_", needed_nvc_version, ".tar.gz"), no.q = TRUE)
         unlink(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))
         ip <- utils::installed.packages()
-        if (length(grep("nvimcom", rownames(ip))) == 0) {
+        if (length(grep("^nvimcom$", rownames(ip))) == 0) {
             if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
                 out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
             else
                 out("RWarn: Failed to install nvimcom.")
             quit(save = "no")
         }
-        if (length(grep("nvimcom", rownames(ip))) > 1) {
+        if (length(grep("^nvimcom$", rownames(ip))) > 1) {
             out("RWarn: More than one nvimcom versions installed.")
             quit(save = "no")
         }
-        nvimcom_version <- ip[grep("nvimcom", rownames(ip)), "Version"]
+        nvimcom_version <- ip["nvimcom", "Version"]
         if (nvimcom_version != needed_nvc_version) {
             out("RWarn: Failed to update nvimcom.")
             quit(save = "no")
@@ -111,15 +111,31 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
 }
 
 # Save ~/.cache/Nvim-R/nvimcom_info
-nvimcom_info <- unname(utils::installed.packages()["nvimcom", c("Version", "LibPath", "Built")])
-writeLines(nvimcom_info, paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))
+ip <- utils::installed.packages()
+if (length(grep("^nvimcom$", rownames(ip))) == 1) {
+    nvimcom_info <- unname(ip["nvimcom", c("Version", "LibPath", "Built")])
+    writeLines(nvimcom_info, paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))
 
-# Build omnils_, fun_ and args_ files, if necessary
-library("nvimcom")
-pkgs <- utils::installed.packages()
-libs <- libs[libs %in% rownames(pkgs)]
-cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
-    '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))
+    # Build omnils_, fun_ and args_ files, if necessary
+    library("nvimcom")
+    libs <- libs[libs %in% rownames(ip)]
+    cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
+        '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))
+    nvimcom:::nvim.buildomnils(libs)
+    out("echo ''")
+    quit(save = "no")
+}
 
-nvimcom:::nvim.buildomnils(libs)
-out("echo ''")
+if (length(grep("^nvimcom$", rownames(ip))) == 0) {
+    out("RWarn: nvimcom is not installed.")
+    for (p in libp)
+        if (dir.exists(paste0(p, "/00LOCK-nvimcom")))
+            out(paste0('RWarn: nvimcom is not installed. Perhaps you should delete the directory "', p, '/00LOCK-nvimcom"'))
+    quit(save = "no")
+}
+
+if (length(grep("^nvimcom$", rownames(ip))) > 1) {
+    out(paste0("RWarn: nvimcom is installed in more than one directory: ",
+               paste0(ip[grep("^nvimcom$", rownames(ip)), "LibPath"], collapse = ", ")))
+    quit(save = "no")
+}
