@@ -194,8 +194,8 @@ The plugin is a |file-type| plugin. It will be active only if you are editing
 a .R, .Rnw, .Rd, Rmd, or Rrst file. The menu items will not be visible and the
 key bindings will not be active while editing either unnamed files or files
 with name extensions other than the mentioned above (however, see
-|Nvim-R-global|). If the plugin is active, pressing <LocalLeader>rf should
-start R.
+https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type).
+If the plugin is active, pressing <LocalLeader>rf should start R.
 
 Did you see warning messages but they disappeared before you have had time to
 read them? Type the command |:messages| in Normal mode to see them again.
@@ -297,10 +297,6 @@ change this behavior (see |R_external_term|).
 4.1. Key bindings~
 
 Note: The <LocalLeader> is '\' by default.
-
-Note: It is recommended the use of different keys for <Leader> and
-<LocalLeader> to avoid clashes between filetype plugins and general plugins
-key binds. See |filetype-plugins|, |maplocalleader| and |Nvim-R-localleader|.
 
 To use the plugin, open a .R, .Rnw, .Rd, .Rmd or .Rrst file with Vim and
 type <LocalLeader>rf. Then, you will be able to use the plugin key bindings to
@@ -544,11 +540,10 @@ the cursor is a data.frame or a matrix, instead of displaying the output of
 values separated by tab characters and display this file. The command
 <LocalLeader>vh will show the `head()` of the data.frame or matrix in a
 horizontal split that opens above the current window. This behavior can be
-customized with new mappings (see |Nvim-R-df-view-mappings| and
-|Nvim-R-df-view|), and you can configure Nvim-R to call an external
-application to display the data.frame or matrix. All files involved in these
-operations are created in Nvim-R's temporary directory and deleted when R
-quits.
+customized, and you can configure Nvim-R to call an external application to
+display the data.frame or matrix (see |Nvim-R-df-view|). All files involved in
+these operations are created in Nvim-R's temporary directory and deleted when
+R quits.
 
 You can source all .R files in a directory with the Normal mode command
 `:RSourceDir`, which accepts an optional argument (the directory to be
@@ -725,9 +720,7 @@ Vim can jump to functions defined in other files if you press CTRL-] over the
 name of a function, but it needs a tags file to be able to find the function
 definition (see |tags-and-searches|). The command `:RBuildTags` calls the R
 functions `rtags()` and `etags2ctags` to build the tags file for the R scripts
-in the current directory. Please read |Nvim-R-tagsfile| to learn how to create
-a tags file referencing source code located in other directories, including
-the entire R source code.
+in the current directory.
 
 
 ------------------------------------------------------------------------------
@@ -2070,8 +2063,6 @@ If you want to enable commands in Insert mode, add the following to your
 >
    let R_insert_mode_cmds = 1
 <
-See also: |Nvim-R-localleader|.
-
 
 ------------------------------------------------------------------------------
 								  *R_rmhidden*
@@ -2474,7 +2465,7 @@ better than Nvim-R. Examples:
 							      *R_nvimcom_home*
 6.38 Options for accessing Remote R from local Vim~
 
-See |Nvim-R-remote|.
+See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*

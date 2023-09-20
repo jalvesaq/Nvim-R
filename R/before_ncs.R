@@ -6,6 +6,22 @@ out <- function(x) {
     flush(stdout())
 }
 
+isdir <- file.info(Sys.getenv("NVIMR_TMPDIR"))[["isdir"]]
+if (is.na(isdir)) {
+    out(paste0("RWarn: R: NVIMR_TMPDIR (`", Sys.getenv("NVIMR_TMPDIR"), "`) not found."))
+} else {
+    if (!isdir)
+        out(paste0("RWarn: R: NVIMR_TMPDIR (`", Sys.getenv("NVIMR_TMPDIR"), "`) is not a directory."))
+}
+
+isdir <- file.info(Sys.getenv("NVIMR_COMPLDIR"))[["isdir"]]
+if (is.na(isdir)) {
+    out(paste0("RWarn: R: NVIMR_COMPLDIR (`", Sys.getenv("NVIMR_COMPLDIR"), "`) not found."))
+} else {
+    if (!isdir)
+        out(paste0("RWarn: R: NVIMR_COMPLDIR (`", Sys.getenv("NVIMR_COMPLDIR"), "`) is not a directory."))
+}
+
 setwd(Sys.getenv("NVIMR_TMPDIR"))
 
 # Save libPaths for nclientserver
@@ -24,8 +40,8 @@ R_version <- sub("[0-9]$", "", R_version)
 need_new_nvimcom <- ""
 
 # The nvimcom directory will not exist if nvimcom was packaged separately from
-# the rest of Nvim-R, and in this case we don't need to check if its version
-# is correct.
+# the rest of Nvim-R. I will also not be found if running Vim in MSYS2 and R
+# on Windows because the directory names change between the two systems.
 if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
     # Check nvimcom version.
     nd <- readLines(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))
@@ -51,14 +67,8 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
             }
         }
     } else {
-        if (length(grep("^nvimcom$", rownames(ip))) > 1) {
-            # FIXME: what version would be loaded?
-            out(paste0("RWarn: nvimcom installed in more than one directory: ",
-                       paste0(ip[grep("^nvimcom$", rownames(ip)), "LibPath"], collapse = ", ")))
-        } else {
-            if (length(grep("^nvimcom$", rownames(ip))) == 0)
-                need_new_nvimcom <- "Nvimcom not installed"
-        }
+        if (length(grep("^nvimcom$", rownames(ip))) == 0)
+            need_new_nvimcom <- "Nvimcom not installed"
     }
 
     # Build and install nvimcom if necessary
