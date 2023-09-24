@@ -211,7 +211,7 @@ If you see the following message in the R console:
                  logical.return = TRUE, : there is no package called ‘nvimcom’
    2: package ‘nvimcom’ in options("defaultPackages") was not found
 <
-Try quiting both R and Vim/Neovim and starting them again.
+Try quitting both R and Vim/Neovim and starting them again.
 
 If you still see the message "The package nvimcom wasn't loaded yet" after
 starting R, then Nvim-R could not induce R to load nvimcom. Nvim-R sets the
@@ -235,7 +235,7 @@ path where nvimcom was installed.
 On Windows, nvimcom compilation will fail if your `.Rprofile` outputs anything
 during R Startup. It will also fail with a message about `--slave` not being a
 `gcc` option if either `make.exe` or `gcc.exe` from RTools40 are not the first
-ones found in your systems's `PATH` (see |R_path| and |Rtools-path|).
+ones found in your systems' `PATH` (see |R_path| and |Rtools-path|).
 
 
 ------------------------------------------------------------------------------
@@ -304,7 +304,7 @@ send commands to R.
 
 This plugin has many key bindings, which correspond with menu entries. In the
 list below, the backslash represents the <LocalLeader>. Not all menu items and
-key bindings are enabled in all filetypes supported by the plugin (r, rnoweb,
+key bindings are enabled in all file types supported by the plugin (r, rnoweb,
 rhelp, rrst, rmd).
 
 Menu entry                                Default shortcut~
@@ -791,7 +791,7 @@ package, without calling the function `source()`. In either case, Nvim-R will
 try to find the pattern `funcname <- function(` in the buffer being edited. If
 the pattern is found, the cursor will jump to its position.
 
-The highlighting group used to highlight the line being debuged is the
+The highlighting group used to highlight the line being debugged is the
 QuickFixLine (see |hl-QuickFixLine|). Its foreground and background colors are
 defined by your colorscheme, but you can change them in your |vimrc| (see
 |cterm-colors| and |gui-colors|). Example:
@@ -1113,10 +1113,10 @@ You may either use the package colorout (Unix only) to colorize R output or
 let Neovim highlight the terminal contents as it was a .Rout file type. Two
 advantages of colorout are the possibility of highlighting numbers close to
 zero in a different color and the distinction between stdout and stderr. The
-value of R_hl_term (0 or 1) determines whether Neovim should syntax highlight
+value of `R_hl_term` (0 or 1) determines whether Neovim should syntax highlight
 the R output, and its default value will be set to 0 if the package colorout
 is loaded. If you prefer do not rely on the auto detection of colorout, you
-should set the value of R_hl_term in your |vimrc|. Example:
+should set the value of `R_hl_term` in your |vimrc|. Example:
 >
    let R_hl_term = 0
 <
@@ -1132,7 +1132,7 @@ should put in your |vimrc|:
 								  *R_setwidth*
 On Unix systems, BEFORE sending a command to R Console, if the terminal width
 has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
-where X is the new terminal width. You can set the value of R_setwidth to 0 to
+where X is the new terminal width. You can set the value of `R_setwidth` to 0 to
 avoid the width being set. Example:
 >
    let R_setwidth = 0
@@ -1284,9 +1284,9 @@ you can put in your |vimrc|:
    let R_arrange_windows = 0
 <
 If you want R and GVim windows always in a specific arrangement, regardless of
-their state when you have quited R for the last time, you should arrange them
+their state when you have quit R for the last time, you should arrange them
 in the way you want, quit R, change in your |vimrc| only the value of
-R_save_win_pos and, finally, quit Vim.
+`R_save_win_pos` and, finally, quit Vim.
 
 The plugin sets `$HOME` as the Windows register value for "Personal" "Shell
 Folders" which is the same value set by R. However, if you have set `$HOME`
@@ -1341,8 +1341,8 @@ To completely disable this feature, put in your |vimrc|:
 <
 If you need to type many object names with underscores and still want to use
 `_` as the trigger for the assign symbol, you may want to set the value of
-R_assign as 2. Then, you will have to type two `_` to get them converted into
-`<-`. Alternatively, if the value of R_assign is 3, the plugin will run the
+`R_assign` as 2. Then, you will have to type two `_` to get them converted into
+`<-`. Alternatively, if the value of `R_assign` is 3, the plugin will run the
 following command in each buffer containing R code (R, Rnoweb, Rhelp, Rrst,
 and Rmd):
 >
@@ -1447,7 +1447,7 @@ The valid values of `R_nvimpager` are:
    "no"        : Do not show R documentation in Vim.
 
 The window will be considered large enough if it has more columns than
-R_editor_w + R_help_w. These variables control the minimum
+`R_editor_w` + `R_help_w`. These variables control the minimum
 width of the editor window and the help window, and their default values are,
 respectively, 66 and 46. Thus, if you want to have more control over Vim's
 behavior while opening R's documentations, you will want to set different
@@ -1526,17 +1526,17 @@ the SDI style of the graphical user interface.
 								*R_start_libs*
 6.10. Omnicompletion and syntax highlighting~
 
-The list of functions to be highlighted and the list of objects for
-omni completion are built dynamically as the libraries are loaded by R.
-If R is running, only the names of objects in .GlobalEnv and in loaded
-libraries are completed. If R is not running, only objects of libraries listed
-in |R_start_libs| and as the first argument of either `library()` and
-`require()` commands in the current buffer will have their names completed.
-However, you can set the value of R_start_libs if you want that
-the functions and objects of specific packages are respectively highlighted
-and available for omni completion even if R is not running yet. By default,
-only the functions of vanilla R are always highlighted. Below is the default
-value of R_start_libs:
+The list of functions to be highlighted and the list of objects for omni
+completion are built dynamically as the libraries are loaded by R. If R is
+running, only the names of objects in .GlobalEnv and in loaded libraries are
+completed. If R is not running, only objects of libraries listed in
+`R_start_libs` and as the first argument of either `library()` and `require()`
+commands in the current buffer will have their names completed. However, you
+can set the value of `R_start_libs` if you want that the functions and objects
+of specific packages are respectively highlighted and available for omni
+completion even if R is not running yet. By default, only the functions of
+vanilla R are always highlighted. Below is the default value of
+`R_start_libs`:
 >
    let R_start_libs = 'base,stats,graphics,grDevices,utils,methods'
 <
@@ -1636,7 +1636,7 @@ typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
 
 You can also add the string "# " to the beginning of a line by typing
 <LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
-the value of R_rcomment_string to control what string will be added
+the value of `R_rcomment_string` to control what string will be added
 to the beginning of the line. Example:
 >
    let R_rcomment_string = '# '
@@ -1666,7 +1666,7 @@ To turn off the automatic indentation, put in your |vimrc|:
    let R_indent_commented = 0
 <
 The string used to comment text with <LocalLeader>xc, <LocalLeader>xu,
-<LocalLeader>xx and <LocalLeader>o is defined by R_rcomment_string.
+<LocalLeader>xx and <LocalLeader>o is defined by `R_rcomment_string`.
 Example:
 >
    let R_rcomment_string = '# '
@@ -1775,8 +1775,8 @@ arguments of its methods. If you want that the plugin calls the function
 >
    let R_listmethods = 1
 <
-By default, R makes a scatterplot of numeric vectors. The function
-`nvim.plot()` do both a histogram and a boxplot. The function can be called by
+By default, R makes a scatter plot of numeric vectors. The function
+`nvim.plot()` do both a histogram and a box plot. The function can be called by
 the plugin after <LocalLeader>rg if you put the following line in your
 |vimrc|:
 >
@@ -1872,7 +1872,7 @@ above), but not single quotes, because Nvim-R will use single quotes to
 separate them in an R's `c()` command.
 
 If you want to pass arguments to the `Sweave()` function, set the value of the
-R_sweaveargs variable.
+`R_sweaveargs` variable.
 
 If the value of `R_texerr` is `1`, nvmimcom will output to R Console LaTeX
 errors and warnings produced by the compilation of the .tex document into
@@ -1990,7 +1990,7 @@ the X server) you may want to put in your |vimrc|:
 The default value of `R_openpdf` is 1 on Mac OS X and 2 on other systems.
 
 On Windows, Nvim-R will call Sumatra to open the PDF, and, on Mac OS X, it
-will call Skim. On Linux, you can change the value of R_pdfviewer in your
+will call Skim. On Linux, you can change the value of `R_pdfviewer` in your
 |vimrc| to define what PDF viewer will be called. Valid values are "zathura"
 (default, and the one best integrated with Nvim-R), "evince" and "okular".
 
@@ -2005,7 +2005,7 @@ will be automatically opened if you put the following in your |vimrc|:
 >
    let R_openhtml = 1
 <
-The meanings of different values of R_openhtml are:
+The meanings of different values of `R_openhtml` are:
 
    0: Never open the html.
    1: Always open the html.
@@ -2042,9 +2042,9 @@ you prefer the non strict rst code, put the following in your |vimrc|:
 >
    let R_strict_rst = 0
 <
-You can also set the value of R_rst2pdfpath (the path to rst2pdf
-application), R_rrstcompiler (the compiler argument to be passed to R
-function knit2pdf), and R_rst2pdfargs (further arguments to be passed
+You can also set the value of `R_rst2pdfpath` (the path to rst2pdf
+application), `R_rrstcompiler` (the compiler argument to be passed to R
+function knit2pdf), and `R_rst2pdfargs` (further arguments to be passed
 to R function knit2pdf).
 
 
@@ -2344,8 +2344,8 @@ list will be supported.
 6.36 Temporary files directories~
 
 You can change the directories where temporary files are created and
-stored by setting in your |vimrc| the values of R_tmpdir and
-R_compldir, as in the example below:
+stored by setting in your |vimrc| the values of `R_tmpdir` and
+`R_compldir`, as in the example below:
 >
    let R_tmpdir = '/dev/shm/R_tmp_dir'
    let R_compldir = '~/.cache/Nvim-R'
@@ -2494,7 +2494,7 @@ and |:execute| the command. Example:
 >
    let R_csv_app = ':vsplit'
 <
-You may also include "%s" in R_csv_app to indicate the position of the tsv
+You may also include "%s" in `R_csv_app` to indicate the position of the tsv
 file name in the command to be executed. Example using the `toggleterm.nvim`
 plugin which requires the whole command within quotes:
 >
@@ -2518,7 +2518,7 @@ display the data. Examples:
 >
    let R_df_viewer = "relimp::showData(%s, font = 'Courier 14')"
 <
-The value of R_df_viewer is a string and the substring `%s` is replaced by the
+The value of `R_df_viewer` is a string and the substring `%s` is replaced by the
 name of the object under the cursor.
 
 
