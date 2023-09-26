@@ -143,15 +143,6 @@ let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 
 let g:R_silent_term = get(g:, "R_silent_term", 0)
 
-" Support for legacy options (removed on 2020-06-16)
-if type(g:R_external_term) != v:t_string
-    if exists("g:R_term_cmd")
-        let g:R_external_term = g:R_term_cmd
-    elseif exists("g:R_term")
-        let g:R_external_term = g:R_term
-    endif
-endif
-
 if g:rplugin.is_darwin
     let s:term_name = 'xterm'
     let s:term_cmd = 'xterm -title R -e'
@@ -160,27 +151,25 @@ endif
 
 if type(g:R_external_term) == v:t_string
     let s:term_name = substitute(g:R_external_term, ' .*', '', '')
+    let s:term_cmd = g:R_external_term
     if g:R_external_term =~ ' '
-        let s:term_cmd = g:R_external_term
+        " The terminal command is complete
         finish
     endif
 endif
 
-" Choose a terminal (code adapted from screen.vim)
 if exists("s:term_name")
-    if s:term_name == "terminator"
-        call RWarningMsg('"terminator" is not supported. Please, choose another value for R_external_term.')
-        finish
-    endif
     if !executable(s:term_name)
         call RWarningMsg("'" . s:term_name . "' not found. Please change the value of 'R_external_term' in your vimrc.")
         finish
     endif
-endif
-
-if !exists("s:term_name")
+else
+    " Choose a terminal (code adapted from screen.vim)
     let s:terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'Eterm',
                 \ 'rxvt', 'urxvt', 'aterm', 'roxterm', 'lxterminal', 'alacritty', 'xterm']
+    if $WAYLAND_DISPLAY != ''
+        let s:terminals = ['foot'] + s:terminals
+    endif
     for s:term in s:terminals
         if executable(s:term)
             let s:term_name = s:term
@@ -192,41 +181,37 @@ if !exists("s:term_name")
 endif
 
 if !exists("s:term_name")
-    call RWarningMsg("Please, set the variable 'g:R_external_term' in your vimrc. Read the plugin documentation for details.")
+    call RWarningMsg("Please, set the variable 'g:R_external_term' in your vimrc. See the plugin documentation for details.")
     let g:rplugin.failed = 1
     finish
 endif
 
-if s:term_name =~ '^\(gnome-terminal\|xfce4-terminal\|roxterm\|Eterm\|aterm\|lxterminal\|rxvt\|urxvt\|alacritty\)$'
+if s:term_name =~ '^\(foot\|gnome-terminal\|xfce4-terminal\|roxterm\|Eterm\|aterm\|lxterminal\|rxvt\|urxvt\|alacritty\)$'
     let s:term_cmd = s:term_name . " --title R"
 elseif s:term_name =~ '^\(xterm\|uxterm\|lxterm\)$'
     let s:term_cmd = s:term_name . " -title R"
 else
-    call RWarningMsg("Please, set the value of 'g:R_external_term' in your vimrc. Read the plugin documentation for details.")
-    let g:rplugin.failed = 1
-    finish
+    let s:term_cmd = s:term_name
+endif
+
+if s:term_name == 'foot'
+    let s:term_cmd .= ' --log-level error'
 endif
 
 if !g:R_nvim_wd
     if s:term_name =~ '^\(gnome-terminal\|xfce4-terminal\|lxterminal\)$'
-        let s:term_cmd = s:term_cmd . " --working-directory='" . expand("%:p:h") . "'"
+        let s:term_cmd .= " --working-directory='" . expand("%:p:h") . "'"
     elseif s:term_name == "konsole"
-        let s:term_cmd = "konsole -p tabtitle=R --workdir '" . expand("%:p:h") . "'"
+        let s:term_cmd .= " -p tabtitle=R --workdir '" . expand("%:p:h") . "'"
     elseif s:term_name == "roxterm"
-        let s:term_cmd = s:term_cmd . " --directory='" . expand("%:p:h") . "'"
+        let s:term_cmd .= " --directory='" . expand("%:p:h") . "'"
     endif
 endif
 
 if s:term_name == "gnome-terminal"
-    let s:gtv = split(system("gnome-terminal --version"))
-    if len(s:gtv) > 2 && s:gtv[2] >= "3.24.2"
-        let s:term_cmd = s:term_cmd . " --"
-    else
-        let s:term_cmd = s:term_cmd . " -x"
-    endif
-    unlet s:gtv
-elseif s:term_name == "xfce4-terminal"
-    let s:term_cmd = s:term_cmd . " -x"
+    let s:term_cmd .= " --"
+elseif s:term_name =~ '^\(terminator\|xfce4-terminal\)$'
+    let s:term_cmd .= " -x"
 else
-    let s:term_cmd = s:term_cmd . " -e"
+    let s:term_cmd .= " -e"
 endif

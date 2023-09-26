@@ -191,14 +191,17 @@ file) released at:
 Note: The <LocalLeader> is '\' by default.
 
 The plugin is a |file-type| plugin. It will be active only if you are editing
-a .R, .Rnw, .Rd, Rmd, or Rrst file. The menu items will not be visible and the
-key bindings will not be active while editing either unnamed files or files
-with name extensions other than the mentioned above (however, see
+a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The menu items will not be visible
+and the key bindings will not be active while editing either unnamed files or
+files with name extensions other than the mentioned above (however, see
 https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type).
 If the plugin is active, pressing <LocalLeader>rf should start R.
 
 Did you see warning messages but they disappeared before you have had time to
 read them? Type the command |:messages| in Normal mode to see them again.
+
+Run the command `:RDebugInfo` which will show information useful to fix some
+common issues.
 
 If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
@@ -298,14 +301,14 @@ change this behavior (see |R_external_term|).
 
 Note: The <LocalLeader> is '\' by default.
 
-To use the plugin, open a .R, .Rnw, .Rd, .Rmd or .Rrst file with Vim and
-type <LocalLeader>rf. Then, you will be able to use the plugin key bindings to
-send commands to R.
+To use the plugin, open a .R, .Rnw, .Rd, .Rmd, .Rrst, or .qmd file with Vim
+and type <LocalLeader>rf. Then, you will be able to use the plugin key
+bindings to send commands to R.
 
 This plugin has many key bindings, which correspond with menu entries. In the
 list below, the backslash represents the <LocalLeader>. Not all menu items and
 key bindings are enabled in all file types supported by the plugin (r, rnoweb,
-rhelp, rrst, rmd).
+rhelp, rrst, rmd, and quarto).
 
 Menu entry                                Default shortcut~
 Start/Close
@@ -1216,46 +1219,43 @@ Note: The options of this section are ignored on Mac OS X, where the command
 
 R will run in Vim/Neovim's built-in terminal emulator, unless you set the
 value of `R_external_term`, which can be a numeric value (either `0` or `1`),
-the name of the terminal emulator (see list below) or the complete command to
-run the terminal emulator. On Windows, the only valid value is `1`, which will
-make Nvim-R to run `Rgui.exe`, and not really a terminal emulator.
+the name of the terminal emulator or the complete command to run the terminal
+emulator. On Windows, the only valid value is `1`, which will make Nvim-R to
+run `Rgui.exe`, and not really a terminal emulator.
 
 On Linux, the complete command for running the terminal is predefined for the
 following options:
 
-    1. gnome-terminal,
-    2. konsole,
-    3. xfce4-terminal,
-    4. Eterm,
-    5. (u)rxvt,
-    6. aterm,
-    7. roxterm,
-    8. lxterminal
-    9. xterm.
+    1. foot
+    2. gnome-terminal,
+    3. konsole,
+    4. xfce4-terminal,
+    5. Eterm,
+    6. (u)rxvt,
+    7. aterm,
+    8. roxterm,
+    9. lxterminal
+   10. xterm.
 
-The plugin runs the first terminal emulator that it finds from the above
-list. If your favorite terminal emulator is not selected, you may define it in
-your |vimrc|. Below are some examples of how to set the value of
-`R_external_term`:
+If the value of `R_external_term` is 1, the plugin runs the first terminal
+emulator that it finds from the above list. If your favorite terminal emulator
+is not selected, you may define it in your |vimrc|. Below are some examples of
+how to set the value of `R_external_term`:
 >
    let R_external_term = 1 " Run R in an external terminal (or Rgui.exe)
-   let R_external_term = 'xterm' " Run R in in xterm
+   let R_external_term = 'foot' " Run R in in foot
 <
-If your terminal emulator is not listed above, or if you are not satisfied
-with the way your terminal emulator is called by the plugin, you may define in
-your |vimrc| the variable `R_external_term` as the complete command to run the
-terminal. Examples:
+If you are not satisfied with the way your terminal emulator is called by the
+plugin, you may define in your |vimrc| the variable `R_external_term` as the
+complete command to run the terminal. Examples:
 >
    let R_external_term = 'xterm -title R -e'
    let R_external_term = 'tilix -a session-add-right -e'
    let R_external_term = 'xfce4-terminal --icon=/path/to/icons/R.png --title=R -x'
-   let R_external_term = 'foot -a R -T R --login-shell --log-level warning'
+   let R_external_term = 'foot -a R -T R --login-shell --log-level error'
 <
 Please, look at the manual of your terminal emulator to know how to call it.
 The last argument must be the one which precedes the command to be executed.
-
-Note: Terminal emulators that require the command to be executed to be quoted
-(such as `termit`) are not supported.
 
 The terminal error messages, if any, are shown as warning messages, unless you
 put in your |vimrc|:
@@ -2193,11 +2193,11 @@ in your |vimrc|.  Example:
 								   *R_nvim_wd*
 6.32 Start R in working directory of Vim~
 
-When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst) and start R, the R
-package nvimcom runs the command `setwd()` with the directory of the file
-being edited as argument, that is, the R working directory becomes the same
-directory of the R file. If you want R's working directory to be the same as
-Vim's working directory, put in your |vimrc|:
+When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst, or .qmd) and start
+R, the R package nvimcom runs the command `setwd()` with the directory of the
+file being edited as argument, that is, the R working directory becomes the
+same directory of the R file. If you want R's working directory to be the same
+as Vim's working directory, put in your |vimrc|:
 >
    let R_nvim_wd = 1
 <
@@ -2372,7 +2372,7 @@ you type: using Nvim-R's built-in completion system (as a source for
    https://github.com/jalvesaq/cmp-nvim-r
    https://github.com/REditorSupport/languageserver
 
-The advantage of Nvim-R's built-in system is the completion of objects
+The advantage of Nvim-R's built-in system is the ability to complete objects
 of the R's workspace (`.GlobalEnv`), including column names of data.frames.
 
 Note: If you are using the `languageserver` package, you should disable its
@@ -2445,7 +2445,7 @@ file types if you include them in the list `R_bib_compl`. Example:
 >
    let R_bib_compl = ['rnoweb', 'rmd', 'quarto']
 <
-However, there are many alternatives plugins for completing bib keys that work
+However, there are many alternative plugins for completing bib keys that work
 better than Nvim-R. Examples:
 
    - `zotcite` with `cmp-zotice` (for Markdown, Rmd and Quarto):
