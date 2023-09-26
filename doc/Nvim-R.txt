@@ -6,7 +6,7 @@ Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
 Version: 0.9.17
-For Neovim >= 0.5.0 and Vim >= 8.2.84
+For Neovim >= 0.6.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
  2. Main features                               |Nvim-R-features|
@@ -95,7 +95,7 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:~
 
-   Neovim >= 0.5.0
+   Neovim >= 0.6.0
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
@@ -2556,14 +2556,14 @@ subdocument (TeX and Rnoweb alike) should include the following line:
 where `master.Rnw` must be replaced with the name of the actual master
 document.
 
-Note: The current knitr package (version 1.7) has at least two limitations:
+Note: The knitr package (as of version 1.7) had at least two limitations:
 
-   - It has no SyncTeX support for child documents. The correspondence data
+   - It had no SyncTeX support for child documents. The correspondence data
      point to lines right below child chunks in the master document and not to
      somewhere in the child documents themselves. See:
      https://github.com/yihui/knitr/issues/225
 
-   - It only starts registering the concordance after the first chunk. So, it
+   - It only started registering the concordance after the first chunk. So, it
      is recommended that you put the first chunk of R code just after the
      `\begin{document}` command.
 
@@ -2813,6 +2813,7 @@ See also: |R_source|.
  * Delete option R_auto_omni.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
+ * Require either Neovim 0.6.0 or Vim 8.2.84.
 
 0.9.17 (2022-09-29)
 
