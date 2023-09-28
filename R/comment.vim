@@ -1,3 +1,29 @@
+" Get first and last selected lines
+function RGetFL(mode)
+    if a:mode == "normal"
+        let fline = line(".")
+        let lline = line(".")
+    else
+        let fline = line("'<")
+        let lline = line("'>")
+    endif
+    if fline > lline
+        let tmp = lline
+        let lline = fline
+        let fline = tmp
+    endif
+    return [fline, lline]
+endfunction
+
+" Each file type defines a function to say whether the cursor is in a block of
+" R code. Useful for Rmd, Rnw, Rhelp, Rdoc, etc...
+function IsLineInRCode(vrb, line)
+    let save_cursor = getpos(".")
+    call setpos(".", [0, a:line, 1, 0])
+    let isR = b:IsInRCode(a:vrb) == 1
+    call setpos('.', save_cursor)
+    return isR
+endfunction
 
 function RSimpleCommentLine(mode, what)
     let [fline, lline] = RGetFL(a:mode)

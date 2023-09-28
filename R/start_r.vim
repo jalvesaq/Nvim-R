@@ -39,6 +39,29 @@ function s:RGetBufDir()
     return rwd
 endfunction
 
+function IsSendCmdToRFake()
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        let qcmd = "\\rq"
+        let nkblist = execute("nmap")
+        let nkbls = split(nkblist, "\n")
+        for nkb in nkbls
+            if stridx(nkb, "RQuit('nosave')") > 0
+                let qls = split(nkb, " ")
+                let qcmd = qls[1]
+                break
+            endif
+        endfor
+        call RWarningMsg("As far as I know, R is already running. If it is not running, did you quit it from within ". v:progname . " (command " . qcmd . ")?")
+        return 1
+    endif
+    return 0
+endfunction
+
+function SendCmdToR_NotYet(...)
+    call RWarningMsg("Not ready yet")
+    return 0
+endfunction
+
 " Start R
 function StartR(whatr)
     let s:wait_nvimcom = 1

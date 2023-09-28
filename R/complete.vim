@@ -473,6 +473,13 @@ function SetComplMenu(id, cmn)
     let s:waiting_compl_menu = 0
 endfunction
 
+function UpdateRGlobalEnv(block)
+    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
+        return
+    endif
+    call RealUpdateRGlbEnv(a:block)
+endfunction
+
 let s:completion_id = 0
 function CompleteR(findstart, base)
     if a:findstart
@@ -665,6 +672,15 @@ function FillQuartoComplMenu()
                 call add(s:qchunk_opt_list, dict)
             endfor
         endfor
+    endif
+endfunction
+
+function ROnInsertEnter()
+    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
+        return
+    endif
+    if g:R_hi_fun_globenv != 0
+        call RealUpdateRGlbEnv(0)
     endif
 endfunction
 

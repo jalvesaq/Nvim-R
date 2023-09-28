@@ -232,56 +232,6 @@ function ReplaceUnderS()
     endif
 endfunction
 
-" Get first and last selected lines
-function RGetFL(mode)
-    if a:mode == "normal"
-        let fline = line(".")
-        let lline = line(".")
-    else
-        let fline = line("'<")
-        let lline = line("'>")
-    endif
-    if fline > lline
-        let tmp = lline
-        let lline = fline
-        let fline = tmp
-    endif
-    return [fline, lline]
-endfunction
-
-" Each file type defines a function to say whether the cursor is in a block of
-" R code. Useful for Rmd, Rnw, Rhelp, Rdoc, etc...
-function IsLineInRCode(vrb, line)
-    let save_cursor = getpos(".")
-    call setpos(".", [0, a:line, 1, 0])
-    let isR = b:IsInRCode(a:vrb) == 1
-    call setpos('.', save_cursor)
-    return isR
-endfunction
-
-function IsSendCmdToRFake()
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        let qcmd = "\\rq"
-        let nkblist = execute("nmap")
-        let nkbls = split(nkblist, "\n")
-        for nkb in nkbls
-            if stridx(nkb, "RQuit('nosave')") > 0
-                let qls = split(nkb, " ")
-                let qcmd = qls[1]
-                break
-            endif
-        endfor
-        call RWarningMsg("As far as I know, R is already running. If it is not running, did you quit it from within ". v:progname . " (command " . qcmd . ")?")
-        return 1
-    endif
-    return 0
-endfunction
-
-function SendCmdToR_NotYet(...)
-    call RWarningMsg("Not ready yet")
-    return 0
-endfunction
-
 " Get the word either under or after the cursor.
 " Works for word(| where | is the cursor position.
 function RGetKeyword(...)
@@ -742,22 +692,6 @@ function ShowRDebugInfo()
         echo g:rplugin.debug_info[key]
         echo ""
     endfor
-endfunction
-
-function UpdateRGlobalEnv(block)
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    call RealUpdateRGlbEnv(a:block)
-endfunction
-
-function ROnInsertEnter()
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    if g:R_hi_fun_globenv != 0
-        call RealUpdateRGlbEnv(0)
-    endif
 endfunction
 
 " Function to send commands
