@@ -116,6 +116,16 @@ function StartR_InBuffer()
         call UnsetRHome()
     endif
     let g:rplugin.R_bufnr = bufnr("%")
+    if exists("g:R_hl_term") && g:R_hl_term
+        silent set syntax=rout
+    endif
+    if g:R_esc_term
+        tnoremap <buffer> <Esc> <C-\><C-n>
+    endif
+    for optn in split(g:R_buffer_opts)
+        exe 'setlocal ' . optn
+    endfor
+
     let s:R_width = 0
     if &number
         if g:R_setwidth < 0 && g:R_setwidth > -17
@@ -126,15 +136,7 @@ function StartR_InBuffer()
     else
         let s:number_col = 0
     endif
-    if exists("g:R_hl_term") && g:R_hl_term
-        silent set syntax=rout
-    endif
-    if g:R_esc_term
-        tnoremap <buffer> <Esc> <C-\><C-n>
-    endif
-    for optn in split(g:R_buffer_opts)
-        exe 'setlocal ' . optn
-    endfor
+
     " Set b:pdf_is_open to avoid error when the user has to go to R Console to
     " deal with latex errors while compiling the pdf
     let b:pdf_is_open = 1
