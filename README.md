@@ -6,7 +6,8 @@ R scripts.
 ## Installation
 
 If you use a plugin manager, follow its instructions on how to install plugins
-from github.
+from GitHub. Users of [lazy.nvim](https://github.com/folke/lazy.nvim) who
+opted for `defaults.lazy=true` have to configure Nvim-R with `lazy=false`.
 
 The `stable` branch is a copy of the last released version plus minor bug
 fixes eventually found after the release.
@@ -39,12 +40,12 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
       turns blue because it is immediately recognized as a loaded function
       (the Vim color scheme used is [southernlights]).
 
-   3. When Mozambique's data.frame is created, it is automatically displayed
+   3. When Mozambique's `data.frame` is created, it is automatically displayed
       in the Object Browser. Messages about unrecognized types are in magenta
       because they were sent to *stderr*, and the line *Warning messages* is in
       red because colorout recognized it as a warning.
 
-   4. When the "label" attributes are applied to the data.frame elements, the
+   4. When the "label" attributes are applied to the `data.frame` elements, the
       labels show up in the Object Browser.
 
    5. The next images show results of omni completion.
@@ -60,7 +61,7 @@ with each other through TCP connections. The R package *nvimcom* runs a TCP
 server that receives messages from Vim/Neovim, and it also sends messages
 through a TCP connection to Vim/Neovim. Moreover, *nvimcom* includes the
 application *nclientserver* which is never used by R itself, but is run by
-Vim/Neovim, providing both a TCP client and a TCP server. The Diagram below
+Vim/Neovim, providing both a TCP client and a TCP server. The diagram below
 shows the three paths of communication between Vim/Neovim and R:
 
   - The black path is followed by all commands that you trigger in the editor
