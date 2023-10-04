@@ -1055,8 +1055,7 @@ function SetRTextWidth(rkeyword)
             endif
             let htwf = (s:hwidth - 1) / 0.9
         endif
-        let htw = printf("%f", htwf)
-        let s:htw = substitute(htw, "\\..*", "", "")
+        let s:htw = float2nr(htwf)
         let s:htw = s:htw - (&number || &relativenumber) * &numberwidth
     endif
 endfunction
@@ -2229,6 +2228,15 @@ let g:R_objbr_auto_start  = get(g:, "R_objbr_auto_start",   0)
 let g:R_clear_line = get(g:, "R_clear_line", 0)
 
 let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
+
+" Avoid problems if either R_rconsole_width or R_rconsole_height is a float
+" number (https://github.com/jalvesaq/Nvim-R/issues/751#issuecomment-1742784447).
+if type(g:R_rconsole_width) == v:t_float
+    let R_rconsole_width = float2nr(g:R_rconsole_width)
+endif
+if type(g:R_rconsole_height) == v:t_float
+    let R_rconsole_height = float2nr(g:R_rconsole_height)
+endif
 
 
 if type(g:R_after_start) != v:t_list

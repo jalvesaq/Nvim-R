@@ -88,10 +88,10 @@ function CreateNewFloat(...)
     let reqh = len(flines) > 15 ? 15 : len(flines)
 
     " Ensure that some variables are integers:
-    exe 'let mc = ' . substitute(string(s:compl_event['col']), '\..*', '', '')
-    exe 'let mr = ' . substitute(string(s:compl_event['row']), '\..*', '', '')
-    exe 'let mw = ' . substitute(string(s:compl_event['width']), '\..*', '', '')
-    exe 'let mh = ' . substitute(string(s:compl_event['height']), '\..*', '', '')
+    let mc = float2nr(s:compl_event['col'])
+    let mr = float2nr(s:compl_event['row'])
+    let mw = float2nr(s:compl_event['width'])
+    let mh = float2nr(s:compl_event['height'])
 
     " Default position and size of float window (at the right side of the popup menu)
     let has_space = 1
