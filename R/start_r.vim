@@ -167,7 +167,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let rwd = getcwd()
     endif
-    if rwd != ""
+    if rwd != "" && !exists("g:R_remote_tmpdir")
         if has("win32")
             let rwd = substitute(rwd, '\\', '/', 'g')
         endif

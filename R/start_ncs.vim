@@ -26,6 +26,9 @@ function CheckNvimcomVersion()
     let s:RBout = []
     let s:RBerr = []
     let s:RWarn = []
+    if exists("g:R_remote_tmpdir")
+        let scrptnm = g:R_remote_tmpdir . "/before_ncs.R"
+    endif
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
@@ -158,7 +161,11 @@ function StartNClientServer()
             " Update nvimcom information
             let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
             let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-            let s:ncs_path = FindNCSpath(info[1])
+            if exists("g:R_local_R_library_dir")
+                let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+            else
+                let s:ncs_path = FindNCSpath(info[1])
+            endif
         else
             call delete(g:rplugin.compldir . '/nvimcom_info')
             call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
@@ -335,7 +342,11 @@ endfunction
 
 if exists("g:R_nvimcom_home")
     let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
-    let s:ncs_path = FindNCSpath(nvimcom_home)
+    if exists("g:R_local_R_library_dir")
+        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+    else
+        let s:ncs_path = FindNCSpath(nvimcom_home)
+    endif
 
     if s:ncs_path != '' && filereadable(nvimcom_home . '/nvimcom/DESCRIPTION')
         let g:rplugin.nvimcom_info['home'] = nvimcom_home
