@@ -26,9 +26,6 @@ function CheckNvimcomVersion()
     let s:RBout = []
     let s:RBerr = []
     let s:RWarn = []
-    if exists("g:R_remote_tmpdir")
-        let scrptnm = g:R_remote_tmpdir . "/before_ncs.R"
-    endif
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
@@ -161,11 +158,7 @@ function StartNClientServer()
             " Update nvimcom information
             let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
             let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-            if exists("g:R_local_R_library_dir")
-                let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
-            else
-                let s:ncs_path = FindNCSpath(info[1])
-            endif
+            let s:ncs_path = FindNCSpath(info[1])
         else
             call delete(g:rplugin.compldir . '/nvimcom_info')
             call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
@@ -339,34 +332,6 @@ function AddToRhelpList(lib)
         endif
     endfor
 endfunction
-
-if exists("g:R_nvimcom_home")
-    let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
-    if exists("g:R_local_R_library_dir")
-        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
-    else
-        let s:ncs_path = FindNCSpath(nvimcom_home)
-    endif
-
-    if s:ncs_path != '' && filereadable(nvimcom_home . '/nvimcom/DESCRIPTION')
-        let g:rplugin.nvimcom_info['home'] = nvimcom_home
-
-        let ndesc = readfile(g:rplugin.nvimcom_info['home'] . '/nvimcom/DESCRIPTION')
-
-        let versionline = matchstr(ndesc, '^Version: ')
-        if versionline != ''
-            let g:rplugin.nvimcom_info['version'] = substitute(versionline, '^Version: ', '', '')
-        endif
-
-        let buildinfoline = matchstr(ndesc, '^Built:')
-        if buildinfoline != ''
-            let rinfo = matchstr(buildinfoline, 'R [.0-9]\+')
-            if rinfo != ''
-                let g:rplugin.nvimcom_info['Rversion'] = substitute(rinfo, 'R ', '', '')
-            endif
-        endif
-    endif
-endif
 
 " The calls to system() and executable() below are in this script to run
 " asynchronously and avoid slow startup on Mac OS X.

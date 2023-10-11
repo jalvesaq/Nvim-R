@@ -955,6 +955,15 @@ of
    https://github.com/jalvesaq/Nvim-R/blob/master/README.md
 
 
+------------------------------------------------------------------------------
+5.8. R and Vim must both be on the same machine~
+
+It is not possible to run (Neo)Vim on a machine and send code to R running on
+another machine. For an alternative, see:
+
+   https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
+
+
 ==============================================================================
 							      *Nvim-R-options*
 6. Options~
@@ -1038,8 +1047,6 @@ of
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
 |R_bib_compl|           List of file types for bib completion
-|R_remote_tmpdir|       Mount point of remote temporary directory
-|R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|        Options for SyncTeX
 
@@ -2459,13 +2466,6 @@ better than Nvim-R. Examples:
      https://github.com/jc-doyle/cmp-pandoc-references
      https://github.com/aspeddro/cmp-pandoc.nvim
 
-
-------------------------------------------------------------------------------
-							      *R_remote_tmpdir*
-							      *R_nvimcom_home*
-6.38 Options for accessing Remote R from local Vim~
-
-See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*
