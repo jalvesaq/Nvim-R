@@ -167,7 +167,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let rwd = getcwd()
     endif
-    if rwd != ""
+    if rwd != "" && !exists("g:R_remote_tmpdir")
         if has("win32")
             let rwd = substitute(rwd, '\\', '/', 'g')
         endif
@@ -272,7 +272,7 @@ function WaitNvimcomStart()
 endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
-    if a:nvimcomhome != g:rplugin.nvimcom_info['home']
+    if !exists("g:R_nvimcom_home") && a:nvimcomhome != g:rplugin.nvimcom_info['home']
         call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom_info['home'] . '" and "' . a:nvimcomhome . '"')
         sleep 1
     endif
@@ -2246,7 +2246,11 @@ if type(g:R_after_start) != v:t_list
 endif
 
 " Make the file name of files to be sourced
-let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
+if exists("g:R_remote_tmpdir")
+    let s:Rsource_read = g:R_remote_tmpdir . "/Rsource-" . getpid()
+else
+    let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
+endif
 let s:Rsource_write = g:rplugin.tmpdir . "/Rsource-" . getpid()
 call AddForDeletion(s:Rsource_write)
 

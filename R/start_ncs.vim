@@ -26,6 +26,9 @@ function CheckNvimcomVersion()
     let s:RBout = []
     let s:RBerr = []
     let s:RWarn = []
+    if exists("g:R_remote_tmpdir")
+        let scrptnm = g:R_remote_tmpdir . "/before_ncs.R"
+    endif
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
 
@@ -158,7 +161,11 @@ function StartNClientServer()
             " Update nvimcom information
             let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
             let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-            let s:ncs_path = FindNCSpath(info[1])
+            if exists("g:R_local_R_library_dir")
+                let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+            else
+                let s:ncs_path = FindNCSpath(info[1])
+            endif
         else
             call delete(g:rplugin.compldir . '/nvimcom_info')
             call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
@@ -193,6 +200,15 @@ function StartNClientServer()
     if g:R_objbr_allnames
         let $NVIMR_OBJBR_ALLNAMES = "TRUE"
     endif
+    let $NVIMR_RPATH = g:rplugin.Rcmd
+    if exists("g:R_remote_tmpdir")
+        " R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS
+        let $NVIMR_REMOTE_COMPLDIR = g:R_remote_compldir
+        let $NVIMR_REMOTE_TMPDIR = g:R_remote_tmpdir
+    else
+        let $NVIMR_REMOTE_COMPLDIR = $NVIMR_COMPLDIR
+        let $NVIMR_REMOTE_TMPDIR = $NVIMR_TMPDIR
+    endif
 
     " We have to set R's home directory on Window because nclientserver will
     " run R to build the list for omni completion.
@@ -208,6 +224,9 @@ function StartNClientServer()
     unlet $NVIMR_OPENDF
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
+    unlet $NVIMR_RPATH
+    unlet $NVIMR_REMOTE_COMPLDIR
+    unlet $NVIMR_REMOTE_TMPDIR
 endfunction
 
 function ListRLibsFromBuffer()
@@ -332,6 +351,34 @@ function AddToRhelpList(lib)
         endif
     endfor
 endfunction
+
+if exists("g:R_nvimcom_home")
+    let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
+    if exists("g:R_local_R_library_dir")
+        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+    else
+        let s:ncs_path = FindNCSpath(nvimcom_home)
+    endif
+
+    if s:ncs_path != '' && filereadable(nvimcom_home . '/nvimcom/DESCRIPTION')
+        let g:rplugin.nvimcom_info['home'] = nvimcom_home
+
+        let ndesc = readfile(g:rplugin.nvimcom_info['home'] . '/nvimcom/DESCRIPTION')
+
+        let versionline = matchstr(ndesc, '^Version: ')
+        if versionline != ''
+            let g:rplugin.nvimcom_info['version'] = substitute(versionline, '^Version: ', '', '')
+        endif
+
+        let buildinfoline = matchstr(ndesc, '^Built:')
+        if buildinfoline != ''
+            let rinfo = matchstr(buildinfoline, 'R [.0-9]\+')
+            if rinfo != ''
+                let g:rplugin.nvimcom_info['Rversion'] = substitute(rinfo, 'R ', '', '')
+            endif
+        endif
+    endif
+endif
 
 " The calls to system() and executable() below are in this script to run
 " asynchronously and avoid slow startup on Mac OS X.

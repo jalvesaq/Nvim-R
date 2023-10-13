@@ -191,10 +191,12 @@ file) released at:
 Note: The <LocalLeader> is '\' by default.
 
 The plugin is a |file-type| plugin. It will be active only if you are editing
-a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The menu items will not be visible
-and the key bindings will not be active while editing either unnamed files or
-files with name extensions other than the mentioned above (however, see
-https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type).
+a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The the key bindings will not be
+active while editing either unnamed files or files with name extensions other
+than the mentioned above: Hhowever, see:
+
+  https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type
+
 If the plugin is active, pressing <LocalLeader>rf should start R.
 
 Did you see warning messages but they disappeared before you have had time to
@@ -203,6 +205,21 @@ read them? Type the command |:messages| in Normal mode to see them again.
 Run the command `:RDebugInfo` which will show information useful to fix some
 common issues.
 
+To see messages received by `nvimcom`, put in your `~/.Rprofile`:
+>
+  options(nvimcom.verbose = 4)
+<
+To see messages received by Neovim, uncomment the first line of the function
+`ROnJobStdout()` at `R/nvimrcom.vim` and delete the string "DEBUG:". It will
+become:
+>
+  call writefile(a:data, "/dev/shm/nclientserver_stdout", "a")
+<
+Then, in another terminal or in another Tmux pane, you would have to use tail
+to follow the output:
+>
+  tail -f /dev/shm/nclientserver_stdout
+<
 If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
 |R_path|).
@@ -920,7 +937,7 @@ is to manually open R and install any package with the `install.packages()`
 command before using Nvim-R.
 
 
-5.6. The ~.Rprofile should not output anything (Windows only)~
+5.6. ~/.Rprofile should not output anything (Windows only)~
 
 The compilation of `nvimcom` during R startup will fail on Windows if your
 `~/.Rprofile` outputs anything. Example of how to replicate the bug:
@@ -936,8 +953,8 @@ Vim through the <LocalLeader>rf command because the plugin was designed to
 connect each Vim instance with its own R instance.
 
 If you start R before Vim, it will not inherit from Vim the environment
-variables R_DEFAULT_PACKAGES, NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and
-NVIMR_SECRET. The first one induces R to load nvimcom; the second variable is
+variables `R_DEFAULT_PACKAGES`, `NVIMR_TMPDIR`, `NVIMR_COMPLDIR`, `NVIMR_ID`, and
+`NVIMR_SECRET`. The first one induces R to load nvimcom; the second variable is
 the path used by the R package nvimcom to save temporary files used by Nvim-R
 to: perform omni completion, show R documentation in a Vim buffer, and update
 the Object Browser. The two last ones are used by Nvim-R and by nvimcom to
@@ -953,15 +970,6 @@ Please see the explanation on the communication between Vim and R at the end
 of
 
    https://github.com/jalvesaq/Nvim-R/blob/master/README.md
-
-
-------------------------------------------------------------------------------
-5.8. R and Vim must both be on the same machine~
-
-It is not possible to run (Neo)Vim on a machine and send code to R running on
-another machine. For an alternative, see:
-
-   https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 
 ==============================================================================
@@ -1047,6 +1055,8 @@ another machine. For an alternative, see:
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
 |R_bib_compl|           List of file types for bib completion
+|R_remote_tmpdir|       Mount point of remote temporary directory
+|R_nvimcom_home|        Mount point of remote R library
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|        Options for SyncTeX
 
@@ -2466,6 +2476,13 @@ better than Nvim-R. Examples:
      https://github.com/jc-doyle/cmp-pandoc-references
      https://github.com/aspeddro/cmp-pandoc.nvim
 
+
+------------------------------------------------------------------------------
+							      *R_remote_tmpdir*
+							      *R_nvimcom_home*
+6.38 Options for accessing Remote R from local Vim~
+
+See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*

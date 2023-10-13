@@ -176,6 +176,8 @@ static void nvimcom_nvimclient(const char *msg, char *port)
     hints.ai_protocol = 0;
 
     sprintf(portstr, "%d", srvport);
+    if (verbose > 1)
+        Rprintf("(nvimcom_nvimclient) NVIM_IP_ADDRESS: '%s'\n", getenv("NVIM_IP_ADDRESS"));
     if(getenv("NVIM_IP_ADDRESS"))
         a = getaddrinfo(getenv("NVIM_IP_ADDRESS"), portstr, &hints, &result);
     else
@@ -188,10 +190,15 @@ static void nvimcom_nvimclient(const char *msg, char *port)
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         s = socket(rp->ai_family, rp->ai_socktype,
                 rp->ai_protocol);
+        if (verbose > 3)
+            Rprintf("(nvimcom_nvimclient) socket result: '%d'\n", s);
         if (s == -1)
             continue;
 
-        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1)
+        int cres = connect(s, rp->ai_addr, rp->ai_addrlen);
+        if (verbose > 3)
+            Rprintf("(nvimcom_nvimclient) connect result: '%d'\n", cres);
+        if (cres != -1)
             break;		   /* Success */
 
         close(s);

@@ -123,7 +123,7 @@ static pthread_t Tid;
 static char myport[128];
 #endif
 
-// #define Debug_NCS
+#define Debug_NCS
 #ifdef Debug_NCS
 static void Log(const char *fmt, ...)
 {
@@ -228,7 +228,7 @@ static void ParseMsg(char *b)
 
     b += VimSecretLen;
 
-    // Log("tcp:   %s", b);
+    Log("tcp:   %s", b);
 
     // Update the GlobalEnv buffer before sending the message to Nvim-R
     // because it must be ready for omni completion
@@ -323,7 +323,7 @@ static void *NeovimServer(__attribute__((unused))void *arg)
         bindportn++;
         sprintf(bindport, "%d", bindportn);
         if(getenv("R_IP_ADDRESS"))
-            result = getaddrinfo(NULL, bindport, &hints, &res);
+            result = getaddrinfo(getenv("R_IP_ADDRESS"), bindport, &hints, &res);
         else
             result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
         if(result != 0){
@@ -356,18 +356,23 @@ static void *NeovimServer(__attribute__((unused))void *arg)
     snprintf(endmsg, 127, "%scall >>> STOP Now <<< !!!", getenv("NVIMR_SECRET"));
 
     /* Read datagrams and reply to sender */
+    Log("Ready to read datagrams and reply to sender...");
     for (;;) {
+        Log("NeovimServer: begin of loop for");
         memset(buf, 0, bsize);
 
         nread = recvfrom(Sfd, buf, bsize, 0,
                 (struct sockaddr *) &peer_addr, &peer_addr_len);
+        Log("NeovimServer: nread = %d", nread);
         if (nread == -1){
             fprintf(stderr, "recvfrom failed [port %d]\n", bindportn);
             fflush(stderr);
             continue;     /* Ignore failed request */
         }
-        if(strncmp(endmsg, buf, 28) == 0)
+        if(strncmp(endmsg, buf, 28) == 0) {
+            Log("End message!");
             break;
+        }
 
         ParseMsg(buf);
     }
@@ -476,6 +481,7 @@ static void SendToServer(const char *port, const char *msg)
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
+    Log("R_IP_ADDRESS=%s", getenv("R_IP_ADDRESS"));
     if(getenv("R_IP_ADDRESS"))
         a = getaddrinfo(getenv("R_IP_ADDRESS"), port, &hints, &result);
     else
@@ -1097,8 +1103,9 @@ static int run_R_code(const char *s, int senderror)
 #else
     char b[1024];
     snprintf(b, 1023,
-            "R --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
-            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
+            "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
+            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"",
+            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
 
     int stt;
     if ((stt = system(b)) != 0) {
@@ -2416,7 +2423,7 @@ int main(int argc, char **argv){
         for(unsigned int i = 0; i < strlen(line); i++)
             if(line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
-        // Log("stdin: %s",  line);
+        Log("stdin: %s",  line);
         msg = line;
         switch(*msg){
             case '1': // SetPort

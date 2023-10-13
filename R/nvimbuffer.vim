@@ -110,6 +110,7 @@ function StartR_InBuffer()
     if has("win32")
         call SetRHome()
     endif
+    let g:TheEnv = [$NVIMR_PORT, $R_DEFAULT_PACKAGES]
     let g:rplugin.jobs["R"] = termopen(g:rplugin.R . " " . join(g:rplugin.r_args), {'on_exit': function('ROnJobExit')})
     if has("win32")
         redraw
