@@ -10,16 +10,13 @@ required to enable full communication between Vim and R because by default
 both Nvim-R and nvimcom only accept TCP connections from the local host, and,
 R saves temporary files in the `/tmp` directory of the machine where it is
 running. To make the communication between local Vim and remote R possible,
-each application has to know the IP address of the other, and some remote
-directories must be mounted locally. Here is an example of how to achieve this
-goal. This used to work in the past (tested on April 2017) but no longer
-works.
-
-If anyone ever want to try to fix the code to allow the remote access again,
-the starting point is:
+the remote R has to know the IP address of local machine, and one remote
+directory must be mounted locally. Here is an example of how to achieve this
+goal.
 
   1. Setup the remote machine to accept ssh login from the local machine
-      without a password (search the Internet to discover how to do it).
+     without a password (search the command `ssh-copy-id` over the Internet to
+     discover how to do it).
 
   2. At the remote machine:
 
@@ -38,18 +35,18 @@ the starting point is:
        library(colorout)
        ```
 
-       If the code above does not work, you have to find a way of discovering
-       the IP address of the remote machine (perhaps parsing the output of
-       `ifconfig`).
-
 
   3. At the local machine:
 
-     - Make the directory `~/.remoteR`.
+     - Make the directory `~/.remoteR`:
+
+       ```sh
+       mkdir ~/.remoteR
+       ```
 
      - Create the shell script `~/bin/mountR` with the following contents, and
-       make it executable (of course, replace `remotelogin`, `remotehost` and
-       the path to R library with valid values for your case):
+       make it executable (of course, replace `remotelogin` and `remotehost`
+       with valid values for your case):
 
        ```sh
        #!/bin/sh
@@ -77,7 +74,6 @@ the starting point is:
            sync
            exit 153
        fi
-
 
        if [ "x$NVIMR_PORT" = "x" ]
        then
