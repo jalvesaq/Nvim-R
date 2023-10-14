@@ -21,6 +21,7 @@
 #ifdef _WIN64
 #include <inttypes.h>
 #endif
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #else
 #include <stdint.h>
 #include <arpa/inet.h> // inet_addr()
@@ -103,8 +104,8 @@ extern void Rconsolecmd(char *cmd); // Defined in R: src/gnuwin32/rui.c
 #else
 static int sfd = -1;
 static pthread_t tid;
-static int sockfd;
 #endif
+static int sockfd;
 
 static char *nvimcom_strcat(char* dest, const char* src)
 {
@@ -151,7 +152,6 @@ static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
     strncat(finalmsg, "\n", 1023);
 }
 
-#ifndef WIN32
 static void send_to_nvim(const char *msg)
 {
     if (verbose > 3)
@@ -164,14 +164,6 @@ static void send_to_nvim(const char *msg)
         REprintf("Error: partial/failed write\n");
     }
 }
-#endif
-
-#ifdef WIN32
-static void send_to_nvim(const char *msg)
-{
-    REprintf("nvimcom: send_to_nvim() not implemented on Windows.");
-}
-#endif
 
 static void nvimcom_squo(const char *buf, char *buf2, int bsize)
 {
@@ -886,8 +878,11 @@ static void nvimcom_parse_received_msg(char *buf)
     }
 }
 
-#ifndef WIN32
+#ifdef WIN32
+static void server_thread(__attribute__((unused))void *arg)
+#else
 static void *server_thread(__attribute__((unused))void *arg)
+#endif
 {
     size_t len;
     for (;;) {
@@ -906,95 +901,10 @@ static void *server_thread(__attribute__((unused))void *arg)
         }
         nvimcom_parse_received_msg(buff);
     }
+#ifndef WIN32
     return NULL;
-}
 #endif
-
-#ifdef WIN32
-static void server_thread(void *arg)
-{
-    unsigned short bindportn = 10000;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
-
-    WSADATA wsaData;
-    SOCKADDR_IN RecvAddr;
-    SOCKADDR_IN peer_addr;
-    int peer_addr_len = sizeof (peer_addr);
-    int nattp = 0;
-    int nfail = 0;
-    int lastfail = 0;
-
-    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != NO_ERROR) {
-        REprintf("WSAStartup failed with error %d\n", result);
-        return;
-    }
-
-    while(bindportn < 10049){
-        bindportn++;
-        sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (sfd == INVALID_SOCKET) {
-            REprintf("Error: socket failed with error %d [nvimcom]\n", WSAGetLastError());
-            return;
-        }
-
-        RecvAddr.sin_family = AF_INET;
-        RecvAddr.sin_port = htons(bindportn);
-        RecvAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-        nattp++;
-        if(bind(sfd, (SOCKADDR *) & RecvAddr, sizeof (RecvAddr)) == 0)
-            break;
-        lastfail = WSAGetLastError();
-        nfail++;
-        if(verbose > 1)
-            REprintf("nvimcom: Could not bind to port %d [error  %d].\n", bindportn, lastfail);
-    }
-    if(nfail > 0 && verbose > 1){
-        if(nattp > nfail)
-            REprintf("nvimcom: finally, bind to port %d was successful.\n", bindportn);
-    }
-    if(nattp == nfail){
-        if(nfail == 1)
-            REprintf("nvimcom: bind failed once with error %d.\n", lastfail);
-        else
-            REprintf("nvimcom: bind failed %d times and the last error was \"%d\".\n", nfail, lastfail);
-        nvimcom_failure = 1;
-        return;
-    }
-
-    if(verbose > 1)
-        REprintf("nvimcom port: %d\n", bindportn);
-
-    // Save a file to indicate that nvimcom is running
-    nvimcom_send_running_info();
-
-    /* Read datagrams and reply to sender */
-    for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(sfd, buf, bsize, 0, (SOCKADDR *) &peer_addr, &peer_addr_len);
-        if (nread == SOCKET_ERROR) {
-            REprintf("nvimcom: recvfrom failed with error %d\n", WSAGetLastError());
-            return;
-        }
-        nvimcom_parse_received_msg(buf);
-    }
-
-    REprintf("nvimcom: Finished receiving. Closing socket.\n");
-    result = closesocket(sfd);
-    if (result == SOCKET_ERROR) {
-        REprintf("closesocket failed with error %d\n", WSAGetLastError());
-        return;
-    }
-    WSACleanup();
-    return;
 }
-#endif
-
 
 void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv, char **pth, char **rinfo)
 {
@@ -1040,9 +950,6 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 #endif
 
-#ifdef WIN32
-    tid = _beginthread(server_thread, 0, NULL);
-#else
     struct sockaddr_in servaddr;
 
     // socket create and verification
@@ -1060,7 +967,11 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 
         // connect the client socket to server socket
         if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
+#ifdef WIN32
+    tid = _beginthread(server_thread, 0, NULL);
+#else
             pthread_create(&tid, NULL, server_thread, NULL);
+#endif
             nvimcom_send_running_info();
         } else {
             REprintf(NULL, "nvimcom: connection with the server failed (%u:%d)\n",
@@ -1072,7 +983,6 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
                 servaddr.sin_addr.s_addr, atoi(edsrvr));
         nvimcom_failure = 1;
     }
-#endif
 
     if(nvimcom_failure == 0){
         glbnvbuf1 = (char*)calloc(glbnvbufsize, sizeof(char));

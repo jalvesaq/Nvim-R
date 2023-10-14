@@ -92,8 +92,7 @@ goal.
          NVIMR_PORT=$NVIMR_PORT R $*"
        ```
 
-     - Add the following lines to your `vimrc` (replace `hostname -I` with a
-       command that works in your system):
+     - Add the following lines to your `vimrc`:
 
        ```vim
        let R_app = '/home/locallogin/bin/sshR'
@@ -103,7 +102,7 @@ goal.
        let R_local_R_library_dir = '/path/to/local/R/library' " where nvimcom is installed
        ```
 
-       if using `init.lua`:
+       or, if using `init.lua`:
 
        ```lua
        vim.g.R_app = '/home/locallogin/bin/sshR'

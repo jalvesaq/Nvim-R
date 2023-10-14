@@ -15,6 +15,7 @@
 #include <inttypes.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #ifdef _WIN64
 #define PRI_SIZET PRIu64
 #else
@@ -114,15 +115,13 @@ static char VimSecret[128];
 static int VimSecretLen;
 
 #ifdef WIN32
-static SOCKET Sfd;
 static int Tid;
-static int winbindport;
 #else
 static pthread_t Tid;
+#endif
 struct sockaddr_in servaddr;
 static int sockfd;
 static int connfd;
-#endif
 
 #define Debug_NCS
 #ifdef Debug_NCS
@@ -275,14 +274,17 @@ static void ParseMsg(char *b)
         omni2ob();
 }
 
-#ifndef WIN32
 // Adapted from
 // https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 static void init_listening()
 {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in cli;
+#ifdef WIN32
+    int len;
+#else
     socklen_t len;
+#endif
     int res;
     int port = 10101;
 
@@ -331,7 +333,11 @@ static void init_listening()
     }
 }
 
-void *receive_msg()
+#ifdef WIN32
+static void receive_msg(void *arg)
+#else
+static void *receive_msg()
+#endif
 {
     char buff[1024];
     size_t len;
@@ -349,6 +355,9 @@ void *receive_msg()
             ParseMsg(buff);
         }
     }
+#ifndef WIN32
+    return NULL;
+#endif
 }
 
 void send_to_nvimcom(char *msg)
@@ -363,7 +372,6 @@ void send_to_nvimcom(char *msg)
         }
     }
 }
-#endif
 
 #ifdef WIN32
 static void SendToRConsole(char *aString){
@@ -379,7 +387,7 @@ static void SendToRConsole(char *aString){
 
     char msg[1024];
     snprintf(msg, 1023, "C%s%s", getenv("NVIMR_ID"), aString);
-    SendToServer(NvimcomPort, msg);
+    send_to_nvimcom(msg);
     Sleep(0.02);
 
     // Necessary to force RConsole to actually process the line
@@ -589,10 +597,11 @@ void start_server(void)
 #endif
 
     init_listening();
+
+    // Receive messages from TCP and output them to stdout
 #ifdef WIN32
     Tid = _beginthread(receive_msg, 0, NULL);
 #else
-    // Receive messages from TCP and output them to stdout
     pthread_create(&Tid, NULL, receive_msg, NULL);
 #endif
 }
@@ -848,8 +857,12 @@ static int run_R_code(const char *s, int senderror)
 
     // Create the child process.
 
+    char buf[512];
+    snprintf(buf, 511, "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
+            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"));
+
     res = CreateProcess(NULL,
-            "R.exe --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",  // Command line
+            "",  // Command line
             NULL,          // process security attributes
             NULL,          // primary thread security attributes
             TRUE,          // handles are inherited
