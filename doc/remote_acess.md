@@ -42,9 +42,10 @@ the starting point is:
        the IP address of the remote machine (perhaps parsing the output of
        `ifconfig`).
 
+
   3. At the local machine:
 
-     - Make the directories `~/.remoteR/NvimR_cache` and `~/.remoteR/R_library`.
+     - Make the directory `~/.remoteR`.
 
      - Create the shell script `~/bin/mountR` with the following contents, and
        make it executable (of course, replace `remotelogin`, `remotehost` and
@@ -52,8 +53,7 @@ the starting point is:
 
        ```sh
        #!/bin/sh
-       sshfs remotelogin@remotehost:/home/remotelogin/.cache/Nvim-R ~/.remoteR/NvimR_cache
-       sshfs remotelogin@remotehost:/home/remotelogin/R/x86_64-pc-linux-gnu-library/4.2 ~/.remoteR/R_library
+       sshfs remotelogin@remotehost:/home/remotelogin/.cache/Nvim-R ~/.remoteR
        ```
 
      - Create the shell script `~/bin/sshR` with the following contents, and
@@ -62,64 +62,74 @@ the starting point is:
 
        ```sh
        #!/bin/sh
-       ssh -t remotelogin@remotehost "PATH=/home/remotelogin/bin:\$PATH \
-       NVIMR_COMPLDIR=~/.cache/Nvim-R \
-       NVIMR_TMPDIR=~/.cache/Nvim-R/tmp \
-       NVIMR_ID=$NVIMR_ID \
-       NVIMR_SECRET=$NVIMR_SECRET \
-       R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
-       NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS \
-       NVIMR_PORT=$NVIMR_PORT R $@"
+
+       LOCAL_MOUNT_POINT=$NVIMR_COMPLDIR
+       REMOTE_CACHE_DIR=$NVIMR_REMOTE_COMPLDIR
+       REMOTE_LOGIN_HOST=remotelogin@remotehost
+
+       NVIM_IP_ADDRESS=$(hostname -I)
+       REMOTE_DIR_IS_MOUNTED=$(df | grep $LOCAL_MOUNT_POINT)
+
+       if [ "x$REMOTE_DIR_IS_MOUNTED" = "x" ]
+       then
+           echo "Remote directory '$REMOTE_CACHE_DIR' not mounted. Quit Vim and start it again." >&2
+           sshfs $REMOTE_LOGIN_HOST:$REMOTE_CACHE_DIR $LOCAL_MOUNT_POINT
+           sync
+           exit 153
+       fi
+
+
+       if [ "x$NVIMR_PORT" = "x" ]
+       then
+           PSEUDOTERM='-T'
+       else
+           PSEUDOTERM='-t'
+       fi
+
+       ssh $PSEUDOTERM $REMOTE_LOGIN_HOST \
+         "NVIMR_TMPDIR=$REMOTE_CACHE_DIR/tmp \
+         NVIMR_COMPLDIR=$REMOTE_CACHE_DIR \
+         NVIMR_ID=$NVIMR_ID \
+         NVIMR_SECRET=$NVIMR_SECRET \
+         R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES \
+         NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS \
+         NVIMR_PORT=$NVIMR_PORT R $*"
        ```
 
      - Add the following lines to your `vimrc` (replace `hostname -I` with a
        command that works in your system):
 
        ```vim
-       " Setup Vim to use the remote R only if the output of df includes
-       " the string 'remoteR', that is, the remote file system is mounted:
-       if system('df') =~ 'remoteR'
-           let $NVIM_IP_ADDRESS = substitute(system("hostname -I"), " .*", "", "")
-           let R_app = '/home/locallogin/bin/sshR'
-           let R_cmd = '/home/locallogin/bin/sshR'
-           let R_compldir = '/home/locallogin/.remoteR/NvimR_cache'
-           let R_tmpdir = '/home/locallogin/.remoteR/NvimR_cache/tmp'
-           let R_remote_tmpdir = '/home/remotelogin/.cache/NvimR_cache/tmp'
-           let R_local_R_library_dir = '/home/locallogin/path/to/R/library'
-           let R_nvimcom_home = '/home/locallogin/.remoteR/library/nvimcom'
-        endif
-        ```
+       let R_app = '/home/locallogin/bin/sshR'
+       let R_cmd = '/home/locallogin/bin/sshR'
+       let R_compldir = '/home/locallogin/.remoteR
+       let R_remote_compldir = '/home/remotelogin/.cache/Nvim-R'
+       let R_local_R_library_dir = '/path/to/local/R/library' " where nvimcom is installed
+       ```
 
-        if using `init.lua`:
+       if using `init.lua`:
 
-        ```lua
-        -- Setup Neovim to use the remote R only if the output of df includes
-        -- the string 'remoteR', that is, the remote file system is mounted:
-        local a
-        a = io.popen('/usr/bin/df', "r")
-        if a then
-            local output = a:read("*a")
-            a:close()
-            if string.find(output, 'remoteR') then
-                a = io.popen("hostname -I", "r")
-                if a then
-                    local h
-                    h = string.gsub(a:read("*a"), "\n", "")
-                    a:close()
-                    vim.fn.setenv('NVIM_IP_ADDRESS', h)
-                    vim.g.R_app = '/home/locallogin/bin/sshR'
-                    vim.g.R_cmd = '/home/locallogin/bin/sshR'
-                    vim.g.R_compldir = '/home/locallogin/.remoteR/NvimR_cache'
-                    vim.g.R_tmpdir = '/home/locallogin/.remoteR/NvimR_cache/tmp'
-                    vim.g.R_remote_tmpdir = '/home/remotelogin/.cache/Nvim-R/tmp'
-                    vim.g.R_local_R_library_dir = '/home/locallogin/path/to/R/library'
-                    vim.g.R_nvimcom_home = '/home/locallogin/.remoteR/library'
-                end
-            end
-        end
-        ```
+       ```lua
+       vim.g.R_app = '/home/locallogin/bin/sshR'
+       vim.g.R_cmd = '/home/locallogin/bin/sshR'
+       vim.g.R_compldir = '/home/locallogin/.remoteR'
+       vim.g.R_remote_compldir = '/home/remotelogin/.cache/Nvim-R'
+       vim.g.R_local_R_library_dir = '/path/to/local/R/library' -- where nvimcom is installed
+       ```
 
-     - Mount the remote directories:
+     - Manually build nvimcom, copy the source to the remote machine, access
+       the remote machine and install the package:
+
+       ```sh
+       cd /tmp
+       R CMD build /path/to/Nvim-R/R/nvimcom
+       scp nvimcom_0.9-149.tar.gz remotelogin@remotehost:/tmp
+       ssh remotelogin@remotehost
+       cd /tmp
+       R CMD INSTALL nvimcom_0.9-149.tar.gz
+       ```
+
+     - Mount the remote directory:
 
        ```sh
        ~/bin/mountR

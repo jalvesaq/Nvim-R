@@ -57,7 +57,7 @@ void update_inst_libs(void);
 void update_pkg_list(void);
 void update_glblenv_buffer(void);
 static void build_omnils(void);
-static void finish_bol(int nob);
+static void finish_bol();
 void complete(const char *id, char *base, char *funcnm);
 
 // List of paths to libraries
@@ -118,9 +118,10 @@ static SOCKET Sfd;
 static int Tid;
 static int winbindport;
 #else
-static int Sfd = -1;
 static pthread_t Tid;
-static char myport[128];
+struct sockaddr_in servaddr;
+static int sockfd;
+static int connfd;
 #endif
 
 #define Debug_NCS
@@ -221,14 +222,12 @@ static void RegisterPort(int bindportn)
 static void ParseMsg(char *b)
 {
     if(strstr(b, VimSecret) != b){
-        fprintf(stderr, "Strange string received: \"%s\"\n", b);
+        fprintf(stderr, "Strange string received {%s}: \"%s\"\n", VimSecret, b);
         fflush(stderr);
         return;
     }
 
     b += VimSecretLen;
-
-    Log("tcp:   %s", b);
 
     // Update the GlobalEnv buffer before sending the message to Nvim-R
     // because it must be ready for omni completion
@@ -236,19 +235,11 @@ static void ParseMsg(char *b)
         update_glblenv_buffer();
 
     if(str_here(b, "+BuildOmnils")){
+        Log(">>> +BuildOmnils");
         update_pkg_list();
         build_omnils();
         if (auto_obbr)
             lib2ob();
-    }
-
-    if (str_here(b, "+FinishBOL")) {
-        b += 10;
-        if (*b == '1')
-            update_inst_libs();
-        b++;
-        finish_bol(atoi(b));
-        return;
     }
 
     if (str_here(b, "+FinishArgsCompletion")) {
@@ -285,288 +276,96 @@ static void ParseMsg(char *b)
 }
 
 #ifndef WIN32
-static void *NeovimServer(__attribute__((unused))void *arg)
+// Adapted from
+// https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+static void init_listening()
 {
-    unsigned short bindportn = 10100;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in cli;
+    socklen_t len;
+    int res;
+    int port = 10101;
 
-    struct addrinfo hints;
-    struct addrinfo *rp;
-    struct addrinfo *res;
-    struct sockaddr_storage peer_addr;
-    int Sfd = -1;
-    char bindport[16];
-    socklen_t peer_addr_len = sizeof(struct sockaddr_storage);
-
-    // block SIGINT
-    {
-        sigset_t set;
-        sigemptyset(&set);
-        sigaddset(&set, SIGINT);
-        sigprocmask(SIG_BLOCK, &set, NULL);
-    }
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-    rp = NULL;
-    result = 1;
-    while(rp == NULL && bindportn < 10149){
-        bindportn++;
-        sprintf(bindport, "%d", bindportn);
-        if(getenv("R_IP_ADDRESS"))
-            result = getaddrinfo(getenv("R_IP_ADDRESS"), bindport, &hints, &res);
-        else
-            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
-        if(result != 0){
-            fprintf(stderr, "Error at getaddrinfo (%s)\n", gai_strerror(result));
-            fflush(stderr);
-            return NULL;
-        }
-
-        for (rp = res; rp != NULL; rp = rp->ai_next) {
-            Sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-            if (Sfd == -1)
-                continue;
-            if (bind(Sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                break;       /* Success */
-            close(Sfd);
-        }
-        freeaddrinfo(res);   /* No longer needed */
-    }
-
-    if (rp == NULL) {        /* No address succeeded */
-        fprintf(stderr, "Could not bind\n");
+    if (sockfd == -1) {
+        fprintf(stderr, "socket creation failed...\n");
         fflush(stderr);
-        return NULL;
+        exit(1);
     }
 
-    RegisterPort(bindportn);
+    bzero(&servaddr, sizeof(servaddr));
 
-    snprintf(myport, 127, "%d", bindportn);
-    char endmsg[128];
-    snprintf(endmsg, 127, "%scall >>> STOP Now <<< !!!", getenv("NVIMR_SECRET"));
+    // assign IP, PORT
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    /* Read datagrams and reply to sender */
-    Log("Ready to read datagrams and reply to sender...");
-    for (;;) {
-        Log("NeovimServer: begin of loop for");
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(Sfd, buf, bsize, 0,
-                (struct sockaddr *) &peer_addr, &peer_addr_len);
-        Log("NeovimServer: nread = %d", nread);
-        if (nread == -1){
-            fprintf(stderr, "recvfrom failed [port %d]\n", bindportn);
-            fflush(stderr);
-            continue;     /* Ignore failed request */
-        }
-        if(strncmp(endmsg, buf, 28) == 0) {
-            Log("End message!");
+    while (port < 10199) {
+        servaddr.sin_port = htons(port);
+        res = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        if (res == 0)
             break;
-        }
-
-        ParseMsg(buf);
+        port++;
     }
-    close(Sfd);
-    return NULL;
+    if (res == 0) {
+        RegisterPort(port);
+    } else {
+        fprintf(stderr, "Failed to bind to port %d\n", port);
+        fflush(stderr);
+        exit(2);
+    }
+
+    // Now server is ready to listen and verification
+    if ((listen(sockfd, 5)) != 0) {
+        fprintf(stderr, "Listen failed...\n");
+        fflush(stderr);
+        exit(3);
+    }
+
+    len = sizeof(cli);
+
+    // Accept the data packet from client and verification
+    connfd = accept(sockfd, (struct sockaddr*)&cli, &len);
+    if (connfd < 0) {
+        fprintf(stderr, "server accept failed...\n");
+        fflush(stderr);
+        exit(4);
+    }
 }
-#endif
 
-#ifdef WIN32
-static void NeovimServer(void *arg)
+void *receive_msg()
 {
-    unsigned short bindportn = 10100;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
-
-    WSADATA wsaData;
-    SOCKADDR_IN RecvAddr;
-    SOCKADDR_IN peer_addr;
-    SOCKET Sfd;
-    int peer_addr_len = sizeof (peer_addr);
-    int nattp = 0;
-    int nfail = 0;
-
-    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != NO_ERROR) {
-        fprintf(stderr, "WSAStartup failed with error %d.\n", result);
-        fflush(stderr);
-        return;
-    }
-
-    while(bindportn < 10149){
-        bindportn++;
-        Sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (Sfd == INVALID_SOCKET) {
-            fprintf(stderr, "socket failed with error %d\n", WSAGetLastError());
-            fflush(stderr);
-            return;
-        }
-
-        RecvAddr.sin_family = AF_INET;
-        RecvAddr.sin_port = htons(bindportn);
-        RecvAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-        nattp++;
-        if(bind(Sfd, (SOCKADDR *) & RecvAddr, sizeof (RecvAddr)) == 0)
-            break;
-        nfail++;
-    }
-    if(nattp == nfail){
-        fprintf(stderr, "Could not bind\n");
-        fflush(stderr);
-        return;
-    }
-
-    winbindport = bindportn;
-    RegisterPort(bindportn);
-
-    /* Read datagrams and reply to sender */
-    for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(Sfd, buf, bsize, 0,
-                (SOCKADDR *) &peer_addr, &peer_addr_len);
-        if (nread == SOCKET_ERROR) {
-            fprintf(stderr, "recvfrom failed with error %d [port %d]\n",
-                    bindportn, WSAGetLastError());
-            fflush(stderr);
-            return;
-        }
-        if(strstr(buf, "QUIT_NVINSERVER_NOW"))
-            break;
-
-        ParseMsg(buf);
-    }
-    result = closesocket(Sfd);
-    if (result == SOCKET_ERROR) {
-        fprintf(stderr, "closesocket failed with error %d\n", WSAGetLastError());
-        fflush(stderr);
-        return;
-    }
-    WSACleanup();
-    return;
-}
-#endif
-
-#ifndef WIN32
-static void SendToServer(const char *port, const char *msg)
-{
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int s, a;
+    char buff[1024];
     size_t len;
 
-    /* Obtain address(es) matching host/port */
-    if(strncmp(port, "0", 15) == 0){
-        fprintf(stderr, "Is R running?\n");
-        fflush(stderr);
-        return;
+    for (;;) {
+        bzero(buff, 1024);
+        len = read(connfd, buff, sizeof(buff));
+        if (len == 0) {
+            fprintf(stderr, "Read 0 byte (R quit?)\n");
+            fflush(stderr);
+            close(sockfd);
+            init_listening();
+        } else {
+            Log("TCP in : %s", buff);
+            ParseMsg(buff);
+        }
     }
+}
 
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;
-
-    Log("R_IP_ADDRESS=%s", getenv("R_IP_ADDRESS"));
-    if(getenv("R_IP_ADDRESS"))
-        a = getaddrinfo(getenv("R_IP_ADDRESS"), port, &hints, &result);
-    else
-        a = getaddrinfo("127.0.0.1", port, &hints, &result);
-    if (a != 0) {
-        fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n",
-                port, msg, gai_strerror(a));
-        fflush(stderr);
-        return;
+void send_to_nvimcom(char *msg)
+{
+    Log("TCP out: %s", msg);
+    if (connfd) {
+        size_t len = strlen(msg);
+        if (write(connfd, msg, len) != (ssize_t)len) {
+            fprintf(stderr, "Partial/failed write.\n");
+            fflush(stderr);
+            return;
+        }
     }
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-        s = socket(rp->ai_family, rp->ai_socktype,
-                rp->ai_protocol);
-        if (s == -1)
-            continue;
-
-        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1)
-            break;     /* Success */
-
-        close(s);
-    }
-
-    if (rp == NULL) {     /* No address succeeded */
-        fprintf(stderr, "Could not connect.\n");
-        fflush(stderr);
-        return;
-    }
-
-    freeaddrinfo(result);    /* No longer needed */
-
-    len = strlen(msg);
-    if (write(s, msg, len) != (ssize_t)len) {
-        fprintf(stderr, "Partial/failed write.\n");
-        fflush(stderr);
-        return;
-    }
-    close(s);
 }
 #endif
 
 #ifdef WIN32
-static void SendToServer(const char *port, const char *msg)
-{
-    WSADATA wsaData;
-    struct sockaddr_in peer_addr;
-    SOCKET sfd;
-
-    if(strncmp(port, "0", 15) == 0){
-        fprintf(stderr, "Port is 0\n");
-        fflush(stderr);
-        return;
-    }
-
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if(sfd < 0){
-        fprintf(stderr, "Socket failed\n");
-        fflush(stderr);
-        return;
-    }
-
-    peer_addr.sin_family = AF_INET;
-    peer_addr.sin_port = htons(atoi(port));
-    peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    if(connect(sfd, (struct sockaddr *)&peer_addr, sizeof(peer_addr)) < 0){
-        fprintf(stderr, "Could not connect\n");
-        fflush(stderr);
-        return;
-    }
-
-    int len = strlen(msg);
-    if (send(sfd, msg, len+1, 0) < 0) {
-        fprintf(stderr, "Failed sending message\n");
-        fflush(stderr);
-        return;
-    }
-
-    if(closesocket(sfd) < 0){
-        fprintf(stderr, "Error closing socket\n");
-        fflush(stderr);
-    }
-}
-
 static void SendToRConsole(char *aString){
     if(!RConsole){
         fprintf(stderr, "R Console window ID not defined [SendToRConsole]\n");
@@ -773,6 +572,11 @@ void Windows_setup()
 }
 #endif
 
+static void SendToServer(const char *port, const char *msg)
+{
+    fprintf(stderr, "The function SendToServer() no longer exists.");
+}
+
 void start_server(void)
 {
     // Finish immediately with SIGTERM
@@ -784,11 +588,12 @@ void start_server(void)
     sleep(1);
 #endif
 
+    init_listening();
 #ifdef WIN32
-    Tid = _beginthread(NeovimServer, 0, NULL);
+    Tid = _beginthread(receive_msg, 0, NULL);
 #else
-    strcpy(myport, "0");
-    pthread_create(&Tid, NULL, NeovimServer, NULL);
+    // Receive messages from TCP and output them to stdout
+    pthread_create(&Tid, NULL, receive_msg, NULL);
 #endif
 }
 
@@ -987,6 +792,7 @@ static int run_R_code(const char *s, int senderror)
         fclose(f);
     } else {
         fprintf(stderr, "Failed to write \"%s/bo_code.R\"\n", fnm);
+        fflush(stderr);
         return 1;
     }
 
@@ -1011,12 +817,14 @@ static int run_R_code(const char *s, int senderror)
 
     if (! CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
         fprintf(stderr, "CreatePipe error\n");
+        fflush(stderr);
         return 1;
     }
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
     if (! SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
         fprintf(stderr, "SetHandleInformation error\n");
+        fflush(stderr);
         return 1;
     }
 
@@ -1106,6 +914,7 @@ static int run_R_code(const char *s, int senderror)
             "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
             " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"",
             getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
+    Log("R command: %s", b);
 
     int stt;
     if ((stt = system(b)) != 0) {
@@ -1321,20 +1130,10 @@ static void build_omnils(void)
         // more frequently. 3. The Object Browser only needs the omnils_.
 
         n_omnils_build++;
-        p = str_cat(p, ")\nb <- nvimcom:::nvim.buildomnils(p)\n"
-                ".C('nvimcom_send_msg_to_port', paste0('+FinishBOL', b, '");
-        snprintf(buf, 63, "%d", n_omnils_build);
-        p = str_cat(p, buf);
-        p = str_cat(p, "'), '");
-#ifdef WIN32
-        snprintf(buf, 63, "%d", winbindport);
-        p = str_cat(p, buf);
-#else
-        p = str_cat(p, myport);
-#endif
-        p = str_cat(p, "', PACKAGE = 'nvimcom')\n"
-                "nvimcom:::nvim.buildargs(p)\n");
+        p = str_cat(p, ")\nif (nvimcom:::nvim.buildomnils(p))\n");
+        p = str_cat(p, "  nvimcom:::nvim.buildargs(p)\n");
         run_R_code(compl_buffer, 1);
+        finish_bol();
     }
     building_omnils = 0;
 
@@ -1365,10 +1164,9 @@ static void build_omnils(void)
 }
 
 // Called asynchronously and only if an omnils_ file was actually built.
-static void finish_bol(int nob)
+static void finish_bol()
 {
-    if (n_omnils_build > nob)
-        return;
+    Log("finish_bol()");
 
     char buf[1024];
 
@@ -1975,6 +1773,7 @@ static void init_vars(void)
     else
         allnames = 0;
 
+    Log("1");
     // Fill immediately the list of installed libraries. Each entry still has
     // to be confirmed by listing the directories in .libPaths.
     fill_inst_libs();
@@ -1984,6 +1783,7 @@ static void init_vars(void)
 
     compl_buffer = calloc(compl_buffer_size, sizeof(char));
 
+    Log("2");
     char fname[512];
     snprintf(fname, 511, "%s/libPaths", tmpdir);
     char *b = read_file(fname, 1);
@@ -2013,10 +1813,15 @@ static void init_vars(void)
             b++;
         }
     }
+    Log("3");
     update_inst_libs();
+    Log("4");
     update_pkg_list();
+    Log("5");
     build_omnils();
-    finish_bol(1);
+    Log("6");
+    finish_bol();
+    Log("7");
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -2080,7 +1885,7 @@ void completion_info(const char *wrd, const char *pkg)
                 snprintf(compl_buffer, 1024, "%s/args_for_completion", tmpdir);
                 remove(compl_buffer);
                 snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
-                SendToServer(NvimcomPort, compl_buffer);
+                send_to_nvimcom(compl_buffer);
                 return;
             }
 
@@ -2411,44 +2216,31 @@ int main(int argc, char **argv){
     strcpy(NvimcomPort, "0");
 
     init_vars();
+    Log("init_vars finished");
 
 #ifdef WIN32
     Windows_setup();
 #endif
 
     start_server();
+    Log("server started");
 
     while(fgets(line, 1023, stdin)){
 
         for(unsigned int i = 0; i < strlen(line); i++)
             if(line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
-        Log("stdin: %s",  line);
+        Log("stdin:   %s",  line);
         msg = line;
         switch(*msg){
             case '1': // SetPort
-                msg++;
-#ifdef WIN32
-                char *r = msg;
-                while(*r != ' ')
-                    r++;
-                *r = 0;
-                r++;
-                memcpy(NvimcomPort, msg, 15);
-#ifdef _WIN64
-                RConsole = (HWND)atoll(r);
-#else
-                RConsole = (HWND)atol(r);
-#endif
-                if(msg[0] == '0')
-                    RConsole = NULL;
-#else
-                memcpy(NvimcomPort, msg, 15);
-#endif
+                // FIXME: delete this case
+                fprintf(stderr, "This SetPort Option no longer exists\n");
+                fflush(stderr);
                 break;
             case '2': // Send message
                 msg++;
-                SendToServer(NvimcomPort, msg);
+                send_to_nvimcom(msg);
                 break;
             case '3':
                 msg++;
@@ -2594,13 +2386,6 @@ int main(int argc, char **argv){
         }
         memset(line, 0, 1024);
     }
-#ifdef WIN32
-    closesocket(Sfd);
-    WSACleanup();
-#else
-    close(Sfd);
-    SendToServer(myport, ">>> STOP Now <<< !!!");
-    pthread_join(Tid, NULL);
-#endif
+    exit(0);
     return 0;
 }

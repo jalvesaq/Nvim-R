@@ -135,9 +135,6 @@ function RWeave(bibtex, knit, pdf)
         endif
     endif
 
-    if g:rplugin.nvimcom_port == 0
-        call RWarningMsg("The nvimcom package is required to make and open the PDF.")
-    endif
     update
     let rnwdir = expand("%:p:h")
     if has("win32")

@@ -167,7 +167,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let rwd = getcwd()
     endif
-    if rwd != "" && !exists("g:R_remote_tmpdir")
+    if rwd != "" && !exists("g:R_remote_compldir")
         if has("win32")
             let rwd = substitute(rwd, '\\', '/', 'g')
         endif
@@ -247,7 +247,7 @@ endfunction
 
 function CheckIfNvimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
-    if g:rplugin.nvimcom_port == 0
+    if s:R_pid == 0
         if s:nseconds > 0
             call timer_start(1000, "CheckIfNvimcomIsRunning")
         else
@@ -271,7 +271,7 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
+function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
     if !exists("g:R_nvimcom_home") && a:nvimcomhome != g:rplugin.nvimcom_info['home']
         call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom_info['home'] . '" and "' . a:nvimcomhome . '"')
         sleep 1
@@ -284,7 +284,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
 
     let $R_DEFAULT_PACKAGES = s:r_default_pkgs
 
-    let g:rplugin.nvimcom_port = a:bindportn
     let s:R_pid = a:rpid
     let $RCONSOLE = a:wid
 
@@ -329,12 +328,6 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
             if $RCONSOLE == "0"
                 call RWarningMsg("nvimcom did not save R window ID")
             endif
-        endif
-        " Set nvimcom port in nvimclient
-        if has("win32")
-            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . " " . $RCONSOLE . "\n")
-        else
-            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . "\n")
         endif
     else
         call RWarningMsg("nvimcom is not running")
@@ -428,8 +421,6 @@ function ClearRInfo()
     endfor
     let g:SendCmdToR = function('SendCmdToR_fake')
     let s:R_pid = 0
-    let g:rplugin.nvimcom_port = 0
-    call JobStdin(g:rplugin.jobs["ClientServer"], "10\n")
 
     " Legacy support for running R in a Tmux split pane
     if has_key(g:rplugin, "tmux_split") && exists('g:R_tmux_title') && g:rplugin.tmux_split
@@ -527,7 +518,7 @@ function RealUpdateRGlbEnv(block)
     let s:updating_globalenvlist = 1
     call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
 
-    if g:rplugin.nvimcom_port == 0
+    if s:R_pid== 0
         sleep 500m
         return
     endif
@@ -866,7 +857,7 @@ endfunction
 "==============================================================================
 
 function RFormatCode() range
-    if g:rplugin.nvimcom_port == 0
+    if s:R_pid == 0
         return
     endif
 
@@ -897,7 +888,7 @@ function FinishRFormatCode(lnum1, lnum2)
 endfunction
 
 function RInsert(cmd, type)
-    if g:rplugin.nvimcom_port == 0
+    if s:R_pid == 0
         return
     endif
 
@@ -2246,8 +2237,8 @@ if type(g:R_after_start) != v:t_list
 endif
 
 " Make the file name of files to be sourced
-if exists("g:R_remote_tmpdir")
-    let s:Rsource_read = g:R_remote_tmpdir . "/Rsource-" . getpid()
+if exists("g:R_remote_compldir")
+    let s:Rsource_read = g:R_remote_compldir . "/tmp/Rsource-" . getpid()
 else
     let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
 endif

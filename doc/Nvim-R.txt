@@ -1055,8 +1055,7 @@ of
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
 |R_bib_compl|           List of file types for bib completion
-|R_remote_tmpdir|       Mount point of remote temporary directory
-|R_nvimcom_home|        Mount point of remote R library
+|R_remote_compldir|     Mount point of remote cache directory
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|        Options for SyncTeX
 
@@ -2478,8 +2477,7 @@ better than Nvim-R. Examples:
 
 
 ------------------------------------------------------------------------------
-							      *R_remote_tmpdir*
-							      *R_nvimcom_home*
+							   *R_remote_compldir*
 6.38 Options for accessing Remote R from local Vim~
 
 See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access

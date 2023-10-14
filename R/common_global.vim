@@ -177,7 +177,7 @@ elseif !has("channel") || !has("job") || !has('patch-8.2.84')
     finish
 endif
 
-" Convert _ into <- 
+" Convert _ into <-
 function ReplaceUnderS()
     if &filetype != "r" && b:IsInRCode(0) != 1
         let isString = 1
@@ -794,6 +794,13 @@ else
 endif
 
 let $NVIMR_TMPDIR = g:rplugin.tmpdir
+if exists("g:R_remote_compldir")
+    let $NVIMR_REMOTE_COMPLDIR = g:R_remote_compldir
+    let $NVIMR_REMOTE_TMPDIR = g:R_remote_compldir . '/tmp'
+else
+    let $NVIMR_REMOTE_COMPLDIR = $NVIMR_COMPLDIR
+    let $NVIMR_REMOTE_TMPDIR = $NVIMR_TMPDIR
+endif
 if !isdirectory(g:rplugin.tmpdir)
     call mkdir(g:rplugin.tmpdir, "p", 0700)
 endif
@@ -973,7 +980,6 @@ if v:windowid != 0 && $WINDOWID == ""
 endif
 
 let g:rplugin.myport = 0
-let g:rplugin.nvimcom_port = 0
 
 " Current view of the object browser: .GlobalEnv X loaded libraries
 let g:rplugin.curview = "None"

@@ -1,7 +1,7 @@
 " Functions to start nclientserver or that are called only after the
 " nclientserver is running
 
-" Check if it's necessary to build and install nvimcom before attempting o load it
+" Check if it's necessary to build and install nvimcom before attempting to load it
 function CheckNvimcomVersion()
     let libs = ListRLibsFromBuffer()
     let flines = ['nvim_r_home <- "' . g:rplugin.home . '"',
@@ -26,8 +26,8 @@ function CheckNvimcomVersion()
     let s:RBout = []
     let s:RBerr = []
     let s:RWarn = []
-    if exists("g:R_remote_tmpdir")
-        let scrptnm = g:R_remote_tmpdir . "/before_ncs.R"
+    if exists("g:R_remote_compldir")
+        let scrptnm = g:R_remote_compldir . "/tmp/before_ncs.R"
     endif
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction
@@ -201,14 +201,6 @@ function StartNClientServer()
         let $NVIMR_OBJBR_ALLNAMES = "TRUE"
     endif
     let $NVIMR_RPATH = g:rplugin.Rcmd
-    if exists("g:R_remote_tmpdir")
-        " R_DEFAULT_PACKAGES=$R_DEFAULT_PACKAGES NVIM_IP_ADDRESS=$NVIM_IP_ADDRESS
-        let $NVIMR_REMOTE_COMPLDIR = g:R_remote_compldir
-        let $NVIMR_REMOTE_TMPDIR = g:R_remote_tmpdir
-    else
-        let $NVIMR_REMOTE_COMPLDIR = $NVIMR_COMPLDIR
-        let $NVIMR_REMOTE_TMPDIR = $NVIMR_TMPDIR
-    endif
 
     " We have to set R's home directory on Window because nclientserver will
     " run R to build the list for omni completion.
@@ -225,8 +217,6 @@ function StartNClientServer()
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
     unlet $NVIMR_RPATH
-    unlet $NVIMR_REMOTE_COMPLDIR
-    unlet $NVIMR_REMOTE_TMPDIR
 endfunction
 
 function ListRLibsFromBuffer()
