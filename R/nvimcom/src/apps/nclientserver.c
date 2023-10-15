@@ -727,6 +727,8 @@ void pkg_delete(PkgData *pd)
         free(pd->descr);
     if(pd->omnils)
         free(pd->omnils);
+    if(pd->args)
+        free(pd->args);
     free(pd);
 }
 
