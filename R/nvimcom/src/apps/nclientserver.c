@@ -2223,13 +2223,6 @@ void complete(const char *id, char *base, char *funcnm)
 int main(int argc, char **argv){
 
     char line[1024];
-    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
-        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)",
-                getenv("NVIMR_SECRET"), argv[1], argv[2]);
-        SendToServer(getenv("NVIMR_PORT"), line);
-        return 0;
-    }
-
     FILE *f;
     char *msg;
     char t;

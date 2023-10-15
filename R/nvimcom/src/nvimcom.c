@@ -1038,7 +1038,6 @@ void nvimcom_Stop(void)
         if (debug_r)
             ptr_R_ReadConsole = save_ptr_R_ReadConsole;
         close(sfd);
-        // FIXME: send_to_nvim("STOP >>> Now <<< !!!", myport);
         pthread_join(tid, NULL);
 #endif
 
