@@ -17,7 +17,7 @@ let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
     " Also in functions.vim
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': []}
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'R_pid': 0}
 endif
 
 

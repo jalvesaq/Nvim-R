@@ -123,10 +123,10 @@ struct sockaddr_in servaddr;
 static int sockfd;
 static int connfd;
 
-#define Debug_NCS
-#ifdef Debug_NCS
+#define Debug_NCS_
 static void Log(const char *fmt, ...)
 {
+#ifdef Debug_NCS
     va_list argptr;
     FILE *f = fopen("/dev/shm/nclientserver_log", "a");
     va_start(argptr, fmt);
@@ -134,8 +134,10 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}
+#else
+    // empty function
 #endif
+}
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -234,7 +236,6 @@ static void ParseMsg(char *b)
         update_glblenv_buffer();
 
     if(str_here(b, "+BuildOmnils")){
-        Log(">>> +BuildOmnils");
         update_pkg_list();
         build_omnils();
         if (auto_obbr)
@@ -1143,8 +1144,9 @@ static void build_omnils(void)
         // more frequently. 3. The Object Browser only needs the omnils_.
 
         n_omnils_build++;
-        p = str_cat(p, ")\nif (nvimcom:::nvim.buildomnils(p))\n");
-        p = str_cat(p, "  nvimcom:::nvim.buildargs(p)\n");
+        p = str_cat(p, ")\nnvimcom:::nvim.buildomnils(p)\n");
+        p = str_cat(p, "nvimcom:::nvim.buildargs(p)\n");
+        Log(compl_buffer);
         run_R_code(compl_buffer, 1);
         finish_bol();
     }
@@ -1786,7 +1788,6 @@ static void init_vars(void)
     else
         allnames = 0;
 
-    Log("1");
     // Fill immediately the list of installed libraries. Each entry still has
     // to be confirmed by listing the directories in .libPaths.
     fill_inst_libs();
@@ -1796,7 +1797,6 @@ static void init_vars(void)
 
     compl_buffer = calloc(compl_buffer_size, sizeof(char));
 
-    Log("2");
     char fname[512];
     snprintf(fname, 511, "%s/libPaths", tmpdir);
     char *b = read_file(fname, 1);
@@ -1826,15 +1826,9 @@ static void init_vars(void)
             b++;
         }
     }
-    Log("3");
     update_inst_libs();
-    Log("4");
     update_pkg_list();
-    Log("5");
     build_omnils();
-    Log("6");
-    finish_bol();
-    Log("7");
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)

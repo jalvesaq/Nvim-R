@@ -3,8 +3,17 @@
 
 " Check if it's necessary to build and install nvimcom before attempting to load it
 function CheckNvimcomVersion()
+    let s:startCheck = reltime()
+    if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')
+        let flines = ['needed_nvc_version <- "' . current . '"']
+    else
+        let flines = ['needed_nvc_version <- NULL']
+    endif
+
     let libs = ListRLibsFromBuffer()
-    let flines = ['nvim_r_home <- "' . g:rplugin.home . '"',
+    let flines += ['nvim_r_home <- "' . g:rplugin.home . '"',
                 \ 'libs <- c(' . libs . ')']
     let flines += readfile(g:rplugin.home . "/R/before_ncs.R")
     let scrptnm = g:rplugin.tmpdir . "/before_ncs.R"
@@ -103,6 +112,7 @@ endfunction
 " Check if the exit code of the script that built nvimcom was zero and if the
 " file nvimcom_info seems to be OK (has three lines).
 function RInitExit(...)
+    let g:rplugin.debug_info['time'] = reltimefloat(reltime(s:startCheck))
     if a:2 == 0
         call StartNClientServer()
     elseif a:2 == 71
@@ -155,25 +165,25 @@ function StartNClientServer()
         return
     endif
 
-    if filereadable(g:rplugin.compldir . '/nvimcom_info')
-        let info = readfile(g:rplugin.compldir . '/nvimcom_info')
-        if len(info) == 3
-            " Update nvimcom information
-            let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
-            let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-            if exists("g:R_local_R_library_dir")
-                let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
-            else
+    if exists("g:R_local_R_library_dir")
+        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+    else
+        if filereadable(g:rplugin.compldir . '/nvimcom_info')
+            let info = readfile(g:rplugin.compldir . '/nvimcom_info')
+            if len(info) == 3
+                " Update nvimcom information
+                let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
+                let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
                 let s:ncs_path = FindNCSpath(info[1])
+            else
+                call delete(g:rplugin.compldir . '/nvimcom_info')
+                call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
+                return
             endif
         else
-            call delete(g:rplugin.compldir . '/nvimcom_info')
-            call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
+            call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
             return
         endif
-    else
-        call RWarningMsg("ERROR: nvimcom_info not found. Please, run :RDebugInfo for details.")
-        return
     endif
 
     let g:rplugin.starting_ncs = 1
@@ -341,34 +351,6 @@ function AddToRhelpList(lib)
         endif
     endfor
 endfunction
-
-if exists("g:R_nvimcom_home")
-    let nvimcom_home = substitute(g:R_nvimcom_home, '/nvimcom', '', '')
-    if exists("g:R_local_R_library_dir")
-        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
-    else
-        let s:ncs_path = FindNCSpath(nvimcom_home)
-    endif
-
-    if s:ncs_path != '' && filereadable(nvimcom_home . '/nvimcom/DESCRIPTION')
-        let g:rplugin.nvimcom_info['home'] = nvimcom_home
-
-        let ndesc = readfile(g:rplugin.nvimcom_info['home'] . '/nvimcom/DESCRIPTION')
-
-        let versionline = matchstr(ndesc, '^Version: ')
-        if versionline != ''
-            let g:rplugin.nvimcom_info['version'] = substitute(versionline, '^Version: ', '', '')
-        endif
-
-        let buildinfoline = matchstr(ndesc, '^Built:')
-        if buildinfoline != ''
-            let rinfo = matchstr(buildinfoline, 'R [.0-9]\+')
-            if rinfo != ''
-                let g:rplugin.nvimcom_info['Rversion'] = substitute(rinfo, 'R ', '', '')
-            endif
-        endif
-    endif
-endif
 
 " The calls to system() and executable() below are in this script to run
 " asynchronously and avoid slow startup on Mac OS X.

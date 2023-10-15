@@ -42,12 +42,7 @@ need_new_nvimcom <- ""
 # The nvimcom directory will not exist if nvimcom was packaged separately from
 # the rest of Nvim-R. I will also not be found if running Vim in MSYS2 and R
 # on Windows because the directory names change between the two systems.
-if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
-    # Check nvimcom version.
-    nd <- readLines(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))
-    nd <- nd[grepl("Version:", nd)]
-    needed_nvc_version <- sub("Version: ", "", nd)
-
+if (!is.null(needed_nvc_version)) {
     ip <- utils::installed.packages()
     if (length(grep("^nvimcom$", rownames(ip))) == 1) {
         nvimcom_info <- ip["nvimcom", c("Version", "LibPath", "Built")]
@@ -90,32 +85,37 @@ if (file.exists(paste0(nvim_r_home, "/R/nvimcom/DESCRIPTION"))) {
             quit(save = "no")
         }
 
-        out("echo \"Building nvimcom... \"")
-        tools:::.build_packages(paste0(nvim_r_home, "/R/nvimcom"), no.q = TRUE)
-        if (!file.exists(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))) {
-            out("RWarn: Failed to build nvimcom.")
-            quit(save = "no")
-        }
+        if (!file.exists(paste0(nvim_r_home, "/R/nvimcom"))) {
+            out(paste0("RWarn: Cannot build nvimcom: directory '", nvim_r_home, "/R/nvimcom", "' not found"))
+        } else {
 
-        out("echo \"Installing nvimcom... \"")
-        tools:::.install_packages(paste0("nvimcom_", needed_nvc_version, ".tar.gz"), no.q = TRUE)
-        unlink(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))
-        ip <- utils::installed.packages()
-        if (length(grep("^nvimcom$", rownames(ip))) == 0) {
-            if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
-                out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
-            else
-                out("RWarn: Failed to install nvimcom.")
-            quit(save = "no")
-        }
-        if (length(grep("^nvimcom$", rownames(ip))) > 1) {
-            out("RWarn: More than one nvimcom versions installed.")
-            quit(save = "no")
-        }
-        nvimcom_version <- ip["nvimcom", "Version"]
-        if (nvimcom_version != needed_nvc_version) {
-            out("RWarn: Failed to update nvimcom.")
-            quit(save = "no")
+            out("echo \"Building nvimcom... \"")
+            tools:::.build_packages(paste0(nvim_r_home, "/R/nvimcom"), no.q = TRUE)
+            if (!file.exists(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))) {
+                out("RWarn: Failed to build nvimcom.")
+                quit(save = "no")
+            }
+
+            out("echo \"Installing nvimcom... \"")
+            tools:::.install_packages(paste0("nvimcom_", needed_nvc_version, ".tar.gz"), no.q = TRUE)
+            unlink(paste0("nvimcom_", needed_nvc_version, ".tar.gz"))
+            ip <- utils::installed.packages()
+            if (length(grep("^nvimcom$", rownames(ip))) == 0) {
+                if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
+                    out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
+                else
+                    out("RWarn: Failed to install nvimcom.")
+                quit(save = "no")
+            }
+            if (length(grep("^nvimcom$", rownames(ip))) > 1) {
+                out("RWarn: More than one nvimcom versions installed.")
+                quit(save = "no")
+            }
+            nvimcom_version <- ip["nvimcom", "Version"]
+            if (nvimcom_version != needed_nvc_version) {
+                out("RWarn: Failed to update nvimcom.")
+                quit(save = "no")
+            }
         }
     }
 }
@@ -127,7 +127,7 @@ if (length(grep("^nvimcom$", rownames(ip))) == 1) {
     writeLines(nvimcom_info, paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))
 
     # Build omnils_, fun_ and args_ files, if necessary
-    library("nvimcom")
+    library("nvimcom", warn.conflicts = FALSE)
     libs <- libs[libs %in% rownames(ip)]
     cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
         '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))

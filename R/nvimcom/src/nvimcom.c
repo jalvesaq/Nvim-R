@@ -48,7 +48,7 @@ static char nvimcom_version[32];
 static pid_t R_PID;
 
 static int nvimcom_initialized = 0;
-static int verbose = 0;
+static int verbose = 0; // 1: version number; 2: initial information; 3: TCP in and out; 4: realy verbose
 static int allnames = 0;
 static int nvimcom_failure = 0;
 static int nlibs = 0;
@@ -154,7 +154,7 @@ static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
 
 static void send_to_nvim(const char *msg)
 {
-    if (verbose > 3)
+    if (verbose > 2)
         REprintf("send_to_nvim [%d] {%s}: %s\n", sockfd, nvimsecr, msg);
 
     char finalmsg[1024];
@@ -776,21 +776,21 @@ static void nvimcom_send_running_info()
     char msg[2176];
 #ifdef WIN32
 #ifdef _WIN64
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%" PRId64 "', '%" PRId64 "', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', %" PRId64 ", '%" PRId64 "', '%s')",
             nvimcom_version, nvimcom_home, R_PID,
             (long long)GetForegroundWindow(), r_info);
 #else
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%ld', '%s')",
+    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', %d, '%ld', '%s')",
             nvimcom_version, nvimcom_home, R_PID,
             (long)GetForegroundWindow(), r_info);
 #endif
 #else
     if(getenv("WINDOWID"))
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%s', '%s')",
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', %d, '%s', '%s')",
                 nvimcom_version, nvimcom_home, R_PID,
                 getenv("WINDOWID"), r_info);
     else
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '0', '%s')",
+        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', %d, '0', '%s')",
                 nvimcom_version, nvimcom_home, R_PID, r_info);
 #endif
     send_to_nvim(msg);

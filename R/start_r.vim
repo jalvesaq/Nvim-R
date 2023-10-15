@@ -239,15 +239,15 @@ endfunction
 
 " Send SIGINT to R
 function SignalToR(signal)
-    if s:R_pid
-        call system('kill -s ' . a:signal . ' ' . s:R_pid)
+    if g:rplugin.R_pid
+        call system('kill -s ' . a:signal . ' ' . g:rplugin.R_pid)
     endif
 endfunction
 
 
 function CheckIfNvimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
-    if s:R_pid == 0
+    if g:rplugin.R_pid == 0
         if s:nseconds > 0
             call timer_start(1000, "CheckIfNvimcomIsRunning")
         else
@@ -272,19 +272,18 @@ function WaitNvimcomStart()
 endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
-    if !exists("g:R_nvimcom_home") && a:nvimcomhome != g:rplugin.nvimcom_info['home']
-        call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom_info['home'] . '" and "' . a:nvimcomhome . '"')
-        sleep 1
-    endif
-
-    if g:rplugin.nvimcom_info['version'] != a:nvimcomversion
-        call RWarningMsg('Mismatch in nvimcom versions: "' . g:rplugin.nvimcom_info['version'] . '" and "' . a:nvimcomversion . '"')
-        sleep 1
+    if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')
+        if a:nvimcomversion != current
+            call RWarningMsg('Mismatch in nvimcom versions: R (' . a:nvimcomversion . ') and Vim (' . current . ')')
+            sleep 1
+        endif
     endif
 
     let $R_DEFAULT_PACKAGES = s:r_default_pkgs
 
-    let s:R_pid = a:rpid
+    let g:rplugin.R_pid = a:rpid
     let $RCONSOLE = a:wid
 
     let Rinfo = split(a:r_info, "\x02")
@@ -420,7 +419,7 @@ function ClearRInfo()
         call delete(fn)
     endfor
     let g:SendCmdToR = function('SendCmdToR_fake')
-    let s:R_pid = 0
+    let g:rplugin.R_pid = 0
 
     " Legacy support for running R in a Tmux split pane
     if has_key(g:rplugin, "tmux_split") && exists('g:R_tmux_title') && g:rplugin.tmux_split
@@ -518,7 +517,7 @@ function RealUpdateRGlbEnv(block)
     let s:updating_globalenvlist = 1
     call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
 
-    if s:R_pid== 0
+    if g:rplugin.R_pid== 0
         sleep 500m
         return
     endif
@@ -857,7 +856,7 @@ endfunction
 "==============================================================================
 
 function RFormatCode() range
-    if s:R_pid == 0
+    if g:rplugin.R_pid == 0
         return
     endif
 
@@ -888,7 +887,7 @@ function FinishRFormatCode(lnum1, lnum2)
 endfunction
 
 function RInsert(cmd, type)
-    if s:R_pid == 0
+    if g:rplugin.R_pid == 0
         return
     endif
 
@@ -2247,7 +2246,7 @@ call AddForDeletion(s:Rsource_write)
 
 let s:running_objbr = 0
 let s:running_rhelp = 0
-let s:R_pid = 0
+let g:rplugin.R_pid = 0
 let s:docfile = g:rplugin.tmpdir . "/Rdoc"
 
 " List of marks that the plugin seeks to find the block to be sent to R
