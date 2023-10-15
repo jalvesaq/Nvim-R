@@ -16,8 +16,8 @@ endif
 let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
-    " Also in functions.vim
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'R_pid': 0}
+    " Attention: also in functions.vim
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'myport': 0, 'R_pid': 0}
 endif
 
 
@@ -709,10 +709,6 @@ function AutoStartR(...)
         call timer_start(100, 'AutoStartR')
         return
     endif
-    if exists('g:rplugin.starting_ncs') && g:rplugin.starting_ncs == 1
-        call timer_start(200, 'AutoStartR')
-        return
-    endif
     call StartR("R")
 endfunction
 
@@ -979,8 +975,6 @@ if v:windowid != 0 && $WINDOWID == ""
     let $WINDOWID = v:windowid
 endif
 
-let g:rplugin.myport = 0
-
 " Current view of the object browser: .GlobalEnv X loaded libraries
 let g:rplugin.curview = "None"
 
@@ -1072,7 +1066,6 @@ function PreGlobalRealInit()
     call timer_start(1, "GlobalRInit")
 endfunction
 
-let g:rplugin.starting_ncs = 1
 if v:vim_did_enter == 0
     autocmd VimEnter * call PreGlobalRealInit()
 else

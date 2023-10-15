@@ -25,8 +25,8 @@ endif
 "==============================================================================
 
 if !exists('g:rplugin')
-    " Also in common_global.vim
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'R_pid': 0}
+    " Attention: also in common_global.vim
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'myport': 0, 'R_pid': 0}
 endif
 
 " syntax/r.vim may have being called before ftplugin/r.vim

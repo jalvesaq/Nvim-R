@@ -201,8 +201,6 @@ function StartNClientServer()
         endif
     endif
 
-    let g:rplugin.starting_ncs = 1
-
     let ncspath = substitute(s:ncs_path, '/nclientserver.*', '', '')
     let ncs = substitute(s:ncs_path, '.*/nclientserver', 'nclientserver', '')
 
@@ -273,7 +271,6 @@ endfunction
 function RSetMyPort(p)
     let g:rplugin.myport = a:p
     let $NVIMR_PORT = a:p
-    let g:rplugin.starting_ncs = 0
     call delete(g:rplugin.tmpdir . "/libPaths")
 endfunction
 

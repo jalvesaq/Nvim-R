@@ -66,18 +66,21 @@ endfunction
 function StartR(whatr)
     let s:wait_nvimcom = 1
 
-    if g:rplugin.starting_ncs == 1
-        " The user called StartR too quickly
+    if g:rplugin.myport == 0
         echon "Waiting nclientserver..."
+        call JobStdin(g:rplugin.jobs["ClientServer"], "1\n") " Start the TCP server
         let ii = 0
-        while g:rplugin.starting_ncs == 1
+        while g:rplugin.myport == 0
             sleep 100m
             let ii += 1
             if ii == 30
                 break
             endif
         endwhile
-        let g:rplugin.starting_ncs = 0
+    endif
+    if g:rplugin.myport == 0
+        call RWarningMsg("TCP server not started yet")
+        sleep 1
     endif
 
     if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string

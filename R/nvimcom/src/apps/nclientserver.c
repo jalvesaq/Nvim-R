@@ -279,6 +279,7 @@ static void ParseMsg(char *b)
 // https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
 static void init_listening()
 {
+    Log("init_listening()");
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in cli;
 #ifdef WIN32
@@ -310,6 +311,7 @@ static void init_listening()
     }
     if (res == 0) {
         RegisterPort(port);
+        Log("init_listening: RegisterPort");
     } else {
         fprintf(stderr, "Failed to bind to port %d\n", port);
         fflush(stderr);
@@ -322,6 +324,7 @@ static void init_listening()
         fflush(stderr);
         exit(3);
     }
+    Log("init_listening: Listen succeeded");
 
     len = sizeof(cli);
 
@@ -332,6 +335,7 @@ static void init_listening()
         fflush(stderr);
         exit(4);
     }
+    Log("init_listening: accept succeeded");
 }
 
 #ifdef WIN32
@@ -675,6 +679,7 @@ char *read_file(const char *fn, int verbose)
 
 char *read_omnils_file(const char *fn, int *size)
 {
+    Log("read_omnils_file(%s)", fn);
     char * buffer = read_file(fn, 1);
     if(!buffer)
         return NULL;
@@ -699,6 +704,7 @@ char *read_omnils_file(const char *fn, int *size)
 
 char *get_pkg_descr(const char *pkgnm)
 {
+    Log("get_pkg_descr(%s)", pkgnm);
     InstLibs *il = instlibs;
     while (il) {
         if (strcmp(il->name, pkgnm) == 0) {
@@ -742,6 +748,7 @@ void load_pkg_data(PkgData *pd)
 
 PkgData *new_pkg_data(const char *nm, const char *vrsn)
 {
+    Log("new_pkg_data(%s %s)", nm, vrsn);
     char buf[1024];
 
     PkgData *pd = calloc(1, sizeof(PkgData));
@@ -785,6 +792,7 @@ PkgData *get_pkg(const char *nm)
 
 void add_pkg(const char *nm, const char *vrsn)
 {
+    Log("add_pkg(%s %s)", nm, vrsn);
     PkgData *tmp = pkgList;
     pkgList = new_pkg_data(nm, vrsn);
     pkgList->next = tmp;
@@ -1033,6 +1041,7 @@ void parse_descr(char *descr, const char *fnm) {
 
 void update_inst_libs(void)
 {
+    Log("update_inst_libs()");
     DIR *d;
     struct dirent *dir;
     char fname[512];
@@ -1102,6 +1111,7 @@ void update_inst_libs(void)
 // the omnils_ and fun_ files in compldir.
 static void build_omnils(void)
 {
+    Log("build_omnils()");
     unsigned long nsz;
 
     if (building_omnils) {
@@ -1249,6 +1259,7 @@ char *complete_instlibs(char *p, const char *base) {
 
 void update_pkg_list(void)
 {
+    Log("update_pkg_list()");
     char buf[512];
     char *s, *vrsn;
     char lbnm[128];
@@ -1560,6 +1571,7 @@ void hi_glbenv_fun(void)
 
 void update_glblenv_buffer(void)
 {
+    Log("update_glblenv_buffer()");
     if(glbnv_buffer)
         free(glbnv_buffer);
     glbnv_buffer = read_omnils_file(glbnvls, &glbnv_size);
@@ -2229,8 +2241,6 @@ int main(int argc, char **argv){
     Windows_setup();
 #endif
 
-    start_server();
-    Log("server started");
 
     while(fgets(line, 1023, stdin)){
 
@@ -2240,10 +2250,9 @@ int main(int argc, char **argv){
         Log("stdin:   %s",  line);
         msg = line;
         switch(*msg){
-            case '1': // SetPort
-                // FIXME: delete this case
-                fprintf(stderr, "This SetPort Option no longer exists\n");
-                fflush(stderr);
+            case '1': // Start server and wait nvimcom contact
+                start_server();
+                Log("server started");
                 break;
             case '2': // Send message
                 msg++;

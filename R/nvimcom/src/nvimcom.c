@@ -53,7 +53,7 @@ static int allnames = 0;
 static int nvimcom_failure = 0;
 static int nlibs = 0;
 static int needsfillmsg = 0;
-static char edsrvr[128];
+static char ncs_port[16];
 static char nvimsecr[128];
 
 static char glbnvls[576];
@@ -654,7 +654,7 @@ static Rboolean nvimcom_task(__attribute__((unused))SEXP expr,
     r_is_busy = 0;
 #endif
     nvimcom_checklibs();
-    if(edsrvr[0] != 0 && needsfillmsg){
+    if(ncs_port[0] != 0 && needsfillmsg){
         needsfillmsg = 0;
         send_to_nvim("+BuildOmnils");
     }
@@ -933,7 +933,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 
     if(getenv("NVIMR_PORT"))
-        strncpy(edsrvr, getenv("NVIMR_PORT"), 127);
+        strncpy(ncs_port, getenv("NVIMR_PORT"), 15);
 
     snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
@@ -950,38 +950,39 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 #endif
 
-    struct sockaddr_in servaddr;
+    if (atoi(ncs_port) > 0) {
+        struct sockaddr_in servaddr;
+        // socket create and verification
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd != -1) {
+            bzero(&servaddr, sizeof(servaddr));
 
-    // socket create and verification
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd != -1) {
-        bzero(&servaddr, sizeof(servaddr));
+            // assign IP, PORT
+            servaddr.sin_family = AF_INET;
+            if (getenv("NVIM_IP_ADDRESS"))
+                servaddr.sin_addr.s_addr = inet_addr(getenv("NVIM_IP_ADDRESS"));
+            else
+                servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+            servaddr.sin_port = htons(atoi(ncs_port));
 
-        // assign IP, PORT
-        servaddr.sin_family = AF_INET;
-        if (getenv("NVIM_IP_ADDRESS"))
-            servaddr.sin_addr.s_addr = inet_addr(getenv("NVIM_IP_ADDRESS"));
-        else
-            servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-        servaddr.sin_port = htons(atoi(edsrvr));
-
-        // connect the client socket to server socket
-        if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
+            // connect the client socket to server socket
+            if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
 #ifdef WIN32
-    tid = _beginthread(server_thread, 0, NULL);
+                tid = _beginthread(server_thread, 0, NULL);
 #else
-            pthread_create(&tid, NULL, server_thread, NULL);
+                pthread_create(&tid, NULL, server_thread, NULL);
 #endif
-            nvimcom_send_running_info();
+                nvimcom_send_running_info();
+            } else {
+                REprintf(NULL, "nvimcom: connection with the server failed (%s)\n",
+                        ncs_port);
+                nvimcom_failure = 1;
+            }
         } else {
-            REprintf(NULL, "nvimcom: connection with the server failed (%u:%d)\n",
-                    servaddr.sin_addr.s_addr, atoi(edsrvr));
+            REprintf("nvimcom: socket creation failed (%u:%d)\n",
+                    servaddr.sin_addr.s_addr, atoi(ncs_port));
             nvimcom_failure = 1;
         }
-    } else {
-        REprintf("nvimcom: socket creation failed (%u:%d)\n",
-                servaddr.sin_addr.s_addr, atoi(edsrvr));
-        nvimcom_failure = 1;
     }
 
     if(nvimcom_failure == 0){
@@ -1000,7 +1001,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
                 REprintf("  R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
                 REprintf("  NVIM_IP_ADDRESS: %s\n", getenv("NVIM_IP_ADDRESS"));
             }
-            REprintf("  NVIMR_PORT: %s\n", edsrvr);
+            REprintf("  NVIMR_PORT: %s\n", ncs_port);
             REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
             REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
             REprintf("  nvimcom dir: %s\n", nvimcom_home);
