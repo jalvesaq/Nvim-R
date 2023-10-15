@@ -113,13 +113,28 @@ endfunction
 " file nvimcom_info seems to be OK (has three lines).
 function RInitExit(...)
     let g:rplugin.debug_info['time'] = reltimefloat(reltime(s:startCheck))
-    if a:2 == 0
+    if a:2 == 0 || a:2 == 512 " ssh success seems to be 512
         call StartNClientServer()
     elseif a:2 == 71
+        " No writable directory to update nvimcom
         " Avoid redraw of status line while waiting user input in MkRdir()
         let s:RBerr += s:RWarn
         let s:RWarn =[]
         call MkRdir()
+    elseif a:2 == 72 && !has('win32') && !exists('s:pkgbuild_attempt')
+        " Nvim-R/R/nvimcom directory not found. Perhaps R running in remote machine...
+        " Try to use local R to build the nvimcom package.
+        let s:pkgbuild_attempt = 1
+        if executable("R")
+            let shf = ['cd ' . g:rplugin.tmpdir,
+                        \ 'R CMD build ' . g:rplugin.home . '/R/nvimcom']
+            call writefile(shf, g:rplugin.tmpdir . '/buildpkg.sh')
+            let rout = system('sh ' . g:rplugin.tmpdir . '/buildpkg.sh')
+            if v:shell_error == 0
+                call CheckNvimcomVersion()
+            endif
+            call delete(g:rplugin.tmpdir . '/buildpkg.sh')
+        endif
     else
         if filereadable(expand("~/.R/Makevars"))
             call RWarningMsg("ERROR! Please, run :RDebugInfo for details, and check your '~/.R/Makevars'.")

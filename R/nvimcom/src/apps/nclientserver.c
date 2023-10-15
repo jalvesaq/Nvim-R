@@ -930,8 +930,8 @@ static int run_R_code(const char *s, int senderror)
             getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
     Log("R command: %s", b);
 
-    int stt;
-    if ((stt = system(b)) != 0) {
+    int stt = system(b);
+    if (stt != 0 && stt != 512) { // ssh success status seems to be 512
         if (senderror) {
             printf("call ShowBuildOmnilsError('%d')\n", stt);
             fflush(stdout);
