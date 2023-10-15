@@ -69,7 +69,7 @@ goal.
 
        if [ "x$REMOTE_DIR_IS_MOUNTED" = "x" ]
        then
-           echo "Remote directory '$REMOTE_CACHE_DIR' not mounted. Quit Vim and start it again." >&2
+           echo "RWarn: Remote directory '$REMOTE_CACHE_DIR' not mounted. Quit Vim and start it again.\002"
            sshfs $REMOTE_LOGIN_HOST:$REMOTE_CACHE_DIR $LOCAL_MOUNT_POINT
            sync
            exit 153
@@ -112,7 +112,17 @@ goal.
        vim.g.R_local_R_library_dir = '/path/to/local/R/library' -- where nvimcom is installed
        ```
 
-     - Manually build nvimcom, copy the source to the remote machine, access
+     - Mount the remote directory:
+
+       ```sh
+       ~/bin/mountR
+       ```
+
+     - Start Neovim (or Vim), and start R. Nvimcom should be automatically
+       installed on the remote machine.
+
+     - If nvimcom does not get automatically installed, you will have to
+       manually, build nvimcom, copy the source to the remote machine, access
        the remote machine and install the package:
 
        ```sh
@@ -124,10 +134,3 @@ goal.
        R CMD INSTALL nvimcom_0.9-149.tar.gz
        ```
 
-     - Mount the remote directory:
-
-       ```sh
-       ~/bin/mountR
-       ```
-
-     - Start Neovim (or Vim), and start R.
