@@ -62,25 +62,30 @@ function SendCmdToR_NotYet(...)
     return 0
 endfunction
 
+" This function is called by nclientserver when its server binds to a specific port.
+let s:waiting_to_start_r = ''
+function RSetMyPort(p)
+    let g:rplugin.myport = a:p
+    let $NVIMR_PORT = a:p
+    if s:waiting_to_start_r != ''
+        call StartR(s:waiting_to_start_r)
+        let s:waiting_to_start_r = ''
+    endif
+    call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
+endfunction
+
 " Start R
 function StartR(whatr)
     let s:wait_nvimcom = 1
 
     if g:rplugin.myport == 0
-        echon "Waiting nclientserver..."
+        if g:rplugin.jobs["ClientServer"] == 0
+            call RWarningMsg("Cannot start R: nclientserver not running")
+            return
+        endif
+        let s:waiting_to_start_r = a:whatr
         call JobStdin(g:rplugin.jobs["ClientServer"], "1\n") " Start the TCP server
-        let ii = 0
-        while g:rplugin.myport == 0
-            sleep 100m
-            let ii += 1
-            if ii == 30
-                break
-            endif
-        endwhile
-    endif
-    if g:rplugin.myport == 0
-        call RWarningMsg("TCP server not started yet")
-        sleep 1
+        return
     endif
 
     if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string

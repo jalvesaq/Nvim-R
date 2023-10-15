@@ -267,13 +267,6 @@ function ListRLibsFromBuffer()
     return libs
 endfunction
 
-" This function is called by nclientserver when its server binds to a specific port.
-function RSetMyPort(p)
-    let g:rplugin.myport = a:p
-    let $NVIMR_PORT = a:p
-    call delete(g:rplugin.tmpdir . "/libPaths")
-endfunction
-
 " Get information from nclientserver (currently only the names of loaded
 " libraries).
 function RequestNCSInfo()

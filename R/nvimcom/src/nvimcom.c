@@ -937,6 +937,21 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 
     snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
+    if(verbose > 0)
+        REprintf("nvimcom %s loaded\n", nvimcom_version);
+    if(verbose > 1){
+        if(getenv("R_IP_ADDRESS")) {
+            REprintf("  R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
+            REprintf("  NVIM_IP_ADDRESS: %s\n", getenv("NVIM_IP_ADDRESS"));
+        }
+        REprintf("  NVIMR_PORT: %s\n", ncs_port);
+        REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
+        REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
+        REprintf("  NVIMR_COMPLDIR: %s\n", getenv("NVIMR_COMPLDIR"));
+        REprintf("  nvimcom dir: %s\n", nvimcom_home);
+        REprintf("  R info: %s\n\n", r_info);
+    }
+
 #ifndef WIN32
     *flag_eval = 0;
     int fds[2];
@@ -994,19 +1009,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         Rf_addTaskCallback(nvimcom_task, NULL, free, "NVimComHandler", NULL);
 
         nvimcom_initialized = 1;
-        if(verbose > 0)
-            REprintf("nvimcom %s loaded\n", nvimcom_version);
-        if(verbose > 1){
-            if(getenv("R_IP_ADDRESS")) {
-                REprintf("  R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
-                REprintf("  NVIM_IP_ADDRESS: %s\n", getenv("NVIM_IP_ADDRESS"));
-            }
-            REprintf("  NVIMR_PORT: %s\n", ncs_port);
-            REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
-            REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
-            REprintf("  nvimcom dir: %s\n", nvimcom_home);
-            REprintf("  R info: %s\n", r_info);
-        }
+
 #ifdef WIN32
         r_is_busy = 0;
 #else

@@ -31,7 +31,7 @@ goal.
        if(interactive() && Sys.getenv("NVIM_IP_ADDRESS") != ""){
            Sys.setenv("R_IP_ADDRESS" = trimws(system("hostname -I", intern = TRUE)))
        }
-       options(nvimcom.verbose = 4)
+       options(nvimcom.verbose = 2)
        library(colorout)
        ```
 

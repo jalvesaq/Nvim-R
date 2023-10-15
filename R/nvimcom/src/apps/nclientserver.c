@@ -585,21 +585,10 @@ void Windows_setup()
 }
 #endif
 
-static void SendToServer(const char *port, const char *msg)
-{
-    fprintf(stderr, "The function SendToServer() no longer exists.");
-}
-
 void start_server(void)
 {
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
-
-#ifdef WIN32
-    Sleep(1000);
-#else
-    sleep(1);
-#endif
 
     init_listening();
 

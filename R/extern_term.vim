@@ -45,7 +45,7 @@ function StartR_ExternalTerm(rcmd)
                 \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
                 \ ' NVIMR_ID=' . $NVIMR_ID .
                 \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
-                \ ' NVIMR_PORT=' . $NVIMR_PORT .
+                \ ' NVIMR_PORT=' . g:rplugin.myport .
                 \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES
 
     if $NVIM_IP_ADDRESS != ""
