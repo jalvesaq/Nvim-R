@@ -111,7 +111,7 @@ static int nLibObjs;
 
 int nGlbEnvFun;
 
-static char NvimcomPort[16];
+static int r_conn;
 static char VimSecret[128];
 static int VimSecretLen;
 
@@ -337,6 +337,7 @@ static void init_listening()
         fflush(stderr);
         exit(4);
     }
+    r_conn = 1;
     Log("init_listening: accept succeeded");
 }
 
@@ -355,6 +356,7 @@ static void *receive_msg()
         if (len == 0) {
             fprintf(stderr, "Read 0 byte (R quit?)\n");
             fflush(stderr);
+            r_conn = 0;
             close(sockfd);
             init_listening();
         } else {
@@ -1733,7 +1735,19 @@ static void fill_inst_libs(void)
     free(b);
 }
 
-static void init_vars(void)
+static void send_ncs_info(void)
+{
+    printf("call EchoNCSInfo('Loaded packages:");
+    PkgData *pkg = pkgList;
+    while(pkg){
+        printf(" %s", pkg->name);
+        pkg = pkg->next;
+    }
+    printf("')\n");
+    fflush(stdout);
+}
+
+static void init(void)
 {
 #ifdef Debug_NCS
     time_t t;
@@ -1744,6 +1758,7 @@ static void init_vars(void)
 #endif
 
     char envstr[1024];
+
     envstr[0] = 0;
     if(getenv("LC_MESSAGES"))
         strcat(envstr, getenv("LC_MESSAGES"));
@@ -1838,6 +1853,11 @@ static void init_vars(void)
     update_inst_libs();
     update_pkg_list();
     build_omnils();
+
+    printf("let g:rplugin.ncs_running = 1\n");
+    fflush(stdout);
+
+    Log("init() finished");
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -2175,7 +2195,7 @@ void complete(const char *id, char *base, char *funcnm)
             return;
         } else {
             // Normal completion of arguments
-            if (*NvimcomPort == '0')
+            if (r_conn == 0)
                 p = complete_args(p, funcnm);
             else
                 p = get_arg_compl(p, base);
@@ -2215,22 +2235,13 @@ void complete(const char *id, char *base, char *funcnm)
     fflush(stdout);
 }
 
-int main(int argc, char **argv){
-
+void stdin_loop()
+{
     char line[1024];
     FILE *f;
     char *msg;
     char t;
     memset(line, 0, 1024);
-    strcpy(NvimcomPort, "0");
-
-    init_vars();
-    Log("init_vars finished");
-
-#ifdef WIN32
-    Windows_setup();
-#endif
-
 
     while(fgets(line, 1023, stdin)){
 
@@ -2290,14 +2301,7 @@ int main(int argc, char **argv){
                 break;
             case '4': // Print pkg info
                 update_glblenv_buffer();
-                printf("call NclientserverInfo('Loaded packages:");
-                PkgData *pkg = pkgList;
-                while(pkg){
-                    printf(" %s", pkg->name);
-                    pkg = pkg->next;
-                }
-                printf("')\n");
-                fflush(stdout);
+                send_ncs_info();
                 break;
             case '5':
                 msg++;
@@ -2392,6 +2396,13 @@ int main(int argc, char **argv){
         }
         memset(line, 0, 1024);
     }
-    exit(0);
+}
+
+int main(int argc, char **argv){
+    init();
+#ifdef WIN32
+    Windows_setup();
+#endif
+    stdin_loop();
     return 0;
 }

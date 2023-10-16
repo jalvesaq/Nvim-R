@@ -91,6 +91,9 @@ function ROnJobExit(job_id, data, etype)
     if key ==# 'R' || key ==# 'RStudio'
         call ClearRInfo()
     endif
+    if key ==# 'ClientServer'
+        let g:rplugin.ncs_running = 0
+    endif
 endfunction
 
 function IsJobRunning(key)

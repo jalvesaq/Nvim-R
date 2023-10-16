@@ -88,6 +88,10 @@ function ReallyStartR(whatr)
             call RWarningMsg("Cannot start R: nclientserver not running")
             return
         endif
+        if g:rplugin.ncs_running == 0
+            call RWarningMsg("nclientserver not ready yet")
+            return
+        endif
         let s:waiting_to_start_r = a:whatr
         call JobStdin(g:rplugin.jobs["ClientServer"], "1\n") " Start the TCP server
         return

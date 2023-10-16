@@ -76,6 +76,9 @@ function ROnJobExit(job_id, stts)
     if key ==# 'R'
         call ClearRInfo()
     endif
+    if key ==# 'ClientServer'
+        let g:rplugin.ncs_running = 0
+    endif
 endfunction
 
 function IsJobRunning(key)

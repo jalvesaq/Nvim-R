@@ -16,8 +16,8 @@ endif
 let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
-    " Attention: also in functions.vim
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'myport': 0, 'R_pid': 0}
+    " Attention: also in functions.vim because either of them might be sourced first.
+    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'ncs_running': 0, 'myport': 0, 'R_pid': 0}
 endif
 
 let g:rplugin.debug_info['Time'] = {'common_global': reltime()}
@@ -724,7 +724,7 @@ function AutoStartR(...)
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
-    if v:vim_did_enter == 0 || g:rplugin.myport == 0
+    if v:vim_did_enter == 0 || g:rplugin.ncs_running == 0
         call timer_start(100, 'AutoStartR')
         return
     endif

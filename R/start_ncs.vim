@@ -235,8 +235,8 @@ function StartNClientServer()
     if has('win32')
         call SetRHome()
     endif
-    let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    " let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    " let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
+    let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     if has('win32')
         call UnsetRHome()
     endif
@@ -273,8 +273,7 @@ function ListRLibsFromBuffer()
     return libs
 endfunction
 
-" Get information from nclientserver (currently only the names of loaded
-" libraries).
+" Get information from nclientserver (currently only the names of loaded libraries).
 function RequestNCSInfo()
     call JobStdin(g:rplugin.jobs["ClientServer"], "4\n")
 endfunction
@@ -282,7 +281,7 @@ endfunction
 command RGetNCSInfo :call RequestNCSInfo()
 
 " Callback function
-function NclientserverInfo(info)
+function EchoNCSInfo(info)
     echo a:info
 endfunction
 
