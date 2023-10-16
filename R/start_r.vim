@@ -74,8 +74,13 @@ function RSetMyPort(p)
     call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
 endfunction
 
-" Start R
 function StartR(whatr)
+    let g:rplugin.debug_info['Time']['start_R'] = reltime()
+    call ReallyStartR(a:whatr)
+endfunction
+
+" Start R
+function ReallyStartR(whatr)
     let s:wait_nvimcom = 1
 
     if g:rplugin.myport == 0
@@ -280,6 +285,7 @@ function WaitNvimcomStart()
 endfunction
 
 function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
+    let g:rplugin.debug_info['Time']['start_R'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_R'], reltime()))
     if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
         let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
         let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')

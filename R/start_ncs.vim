@@ -3,7 +3,6 @@
 
 " Check if it's necessary to build and install nvimcom before attempting to load it
 function CheckNvimcomVersion()
-    let s:startCheck = reltime()
     if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
         let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
         let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')
@@ -112,7 +111,7 @@ endfunction
 " Check if the exit code of the script that built nvimcom was zero and if the
 " file nvimcom_info seems to be OK (has three lines).
 function RInitExit(...)
-    let g:rplugin.debug_info['time'] = reltimefloat(reltime(s:startCheck))
+    let cnv_again = 0
     if a:2 == 0 || a:2 == 512 " ssh success seems to be 512
         call StartNClientServer()
     elseif a:2 == 71
@@ -132,6 +131,7 @@ function RInitExit(...)
             let rout = system('sh ' . g:rplugin.tmpdir . '/buildpkg.sh')
             if v:shell_error == 0
                 call CheckNvimcomVersion()
+                let cnv_again = 1
             endif
             call delete(g:rplugin.tmpdir . '/buildpkg.sh')
         endif
@@ -153,6 +153,9 @@ function RInitExit(...)
             let g:rplugin.debug_info['RInit Warning'] .= wrn . "\n"
             call RWarningMsg(wrn)
         endfor
+    endif
+    if cnv_again == 0
+        let g:rplugin.debug_info['Time']['R_before_ncs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['R_before_ncs'], reltime()))
     endif
 endfunction
 

@@ -20,6 +20,7 @@ if !exists('g:rplugin')
     let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'myport': 0, 'R_pid': 0}
 endif
 
+let g:rplugin.debug_info['Time'] = {'common_global': reltime()}
 
 "==============================================================================
 " Check if there is more than one copy of Nvim-R
@@ -692,7 +693,22 @@ function ShowRDebugInfo()
         echohl Title
         echo key
         echohl None
-        echo g:rplugin.debug_info[key]
+        if key == 'Time' || key == 'nvimcom_info'
+            for step in keys(g:rplugin.debug_info[key])
+                echohl Identifier
+                echo '  ' . step . ': '
+                if key == 'Time'
+                    echohl Number
+                else
+                    echohl String
+                endif
+                echon g:rplugin.debug_info[key][step]
+                echohl None
+            endfor
+            echo ""
+        else
+            echo g:rplugin.debug_info[key]
+        endif
         echo ""
     endfor
 endfunction
@@ -708,7 +724,7 @@ function AutoStartR(...)
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
-    if v:vim_did_enter == 0
+    if v:vim_did_enter == 0 || g:rplugin.myport == 0
         call timer_start(100, 'AutoStartR')
         return
     endif
@@ -1071,6 +1087,7 @@ endif
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)
+    let g:rplugin.debug_info['Time']['start_ncs'] = reltime()
     exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
     " Set security variables
     if has('nvim') && !has("nvim-0.7.0")
@@ -1080,7 +1097,9 @@ function GlobalRInit(...)
         let $NVIMR_ID = rand(srand())
         let $NVIMR_SECRET = rand()
     end
+    let g:rplugin.debug_info['Time']['R_before_ncs'] = reltime()
     call CheckNvimcomVersion()
+    let g:rplugin.debug_info['Time']['start_ncs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_ncs'], reltime()))
 endfunction
 
 function PreGlobalRealInit()
@@ -1092,3 +1111,4 @@ if v:vim_did_enter == 0
 else
     call GlobalRInit()
 endif
+let g:rplugin.debug_info['Time']['common_global'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['common_global'], reltime()))
