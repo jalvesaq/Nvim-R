@@ -529,8 +529,12 @@ static void nvimcom_globalenv_list(void)
                 maxdepth = curdepth + 1;
             }
         }
+        // TODO: Compare the time of saving the file at /dev/shm with the time of sending the buffer through TCP.
+        // If the time is about the same in both cases, use only the TCP transmission.
+        // If saving at /dev/shm is faster, use /dev/shm when running R locally and TCP when running it remotely.
         send_to_nvim("GlblEnvUpdated(1)");
     } else {
+        // TODO: Don't send this superfluous message
         send_to_nvim("GlblEnvUpdated(0)");
     }
 }
@@ -627,6 +631,7 @@ static int nvimcom_checklibs(void)
     }
     UNPROTECT(1);
 
+    // TODO: Always send the libnames through TCP because the list is small and its update infrequent
     char fn[576];
     snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
     FILE *f = fopen(fn, "w");
