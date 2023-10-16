@@ -60,9 +60,9 @@ function! UpdateOB(what)
     endif
 
     if wht == "GlobalEnv"
-        let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
     else
-        let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
     endif
     if has("nvim")
         let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)

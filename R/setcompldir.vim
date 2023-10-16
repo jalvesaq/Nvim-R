@@ -43,9 +43,6 @@ endif
 
 if exists("g:R_compldir")
     let g:rplugin.compldir = expand(g:R_compldir)
-    if exists("g:R_remote_compldir")
-        let g:R_tmpdir = g:rplugin.compldir . '/tmp'
-    endif
 elseif has("win32") && $APPDATA != "" && isdirectory($APPDATA)
     let g:rplugin.compldir = $APPDATA . "\\Nvim-R"
 elseif $XDG_CACHE_HOME != "" && isdirectory($XDG_CACHE_HOME)

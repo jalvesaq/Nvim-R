@@ -145,7 +145,7 @@ function RInitExit(...)
     let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
     let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
     call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
-    call AddForDeletion(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     if len(s:RWarn) > 0
         let g:rplugin.debug_info['RInit Warning'] = ''
@@ -225,13 +225,15 @@ function StartNClientServer()
     endif
     let $NVIMR_RPATH = g:rplugin.Rcmd
 
+    let $NVIMR_LOCAL_TMPDIR = g:rplugin.localtmpdir
+
     " We have to set R's home directory on Window because nclientserver will
     " run R to build the list for omni completion.
     if has('win32')
         call SetRHome()
     endif
     let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    "let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    " let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     if has('win32')
         call UnsetRHome()
     endif
@@ -240,6 +242,7 @@ function StartNClientServer()
     unlet $NVIMR_OPENLS
     unlet $NVIMR_OBJBR_ALLNAMES
     unlet $NVIMR_RPATH
+    unlet $NVIMR_LOCAL_TMPDIR
 endfunction
 
 function ListRLibsFromBuffer()
@@ -300,11 +303,11 @@ endfunction
 " This function is called for the first time before R is running because we
 " support syntax highlighting and omni completion of default libraries' objects.
 function UpdateSynRhlist()
-    if !filereadable(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    if !filereadable(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
         return
     endif
 
-    let g:rplugin.libs_in_ncs = readfile(g:rplugin.tmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    let g:rplugin.libs_in_ncs = readfile(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
     for lib in g:rplugin.libs_in_ncs
         call AddToRhelpList(lib)
     endfor

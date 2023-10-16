@@ -664,6 +664,9 @@ function RVimLeave()
     endfor
     if executable("rmdir")
         call system("rmdir '" . g:rplugin.tmpdir . "'")
+        if g:rplugin.localtmpdir != g:rplugin.tmpdir
+            call system("rmdir '" . g:rplugin.localtmpdir . "'")
+        endif
     endif
 endfunction
 
@@ -789,17 +792,35 @@ else
     endif
 endif
 
-let $NVIMR_TMPDIR = g:rplugin.tmpdir
+" When accessing R remotely, a local tmp directory is used by the
+" nclientserver to save the contents of the ObjectBrowser to avoid traffic
+" over the ssh connection
+let g:rplugin.localtmpdir = g:rplugin.tmpdir
+
 if exists("g:R_remote_compldir")
     let $NVIMR_REMOTE_COMPLDIR = g:R_remote_compldir
     let $NVIMR_REMOTE_TMPDIR = g:R_remote_compldir . '/tmp'
+    let g:rplugin.tmpdir = g:R_compldir . '/tmp'
+    if !isdirectory(g:rplugin.tmpdir)
+        call mkdir(g:rplugin.tmpdir, "p", 0700)
+    endif
 else
-    let $NVIMR_REMOTE_COMPLDIR = $NVIMR_COMPLDIR
-    let $NVIMR_REMOTE_TMPDIR = $NVIMR_TMPDIR
+    let $NVIMR_REMOTE_COMPLDIR = g:rplugin.compldir
+    let $NVIMR_REMOTE_TMPDIR = g:rplugin.tmpdir
 endif
-if !isdirectory(g:rplugin.tmpdir)
-    call mkdir(g:rplugin.tmpdir, "p", 0700)
+if !isdirectory(g:rplugin.localtmpdir)
+    call mkdir(g:rplugin.localtmpdir, "p", 0700)
 endif
+let $NVIMR_TMPDIR = g:rplugin.tmpdir
+
+let g:TheVars = {
+            \ 'NVIMR_TMPDIR': $NVIMR_TMPDIR,
+            \ 'NVIMR_COMPLDIR': $NVIMR_COMPLDIR,
+            \ 'NVIMR_REMOTE_TMPDIR': $NVIMR_REMOTE_TMPDIR,
+            \ 'NVIMR_REMOTE_COMPLDIR': $NVIMR_REMOTE_COMPLDIR,
+            \ 'compldir': g:rplugin.compldir,
+            \ 'tmpdir': g:rplugin.tmpdir,
+            \ 'localtmpdir': g:rplugin.localtmpdir}
 
 " Delete options with invalid values
 if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list

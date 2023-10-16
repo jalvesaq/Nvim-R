@@ -41,6 +41,7 @@ static char compl_cb[64];
 static char compl_info[64];
 static char compldir[256];
 static char tmpdir[256];
+static char localtmpdir[256];
 static char liblist[576];
 static char globenv[576];
 static char glbnvls[576];
@@ -232,8 +233,14 @@ static void ParseMsg(char *b)
 
     // Update the GlobalEnv buffer before sending the message to Nvim-R
     // because it must be ready for omni completion
-    if(str_here(b, "call GlblEnvUpdated(1)"))
+    if(str_here(b, "call GlblEnvUpdated(1)")) {
         update_glblenv_buffer();
+
+        // Update the Object Browser after sending the message to Nvim-R to
+        // avoid unnecessary delays in omni completion
+        if(auto_obbr)
+            omni2ob();
+    }
 
     if(str_here(b, "+BuildOmnils")){
         update_pkg_list();
@@ -268,11 +275,6 @@ static void ParseMsg(char *b)
         printf("%s\n", b);
         fflush(stdout);
     }
-
-    // Update the Object Browser after sending the message to Nvim-R to
-    // avoid unnecessary delays in omni completion
-    if(auto_obbr && str_here(b, "call GlblEnvUpdated(1)"))
-        omni2ob();
 }
 
 // Adapted from
@@ -1201,7 +1203,7 @@ static void finish_bol()
 
     // Finally create a list of built omnils_ because libnames_ might have
     // already changed and Nvim-R would try to read omnils_ files not built yet.
-    snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(buf, 511, "%s/libs_in_ncs_%s", localtmpdir, getenv("NVIMR_ID"));
     FILE *f = fopen(buf, "w");
     if (f) {
         PkgData *pkg = pkgList;
@@ -1774,8 +1776,12 @@ static void init_vars(void)
     strncpy(compl_info, getenv("NVIMR_COMPLInfo"), 63);
     strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
     strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
-    snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
-    snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
+    if(getenv("NVIMR_LOCAL_TMPDIR"))
+        strncpy(localtmpdir, getenv("NVIMR_LOCAL_TMPDIR"), 255);
+    else
+        strncpy(localtmpdir, getenv("NVIMR_TMPDIR"), 255);
+    snprintf(liblist, 575, "%s/liblist_%s", localtmpdir, getenv("NVIMR_ID"));
+    snprintf(globenv, 575, "%s/globenv_%s", localtmpdir, getenv("NVIMR_ID"));
     snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
     if(getenv("NVIMR_OPENDF"))
