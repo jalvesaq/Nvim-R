@@ -325,7 +325,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
         let curwin = winnr()
         exe 'sb ' . g:rplugin.R_bufnr
         if !exists('g:R_hl_term')
-            if Rinfo[4] =~# 'colorout'
+            if Rinfo[4] =~# '1'
                 let g:R_hl_term = 0
             else
                 let g:R_hl_term = 1
@@ -495,70 +495,39 @@ endfunction
 " Did R successfully finished evaluating a command?
 " There is no need of waiting for the completion of the .GlobalEnv list of
 " objects to start omni completion if no command was run afer the list was
-" bilt for the last time.
+" built for the last time.
 let s:R_task_completed = 0
 
 " Function called by nvimcom
-function RTaskCompleted()
-    let s:R_task_completed = 1
-    if g:R_hi_fun_globenv == 2
-        call SendToNvimcom("A", "TaskCompleted hi_fun_globenv = 2")
-        call RealUpdateRGlbEnv(0)
-    endif
-endfunction
+" function RTaskCompleted()
+"     let s:R_task_completed = 1
+"     if g:R_hi_fun_globenv == 2
+"         call SendToNvimcom("A", "TaskCompleted hi_fun_globenv = 2")
+"         call RealUpdateRGlbEnv(0)
+"     endif
+" endfunction
 
-let s:updating_globalenvlist = 0
-let s:waiting_glblnv_list = 0
+" let s:updating_globalenvlist = 0
 
-" Function called by nvimcom
-function GlblEnvUpdated(changed)
-    let s:updating_globalenvlist = 0
-    if s:waiting_glblnv_list
-        if a:changed == 0
-            " Nothing to update
-            let s:waiting_glblnv_list = 0
-        endif
-    endif
-endfunction
+" let s:nglobfun = 0
+" function RealUpdateRGlbEnv(block)
+"     if ! s:R_task_completed
+"         return
+"     endif
+"     let s:R_task_completed = 0
 
-let s:nglobfun = 0
-function RealUpdateRGlbEnv(block)
-    if ! s:R_task_completed
-        return
-    endif
-    let s:R_task_completed = 0
+"     if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
+"         return
+"     endif
 
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
+"     let s:updating_globalenvlist = 1
+"     call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
 
-    let s:updating_globalenvlist = 1
-    call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
-
-    if g:rplugin.R_pid== 0
-        sleep 500m
-        return
-    endif
-
-    if a:block
-        " We can't return from this function and wait for a message from
-        " nvimcom because both omni completion and the Object Browser require
-        " the list of completions immediately.
-        sleep 10m
-        let ii = 0
-        let max_ii = 100 * g:R_wait_reply
-        while s:updating_globalenvlist && ii < max_ii
-            let ii += 1
-            sleep 10m
-        endwhile
-        if ii == max_ii
-            call RWarningMsg("No longer waiting...")
-            return
-        endif
-    else
-        let s:waiting_glblnv_list = 1
-    endif
-endfunction
+"     if g:rplugin.R_pid== 0
+"         sleep 500m
+"         return
+"     endif
+" endfunction
 
 " Called by nclientserver. When g:rplugin has the key 'localfun', the function
 " is also called by SourceRFunList() (R/functions.vim)
@@ -689,7 +658,7 @@ function RObjBrowser(...)
 
     let s:running_objbr = 1
 
-    call RealUpdateRGlbEnv(1)
+    " call RealUpdateRGlbEnv(1)
     call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
     call SendToNvimcom("A", "RObjBrowser")
 

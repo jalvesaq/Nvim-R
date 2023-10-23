@@ -103,7 +103,6 @@ function! UpdateOB(what)
         endif
     endif
     let s:upobcnt = 0
-    return "End of UpdateOB()"
 endfunction
 
 function! RBrowserDoubleClick()

@@ -45,19 +45,20 @@ static char localtmpdir[256];
 static char liblist[576];
 static char globenv[576];
 static char glbnvls[576];
-static int glbnv_size;
 static int auto_obbr;
+static size_t glbnv_buffer_sz;
 static char *glbnv_buffer;
 static char *compl_buffer;
 static unsigned long compl_buffer_size = 32768;
 static int n_omnils_build;
 static int building_omnils;
 static int more_to_build;
+static unsigned long msg_size;
 void omni2ob(void);
 void lib2ob(void);
 void update_inst_libs(void);
-void update_pkg_list(void);
-void update_glblenv_buffer(void);
+void update_pkg_list(char *libnms);
+void update_glblenv_buffer(char *g);
 static void build_omnils(void);
 static void finish_bol();
 void complete(const char *id, char *base, char *funcnm);
@@ -223,58 +224,50 @@ static void RegisterPort(int bindportn)
 
 static void ParseMsg(char *b)
 {
-    if(strstr(b, VimSecret) != b){
-        fprintf(stderr, "Strange string received {%s}: \"%s\"\n", VimSecret, b);
-        fflush(stderr);
-        return;
-    }
+    Log("ParseMsg(): strlen(b) = %zu, msg_size = %zu", strlen(b), msg_size);
 
-    b += VimSecretLen;
-
-    // Update the GlobalEnv buffer before sending the message to Nvim-R
-    // because it must be ready for omni completion
-    if(str_here(b, "call GlblEnvUpdated(1)")) {
-        update_glblenv_buffer();
-
-        // Update the Object Browser after sending the message to Nvim-R to
-        // avoid unnecessary delays in omni completion
-        if(auto_obbr)
-            omni2ob();
-    }
-
-    if(str_here(b, "+BuildOmnils")){
-        update_pkg_list();
-        build_omnils();
-        if (auto_obbr)
-            lib2ob();
-    }
-
-    if (str_here(b, "+FinishArgsCompletion")) {
-        // strtok doesn't work here because "base" might be empty.
-        char *id = b + 22;
-        char *base = id;
-        while (*base != ';')
-            base++;
-        *base = 0;
-        base++;
-        char *fnm = base;
-        while (*fnm != ';')
-            fnm++;
-        *fnm = 0;
-        fnm++;
-        b = fnm;
-        while (*b != 0 && *b != '\n')
-            b++;
-        *b = 0;
-        complete(id, base, fnm);
+    if (*b == '+') {
+        b++;
+        switch (*b) {
+            case 'G':
+                b++;
+                update_glblenv_buffer(b);
+                if(auto_obbr)   // Update the Object Browser after sending the message to Nvim-R to
+                    omni2ob();  // avoid unnecessary delays in omni completion
+                break;
+            case 'L':
+                b++;
+                update_pkg_list(b);
+                build_omnils();
+                if(auto_obbr)
+                    lib2ob();
+                break;
+            case 'A': // strtok doesn't work here because "base" might be empty.
+                b++;
+                char *id = b;
+                char *base = id;
+                while (*base != ';')
+                    base++;
+                *base = 0;
+                base++;
+                char *fnm = base;
+                while (*fnm != ';')
+                    fnm++;
+                *fnm = 0;
+                fnm++;
+                b = fnm;
+                while (*b != 0 && *b != '\n')
+                    b++;
+                *b = 0;
+                complete(id, base, fnm);
+                break;
+        }
         return;
     }
 
     // Send the command to Nvim-R
-    if (*b != '+'){
-        printf("%s\n", b);
-        fflush(stdout);
-    }
+    printf("%s\n", b);
+    fflush(stdout);
 }
 
 // Adapted from
@@ -289,7 +282,7 @@ static void init_listening()
 #else
     socklen_t len;
 #endif
-    int res;
+    int res = 1;
     int port = 10101;
 
     if (sockfd == -1) {
@@ -341,27 +334,88 @@ static void init_listening()
     Log("init_listening: accept succeeded");
 }
 
+static void get_whole_msg(char *b)
+{
+    static char *finalbuffer;
+    static unsigned long fb_size = 1024;
+
+    Log("get_whole_msg()");
+    char *p;
+    char tmp[1];
+    int msg_size;
+
+    if(strstr(b, VimSecret) != b){
+        fprintf(stderr, "Strange string received {%s}: \"%s\"\n", VimSecret, b);
+        fflush(stderr);
+        return;
+    }
+    p = b + VimSecretLen;
+
+    // Get the message size
+    p[9] = 0;
+    msg_size = atoi(p);
+    p += 10;
+
+    // Allocate enough memory to the final buffer
+    if (finalbuffer) {
+        if (msg_size > fb_size)
+            finalbuffer = grow_buffer(&finalbuffer, &fb_size, msg_size - fb_size + 1024);
+        else
+            memset(finalbuffer, 0, fb_size);
+    } else {
+        if (msg_size > fb_size)
+            fb_size = msg_size + 1024;
+        finalbuffer = calloc(fb_size, sizeof(char));
+    }
+
+    p = finalbuffer;
+    for (;;) {
+        if((read(connfd, tmp, 1) == 1)) {
+            *p = *tmp;
+        } else {
+            fprintf(stderr, "Read 0 byte from TCP connection (R quit?)\n");
+            fflush(stderr);
+        }
+        if (*p == '\001')
+            break;
+        p++;
+    }
+    *p = 0;
+
+    // FIXME: Delete this check when the code proved to be reliable
+    if (strlen(finalbuffer) != msg_size) {
+        fprintf(stderr, "Divergent TCP message size: %zu x %d\n", strlen(p), msg_size);
+        fflush(stderr);
+    }
+
+    ParseMsg(finalbuffer);
+}
+
 #ifdef WIN32
 static void receive_msg(void *arg)
 #else
 static void *receive_msg()
 #endif
 {
-    char buff[1024];
-    size_t len;
+    size_t blen = VimSecretLen + 9;
+    char b[32];
+    size_t rlen;
 
     for (;;) {
-        bzero(buff, 1024);
-        len = read(connfd, buff, sizeof(buff));
-        if (len == 0) {
+        bzero(b, blen);
+        rlen = read(connfd, b, blen);
+        if (rlen == 0) {
             fprintf(stderr, "Read 0 byte (R quit?)\n");
             fflush(stderr);
             r_conn = 0;
             close(sockfd);
             init_listening();
+        } else if (rlen != blen) {
+            fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
+            fflush(stderr);
         } else {
-            Log("TCP in : %s", buff);
-            ParseMsg(buff);
+            Log("TCP in (message header): %s", b);
+            get_whole_msg(b);
         }
     }
 #ifndef WIN32
@@ -649,6 +703,7 @@ char *read_file(const char *fn, int verbose)
     rewind(f);
     if(sz == 0){
         // List of objects is empty. Perhaps no object was created yet.
+        fclose(f);
         return NULL;
     }
 
@@ -657,6 +712,7 @@ char *read_file(const char *fn, int verbose)
         fclose(f);
         fputs("Error allocating memory\n", stderr);
         fflush(stderr);
+        return NULL;
     }
 
     if(1 != fread(buffer, sz, 1 , f)){
@@ -670,13 +726,8 @@ char *read_file(const char *fn, int verbose)
     return buffer;
 }
 
-char *read_omnils_file(const char *fn, int *size)
+void *check_omils_buffer(char *buffer, int *size)
 {
-    Log("read_omnils_file(%s)", fn);
-    char * buffer = read_file(fn, 1);
-    if(!buffer)
-        return NULL;
-
     // Ensure that there are exactly 7 \006 between new line characters
     buffer = count_sep(buffer, size);
 
@@ -691,8 +742,17 @@ char *read_omnils_file(const char *fn, int *size)
             p++;
         }
     }
-
     return buffer;
+}
+
+char *read_omnils_file(const char *fn, int *size)
+{
+    Log("read_omnils_file(%s)", fn);
+    char * buffer = read_file(fn, 1);
+    if(!buffer)
+        return NULL;
+
+    return check_omils_buffer(buffer, size);
 }
 
 char *get_pkg_descr(const char *pkgnm)
@@ -743,7 +803,6 @@ void load_pkg_data(PkgData *pd)
 
 PkgData *new_pkg_data(const char *nm, const char *vrsn)
 {
-    Log("new_pkg_data(%s %s)", nm, vrsn);
     char buf[1024];
 
     PkgData *pd = calloc(1, sizeof(PkgData));
@@ -787,7 +846,6 @@ PkgData *get_pkg(const char *nm)
 
 void add_pkg(const char *nm, const char *vrsn)
 {
-    Log("add_pkg(%s %s)", nm, vrsn);
     PkgData *tmp = pkgList;
     pkgList = new_pkg_data(nm, vrsn);
     pkgList->next = tmp;
@@ -1151,7 +1209,7 @@ static void build_omnils(void)
         n_omnils_build++;
         p = str_cat(p, ")\nnvimcom:::nvim.buildomnils(p)\n");
         p = str_cat(p, "nvimcom:::nvim.buildargs(p)\n");
-        Log(compl_buffer);
+        // Log(compl_buffer);
         run_R_code(compl_buffer, 1);
         finish_bol();
     }
@@ -1252,21 +1310,12 @@ char *complete_instlibs(char *p, const char *base) {
     return p;
 }
 
-void update_pkg_list(void)
+void update_pkg_list(char *libnms)
 {
     Log("update_pkg_list()");
     char buf[512];
-    char *s, *vrsn;
-    char lbnm[128];
+    char *s, *nm, *vrsn;
     PkgData *pkg;
-
-    snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *flib = fopen(buf, "r");
-    if(!flib){
-        fprintf(stderr, "Failed to open \"%s\"\n", buf);
-        fflush(stderr);
-        return;
-    }
 
     // Consider that all packages were unloaded
     pkg = pkgList;
@@ -1275,23 +1324,64 @@ void update_pkg_list(void)
         pkg = pkg->next;
     }
 
-    while((s = fgets(lbnm, 127, flib))){
-        while(*s != '_')
-            s++;
-        *s = 0;
-        s++;
-        vrsn = s;
-        while(*s != '\n')
-            s++;
-        *s = 0;
+    if (libnms) {
+        Log("update_pkg_list != NULL");
+        while (*libnms) {
+            nm = libnms;
+            while(*libnms != '\003')
+                libnms++;
+            *libnms = 0;
+            libnms++;
+            vrsn = libnms;
+            while(*libnms != '\004')
+                libnms++;
+            *libnms = 0;
+            libnms++;
+            if (*libnms == '\n') // this was the last package
+                libnms++;
 
-        pkg = get_pkg(lbnm);
-        if (pkg)
-            pkg->loaded = 1;
-        else
-            add_pkg(lbnm, vrsn);
+            if (strstr(nm, " ") || strstr(vrsn, " ")) {
+                Log("  nm = %s", nm);
+                Log("  vr = %s", vrsn);
+                break;
+            }
+
+            pkg = get_pkg(nm);
+            if (pkg)
+                pkg->loaded = 1;
+            else
+                add_pkg(nm, vrsn);
+        }
+    } else {
+        char lbnm[128];
+        Log("update_pkg_list == NULL");
+
+        snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+        FILE *flib = fopen(buf, "r");
+        if(!flib){
+            fprintf(stderr, "Failed to open \"%s\"\n", buf);
+            fflush(stderr);
+            return;
+        }
+
+        while((s = fgets(lbnm, 127, flib))){
+            while(*s != '_')
+                s++;
+            *s = 0;
+            s++;
+            vrsn = s;
+            while(*s != '\n')
+                s++;
+            *s = 0;
+
+            pkg = get_pkg(lbnm);
+            if (pkg)
+                pkg->loaded = 1;
+            else
+                add_pkg(lbnm, vrsn);
+        }
+        fclose(flib);
     }
-    fclose(flib);
 
     // No command run yet
     if(!pkgList)
@@ -1410,6 +1500,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
         p++;
     if(*p == '\n')
         p++;
+    // Log("|%s|%s|%s|%s|%s|%s|%s|", f[0], f[1], f[2], f[3], f[4], f[5], f[6]);
 
     if(closeddf)
         df = 0;
@@ -1564,17 +1655,29 @@ void hi_glbenv_fun(void)
     fflush(stdout);
 }
 
-void update_glblenv_buffer(void)
+void update_glblenv_buffer(char *g)
 {
     Log("update_glblenv_buffer()");
-    if(glbnv_buffer)
-        free(glbnv_buffer);
-    glbnv_buffer = read_omnils_file(glbnvls, &glbnv_size);
-    if(glbnv_buffer == NULL)
+    int n = 0;
+    int max;
+    int glbnv_size;
+
+    if(glbnv_buffer) {
+        if (strlen(g) > glbnv_buffer_sz) {
+            free(glbnv_buffer);
+            glbnv_buffer_sz = strlen(g) + 4096;
+            glbnv_buffer = malloc(glbnv_buffer_sz * sizeof(char));
+        }
+    } else {
+        glbnv_buffer_sz = strlen(g) + 4096;
+        glbnv_buffer = malloc(glbnv_buffer_sz * sizeof(char));
+    }
+    strcpy(glbnv_buffer, g);
+    if (check_omils_buffer(glbnv_buffer, &glbnv_size) == NULL)
         return;
 
-    int n = 0;
-    int max = glbnv_size - 5;
+    max = glbnv_size - 5;
+
     for(int i = 0; i < max; i++)
         if(glbnv_buffer[i] == '\003'){
             n++;
@@ -1589,6 +1692,7 @@ void update_glblenv_buffer(void)
 
 void omni2ob(void)
 {
+    Log("omni2ob()");
     FILE *f = fopen(globenv, "w");
     if(!f){
         fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
@@ -1613,6 +1717,7 @@ void omni2ob(void)
 
 void lib2ob(void)
 {
+    Log("lib2ob()");
     FILE *f = fopen(liblist, "w");
     if(!f){
         fprintf(stderr, "Failed to open \"%s\"\n", liblist);
@@ -1791,10 +1896,12 @@ static void init(void)
     strncpy(compl_info, getenv("NVIMR_COMPLInfo"), 63);
     strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
     strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
-    if(getenv("NVIMR_LOCAL_TMPDIR"))
+    if (getenv("NVIMR_LOCAL_TMPDIR")) {
         strncpy(localtmpdir, getenv("NVIMR_LOCAL_TMPDIR"), 255);
-    else
+    } else {
         strncpy(localtmpdir, getenv("NVIMR_TMPDIR"), 255);
+    }
+
     snprintf(liblist, 575, "%s/liblist_%s", localtmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 575, "%s/globenv_%s", localtmpdir, getenv("NVIMR_ID"));
     snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
@@ -1851,7 +1958,7 @@ static void init(void)
         }
     }
     update_inst_libs();
-    update_pkg_list();
+    update_pkg_list(NULL);
     build_omnils();
 
     printf("let g:rplugin.ncs_running = 1\n");
@@ -2300,7 +2407,7 @@ void stdin_loop()
                 }
                 break;
             case '4': // Print pkg info
-                update_glblenv_buffer();
+                update_glblenv_buffer(NULL);
                 send_ncs_info();
                 break;
             case '5':

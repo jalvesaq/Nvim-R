@@ -18,19 +18,9 @@ goal.
      without a password (search the command `ssh-copy-id` over the Internet to
      discover how to do it).
 
-  2. At the remote machine:
-
-     - You have to edit your `~/.Rprofile` to create the environment variable
-       `R_IP_ADDRESS`. R will save this value in a file that Vim has to read
-       to be able to send messages to R. If the remote machine is a Linux
-       system, the following code might work:
+  2. Edit your `~/.Rprofile` on the remote machine (recommended):
 
        ```r
-       # Only create the environment variable R_IP_ADDRESS if NVIM_IP_ADDRESS
-       # exists, that is, if R is being controlled remotely:
-       if(interactive() && Sys.getenv("NVIM_IP_ADDRESS") != ""){
-           Sys.setenv("R_IP_ADDRESS" = trimws(system("hostname -I", intern = TRUE)))
-       }
        options(nvimcom.verbose = 2)
        library(colorout)
        ```

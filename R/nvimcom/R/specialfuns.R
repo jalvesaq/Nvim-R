@@ -17,7 +17,7 @@ nvim.edit <- function(name, file, title) {
     sink()
 
     .C("nvimcom_msg_to_nvim",
-       paste0("EditRObject('", initial, "')"),
+       paste0("call EditRObject('", initial, "')"),
        PACKAGE = "nvimcom")
 
     while (file.exists(waitf))
@@ -34,7 +34,7 @@ vi <- function(name = NULL, file = "") {
 
 nvim_capture_source_output <- function(s, o) {
     capture.output(base::source(s, echo = TRUE), file = o)
-    .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE = "nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0("call GetROutput('", o, "')"), PACKAGE = "nvimcom")
 }
 
 nvim_dput <- function(oname, howto = "tabnew") {
@@ -42,7 +42,7 @@ nvim_dput <- function(oname, howto = "tabnew") {
     eval(parse(text = paste0("dput(", oname, ")")))
     sink()
     .C("nvimcom_msg_to_nvim",
-       paste0('ShowRObj("', howto, '", "', oname, '", "r")'),
+       paste0('call ShowRObj("', howto, '", "', oname, '", "r")'),
        PACKAGE = "nvimcom")
 }
 
@@ -68,7 +68,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
         }
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
+               paste0("call RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
@@ -79,7 +79,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
         }
         if (!is.null(R_df_viewer)) {
             .C("nvimcom_msg_to_nvim",
-               paste0("g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
+               paste0("call g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
@@ -93,7 +93,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
                         file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
         }
         .C("nvimcom_msg_to_nvim",
-           paste0("RViewDF('", oname, "', '", howto, "')"),
+           paste0("call RViewDF('", oname, "', '", howto, "')"),
            PACKAGE = "nvimcom")
     } else {
         nvim_dput(oname, howto)
@@ -134,7 +134,7 @@ nvim_format <- function(l1, l2, wco, sw) {
                 options(nvimcom.formatfun = "tidy_source")
             } else {
                 .C("nvimcom_msg_to_nvim",
-                   "RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
+                   "call RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
                    PACKAGE = "nvimcom")
                 return(invisible(NULL))
             }
@@ -147,7 +147,7 @@ nvim_format <- function(l1, l2, wco, sw) {
                                        width.cutoff = wco))
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               "RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
+               "call RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
@@ -156,7 +156,7 @@ nvim_format <- function(l1, l2, wco, sw) {
         ok <- try(styler::style_text(txt, indent_by = sw))
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               "RWarningMsg('Error trying to execute the function styler::style_text()')",
+               "call RWarningMsg('Error trying to execute the function styler::style_text()')",
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
@@ -164,7 +164,7 @@ nvim_format <- function(l1, l2, wco, sw) {
     }
 
     .C("nvimcom_msg_to_nvim",
-       paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+       paste0("call FinishRFormatCode(", l1, ", ", l2, ")"),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
@@ -173,11 +173,11 @@ nvim_insert <- function(cmd, howto = "tabnew") {
     try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
     if (inherits(ok, "try-error")) {
         .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
+           paste0("call RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
            PACKAGE = "nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
-           paste0('FinishRInsert("', howto, '")'),
+           paste0('call FinishRInsert("', howto, '")'),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -308,10 +308,10 @@ nvim.GlobalEnv.fun.args <- function(funcname) {
     sink()
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
         .C("nvimcom_msg_to_nvim",
-           paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
+           paste0('call FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
-           paste0("v:lua.require'cmp_nvim_r'.finish_glbenv_fun()"),
+           paste0("call v:lua.require'cmp_nvim_r'.finish_glbenv_fun()"),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -347,9 +347,9 @@ nvim.get.summary <- function(obj, wdth) {
     options(width = owd)
 
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
-        .C("nvimcom_msg_to_nvim", "FinishGetSummary()", PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", "call FinishGetSummary()", PACKAGE = "nvimcom")
     } else {
-        .C("nvimcom_msg_to_nvim", "v:lua.require'cmp_nvim_r'.finish_get_summary()",
+        .C("nvimcom_msg_to_nvim", "call v:lua.require'cmp_nvim_r'.finish_get_summary()",
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -444,7 +444,7 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
     writeLines(text = res,
                con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     .C("nvimcom_msg_to_nvim",
-       paste("+FinishArgsCompletion", id, argkey, rkeyword0, sep = ";"),
+       paste("+A", id, argkey, rkeyword0, sep = ";"),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }

@@ -39,7 +39,8 @@ NvimcomEnv$pkgdescr <- list()
 
     if (interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != "") {
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
-        nvinf <- utils::installed.packages()["nvimcom", c("Version", "LibPath", "Built")]
+        ip <- utils::installed.packages()
+        nvinf <- ip["nvimcom", c("Version", "LibPath", "Built")]
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
@@ -52,7 +53,7 @@ NvimcomEnv$pkgdescr <- list()
                  getOption("OutDec"),
                  gsub("\n", "#N#", getOption("prompt")),
                  getOption("continue"),
-                 paste(.packages(), collapse = " "),
+                 as.integer(length(grep("colorout", rownames(ip))) == 1),
                  sep = "\x02"),
            PACKAGE = "nvimcom")
     }
