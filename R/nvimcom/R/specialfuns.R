@@ -444,7 +444,7 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
     writeLines(text = res,
                con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     .C("nvimcom_msg_to_nvim",
-       paste("+A", id, argkey, rkeyword0, sep = ";"),
+       paste0("+A", id, ";", argkey, ";", rkeyword0),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }

@@ -869,7 +869,6 @@ let g:R_disable_cmds      = get(g:, "R_disable_cmds",    [''])
 let g:R_enable_comment    = get(g:, "R_enable_comment",     0)
 let g:R_openhtml          = get(g:, "R_openhtml",           1)
 let g:R_hi_fun_paren      = get(g:, "R_hi_fun_paren",       0)
-let g:R_hi_fun_globenv    = get(g:, "R_hi_fun_globenv",     0)
 let g:R_bib_compl         = get(g:, "R_bib_compl", ["rnoweb"])
 
 if type(g:R_bib_compl) == v:t_string
@@ -955,11 +954,15 @@ if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
     let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
     let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
     let g:R_set_omnifunc = []
-    let g:R_hi_fun_globenv = 2
+    let g:rplugin.update_glbenv = 1
 else
     let $NVIMR_COMPLCB = 'SetComplMenu'
     let $NVIMR_COMPLInfo = "SetComplInfo"
     let g:R_set_omnifunc = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
+endif
+
+if len(g:R_set_omnifunc) > 0
+    let g:rplugin.update_glbenv = 1
 endif
 
 " Look for invalid options

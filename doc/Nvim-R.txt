@@ -720,10 +720,11 @@ background):
 <
 Notes:
 
-  - The Object Browser enables the automatic update of the data for the omni
-    completion of .GlobalEnv objects, and this may slowdown R if its workspace
-    has too many objects, data.frames with too many columns or lists with too
-    many elements (see |R_hi_fun_globenv|).
+  - If either the Object Browser is open or omni completion is enabled, the
+    list of .GlobalEnv objects will be automatically updated by R after each
+    successful evaluation of command. This may slowdown R if its workspace has
+    too many objects, data.frames with too many columns or lists with too many
+    elements (see |R_set_omnifunc|).
 
   - Names of objects are stupidly truncated if they occupy more than 62 bytes.
     This means that Unicode sequences might be split and become invalid.
@@ -1005,7 +1006,6 @@ of
 |Rout_more_colors|      More syntax highlighting in R output
 |R_hi_fun|              Highlight R functions
 |R_hi_fun_paren|        Highlight R functions only if followed by a `(`
-|R_hi_fun_globenv|      Highlight R functions from .GlobalEnv
 |R_routnotab|           Show output of R CMD BATCH in new window
 |R_enable_comment|      Enable ability of commenting code
 |R_notmuxconf|          Don't use a specially built Tmux config file
@@ -1589,22 +1589,10 @@ the `(` is typed, put in your |vimrc|:
 Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
-							    *R_hi_fun_globenv*
 By default, functions from `.GlobalEnv` and other environments in the
-`search()` path whose names do not start with `"package:"` are not immediately
-highlighted to avoid the need of nvimcom saving a temporary file with the list
-objects in these environments after each command sent to R, which might be
-slow in some machines, and especially if R's workspace has too many objects,
-data.frames with too many columns or lists with too many elements. Anyway, if
-you prefer these functions more quickly highlighted, change the value of
-`R_hi_fun_globenv` to either 1 or 2 in your |vimrc|:
->
-   let R_hi_fun_globenv = 0 " Highlight only if starting omni completion
-   let R_hi_fun_globenv = 1 " Highlight after an InsertEnter event
-   let R_hi_fun_globenv = 2 " Highlight immediately
-<
-If the value of `R_hi_fun_globenv` is 0, it is automatically increased to 1 if
-you trigger omni completion.
+`search()` path whose names do not start with `"package:"` are immediately
+highlighted after being created in the R workspace if `R_set_omnifunc` is not
+empty, the Object Browser is open, or `cmp-nvim-r` is installed.
 
 Functions from environments in the search path are highlighted as functions
 from packages, but in Neovim (not in Vim) you can set a different highlight
@@ -2781,7 +2769,7 @@ See also: |R_source|.
 8. News~
 
  * Integration with cmp-nvim-r, a source for nvim-cmp.
- * Delete option R_auto_omni.
+ * Delete options R_auto_omni and R_hi_fun_globenv.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
  * Require either Neovim 0.6.0 or Vim 8.2.84.

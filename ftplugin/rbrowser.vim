@@ -299,7 +299,7 @@ function! RBrowserGetName()
 endfunction
 
 function! OnOBBufUnload()
-    if g:R_hi_fun_globenv < 2
+    if g:rplugin.update_glbenv == 0
         call SendToNvimcom("N", "OnOBBufUnload")
     endif
 endfunction

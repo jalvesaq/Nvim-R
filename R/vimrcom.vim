@@ -31,6 +31,7 @@ let s:waiting_more_input = 0
 function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
+    " DEBUG: call writefile([cmd], "/dev/shm/nclientserver_vim_stdout", "a")
     if cmd[0] == "\005"
         " Check the size of possibly very big string (dictionary for menu completion).
         let cmdsplt = split(cmd, "\005")

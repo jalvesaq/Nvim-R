@@ -863,7 +863,7 @@ static void nvimcom_parse_received_msg(char *buf)
         case 'N':
             autoglbenv = 0;
             break;
-        case 'G': // Write GlobalEnvList_
+        case 'G': // GlobalEnvList_
 #ifdef WIN32
             if(!r_is_busy)
                 nvimcom_globalenv_list();

@@ -475,3 +475,8 @@ endif
 if exists('g:R_commented_lines')
     call RWarningMsg('R_commented_lines no longer exists. See: https://github.com/jalvesaq/Nvim-R/issues/743')
 endif
+
+" 2023-10-23
+if exists('g:R_hi_fun_globenv')
+    call RWarningMsg('R_hi_fun_globenv no longer exists.')
+endif

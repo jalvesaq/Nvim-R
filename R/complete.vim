@@ -16,12 +16,6 @@ let s:float_win = 0
 let s:compl_event = {}
 let g:rplugin.compl_cls = ''
 
-" If omni completion is called at least once, increase the value of
-" g:R_hi_fun_globenv to 1.
-if g:R_hi_fun_globenv == 0
-    let g:R_hi_fun_globenv = 1
-endif
-
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
     let g:rplugin.compl_cls = ud['cls']
@@ -473,13 +467,6 @@ function SetComplMenu(id, cmn)
     let s:waiting_compl_menu = 0
 endfunction
 
-function UpdateRGlobalEnv(block)
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    call RealUpdateRGlbEnv(a:block)
-endfunction
-
 let s:completion_id = 0
 function CompleteR(findstart, base)
     if a:findstart
@@ -522,7 +509,6 @@ function CompleteR(findstart, base)
                 return WaitRCompletion()
             endif
 
-            call UpdateRGlobalEnv(1)
             let s:waiting_compl_menu = 1
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
                 call GetRArgs(s:completion_id, a:base, nra[0], nra[1], nra[2], nra[4], isfa)
@@ -538,7 +524,6 @@ function CompleteR(findstart, base)
         if exists('s:compl_menu')
             unlet s:compl_menu
         endif
-        call UpdateRGlobalEnv(1)
         let s:waiting_compl_menu = 1
         call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" .  a:base . "\n")
         return WaitRCompletion()
@@ -675,15 +660,6 @@ function FillQuartoComplMenu()
     endif
 endfunction
 
-function ROnInsertEnter()
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    if g:R_hi_fun_globenv != 0
-        call RealUpdateRGlbEnv(0)
-    endif
-endfunction
-
 function RComplAutCmds()
     if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
         if &omnifunc == "CompleteR"
@@ -700,7 +676,6 @@ function RComplAutCmds()
     " registered three times
     if !exists('b:did_RBuffer_au')
         augroup RBuffer
-            autocmd InsertEnter <buffer> call ROnInsertEnter()
             if index(g:R_set_omnifunc, &filetype) > -1
                 autocmd CompleteChanged <buffer> call AskForComplInfo()
                 autocmd CompleteDone <buffer> call OnCompleteDone()

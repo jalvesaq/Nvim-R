@@ -84,7 +84,7 @@ function ReallyStartR(whatr)
     let s:wait_nvimcom = 1
 
     if g:rplugin.myport == 0
-        if g:rplugin.jobs["ClientServer"] == 0
+        if IsJobRunning("ClientServer") == 0
             call RWarningMsg("Cannot start R: nclientserver not running")
             return
         endif
@@ -148,7 +148,7 @@ function ReallyStartR(whatr)
     else
         let start_options += ['options(nvimcom.texerrs = FALSE)']
     endif
-    if g:R_hi_fun_globenv == 2
+    if g:rplugin.update_glbenv
         let start_options += ['options(nvimcom.autoglbenv = TRUE)']
     else
         let start_options += ['options(nvimcom.autoglbenv = FALSE)']
@@ -476,58 +476,11 @@ function SendToNvimcom(code, attch)
     call JobStdin(g:rplugin.jobs["ClientServer"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
 endfunction
 
-" This function is called by nvimcom only if the message is longer than 980
-" characters. Then, it saves the message in a file and sends to Nvim-R only
-" this command to read the message from the file. Shorter messages are
-" received from the nclientserver stdout (see nvimrcom.vim and vimrcom.vim).
-function ReadRMsg()
-    let msg = readfile($NVIMR_TMPDIR . "/nvimcom_msg")
-    exe "call " . msg[0]
-    call delete($NVIMR_TMPDIR . "/nvimcom_msg")
-endfunction
-
 
 "==============================================================================
 " Keep syntax highlighting, data for omni completion and object browser up to
 " date
 "==============================================================================
-
-" Did R successfully finished evaluating a command?
-" There is no need of waiting for the completion of the .GlobalEnv list of
-" objects to start omni completion if no command was run afer the list was
-" built for the last time.
-let s:R_task_completed = 0
-
-" Function called by nvimcom
-" function RTaskCompleted()
-"     let s:R_task_completed = 1
-"     if g:R_hi_fun_globenv == 2
-"         call SendToNvimcom("A", "TaskCompleted hi_fun_globenv = 2")
-"         call RealUpdateRGlbEnv(0)
-"     endif
-" endfunction
-
-" let s:updating_globalenvlist = 0
-
-" let s:nglobfun = 0
-" function RealUpdateRGlbEnv(block)
-"     if ! s:R_task_completed
-"         return
-"     endif
-"     let s:R_task_completed = 0
-
-"     if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-"         return
-"     endif
-
-"     let s:updating_globalenvlist = 1
-"     call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
-
-"     if g:rplugin.R_pid== 0
-"         sleep 500m
-"         return
-"     endif
-" endfunction
 
 " Called by nclientserver. When g:rplugin has the key 'localfun', the function
 " is also called by SourceRFunList() (R/functions.vim)
