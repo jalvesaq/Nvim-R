@@ -44,7 +44,6 @@ static char tmpdir[256];
 static char localtmpdir[256];
 static char liblist[576];
 static char globenv[576];
-static char glbnvls[576];
 static int auto_obbr;
 static size_t glbnv_buffer_sz;
 static char *glbnv_buffer;
@@ -1325,6 +1324,7 @@ void update_pkg_list(char *libnms)
     }
 
     if (libnms) {
+        // called by nvimcom
         Log("update_pkg_list != NULL");
         while (*libnms) {
             nm = libnms;
@@ -1353,6 +1353,9 @@ void update_pkg_list(char *libnms)
                 add_pkg(nm, vrsn);
         }
     } else {
+        // Called during the initialization with libnames_ created by
+        // R/before_ncs.R to highlight function from the `library()` and
+        // `require()` commands present in the file being edited.
         char lbnm[128];
         Log("update_pkg_list == NULL");
 
@@ -1904,7 +1907,6 @@ static void init(void)
 
     snprintf(liblist, 575, "%s/liblist_%s", localtmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 575, "%s/globenv_%s", localtmpdir, getenv("NVIMR_ID"));
-    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
     if(getenv("NVIMR_OPENDF"))
         OpenDF = 1;

@@ -119,11 +119,9 @@ function ReallyStartR(whatr)
         endif
     endif
 
-    call writefile([], g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call writefile([], g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
     call writefile([], g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
 
-    call AddForDeletion(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
 
@@ -432,7 +430,6 @@ endfunction
 function ClearRInfo()
     call delete(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
     call delete(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin.localtmpdir . "/GlobalEnvList_" . $NVIMR_ID)
     for fn in g:rplugin.del_list
         call delete(fn)
     endfor

@@ -57,8 +57,6 @@ static int needs_glbenv_msg = 0;
 static char ncs_port[16];
 static char nvimsecr[128];
 
-static char glbnvls[576];
-
 static char *glbnvbuf1;
 static char *glbnvbuf2;
 static char *send_ge_buf;
@@ -863,7 +861,7 @@ static void nvimcom_parse_received_msg(char *buf)
         case 'N':
             autoglbenv = 0;
             break;
-        case 'G': // GlobalEnvList_
+        case 'G':
 #ifdef WIN32
             if(!r_is_busy)
                 nvimcom_globalenv_list();
@@ -980,8 +978,6 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 
     if(getenv("NVIMR_PORT"))
         strncpy(ncs_port, getenv("NVIMR_PORT"), 15);
-
-    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
 
     if(verbose > 0)
         REprintf("nvimcom %s loaded\n", nvimcom_version);
