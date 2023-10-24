@@ -41,11 +41,11 @@ nvim_capture_source_output <- function(s, nm) {
 }
 
 nvim_dput <- function(oname, howto = "tabnew") {
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
-    eval(parse(text = paste0("dput(", oname, ")")))
-    sink()
+    o <- capture.output(eval(parse(text = paste0("dput(", oname, ")"))))
+    o <- paste0(o, collapse = "\002")
+    o <- gsub("'", "\003", o)
     .C("nvimcom_msg_to_nvim",
-       paste0('call ShowRObj("', howto, '", "', oname, '", "r")'),
+       paste0("call ShowRObj('", howto, "', '", oname, "', 'r', '", o, "')"),
        PACKAGE = "nvimcom")
 }
 
@@ -87,16 +87,16 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
             return(invisible(NULL))
         }
         if (getOption("nvimcom.delim") == "\t") {
-            write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
-                        fileEncoding = fenc,
-                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+            txt <- capture.output(write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                                              fileEncoding = fenc))
         } else {
-            write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
-                        fileEncoding = fenc,
-                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+            txt <- capture.output(write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                                              fileEncoding = fenc))
         }
+        txt <- paste0(txt, collapse = "\002")
+        txt <- gsub("'", "\003", txt)
         .C("nvimcom_msg_to_nvim",
-           paste0("call RViewDF('", oname, "', '", howto, "')"),
+           paste0("call RViewDF('", oname, "', '", howto, "', '", txt, "')"),
            PACKAGE = "nvimcom")
     } else {
         nvim_dput(oname, howto)
@@ -173,14 +173,16 @@ nvim_format <- function(l1, l2, wco, sw) {
 }
 
 nvim_insert <- function(cmd, howto = "tabnew") {
-    try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
-    if (inherits(ok, "try-error")) {
+    try(o <- capture.output(cmd))
+    if (inherits(o, "try-error")) {
         .C("nvimcom_msg_to_nvim",
            paste0("call RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
            PACKAGE = "nvimcom")
     } else {
+        o <- paste0(o, collapse = "\002")
+        o <- gsub("'", "\003", o)
         .C("nvimcom_msg_to_nvim",
-           paste0('call FinishRInsert("', howto, '")'),
+           paste0("call FinishRInsert('", howto, "', '", o, "')"),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))

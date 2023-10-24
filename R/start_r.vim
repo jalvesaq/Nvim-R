@@ -503,13 +503,12 @@ endfunction
 "  Functions triggered by nvimcom after user action on R Console
 "==============================================================================
 
-function ShowRObj(howto, bname, ftype)
+function ShowRObj(howto, bname, ftype, txt)
     let bfnm = substitute(a:bname, '[ [:punct:]]', '_', 'g')
     call AddForDeletion(g:rplugin.tmpdir . "/" . bfnm)
     silent exe a:howto . ' ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/' . bfnm
     silent exe 'set ft=' . a:ftype
-    let objf = readfile(g:rplugin.tmpdir . "/Rinsert")
-    call setline(1, objf)
+    call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
     set nomodified
 endfunction
 
@@ -827,10 +826,6 @@ function RInsert(cmd, type)
     if g:rplugin.R_pid == 0
         return
     endif
-
-    call delete(g:rplugin.tmpdir . "/Rinsert")
-    call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
-
     call SendToNvimcom("E", 'nvimcom:::nvim_insert(' . a:cmd . ', "' . a:type . '")')
 endfunction
 
@@ -844,26 +839,16 @@ function SendLineToRAndInsertOutput()
     call RInsert("print(" . cleanl . ")", "comment")
 endfunction
 
-function FinishRInsert(type)
-    silent exe "read " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
-
+function FinishRInsert(type, txt)
+    let ilines = split(substitute(a:txt, "\003", "'", "g"), "\002")
     if a:type == "comment"
-        if !exists('*RSimpleCommentLine')
-            exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/comment.vim"
-        endif
-        let curpos = getpos(".")
-        " comment the output
-        let ilines = readfile(g:rplugin.tmpdir . "/Rinsert")
-        for iln in ilines
-            call RSimpleCommentLine("normal", "c")
-            normal! j
-        endfor
-        call setpos(".", curpos)
+        call map(ilines, '"# " . v:val')
     endif
+    call append(line('.'), ilines)
 endfunction
 
 function GetROutput(fnm, txt)
-    if a:fnm =~ g:rplugin.tmpdir
+    if a:fnm == "NewtabInsert"
         let tnum = 1
         while bufexists("so" . tnum)
             let tnum += 1
@@ -882,10 +867,10 @@ function GetROutput(fnm, txt)
 endfunction
 
 
-function RViewDF(oname, ...)
+function RViewDF(oname, howto, txt)
     if exists('g:R_csv_app')
         let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
-        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
+        call writefile(split(substitute(a:txt, "\003", "'", "g"), "\002"), tsvnm)
         call AddForDeletion(tsvnm)
 
         if g:R_csv_app =~ '%s'
@@ -917,11 +902,10 @@ function RViewDF(oname, ...)
         return
     endif
 
-    let location = get(a:, 1, "tabnew")
+    let location = a:howto
     silent exe location . ' ' . a:oname
-    silent 1,$d
-    silent exe 'read ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
-    silent 1d
+    " silent 1,$d
+    call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
     setlocal filetype=csv
     setlocal nomodified
     setlocal bufhidden=wipe
@@ -1185,8 +1169,7 @@ function RSourceLines(...)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call writefile(lines, s:Rsource_write)
-        call AddForDeletion(g:rplugin.tmpdir . '/Rinsert')
-        call SendToNvimcom("E", 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "' . g:rplugin.tmpdir . '/Rinsert")')
+        call SendToNvimcom("E", 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "NewtabInsert")')
         return 1
     endif
 
@@ -2007,9 +1990,6 @@ function RAction(rcmd, ...)
         endif
 
         if a:rcmd == "viewobj" || a:rcmd == "dputtab"
-            call delete(g:rplugin.tmpdir . "/Rinsert")
-            call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
-
             if a:rcmd == "viewobj"
                 if exists("g:R_df_viewer")
                     let argmnts .= ', R_df_viewer = "' . g:R_df_viewer . '"'
