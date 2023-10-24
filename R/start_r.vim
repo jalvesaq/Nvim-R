@@ -862,19 +862,20 @@ function FinishRInsert(type)
     endif
 endfunction
 
-function GetROutput(outf)
-    if a:outf =~ g:rplugin.tmpdir
+function GetROutput(fnm, txt)
+    if a:fnm =~ g:rplugin.tmpdir
         let tnum = 1
         while bufexists("so" . tnum)
             let tnum += 1
         endwhile
         exe 'tabnew so' . tnum
-        exe 'read ' . substitute(a:outf, " ", '\\ ', 'g')
+        call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
         set filetype=rout
         setlocal buftype=nofile
         setlocal noswapfile
     else
-        exe 'tabnew ' . substitute(a:outf, " ", '\\ ', 'g')
+        exe 'tabnew ' a:fnm
+        call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
     endif
     normal! gT
     redraw
@@ -1002,11 +1003,6 @@ endfunction
 " Show R's help doc in Nvim's buffer
 " (based  on pydoc plugin)
 function AskRDoc(rkeyword, package, getclass)
-    if filewritable(s:docfile)
-        call delete(s:docfile)
-    endif
-    call AddForDeletion(s:docfile)
-
     let firstobj = ""
     if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufnr") && bufnr("%") == g:rplugin.R_bufnr)
         let savesb = &switchbuf
@@ -1033,9 +1029,7 @@ function AskRDoc(rkeyword, package, getclass)
 endfunction
 
 " Function called by nvimcom
-function ShowRDoc(rkeyword)
-    call AddForDeletion(s:docfile)
-
+function ShowRDoc(rkeyword, txt)
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
         let msgs = split(a:rkeyword)
@@ -1126,7 +1120,7 @@ function ShowRDoc(rkeyword)
     let save_unnamed_reg = @@
     set modifiable
     sil normal! ggdG
-    let fcntt = readfile(s:docfile)
+    let fcntt = split(substitute(a:txt, "\003", "'", "g"), "\002")
     call setline(1, fcntt)
     if a:rkeyword =~ "R History"
         set filetype=r
@@ -2184,7 +2178,6 @@ call AddForDeletion(s:Rsource_write)
 let s:running_objbr = 0
 let s:running_rhelp = 0
 let g:rplugin.R_pid = 0
-let s:docfile = g:rplugin.tmpdir . "/Rdoc"
 
 " List of marks that the plugin seeks to find the block to be sent to R
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"

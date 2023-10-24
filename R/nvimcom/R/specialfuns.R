@@ -32,9 +32,12 @@ vi <- function(name = NULL, file = "") {
     nvim.edit(name, file)
 }
 
-nvim_capture_source_output <- function(s, o) {
-    capture.output(base::source(s, echo = TRUE), file = o)
-    .C("nvimcom_msg_to_nvim", paste0("call GetROutput('", o, "')"), PACKAGE = "nvimcom")
+nvim_capture_source_output <- function(s, nm) {
+    o <- capture.output(base::source(s, echo = TRUE), file = NULL)
+    o <- paste0(o, collapse = "\002")
+    o <- gsub("'", "\003", o)
+    .C("nvimcom_msg_to_nvim", paste0("call GetROutput('", nm, "', '", o, "')"),
+       PACKAGE = "nvimcom")
 }
 
 nvim_dput <- function(oname, howto = "tabnew") {
