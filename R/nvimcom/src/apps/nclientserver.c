@@ -52,7 +52,6 @@ static unsigned long compl_buffer_size = 32768;
 static int n_omnils_build;
 static int building_omnils;
 static int more_to_build;
-static unsigned long msg_size;
 void omni2ob(void);
 void lib2ob(void);
 void update_inst_libs(void);
@@ -60,7 +59,7 @@ void update_pkg_list(char *libnms);
 void update_glblenv_buffer(char *g);
 static void build_omnils(void);
 static void finish_bol();
-void complete(const char *id, char *base, char *funcnm);
+void complete(const char *id, char *base, char *funcnm, char *args);
 
 // List of paths to libraries
 typedef struct libpaths_ {
@@ -223,7 +222,7 @@ static void RegisterPort(int bindportn)
 
 static void ParseMsg(char *b)
 {
-    Log("ParseMsg(): strlen(b) = %zu, msg_size = %zu", strlen(b), msg_size);
+    Log("ParseMsg(): strlen(b) = %zu", strlen(b));
 
     if (*b == '+') {
         b++;
@@ -243,6 +242,7 @@ static void ParseMsg(char *b)
                 break;
             case 'A': // strtok doesn't work here because "base" might be empty.
                 b++;
+                char *args;
                 char *id = b;
                 char *base = id;
                 while (*base != ';')
@@ -254,11 +254,16 @@ static void ParseMsg(char *b)
                     fnm++;
                 *fnm = 0;
                 fnm++;
-                b = fnm;
+                args = fnm;
+                while (*args != 0 && *args != ';')
+                    args++;
+                *args = 0;
+                args++;
+                b = args;
                 while (*b != 0 && *b != '\n')
                     b++;
                 *b = 0;
-                complete(id, base, fnm);
+                complete(id, base, fnm, args);
                 break;
         }
         return;
@@ -413,7 +418,7 @@ static void *receive_msg()
             fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
             fflush(stderr);
         } else {
-            Log("TCP in (message header): %s", b);
+            Log("TCP in [%zu bytes] (message header): %s", blen, b);
             get_whole_msg(b);
         }
     }
@@ -1208,7 +1213,6 @@ static void build_omnils(void)
         n_omnils_build++;
         p = str_cat(p, ")\nnvimcom:::nvim.buildomnils(p)\n");
         p = str_cat(p, "nvimcom:::nvim.buildargs(p)\n");
-        // Log(compl_buffer);
         run_R_code(compl_buffer, 1);
         finish_bol();
     }
@@ -1341,8 +1345,6 @@ void update_pkg_list(char *libnms)
                 libnms++;
 
             if (strstr(nm, " ") || strstr(vrsn, " ")) {
-                Log("  nm = %s", nm);
-                Log("  vr = %s", vrsn);
                 break;
             }
 
@@ -1503,7 +1505,6 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
         p++;
     if(*p == '\n')
         p++;
-    // Log("|%s|%s|%s|%s|%s|%s|%s|", f[0], f[1], f[2], f[3], f[4], f[5], f[6]);
 
     if(closeddf)
         df = 0;
@@ -2170,38 +2171,6 @@ char *parse_omnls(const char *s, const char *base, const char *pkg, char *p)
     return p;
 }
 
-char *get_arg_compl(char *p, const char *base)
-{
-    char *s, *t;
-    unsigned long nsz;
-    // Get documentation info for each item
-    char buf[512];
-    snprintf(buf, 511, "%s/args_for_completion", tmpdir);
-    s = read_file(buf, 1);
-    if(s){
-        nsz = strlen(s) + 1024 + (p - compl_buffer);
-        if (compl_buffer_size < nsz)
-            p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
-        snprintf(buf, 511, "{'word': '%s", base);
-#ifdef WIN32
-        t = strtok(s, "\n\r");
-#else
-        t = strtok(s, "\n");
-#endif
-        while(t){
-            if(strstr(t, buf))
-                p = str_cat(p, t);
-#ifdef WIN32
-            t = strtok(NULL, "\n\r");
-#else
-            t = strtok(NULL, "\n");
-#endif
-        }
-        free(s);
-    }
-    return p;
-}
-
 void resolve_arg_item(char *pkg, char *fnm, char *itm)
 {
     char item[128];
@@ -2286,8 +2255,9 @@ char *complete_args(char *p, char *funcnm)
     return p;
 }
 
-void complete(const char *id, char *base, char *funcnm)
+void complete(const char *id, char *base, char *funcnm, char *args)
 {
+    Log("complete(%s, %s, %s, _)", id, base, funcnm, args);
     char *p;
 
     memset(compl_buffer, 0, compl_buffer_size);
@@ -2307,7 +2277,7 @@ void complete(const char *id, char *base, char *funcnm)
             if (r_conn == 0)
                 p = complete_args(p, funcnm);
             else
-                p = get_arg_compl(p, base);
+                p = str_cat(p, args);
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
@@ -2421,7 +2391,7 @@ void stdin_loop()
                 msg++;
                 if (*msg == '\004') {
                     msg++;
-                    complete(id, msg, "\004");
+                    complete(id, msg, "\004", NULL);
                 } else if (*msg == '\005') {
                     msg++;
                     char *base = msg;
@@ -2429,9 +2399,9 @@ void stdin_loop()
                         msg++;
                     *msg = 0;
                     msg++;
-                    complete(id, base, msg);
+                    complete(id, base, msg, NULL);
                 } else {
-                    complete(id, msg, NULL);
+                    complete(id, msg, NULL, NULL);
                 }
                 break;
             case '6':

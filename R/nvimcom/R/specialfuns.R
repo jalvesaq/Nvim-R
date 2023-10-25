@@ -35,7 +35,7 @@ vi <- function(name = NULL, file = "") {
 nvim_capture_source_output <- function(s, nm) {
     o <- capture.output(base::source(s, echo = TRUE), file = NULL)
     o <- paste0(o, collapse = "\002")
-    o <- gsub("'", "\003", o)
+    o <- gsub("'", "\004", o)
     .C("nvimcom_msg_to_nvim", paste0("call GetROutput('", nm, "', '", o, "')"),
        PACKAGE = "nvimcom")
 }
@@ -43,7 +43,7 @@ nvim_capture_source_output <- function(s, nm) {
 nvim_dput <- function(oname, howto = "tabnew") {
     o <- capture.output(eval(parse(text = paste0("dput(", oname, ")"))))
     o <- paste0(o, collapse = "\002")
-    o <- gsub("'", "\003", o)
+    o <- gsub("'", "\004", o)
     .C("nvimcom_msg_to_nvim",
        paste0("call ShowRObj('", howto, "', '", oname, "', 'r', '", o, "')"),
        PACKAGE = "nvimcom")
@@ -94,7 +94,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
                                               fileEncoding = fenc))
         }
         txt <- paste0(txt, collapse = "\002")
-        txt <- gsub("'", "\003", txt)
+        txt <- gsub("'", "\004", txt)
         .C("nvimcom_msg_to_nvim",
            paste0("call RViewDF('", oname, "', '", howto, "', '", txt, "')"),
            PACKAGE = "nvimcom")
@@ -180,7 +180,7 @@ nvim_insert <- function(cmd, howto = "tabnew") {
            PACKAGE = "nvimcom")
     } else {
         o <- paste0(o, collapse = "\002")
-        o <- gsub("'", "\003", o)
+        o <- gsub("'", "\004", o)
         .C("nvimcom_msg_to_nvim",
            paste0("call FinishRInsert('", howto, "', '", o, "')"),
            PACKAGE = "nvimcom")
@@ -308,15 +308,15 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
 ###############################################################################
 
 nvim.GlobalEnv.fun.args <- function(funcname) {
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
-    cat(nvim.args(funcname))
-    sink()
+    txt <- nvim.args(funcname)
+    txt <- gsub('\\\\\\"', '\005', txt)
+    txt <- gsub('"', '\\\\"', txt)
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
         .C("nvimcom_msg_to_nvim",
-           paste0('call FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
+           paste0('call FinishGlbEnvFunArgs("', funcname, '", "', txt, '")'), PACKAGE = "nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
-           paste0("call v:lua.require'cmp_nvim_r'.finish_glbenv_fun()"),
+           paste0("call v:lua.require'cmp_nvim_r'.finish_ge_fun_args(\"", txt, '")'),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -331,31 +331,33 @@ nvim.get.summary <- function(obj, wdth) {
 
     owd <- getOption("width")
     options(width = wdth)
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
         sobj <- try(summary(obj), silent = TRUE)
-        print(sobj)
+        txt <- capture.output(print(sobj))
     } else {
+        txt <- ""
         if (!is.null(attr(obj, "label")))
-            cat("\n\n", attr(obj, "label"))
-        cat("\n\n```rout\n")
+            txt <- append(txt, capture.output(cat("\n\n", attr(obj, "label"))))
+        txt <- append(txt, capture.output(cat("\n\n```rout\n")))
         if (is.factor(obj) || is.numeric(obj)) {
             sobj <- try(summary(obj), silent = TRUE)
-            print(sobj)
+            txt <- append(txt, capture.output(print(sobj)))
         } else {
             sobj <- try(utils::str(obj), silent = TRUE)
-            print(sobj)
+            txt <- append(txt, capture.output(print(sobj)))
         }
-        cat("```\n")
+        txt <- append(txt, capture.output(cat("```\n")))
     }
-    sink()
     options(width = owd)
 
+    txt <- paste0(txt, collapse = "\n")
+    txt <- gsub("'", "\004", gsub("\n", "\002", txt))
+
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
-        .C("nvimcom_msg_to_nvim", "call FinishGetSummary()", PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("call FinishGetSummary('", txt, "')"), PACKAGE = "nvimcom")
     } else {
-        .C("nvimcom_msg_to_nvim", "call v:lua.require'cmp_nvim_r'.finish_get_summary()",
-           PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("call v:lua.require'cmp_nvim_r'.finish_summary('", txt, "')"),
+                                         PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
 }
@@ -446,10 +448,10 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
             }
         }
     }
-    writeLines(text = res,
-               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
+
+    res <- paste0(res, collapse = " ")
     .C("nvimcom_msg_to_nvim",
-       paste0("+A", id, ";", argkey, ";", rkeyword0),
+       paste0("+A", id, ";", argkey, ";", rkeyword0, ";", res),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }

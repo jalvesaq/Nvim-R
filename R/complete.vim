@@ -297,25 +297,22 @@ function AskForComplInfo()
     endif
 endfunction
 
-function FinishGlbEnvFunArgs(fnm)
-    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-        let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
+function FinishGlbEnvFunArgs(fnm, txt)
+        let usage = substitute(a:txt, "\002", "\n", "g")
+        let usage = substitute(usage, "\004", "''", "g")
+        let usage = substitute(usage, "\005", '\\"', "g")
         let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
         let usage = eval(usage)
         call map(usage, 'join(v:val, " = ")')
         let usage = join(usage, ", ")
         let s:usage = a:fnm . '(' . usage . ')'
-    else
-        let s:usage = "COULD NOT GET ARGUMENTS"
-    endif
     let s:compl_event['completed_item']['user_data']['descr'] = ''
     call CreateNewFloat()
 endfunction
 
-function FinishGetSummary()
-    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-        let s:compl_event['completed_item']['user_data']['summary'] = readfile(g:rplugin.tmpdir . "/args_for_completion")
-    endif
+function FinishGetSummary(txt)
+    let summary = split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let s:compl_event['completed_item']['user_data']['summary'] = summary
     call CreateNewFloat()
 endfunction
 

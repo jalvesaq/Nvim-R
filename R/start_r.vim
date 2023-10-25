@@ -508,7 +508,7 @@ function ShowRObj(howto, bname, ftype, txt)
     call AddForDeletion(g:rplugin.tmpdir . "/" . bfnm)
     silent exe a:howto . ' ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/' . bfnm
     silent exe 'set ft=' . a:ftype
-    call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
+    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     set nomodified
 endfunction
 
@@ -840,7 +840,7 @@ function SendLineToRAndInsertOutput()
 endfunction
 
 function FinishRInsert(type, txt)
-    let ilines = split(substitute(a:txt, "\003", "'", "g"), "\002")
+    let ilines = split(substitute(a:txt, "\004", "'", "g"), "\002")
     if a:type == "comment"
         call map(ilines, '"# " . v:val')
     endif
@@ -854,13 +854,13 @@ function GetROutput(fnm, txt)
             let tnum += 1
         endwhile
         exe 'tabnew so' . tnum
-        call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
+        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
         set filetype=rout
         setlocal buftype=nofile
         setlocal noswapfile
     else
         exe 'tabnew ' a:fnm
-        call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
+        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     endif
     normal! gT
     redraw
@@ -870,7 +870,7 @@ endfunction
 function RViewDF(oname, howto, txt)
     if exists('g:R_csv_app')
         let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
-        call writefile(split(substitute(a:txt, "\003", "'", "g"), "\002"), tsvnm)
+        call writefile(split(substitute(a:txt, "\004", "'", "g"), "\002"), tsvnm)
         call AddForDeletion(tsvnm)
 
         if g:R_csv_app =~ '%s'
@@ -905,7 +905,7 @@ function RViewDF(oname, howto, txt)
     let location = a:howto
     silent exe location . ' ' . a:oname
     " silent 1,$d
-    call setline(1, split(substitute(a:txt, "\003", "'", "g"), "\002"))
+    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     setlocal filetype=csv
     setlocal nomodified
     setlocal bufhidden=wipe
@@ -1104,7 +1104,7 @@ function ShowRDoc(rkeyword, txt)
     let save_unnamed_reg = @@
     set modifiable
     sil normal! ggdG
-    let fcntt = split(substitute(a:txt, "\003", "'", "g"), "\002")
+    let fcntt = split(substitute(a:txt, "\004", "'", "g"), "\002")
     call setline(1, fcntt)
     if a:rkeyword =~ "R History"
         set filetype=r
