@@ -1,8 +1,11 @@
+## Both Vim/Neovim and R on the remote machine
 
-The easiest way to run R in a remote machine is to log into the remote
-machine through ssh, start Neovim, and run R in a Neovim's terminal (the
-default). You will only need both Vim (or Neovim) and R configured as usual in
-the remote machine.
+The easiest way to run R in a remote machine is to log into the remote device
+through ssh, start Neovim, and run R in a Neovim's terminal (the default). You
+will only need both Vim (or Neovim) and R configured as usual in the remote
+machine.
+
+## Only R on the remote machine
 
 However, if you need to start either Neovim or Vim on the local machine and
 run R in the remote machine, then, a lot of additional configuration is
@@ -10,8 +13,8 @@ required to enable full communication between Vim and R because by default
 both Nvim-R and nvimcom only accept TCP connections from the local host, and,
 R saves temporary files in the `/tmp` directory of the machine where it is
 running. To make the communication between local Vim and remote R possible,
-the remote R has to know the IP address of local machine, and one remote
-directory must be mounted locally. Here is an example of how to achieve this
+the remote R has to know the IP address of the local machine and one remote
+directory must be mounted locally. Below is an example of how to achieve this
 goal.
 
   1. Setup the remote machine to accept ssh login from the local machine
@@ -111,9 +114,9 @@ goal.
      - Start Neovim (or Vim), and start R. Nvimcom should be automatically
        installed on the remote machine.
 
-     - If nvimcom does not get automatically installed, you will have to
-       manually, build nvimcom, copy the source to the remote machine, access
-       the remote machine and install the package. Example:
+     - If nvimcom is not automatically installed, you will have to
+       manually build nvimcom, copy the source to the remote machine, access
+       the remote machine, and install the package. Example:
 
        ```sh
        cd /tmp
@@ -124,3 +127,31 @@ goal.
        R CMD INSTALL nvimcom_0.9-149.tar.gz
        ```
 
+## Alternative: vimcmdline
+
+Running R on a remote machine will make a lot of data to be transferred
+through a TCP connection between the R package `nvimcom` and the application
+`nvimrserver` run by Nvim-R. If your connection is not fast enough or its
+latency is too high, you could consider using
+[vimcmdline](https://github.com/jalvesaq/vimcmdline) or a similar plugin. Of
+course, none of NvimR's features that depend on information on R's workspace
+will be available.
+
+Below is an example for `init.lua` of how to configure _vimcmdline_ for
+accessing R remotely:
+
+```lua
+vim.g.cmdline_app = {
+    r = 'ssh -t user@remote-machine R --no-save',
+}
+```
+
+Most of Nvim-R's key bindings call functions that send code to R, and, because they
+will not be used, it is better to disable them:
+
+```lua
+vim.g.R_user_maps_only = 1
+```
+
+Finally, you may want to enable custom actions in _vimcmdline_ (seek `cmdline_actions`
+at [doc/vimcmdline.txt](https://github.com/jalvesaq/vimcmdline/blob/master/doc/vimcmdline.txt)).
