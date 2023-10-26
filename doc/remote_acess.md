@@ -113,7 +113,7 @@ goal.
 
      - If nvimcom does not get automatically installed, you will have to
        manually, build nvimcom, copy the source to the remote machine, access
-       the remote machine and install the package:
+       the remote machine and install the package. Example:
 
        ```sh
        cd /tmp
