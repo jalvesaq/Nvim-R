@@ -191,10 +191,12 @@ file) released at:
 Note: The <LocalLeader> is '\' by default.
 
 The plugin is a |file-type| plugin. It will be active only if you are editing
-a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The menu items will not be visible
-and the key bindings will not be active while editing either unnamed files or
-files with name extensions other than the mentioned above (however, see
-https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type).
+a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The the key bindings will not be
+active while editing either unnamed files or files with name extensions other
+than the mentioned above: Hhowever, see:
+
+  https://github.com/jalvesaq/Nvim-R/wiki/Enable-Nvim-R-for-any-file-type
+
 If the plugin is active, pressing <LocalLeader>rf should start R.
 
 Did you see warning messages but they disappeared before you have had time to
@@ -203,6 +205,21 @@ read them? Type the command |:messages| in Normal mode to see them again.
 Run the command `:RDebugInfo` which will show information useful to fix some
 common issues.
 
+To see messages received by `nvimcom`, put in your `~/.Rprofile`:
+>
+  options(nvimcom.verbose = 4)
+<
+To see messages received by Neovim, uncomment the first line of the function
+`ROnJobStdout()` at `R/nvimrcom.vim` and delete the string "DEBUG:". It will
+become:
+>
+  call writefile(a:data, "/dev/shm/nvimrserver_stdout", "a")
+<
+Then, in another terminal or in another Tmux pane, you would have to use tail
+to follow the output:
+>
+  tail -f /dev/shm/nvimrserver_stdout
+<
 If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
 |R_path|).
@@ -703,10 +720,11 @@ background):
 <
 Notes:
 
-  - The Object Browser enables the automatic update of the data for the omni
-    completion of .GlobalEnv objects, and this may slowdown R if its workspace
-    has too many objects, data.frames with too many columns or lists with too
-    many elements (see |R_hi_fun_globenv|).
+  - If either the Object Browser is open or omni completion is enabled, the
+    list of .GlobalEnv objects will be automatically updated by R after each
+    successful evaluation of command. This may slowdown R if its workspace has
+    too many objects, data.frames with too many columns or lists with too many
+    elements (see |R_set_omnifunc|).
 
   - Names of objects are stupidly truncated if they occupy more than 62 bytes.
     This means that Unicode sequences might be split and become invalid.
@@ -920,7 +938,7 @@ is to manually open R and install any package with the `install.packages()`
 command before using Nvim-R.
 
 
-5.6. The ~.Rprofile should not output anything (Windows only)~
+5.6. ~/.Rprofile should not output anything (Windows only)~
 
 The compilation of `nvimcom` during R startup will fail on Windows if your
 `~/.Rprofile` outputs anything. Example of how to replicate the bug:
@@ -936,8 +954,8 @@ Vim through the <LocalLeader>rf command because the plugin was designed to
 connect each Vim instance with its own R instance.
 
 If you start R before Vim, it will not inherit from Vim the environment
-variables R_DEFAULT_PACKAGES, NVIMR_TMPDIR, NVIMR_COMPLDIR, NVIMR_ID, and
-NVIMR_SECRET. The first one induces R to load nvimcom; the second variable is
+variables `R_DEFAULT_PACKAGES`, `NVIMR_TMPDIR`, `NVIMR_COMPLDIR`, `NVIMR_ID`, and
+`NVIMR_SECRET`. The first one induces R to load nvimcom; the second variable is
 the path used by the R package nvimcom to save temporary files used by Nvim-R
 to: perform omni completion, show R documentation in a Vim buffer, and update
 the Object Browser. The two last ones are used by Nvim-R and by nvimcom to
@@ -946,22 +964,13 @@ built-in terminal (which is the default on Unix), if you use Vim to start R,
 but then close Vim, some variables will become outdated. Additionally, Nvim-R
 sets the value of its internal variable SendCmdToR from SendCmdToR_fake to the
 appropriate value when R is successfully started. It is possible to set the
-values of all those variables and start the TCP client-server manually, but it
+values of all those variables and start the TCP server manually, but it
 is not practical to do so.
 
 Please see the explanation on the communication between Vim and R at the end
 of
 
    https://github.com/jalvesaq/Nvim-R/blob/master/README.md
-
-
-------------------------------------------------------------------------------
-5.8. R and Vim must both be on the same machine~
-
-It is not possible to run (Neo)Vim on a machine and send code to R running on
-another machine. For an alternative, see:
-
-   https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 
 ==============================================================================
@@ -997,7 +1006,6 @@ another machine. For an alternative, see:
 |Rout_more_colors|      More syntax highlighting in R output
 |R_hi_fun|              Highlight R functions
 |R_hi_fun_paren|        Highlight R functions only if followed by a `(`
-|R_hi_fun_globenv|      Highlight R functions from .GlobalEnv
 |R_routnotab|           Show output of R CMD BATCH in new window
 |R_enable_comment|      Enable ability of commenting code
 |R_notmuxconf|          Don't use a specially built Tmux config file
@@ -1047,6 +1055,7 @@ another machine. For an alternative, see:
 |R_fun_data_2|          Where the data.frame to complete function arguments is
 |R_quarto_intel|        Where the Quarto completion data is
 |R_bib_compl|           List of file types for bib completion
+|R_remote_compldir|     Mount point of remote cache directory
 |Nvim-R-df-view|        Options for visualizing a data.frame or matrix
 |Nvim-R-SyncTeX|        Options for SyncTeX
 
@@ -1580,22 +1589,10 @@ the `(` is typed, put in your |vimrc|:
 Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
 depending on your system configuration, the slowness might be noticeable.
 
-							    *R_hi_fun_globenv*
 By default, functions from `.GlobalEnv` and other environments in the
-`search()` path whose names do not start with `"package:"` are not immediately
-highlighted to avoid the need of nvimcom saving a temporary file with the list
-objects in these environments after each command sent to R, which might be
-slow in some machines, and especially if R's workspace has too many objects,
-data.frames with too many columns or lists with too many elements. Anyway, if
-you prefer these functions more quickly highlighted, change the value of
-`R_hi_fun_globenv` to either 1 or 2 in your |vimrc|:
->
-   let R_hi_fun_globenv = 0 " Highlight only if starting omni completion
-   let R_hi_fun_globenv = 1 " Highlight after an InsertEnter event
-   let R_hi_fun_globenv = 2 " Highlight immediately
-<
-If the value of `R_hi_fun_globenv` is 0, it is automatically increased to 1 if
-you trigger omni completion.
+`search()` path whose names do not start with `"package:"` are immediately
+highlighted after being created in the R workspace if `R_set_omnifunc` is not
+empty, the Object Browser is open, or `cmp-nvim-r` is installed.
 
 Functions from environments in the search path are highlighted as functions
 from packages, but in Neovim (not in Vim) you can set a different highlight
@@ -2431,9 +2428,9 @@ very simple and would wrongly recognize `data` as the name of the
 >
    ggplot(data = my_data_frame, mapping = aes(
 <
-Nvim-R receives the list of objects for omni completion from the nclientserver
+Nvim-R receives the list of objects for omni completion from the nvimrserver
 job running in the background. If the list is too big to be transmitted
-through nclientserver's `stdout`, the completion might be aborted.
+through nvimrserver's `stdout`, the completion might be aborted.
 
 If editing Quarto documents, Nvim-R will try to find the file
 `yaml-intelligence-resources.json` which is part of `quarto` application and
@@ -2466,6 +2463,12 @@ better than Nvim-R. Examples:
      https://github.com/jc-doyle/cmp-pandoc-references
      https://github.com/aspeddro/cmp-pandoc.nvim
 
+
+------------------------------------------------------------------------------
+							   *R_remote_compldir*
+6.38 Options for accessing Remote R from local Vim~
+
+See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-df-view*
@@ -2574,50 +2577,6 @@ in order to have the terminal window raised on SyncTeX backward events.
 Example:
 >
    let R_term_title = 'Terminal'
-<
-
-------------------------------------------------------------------------------
-6.40.1 Okular configuration~
-
-In Okular, do the mouse clicks described below and fill the field "Command"
-from "Custom Text Editor" as exemplified:
->
-     Settings
-     Configure Okular
-     Editor
-     Dropdown menu: Custom Text Editor
-           Command: nclientserver '%f' %l
-<
-Note: If the PDF document is already open the first time that you jump to it,
-and if Okular was not started with the `--unique` argument, another instance
-of Okular will be started.
-
-
-------------------------------------------------------------------------------
-6.40.2 Skim configuration~
-
-In Skim, click in the drop down menu and fill the fields:
->
-   Skim
-   Settings
-   Sync
-   Preset: Custom
-   Command: nclientserver
-   Arguments: '%file' %line
-<
-
-------------------------------------------------------------------------------
-6.40.3 Qpdfview configuration~
-
-Qpdfview is only partially supported: SyncTeX backward does not work with file
-paths containing spaces, and the qpdfview window is not automatically raised
-during SyncTeX forward search. If you want to use it despite these
-limitations, click in its drop down menu as illustrated below and fill the
-field Source editor:
->
-   Edit
-   Settings
-   Source editor: nclientserver %1 %2
 <
 
 ==============================================================================
@@ -2810,7 +2769,7 @@ See also: |R_source|.
 8. News~
 
  * Integration with cmp-nvim-r, a source for nvim-cmp.
- * Delete option R_auto_omni.
+ * Delete options R_auto_omni and R_hi_fun_globenv.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
    R_bib_compl, R_enable_comment.
  * Require either Neovim 0.6.0 or Vim 8.2.84.

@@ -34,7 +34,7 @@ endfunction
 let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
 let s:waiting_more_input = 0
 function ROnJobStdout(job_id, data, etype)
-    " DEBUG: call writefile(a:data, "/dev/shm/nclientserver_stdout", "a")
+    " DEBUG: call writefile(a:data, "/dev/shm/nvimrserver_stdout", "a")
     for cmd in a:data
         let cmd = substitute(cmd, '\r', '', 'g')
         if cmd == ""
@@ -91,13 +91,16 @@ function ROnJobExit(job_id, data, etype)
     if key ==# 'R' || key ==# 'RStudio'
         call ClearRInfo()
     endif
+    if key ==# 'Server'
+        let g:rplugin.nrs_running = 0
+    endif
 endfunction
 
 function IsJobRunning(key)
     return g:rplugin.jobs[a:key]
 endfunction
 
-let g:rplugin.jobs = {"ClientServer": 0, "R": 0, "Terminal emulator": 0, "BibComplete": 0}
+let g:rplugin.jobs = {"Server": 0, "R": 0, "Terminal emulator": 0, "BibComplete": 0}
 let g:rplugin.job_handlers = {
             \ 'on_stdout': function('ROnJobStdout'),
             \ 'on_stderr': function('ROnJobStderr'),

@@ -78,11 +78,19 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
     call RRaiseWindow(shortp)
 endfunction
 
+function ZathuraJobStdout(job_id, data, etype)
+    for cmd in a:data
+        if cmd =~ "^call "
+            exe cmd
+        endif
+    endfor
+endfunction
+
 function StartZathuraNeovim(fullpath)
     let g:rplugin.jobs["Zathura"] = jobstart(["zathura",
                 \ "--synctex-editor-command",
-                \ "nclientserver %{input} %{line}", a:fullpath],
-                \ {"detach": 1, "on_stderr": function('ROnJobStderr')})
+                \ "echo 'call SyncTeX_backward(\"%{input}\",  \"%{line}\")'", a:fullpath],
+                \ {"detach": 1, "on_stderr": function('ROnJobStderr'), "on_stdout": function('ZathuraJobStdout')})
     if g:rplugin.jobs["Zathura"] < 1
         call RWarningMsg("Failed to run Zathura...")
     else
@@ -90,11 +98,19 @@ function StartZathuraNeovim(fullpath)
     endif
 endfunction
 
+function ZathuraJobstdoutV(job_id, msg)
+    let cmd = substitute(a:msg, '\n', '', 'g')
+    let cmd = substitute(cmd, '\r', '', 'g')
+    if cmd =~ "^call "
+        exe cmd
+    endif
+endfunction
+
 function StartZathuraVim(fullpath)
     let jobid = job_start(["zathura",
                 \ "--synctex-editor-command",
-                \ "nclientserver %{input} %{line}", a:fullpath],
-                \ {"stoponexit": "", "err_cb": function('ROnJobStderr')})
+                \ "echo 'call SyncTeX_backward(\"%{input}\",  \"%{line}\")'", a:fullpath],
+                \ {"stoponexit": "", "err_cb": function('ROnJobStderr'), "out_cb": function("ZathuraJobstdoutV")})
     if job_info(jobid)["status"] == "run"
         let g:rplugin.jobs["Zathura"] = job_getchannel(jobid)
         let g:rplugin.zathura_pid[a:fullpath] = job_info(jobid)["process"]
@@ -113,10 +129,6 @@ function RStart_Zathura(fullpath)
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
             let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
             if pid > 0 && pid <= max_pid
-                " Instead of killing, it would be better to reset the backward
-                " command, but Zathura does not have a Dbus message for this,
-                " and we would have to change nclientserver to receive NVIMR_PORT
-                " and NVIMR_SECRET as part of argv[].
                 call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
                 sleep 5m
                 call system('kill ' . pid)

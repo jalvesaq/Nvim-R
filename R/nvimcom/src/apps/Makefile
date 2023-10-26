@@ -1,10 +1,10 @@
 CC ?= gcc
 CFLAGS = -pthread -std=gnu99 -O2 -Wall
 
-all: nclientserver
+all: nvimrserver
 
-nclientserver: nclientserver.c
-	$(CC) $(CFLAGS) nclientserver.c -o nclientserver
+nvimrserver: nvimrserver.c
+	$(CC) $(CFLAGS) nvimrserver.c -o nvimrserver
 
 clean:
 

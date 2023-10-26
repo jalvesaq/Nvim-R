@@ -2,7 +2,7 @@
 "
 " The menu must be built and rendered very quickly (< 100ms) to make auto
 " completion feasible. That is, the data must be cached (OK, nvim.bol.R),
-" indexed (not yet) and processed quickly (OK, nclientserver.c).
+" indexed (not yet) and processed quickly (OK, nvimrserver.c).
 "
 " The float window that appears when an item is selected can be slower.
 " That is, we can call a function in nvimcom to get the contents of the float
@@ -15,12 +15,6 @@ endif
 let s:float_win = 0
 let s:compl_event = {}
 let g:rplugin.compl_cls = ''
-
-" If omni completion is called at least once, increase the value of
-" g:R_hi_fun_globenv to 1.
-if g:R_hi_fun_globenv == 0
-    let g:R_hi_fun_globenv = 1
-endif
 
 function FormatInfo(width, needblank)
     let ud = s:compl_event['completed_item']['user_data']
@@ -284,12 +278,12 @@ function AskForComplInfo()
                 let pkg = s:compl_event['completed_item']['user_data']['pkg']
                 let wrd = s:compl_event['completed_item']['word']
                 " Request function description and usage
-                call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+                call JobStdin(g:rplugin.jobs["Server"], "6" . wrd . "\002" . pkg . "\n")
             elseif has_key(s:compl_event['completed_item']['user_data'], 'cls')
                 if s:compl_event['completed_item']['user_data']['cls'] == 'v'
                     let pkg = s:compl_event['completed_item']['user_data']['env']
                     let wrd = s:compl_event['completed_item']['user_data']['word']
-                    call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+                    call JobStdin(g:rplugin.jobs["Server"], "6" . wrd . "\002" . pkg . "\n")
                 else
                     " Neovim doesn't allow to open a float window from here:
                     call timer_start(1, 'CreateNewFloat', {})
@@ -303,25 +297,22 @@ function AskForComplInfo()
     endif
 endfunction
 
-function FinishGlbEnvFunArgs(fnm)
-    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-        let usage = readfile(g:rplugin.tmpdir . "/args_for_completion")[0]
+function FinishGlbEnvFunArgs(fnm, txt)
+        let usage = substitute(a:txt, "\002", "\n", "g")
+        let usage = substitute(usage, "\004", "''", "g")
+        let usage = substitute(usage, "\005", '\\"', "g")
         let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
         let usage = eval(usage)
         call map(usage, 'join(v:val, " = ")')
         let usage = join(usage, ", ")
         let s:usage = a:fnm . '(' . usage . ')'
-    else
-        let s:usage = "COULD NOT GET ARGUMENTS"
-    endif
     let s:compl_event['completed_item']['user_data']['descr'] = ''
     call CreateNewFloat()
 endfunction
 
-function FinishGetSummary()
-    if filereadable(g:rplugin.tmpdir . "/args_for_completion")
-        let s:compl_event['completed_item']['user_data']['summary'] = readfile(g:rplugin.tmpdir . "/args_for_completion")
-    endif
+function FinishGetSummary(txt)
+    let summary = split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let s:compl_event['completed_item']['user_data']['summary'] = summary
     call CreateNewFloat()
 endfunction
 
@@ -345,9 +336,9 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-" We can't transfer this function to the nclientserver because
+" We can't transfer this function to the nvimrserver because
 " nvimcom:::nvim_complete_args runs the function methods(), and we couldn't do
-" something similar in the nclientserver.
+" something similar in the nvimrserver.
 function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     if a:rkeyword0 == ""
         return
@@ -364,7 +355,7 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     endif
     let msg .= ')'
 
-    " Save documentation of arguments to be used by nclientserver
+    " Save documentation of arguments to be used by nvimrserver
     call SendToNvimcom("E", msg)
 endfunction
 
@@ -473,13 +464,6 @@ function SetComplMenu(id, cmn)
     let s:waiting_compl_menu = 0
 endfunction
 
-function UpdateRGlobalEnv(block)
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    call RealUpdateRGlbEnv(a:block)
-endfunction
-
 let s:completion_id = 0
 function CompleteR(findstart, base)
     if a:findstart
@@ -518,11 +502,10 @@ function CompleteR(findstart, base)
             let isfa = nra[3] ? v:false : IsFirstRArg(getline("."), nra[6])
             if (nra[0] == "library" || nra[0] == "require") && isfa
                 let s:waiting_compl_menu = 1
-                call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . "\004" . a:base . "\n")
+                call JobStdin(g:rplugin.jobs["Server"], "5" . s:completion_id . "\003" . "\004" . a:base . "\n")
                 return WaitRCompletion()
             endif
 
-            call UpdateRGlobalEnv(1)
             let s:waiting_compl_menu = 1
             if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
                 call GetRArgs(s:completion_id, a:base, nra[0], nra[1], nra[2], nra[4], isfa)
@@ -538,9 +521,8 @@ function CompleteR(findstart, base)
         if exists('s:compl_menu')
             unlet s:compl_menu
         endif
-        call UpdateRGlobalEnv(1)
         let s:waiting_compl_menu = 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" .  a:base . "\n")
+        call JobStdin(g:rplugin.jobs["Server"], "5" . s:completion_id . "\003" .  a:base . "\n")
         return WaitRCompletion()
     endif
 endfunction
@@ -675,15 +657,6 @@ function FillQuartoComplMenu()
     endif
 endfunction
 
-function ROnInsertEnter()
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-    if g:R_hi_fun_globenv != 0
-        call RealUpdateRGlbEnv(0)
-    endif
-endfunction
-
 function RComplAutCmds()
     if &filetype == "rnoweb" || &filetype == "rrst" || &filetype == "rmd" || &filetype == "quarto"
         if &omnifunc == "CompleteR"
@@ -700,7 +673,6 @@ function RComplAutCmds()
     " registered three times
     if !exists('b:did_RBuffer_au')
         augroup RBuffer
-            autocmd InsertEnter <buffer> call ROnInsertEnter()
             if index(g:R_set_omnifunc, &filetype) > -1
                 autocmd CompleteChanged <buffer> call AskForComplInfo()
                 autocmd CompleteDone <buffer> call OnCompleteDone()

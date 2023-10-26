@@ -10,7 +10,7 @@ function ROpenPDF2(fullpath)
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . pdir
         let $NVIMR_PORT = g:rplugin.myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nclientserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
         call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif
@@ -52,7 +52,7 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . substitute(tdir, ' ', '\\ ', 'g')
         let $NVIMR_PORT = g:rplugin.myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "nclientserver.exe %%f %%l" "' . pname . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "nvimrserver.exe %%f %%l" "' . pname . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
         call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif

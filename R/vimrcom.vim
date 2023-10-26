@@ -31,6 +31,7 @@ let s:waiting_more_input = 0
 function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
+    " DEBUG: call writefile([cmd], "/dev/shm/nvimrserver_vim_stdout", "a")
     if cmd[0] == "\005"
         " Check the size of possibly very big string (dictionary for menu completion).
         let cmdsplt = split(cmd, "\005")
@@ -76,6 +77,9 @@ function ROnJobExit(job_id, stts)
     if key ==# 'R'
         call ClearRInfo()
     endif
+    if key ==# 'Server'
+        let g:rplugin.nrs_running = 0
+    endif
 endfunction
 
 function IsJobRunning(key)
@@ -91,7 +95,7 @@ function IsJobRunning(key)
     endif
 endfunction
 
-let g:rplugin.jobs = {"ClientServer": "no", "R": "no", "Terminal emulator": "no", "BibComplete": "no"}
+let g:rplugin.jobs = {"Server": "no", "R": "no", "Terminal emulator": "no", "BibComplete": "no"}
 let g:rplugin.job_handlers = {
             \ 'out_cb':  'ROnJobStdout',
             \ 'err_cb':  'ROnJobStderr',

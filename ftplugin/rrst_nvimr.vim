@@ -94,9 +94,6 @@ function! RMakePDFrrst()
         call RSetPDFViewer()
     endif
 
-    if g:rplugin.nvimcom_port == 0
-        call RWarningMsg("The nvimcom package is required to make and open the PDF.")
-    endif
     update
     call RSetWD()
     if s:has_rst2pdf == 0

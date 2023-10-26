@@ -62,22 +62,38 @@ function SendCmdToR_NotYet(...)
     return 0
 endfunction
 
-" Start R
+" This function is called by nvimrserver when its server binds to a specific port.
+let s:waiting_to_start_r = ''
+function RSetMyPort(p)
+    let g:rplugin.myport = a:p
+    let $NVIMR_PORT = a:p
+    if s:waiting_to_start_r != ''
+        call StartR(s:waiting_to_start_r)
+        let s:waiting_to_start_r = ''
+    endif
+endfunction
+
 function StartR(whatr)
+    let g:rplugin.debug_info['Time']['start_R'] = reltime()
+    call ReallyStartR(a:whatr)
+endfunction
+
+" Start R
+function ReallyStartR(whatr)
     let s:wait_nvimcom = 1
 
-    if g:rplugin.starting_ncs == 1
-        " The user called StartR too quickly
-        echon "Waiting nclientserver..."
-        let ii = 0
-        while g:rplugin.starting_ncs == 1
-            sleep 100m
-            let ii += 1
-            if ii == 30
-                break
-            endif
-        endwhile
-        let g:rplugin.starting_ncs = 0
+    if g:rplugin.myport == 0
+        if IsJobRunning("Server") == 0
+            call RWarningMsg("Cannot start R: nvimrserver not running")
+            return
+        endif
+        if g:rplugin.nrs_running == 0
+            call RWarningMsg("nvimrserver not ready yet")
+            return
+        endif
+        let s:waiting_to_start_r = a:whatr
+        call JobStdin(g:rplugin.jobs["Server"], "1\n") " Start the TCP server
+        return
     endif
 
     if (type(g:R_external_term) == v:t_number && g:R_external_term == 1) || type(g:R_external_term) == v:t_string
@@ -102,13 +118,11 @@ function StartR(whatr)
         endif
     endif
 
-    call writefile([], g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
-    call writefile([], g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
-    call writefile([], g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
+    call writefile([], g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
+    call writefile([], g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
 
-    call AddForDeletion(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
 
     if &encoding == "utf-8"
         call AddForDeletion(g:rplugin.tmpdir . "/start_options_utf8.R")
@@ -131,7 +145,7 @@ function StartR(whatr)
     else
         let start_options += ['options(nvimcom.texerrs = FALSE)']
     endif
-    if g:R_hi_fun_globenv == 2
+    if g:rplugin.update_glbenv
         let start_options += ['options(nvimcom.autoglbenv = TRUE)']
     else
         let start_options += ['options(nvimcom.autoglbenv = FALSE)']
@@ -167,7 +181,7 @@ function StartR(whatr)
     elseif g:R_nvim_wd == 1
         let rwd = getcwd()
     endif
-    if rwd != ""
+    if rwd != "" && !exists("g:R_remote_compldir")
         if has("win32")
             let rwd = substitute(rwd, '\\', '/', 'g')
         endif
@@ -239,15 +253,15 @@ endfunction
 
 " Send SIGINT to R
 function SignalToR(signal)
-    if s:R_pid
-        call system('kill -s ' . a:signal . ' ' . s:R_pid)
+    if g:rplugin.R_pid
+        call system('kill -s ' . a:signal . ' ' . g:rplugin.R_pid)
     endif
 endfunction
 
 
 function CheckIfNvimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
-    if g:rplugin.nvimcom_port == 0
+    if g:rplugin.R_pid == 0
         if s:nseconds > 0
             call timer_start(1000, "CheckIfNvimcomIsRunning")
         else
@@ -271,21 +285,20 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_info)
-    if a:nvimcomhome != g:rplugin.nvimcom_info['home']
-        call RWarningMsg('Mismatch in directory names: "' . g:rplugin.nvimcom_info['home'] . '" and "' . a:nvimcomhome . '"')
-        sleep 1
-    endif
-
-    if g:rplugin.nvimcom_info['version'] != a:nvimcomversion
-        call RWarningMsg('Mismatch in nvimcom versions: "' . g:rplugin.nvimcom_info['version'] . '" and "' . a:nvimcomversion . '"')
-        sleep 1
+function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
+    let g:rplugin.debug_info['Time']['start_R'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_R'], reltime()))
+    if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+        let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')
+        if a:nvimcomversion != current
+            call RWarningMsg('Mismatch in nvimcom versions: R (' . a:nvimcomversion . ') and Vim (' . current . ')')
+            sleep 1
+        endif
     endif
 
     let $R_DEFAULT_PACKAGES = s:r_default_pkgs
 
-    let g:rplugin.nvimcom_port = a:bindportn
-    let s:R_pid = a:rpid
+    let g:rplugin.R_pid = a:rpid
     let $RCONSOLE = a:wid
 
     let Rinfo = split(a:r_info, "\x02")
@@ -309,7 +322,7 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         let curwin = winnr()
         exe 'sb ' . g:rplugin.R_bufnr
         if !exists('g:R_hl_term')
-            if Rinfo[4] =~# 'colorout'
+            if Rinfo[4] =~# '1'
                 let g:R_hl_term = 0
             else
                 let g:R_hl_term = 1
@@ -323,18 +336,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
         endif
     endif
 
-    if IsJobRunning("ClientServer")
-        " Set RConsole window ID in nclientserver to ArrangeWindows()
+    if IsJobRunning("Server")
+        " Set RConsole window ID in nvimrserver to ArrangeWindows()
         if has("win32")
             if $RCONSOLE == "0"
                 call RWarningMsg("nvimcom did not save R window ID")
             endif
-        endif
-        " Set nvimcom port in nvimclient
-        if has("win32")
-            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . " " . $RCONSOLE . "\n")
-        else
-            call JobStdin(g:rplugin.jobs["ClientServer"], "1" . g:rplugin.nvimcom_port . "\n")
         endif
     else
         call RWarningMsg("nvimcom is not running")
@@ -343,12 +350,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, bindportn, rpid, wid, r_inf
     if exists("g:RStudio_cmd")
         if has("win32") && g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["Server"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif has("win32")
         if g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["Server"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif g:R_applescript
         call foreground()
@@ -401,7 +408,7 @@ function RQuit(how)
 
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         " SaveWinPos
-        call JobStdin(g:rplugin.jobs["ClientServer"], "84" . $NVIMR_COMPLDIR . "\n")
+        call JobStdin(g:rplugin.jobs["Server"], "84" . $NVIMR_COMPLDIR . "\n")
     endif
 
     if bufloaded('Object_Browser')
@@ -421,15 +428,12 @@ endfunction
 
 function ClearRInfo()
     call delete(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
-    call delete(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
-    call delete(g:rplugin.tmpdir . "/GlobalEnvList_" . $NVIMR_ID)
+    call delete(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
     for fn in g:rplugin.del_list
         call delete(fn)
     endfor
     let g:SendCmdToR = function('SendCmdToR_fake')
-    let s:R_pid = 0
-    let g:rplugin.nvimcom_port = 0
-    call JobStdin(g:rplugin.jobs["ClientServer"], "10\n")
+    let g:rplugin.R_pid = 0
 
     " Legacy support for running R in a Tmux split pane
     if has_key(g:rplugin, "tmux_split") && exists('g:R_tmux_title') && g:rplugin.tmux_split
@@ -449,7 +453,7 @@ let s:wait_nvimcom = 0
 " Internal communication with R
 "==============================================================================
 
-" Send a message to nclientserver job which will send the message to nvimcom
+" Send a message to nvimrserver job which will send the message to nvimcom
 " through a TCP connection.
 function SendToNvimcom(code, attch)
     if s:wait_nvimcom
@@ -461,21 +465,11 @@ function SendToNvimcom(code, attch)
         return
     endif
 
-    if !IsJobRunning("ClientServer")
-        call RWarningMsg("ClientServer not running.")
+    if !IsJobRunning("Server")
+        call RWarningMsg("Server not running.")
         return
     endif
-    call JobStdin(g:rplugin.jobs["ClientServer"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
-endfunction
-
-" This function is called by nvimcom only if the message is longer than 980
-" characters. Then, it saves the message in a file and sends to Nvim-R only
-" this command to read the message from the file. Shorter messages are
-" received from the nclientserver stdout (see nvimrcom.vim and vimrcom.vim).
-function ReadRMsg()
-    let msg = readfile($NVIMR_TMPDIR . "/nvimcom_msg")
-    exe "call " . msg[0]
-    call delete($NVIMR_TMPDIR . "/nvimcom_msg")
+    call JobStdin(g:rplugin.jobs["Server"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
 endfunction
 
 
@@ -484,75 +478,7 @@ endfunction
 " date
 "==============================================================================
 
-" Did R successfully finished evaluating a command?
-" There is no need of waiting for the completion of the .GlobalEnv list of
-" objects to start omni completion if no command was run afer the list was
-" bilt for the last time.
-let s:R_task_completed = 0
-
-" Function called by nvimcom
-function RTaskCompleted()
-    let s:R_task_completed = 1
-    if g:R_hi_fun_globenv == 2
-        call SendToNvimcom("A", "TaskCompleted hi_fun_globenv = 2")
-        call RealUpdateRGlbEnv(0)
-    endif
-endfunction
-
-let s:updating_globalenvlist = 0
-let s:waiting_glblnv_list = 0
-
-" Function called by nvimcom
-function GlblEnvUpdated(changed)
-    let s:updating_globalenvlist = 0
-    if s:waiting_glblnv_list
-        if a:changed == 0
-            " Nothing to update
-            let s:waiting_glblnv_list = 0
-        endif
-    endif
-endfunction
-
-let s:nglobfun = 0
-function RealUpdateRGlbEnv(block)
-    if ! s:R_task_completed
-        return
-    endif
-    let s:R_task_completed = 0
-
-    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-        return
-    endif
-
-    let s:updating_globalenvlist = 1
-    call SendToNvimcom("G", "UpdateRGlbEnv updating_globalenvlist")
-
-    if g:rplugin.nvimcom_port == 0
-        sleep 500m
-        return
-    endif
-
-    if a:block
-        " We can't return from this function and wait for a message from
-        " nvimcom because both omni completion and the Object Browser require
-        " the list of completions immediately.
-        sleep 10m
-        let ii = 0
-        let max_ii = 100 * g:R_wait_reply
-        while s:updating_globalenvlist && ii < max_ii
-            let ii += 1
-            sleep 10m
-        endwhile
-        if ii == max_ii
-            call RWarningMsg("No longer waiting...")
-            return
-        endif
-    else
-        let s:waiting_glblnv_list = 1
-    endif
-endfunction
-
-" Called by nclientserver. When g:rplugin has the key 'localfun', the function
+" Called by nvimrserver. When g:rplugin has the key 'localfun', the function
 " is also called by SourceRFunList() (R/functions.vim)
 function UpdateLocalFunctions(funnames)
     let g:rplugin.localfun = a:funnames
@@ -576,13 +502,12 @@ endfunction
 "  Functions triggered by nvimcom after user action on R Console
 "==============================================================================
 
-function ShowRObj(howto, bname, ftype)
+function ShowRObj(howto, bname, ftype, txt)
     let bfnm = substitute(a:bname, '[ [:punct:]]', '_', 'g')
     call AddForDeletion(g:rplugin.tmpdir . "/" . bfnm)
     silent exe a:howto . ' ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/' . bfnm
     silent exe 'set ft=' . a:ftype
-    let objf = readfile(g:rplugin.tmpdir . "/Rinsert")
-    call setline(1, objf)
+    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     set nomodified
 endfunction
 
@@ -681,8 +606,8 @@ function RObjBrowser(...)
 
     let s:running_objbr = 1
 
-    call RealUpdateRGlbEnv(1)
-    call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
+    " call RealUpdateRGlbEnv(1)
+    call JobStdin(g:rplugin.jobs["Server"], "31\n")
     call SendToNvimcom("A", "RObjBrowser")
 
     call StartObjBrowser()
@@ -699,7 +624,7 @@ function RObjBrowser(...)
 endfunction
 
 function RBrOpenCloseLs(stt)
-    call JobStdin(g:rplugin.jobs["ClientServer"], "34" . a:stt . g:rplugin.curview . "\n")
+    call JobStdin(g:rplugin.jobs["Server"], "34" . a:stt . g:rplugin.curview . "\n")
 endfunction
 
 
@@ -866,14 +791,9 @@ endfunction
 "==============================================================================
 
 function RFormatCode() range
-    if g:rplugin.nvimcom_port == 0
+    if g:rplugin.R_pid == 0
         return
     endif
-
-    let lns = getline(a:firstline, a:lastline)
-    call writefile(lns, g:rplugin.tmpdir . "/unformatted_code")
-    call AddForDeletion(g:rplugin.tmpdir . "/unformatted_code")
-    call AddForDeletion(g:rplugin.tmpdir . "/formatted_code")
 
     let wco = &textwidth
     if wco == 0
@@ -884,26 +804,22 @@ function RFormatCode() range
         let wco = 180
     endif
 
-    call SendToNvimcom("E", 'nvimcom:::nvim_format(' . a:firstline . ', ' . a:lastline . ', ' . wco . ', ' . &shiftwidth. ')')
+    let lns = getline(a:firstline, a:lastline)
+    let txt = substitute(substitute(join(lns, "\002"), '\\', '\\\\', 'g'), "'", "\004", "g")
+    call SendToNvimcom("E", "nvimcom:::nvim_format(" . a:firstline . ", " . a:lastline . ", " . wco . ", " . &shiftwidth. ", '" . txt . "')")
 endfunction
 
-function FinishRFormatCode(lnum1, lnum2)
-    let lns = readfile(g:rplugin.tmpdir . "/formatted_code")
+function FinishRFormatCode(lnum1, lnum2, txt)
+    let lns =  split(substitute(a:txt, "\004", "'", "g"), "\002")
     silent exe a:lnum1 . "," . a:lnum2 . "delete"
     call append(a:lnum1 - 1, lns)
-    call delete(g:rplugin.tmpdir . "/formatted_code")
-    call delete(g:rplugin.tmpdir . "/unformatted_code")
     echo (a:lnum2 - a:lnum1 + 1) . " lines formatted."
 endfunction
 
 function RInsert(cmd, type)
-    if g:rplugin.nvimcom_port == 0
+    if g:rplugin.R_pid == 0
         return
     endif
-
-    call delete(g:rplugin.tmpdir . "/Rinsert")
-    call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
-
     call SendToNvimcom("E", 'nvimcom:::nvim_insert(' . a:cmd . ', "' . a:type . '")')
 endfunction
 
@@ -917,47 +833,38 @@ function SendLineToRAndInsertOutput()
     call RInsert("print(" . cleanl . ")", "comment")
 endfunction
 
-function FinishRInsert(type)
-    silent exe "read " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/Rinsert"
-
+function FinishRInsert(type, txt)
+    let ilines = split(substitute(a:txt, "\004", "'", "g"), "\002")
     if a:type == "comment"
-        if !exists('*RSimpleCommentLine')
-            exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/comment.vim"
-        endif
-        let curpos = getpos(".")
-        " comment the output
-        let ilines = readfile(g:rplugin.tmpdir . "/Rinsert")
-        for iln in ilines
-            call RSimpleCommentLine("normal", "c")
-            normal! j
-        endfor
-        call setpos(".", curpos)
+        call map(ilines, '"# " . v:val')
     endif
+    call append(line('.'), ilines)
 endfunction
 
-function GetROutput(outf)
-    if a:outf =~ g:rplugin.tmpdir
+function GetROutput(fnm, txt)
+    if a:fnm == "NewtabInsert"
         let tnum = 1
         while bufexists("so" . tnum)
             let tnum += 1
         endwhile
         exe 'tabnew so' . tnum
-        exe 'read ' . substitute(a:outf, " ", '\\ ', 'g')
+        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
         set filetype=rout
         setlocal buftype=nofile
         setlocal noswapfile
     else
-        exe 'tabnew ' . substitute(a:outf, " ", '\\ ', 'g')
+        exe 'tabnew ' a:fnm
+        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     endif
     normal! gT
     redraw
 endfunction
 
 
-function RViewDF(oname, ...)
+function RViewDF(oname, howto, txt)
     if exists('g:R_csv_app')
         let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
-        call system('cp "' . g:rplugin.tmpdir . '/Rinsert" "' . tsvnm . '"')
+        call writefile(split(substitute(a:txt, "\004", "'", "g"), "\002"), tsvnm)
         call AddForDeletion(tsvnm)
 
         if g:R_csv_app =~ '%s'
@@ -989,11 +896,10 @@ function RViewDF(oname, ...)
         return
     endif
 
-    let location = get(a:, 1, "tabnew")
+    let location = a:howto
     silent exe location . ' ' . a:oname
-    silent 1,$d
-    silent exe 'read ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/Rinsert'
-    silent 1d
+    " silent 1,$d
+    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
     setlocal filetype=csv
     setlocal nomodified
     setlocal bufhidden=wipe
@@ -1075,11 +981,6 @@ endfunction
 " Show R's help doc in Nvim's buffer
 " (based  on pydoc plugin)
 function AskRDoc(rkeyword, package, getclass)
-    if filewritable(s:docfile)
-        call delete(s:docfile)
-    endif
-    call AddForDeletion(s:docfile)
-
     let firstobj = ""
     if bufname("%") =~ "Object_Browser" || (has_key(g:rplugin, "R_bufnr") && bufnr("%") == g:rplugin.R_bufnr)
         let savesb = &switchbuf
@@ -1106,9 +1007,7 @@ function AskRDoc(rkeyword, package, getclass)
 endfunction
 
 " Function called by nvimcom
-function ShowRDoc(rkeyword)
-    call AddForDeletion(s:docfile)
-
+function ShowRDoc(rkeyword, txt)
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
         let msgs = split(a:rkeyword)
@@ -1199,7 +1098,7 @@ function ShowRDoc(rkeyword)
     let save_unnamed_reg = @@
     set modifiable
     sil normal! ggdG
-    let fcntt = readfile(s:docfile)
+    let fcntt = split(substitute(a:txt, "\004", "'", "g"), "\002")
     call setline(1, fcntt)
     if a:rkeyword =~ "R History"
         set filetype=r
@@ -1264,8 +1163,7 @@ function RSourceLines(...)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call writefile(lines, s:Rsource_write)
-        call AddForDeletion(g:rplugin.tmpdir . '/Rinsert')
-        call SendToNvimcom("E", 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "' . g:rplugin.tmpdir . '/Rinsert")')
+        call SendToNvimcom("E", 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "NewtabInsert")')
         return 1
     endif
 
@@ -1908,9 +1806,9 @@ function RClearConsole()
         return
     endif
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "86\n")
+        call JobStdin(g:rplugin.jobs["Server"], "86\n")
         sleep 50m
-        call JobStdin(g:rplugin.jobs["ClientServer"], "87\n")
+        call JobStdin(g:rplugin.jobs["Server"], "87\n")
     else
         call g:SendCmdToR("\014", 0)
     endif
@@ -2086,9 +1984,6 @@ function RAction(rcmd, ...)
         endif
 
         if a:rcmd == "viewobj" || a:rcmd == "dputtab"
-            call delete(g:rplugin.tmpdir . "/Rinsert")
-            call AddForDeletion(g:rplugin.tmpdir . "/Rinsert")
-
             if a:rcmd == "viewobj"
                 if exists("g:R_df_viewer")
                     let argmnts .= ', R_df_viewer = "' . g:R_df_viewer . '"'
@@ -2246,14 +2141,17 @@ if type(g:R_after_start) != v:t_list
 endif
 
 " Make the file name of files to be sourced
-let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
+if exists("g:R_remote_compldir")
+    let s:Rsource_read = g:R_remote_compldir . "/tmp/Rsource-" . getpid()
+else
+    let s:Rsource_read = g:rplugin.tmpdir . "/Rsource-" . getpid()
+endif
 let s:Rsource_write = g:rplugin.tmpdir . "/Rsource-" . getpid()
 call AddForDeletion(s:Rsource_write)
 
 let s:running_objbr = 0
 let s:running_rhelp = 0
-let s:R_pid = 0
-let s:docfile = g:rplugin.tmpdir . "/Rdoc"
+let g:rplugin.R_pid = 0
 
 " List of marks that the plugin seeks to find the block to be sent to R
 let s:all_marks = "abcdefghijklmnopqrstuvwxyz"

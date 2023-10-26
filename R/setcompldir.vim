@@ -146,4 +146,3 @@ endif
 unlet s:need_readme
 
 let $NVIMR_COMPLDIR = g:rplugin.compldir
-

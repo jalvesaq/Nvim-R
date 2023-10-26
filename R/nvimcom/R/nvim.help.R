@@ -1,13 +1,10 @@
 
 nvim.hmsg <- function(files, header, title, delete.file) {
-    if (Sys.getenv("NVIMR_TMPDIR") == "")
-        stop("NVIMR_TMPDIR not set.")
-    dest <- paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rdoc")
-    file.copy(files[1], dest, overwrite = TRUE)
+    doc <- gsub("'", "\003", paste(readLines(files[1]), collapse = "\002"))
     ttl <- sub("R Help on '(.*)'", "\\1 (help)", title)
     ttl <- sub("R Help on \u2018(.*)\u2019", "\\1 (help)", ttl)
     ttl <- gsub("'", "''", ttl)
-    .C("nvimcom_msg_to_nvim", paste0("ShowRDoc('", ttl, "')"), PACKAGE = "nvimcom")
+    .C("nvimcom_msg_to_nvim", paste0("call ShowRDoc('", ttl, "', '", doc, "')"), PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
 
@@ -41,7 +38,7 @@ nvim.help <- function(topic, w, firstobj, package) {
 
     warn <- function(msg) {
         .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('", as.character(msg), "')"),
+           paste0("call RWarningMsg('", as.character(msg), "')"),
            PACKAGE = "nvimcom")
     }
 
@@ -75,7 +72,7 @@ nvim.help <- function(topic, w, firstobj, package) {
 
     if (length(h) == 0) {
         msg <- paste0('No documentation for "', topic, '" in loaded packages and libraries.')
-        .C("nvimcom_msg_to_nvim", paste0("RWarningMsg('", msg, "')"), PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("call RWarningMsg('", msg, "')"), PACKAGE = "nvimcom")
         return(invisible(NULL))
     }
     if (length(h) > 1) {
@@ -83,13 +80,13 @@ nvim.help <- function(topic, w, firstobj, package) {
             h <- sub("/help/.*", "", h)
             h <- sub(".*/", "", h)
             msg <- paste("MULTILIB", paste(h, collapse = " "), topic)
-            .C("nvimcom_msg_to_nvim", paste0("ShowRDoc('", msg, "')"), PACKAGE = "nvimcom")
+            .C("nvimcom_msg_to_nvim", paste0("call ShowRDoc('", msg, "')"), PACKAGE = "nvimcom")
             return(invisible(NULL))
         } else {
             h <- h[grep(paste0("/", package, "/"), h)]
             if (length(h) == 0) {
                 msg <- paste0("Package '", package, "' has no documentation for '", topic, "'")
-                .C("nvimcom_msg_to_nvim", paste0("RWarningMsg('", msg, "')"), PACKAGE = "nvimcom")
+                .C("nvimcom_msg_to_nvim", paste0("call RWarningMsg('", msg, "')"), PACKAGE = "nvimcom")
                 return(invisible(NULL))
             }
         }
@@ -107,20 +104,20 @@ nvim.example <- function(topic) {
                        package = NULL), silent = TRUE)
     if (inherits(ret, "try-error")) {
         .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('", as.character(ret), "')"), PACKAGE = "nvimcom")
+           paste0("call RWarningMsg('", as.character(ret), "')"), PACKAGE = "nvimcom")
     } else {
         if (is.character(ret)) {
             if (length(ret) > 0) {
                 writeLines(ret, paste0(Sys.getenv("NVIMR_TMPDIR"), "/example.R"))
-                .C("nvimcom_msg_to_nvim", "OpenRExample()", PACKAGE = "nvimcom")
+                .C("nvimcom_msg_to_nvim", "call OpenRExample()", PACKAGE = "nvimcom")
             } else {
                 .C("nvimcom_msg_to_nvim",
-                   paste0("RWarningMsg('There is no example for \"", topic, "\"')"),
+                   paste0("call RWarningMsg('There is no example for \"", topic, "\"')"),
                    PACKAGE = "nvimcom")
             }
         } else {
             .C("nvimcom_msg_to_nvim",
-               paste0("RWarningMsg('There is no help for \"", topic, "\".')"),
+               paste0("call RWarningMsg('There is no help for \"", topic, "\".')"),
                PACKAGE = "nvimcom")
         }
     }

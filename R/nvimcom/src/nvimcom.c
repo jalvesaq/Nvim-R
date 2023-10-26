@@ -21,8 +21,10 @@
 #ifdef _WIN64
 #include <inttypes.h>
 #endif
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #else
 #include <stdint.h>
+#include <arpa/inet.h> // inet_addr()
 #include <sys/socket.h>
 #include <netdb.h>
 #include <pthread.h>
@@ -46,20 +48,23 @@ static char nvimcom_version[32];
 static pid_t R_PID;
 
 static int nvimcom_initialized = 0;
-static int verbose = 0;
+static int verbose = 0; // 1: version number; 2: initial information; 3: TCP in and out; 4: realy verbose
 static int allnames = 0;
 static int nvimcom_failure = 0;
 static int nlibs = 0;
-static int needsfillmsg = 0;
-static char edsrvr[128];
-static char nvimsecr[128];
-
-static char glbnvls[576];
+static int needs_lib_msg = 0;
+static int needs_glbenv_msg = 0;
+static char nrs_port[16];
+static char nvimsecr[32];
 
 static char *glbnvbuf1;
 static char *glbnvbuf2;
+static char *send_ge_buf;
 static unsigned long lastglbnvbsz;
 static unsigned long glbnvbufsize = 32768;
+
+static unsigned long tcp_header_len;
+
 static int maxdepth = 6;
 static int curdepth = 0;
 static int autoglbenv = 0;
@@ -67,7 +72,6 @@ static clock_t tm;
 
 static char tmpdir[512];
 static char nvimcom_home[1024];
-static char r_info[1024];
 static int setwidth = 0;   // Set the option width after each command is executed
 static int oldcolwd = 0;   // Last set width
 
@@ -80,12 +84,12 @@ static int flag_glbenv = 0;
 static int flag_debug = 0;
 static int ifd, ofd;
 static InputHandler *ih;
-static char myport[128];
 #endif
 
 typedef struct pkg_info_ {
     char *name;
     char *version;
+    unsigned long strlen;
     struct pkg_info_ *next;
 } PkgInfo;
 
@@ -93,7 +97,7 @@ PkgInfo *pkgList;
 
 
 static int nvimcom_checklibs(void);
-static void nvimcom_nvimclient(const char *msg, char *port);
+static void send_to_nvim(const char *msg);
 static void nvimcom_eval_expr(const char *buf);
 
 #ifdef WIN32
@@ -104,6 +108,7 @@ extern void Rconsolecmd(char *cmd); // Defined in R: src/gnuwin32/rui.c
 static int sfd = -1;
 static pthread_t tid;
 #endif
+static int sockfd;
 
 static char *nvimcom_strcat(char* dest, const char* src)
 {
@@ -116,149 +121,71 @@ static char *nvimcom_grow_buffers(void)
 {
     lastglbnvbsz = glbnvbufsize;
     glbnvbufsize += 32768;
+
     char *tmp = (char*)calloc(glbnvbufsize, sizeof(char));
     strcpy(tmp, glbnvbuf1);
     free(glbnvbuf1);
     glbnvbuf1 = tmp;
+
     tmp = (char*)calloc(glbnvbufsize, sizeof(char));
     strcpy(tmp, glbnvbuf2);
     free(glbnvbuf2);
     glbnvbuf2 = tmp;
+
+    tmp = (char*)calloc(glbnvbufsize + 64, sizeof(char));
+    free(send_ge_buf);
+    send_ge_buf = tmp;
+
     return(glbnvbuf2 + strlen(glbnvbuf2));
 }
 
-static void nvimcom_set_finalmsg(const char *msg, char *finalmsg)
+static void send_to_nvim(const char *msg)
 {
-    // Prefix NVIMR_SECRET to msg to increase security
-    strncpy(finalmsg, nvimsecr, 1023);
-    if (*msg != '+')
-        strncat(finalmsg, "call ", 1023);
-    if(strlen(msg) < 980){
-        strncat(finalmsg, msg, 1023);
-    } else {
-        char fn[576];
-        snprintf(fn, 575, "%s/nvimcom_msg", tmpdir);
-        FILE *f = fopen(fn, "w");
-        if(f == NULL){
-            REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-            return;
-        }
-        fprintf(f, "%s\n", msg);
-        fclose(f);
-        strncat(finalmsg, "ReadRMsg()", 1023);
+    unsigned long sent = 0;
+    char b[64];
+    size_t len;
+
+    if (verbose > 2) {
+        if (strlen(msg) < 128)
+            REprintf("send_to_nvim [%d] {%s}: %s\n", sockfd, nvimsecr, msg);
     }
+
+    len = strlen(msg);
+
+    /*
+       Note: the time of saving the file at /dev/shm is bigger than the time of
+       sending the buffer through a TCP connection.
+
+       TCP message format:
+         NVIMR_SECRET : Prefix NVIMR_SECRET to msg to increase security
+         000000000    : Size of message in 9 digits
+         msg          : The message
+         \001         : Final byte
+
+       Note: when the msg is very big, it's faster to send the final message in
+       three pieces than to call snprintf() to assemble everything in a single
+       message.
+    */
+
+    snprintf(b, 63, "%s%09zu", nvimsecr, len);
+    sent = write(sockfd, b, tcp_header_len);
+    if (sent != tcp_header_len)
+        REprintf("Error sending message header to Nvim-R: %zu x %zu\n", tcp_header_len, sent);
+
+    sent = write(sockfd, msg, len);
+    if (sent != len)
+        REprintf("Error sending message to Nvim-R: %zu x %zu\n", len, sent);
+
+    // End the message with \001
+    sent = write(sockfd, "\001", 1);
+    if (sent != 1)
+        REprintf("Error sending final byte to Nvim-R: 1 x %zu\n", sent);
 }
 
-#ifndef WIN32
-static void nvimcom_nvimclient(const char *msg, char *port)
+void nvimcom_msg_to_nvim(char **cmd)
 {
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    char portstr[16];
-    int s, a;
-    ssize_t len;
-    int srvport = atoi(port);
-
-    if(verbose > 2)
-        Rprintf("nvimcom_nvimclient(%s): '%s' (%d)\n", msg, port, srvport);
-    if(port[0] == 0){
-        if(verbose > 3)
-            REprintf("nvimcom_nvimclient() called although Neovim server port is undefined\n");
-        return;
-    }
-
-    /* Obtain address(es) matching host/port */
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;
-
-    sprintf(portstr, "%d", srvport);
-    if(getenv("NVIM_IP_ADDRESS"))
-        a = getaddrinfo(getenv("NVIM_IP_ADDRESS"), portstr, &hints, &result);
-    else
-        a = getaddrinfo("127.0.0.1", portstr, &hints, &result);
-    if (a != 0) {
-        REprintf("Error: getaddrinfo: %s\n", gai_strerror(a));
-        return;
-    }
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-        s = socket(rp->ai_family, rp->ai_socktype,
-                rp->ai_protocol);
-        if (s == -1)
-            continue;
-
-        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1)
-            break;		   /* Success */
-
-        close(s);
-    }
-
-    if (rp == NULL) {		   /* No address succeeded */
-        REprintf("Error: Could not connect\n");
-        return;
-    }
-
-    freeaddrinfo(result);	   /* No longer needed */
-
-    char finalmsg[1024];
-    nvimcom_set_finalmsg(msg, finalmsg);
-    len = (ssize_t)strlen(finalmsg);
-    if (write(s, finalmsg, len) != len) {
-        REprintf("Error: partial/failed write\n");
-        return;
-    }
-    close(s);
+    send_to_nvim(*cmd);
 }
-#endif
-
-#ifdef WIN32
-static void nvimcom_nvimclient(const char *msg, char *port)
-{
-    WSADATA wsaData;
-    struct sockaddr_in peer_addr;
-    SOCKET sfd;
-
-    if(verbose > 2)
-        Rprintf("nvimcom_nvimclient(%s): '%s'\n", msg, port);
-    if(port[0] == 0){
-        if(verbose > 3)
-            REprintf("nvimcom_nvimclient() called although Neovim server port is undefined\n");
-        return;
-    }
-
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if(sfd < 0){
-        REprintf("nvimcom_nvimclient socket failed.\n");
-        return;
-    }
-
-    peer_addr.sin_family = AF_INET;
-    peer_addr.sin_port = htons(atoi(port));
-    peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    if(connect(sfd, (struct sockaddr *)&peer_addr, sizeof(peer_addr)) < 0){
-        REprintf("nvimcom_nvimclient could not connect.\n");
-        return;
-    }
-
-    char finalmsg[1024];
-    nvimcom_set_finalmsg(msg, finalmsg);
-    int len = strlen(finalmsg);
-    if (send(sfd, finalmsg, len+1, 0) < 0) {
-        REprintf("nvimcom_nvimclient failed sending message.\n");
-        return;
-    }
-
-    if(closesocket(sfd) < 0)
-        REprintf("nvimcom_nvimclient error closing socket.\n");
-    return;
-}
-#endif
 
 static void nvimcom_squo(const char *buf, char *buf2, int bsize)
 {
@@ -310,17 +237,6 @@ static void nvimcom_backtick(const char *b1, char *b2)
     b2[j] = 0;
 }
 
-void nvimcom_msg_to_nvim(char **cmd)
-{
-    nvimcom_nvimclient(*cmd, edsrvr);
-}
-
-void nvimcom_send_msg_to_port(char **msg, char **port)
-{
-    strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);
-    nvimcom_nvimclient(*msg, *port);
-}
-
 static PkgInfo *nvimcom_pkg_info_new(const char *nm, const char *vrsn)
 {
     PkgInfo *pi = calloc(1, sizeof(PkgInfo));
@@ -328,6 +244,7 @@ static PkgInfo *nvimcom_pkg_info_new(const char *nm, const char *vrsn)
     strcpy(pi->name, nm);
     pi->version = malloc((strlen(vrsn)+1) * sizeof(char));
     strcpy(pi->version, vrsn);
+    pi->strlen = strlen(pi->name) + strlen(pi->version) + 2;
     return pi;
 }
 
@@ -355,17 +272,6 @@ PkgInfo *nvimcom_get_pkg(const char *nm)
     } while(pi);
 
     return NULL;
-}
-
-static void nvimcom_write_file(char *b, const char *fn)
-{
-    FILE *f = fopen(fn, "w");
-    if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-        return;
-    }
-    fprintf(f, "%s", b);
-    fclose(f);
 }
 
 static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, char *p, int depth)
@@ -569,6 +475,8 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
 
 static void nvimcom_globalenv_list(void)
 {
+    if (verbose > 4)
+        REprintf("nvimcom_globalenv_list()\n");
     const char *varName;
     SEXP envVarsSEXP, varSEXP;
 
@@ -604,6 +512,8 @@ static void nvimcom_globalenv_list(void)
     int len1 = strlen(glbnvbuf1);
     int len2 = strlen(glbnvbuf2);
     int changed = len1 != len2;
+    if (verbose > 4)
+        REprintf("globalenv_list(0) len1 = %zu, len2 = %zu\n", len1, len2);
     if(!changed){
         for(int i = 0; i < len1; i++){
             if(glbnvbuf1[i] != glbnvbuf2[i]){
@@ -613,27 +523,41 @@ static void nvimcom_globalenv_list(void)
         }
     }
 
-    if(changed){
-        nvimcom_write_file(glbnvbuf2, glbnvls);
-        strcpy(glbnvbuf1, glbnvbuf2);
-        double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
-        if(verbose && tmdiff > 1000.0)
-            REprintf("Time to build GlobalEnv omnils [%lu bytes]: %f ms\n", strlen(glbnvbuf2), tmdiff);
-        if(tmdiff > 300.0){
-            maxdepth = curdepth - 1;
-        } else {
-            // NOTE: There is a high risk of zig zag effect. It would be
-            // better to have a smarter algorithm to decide when to
-            // increase maxdepth, but this is not feasible with the current
-            // nvimcom_glbnv_line() function.
-            if(tmdiff < 30.0 && maxdepth <= curdepth){
-                maxdepth = curdepth + 1;
-            }
-        }
-        nvimcom_nvimclient("GlblEnvUpdated(1)", edsrvr);
+    if (changed)
+        needs_glbenv_msg = 1;
+
+    double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
+    if (verbose && tmdiff > 1000.0)
+        REprintf("Time to build GlobalEnv omnils [%lu bytes]: %f ms\n", strlen(glbnvbuf2), tmdiff);
+    if (tmdiff > 300.0){
+        maxdepth = curdepth - 1;
     } else {
-        nvimcom_nvimclient("GlblEnvUpdated(0)", edsrvr);
+        // NOTE: There is a high risk of zig zag effect. It would be
+        // better to have a smarter algorithm to decide when to
+        // increase maxdepth, but this is not feasible with the current
+        // nvimcom_glbnv_line() function.
+        if(tmdiff < 30.0 && maxdepth <= curdepth){
+            maxdepth = curdepth + 1;
+        }
     }
+}
+
+static void send_glb_env(void)
+{
+    clock_t t1;
+
+    t1 = clock();
+
+    strcpy(send_ge_buf, "+G");
+    strcat(send_ge_buf, glbnvbuf2);
+    send_to_nvim(send_ge_buf);
+
+    if (verbose > 3)
+        REprintf("Time to send message to Nvim-R: %f\n", 1000 * ((double)clock() - t1) / CLOCKS_PER_SEC);
+
+    char *tmp = glbnvbuf1;
+    glbnvbuf1 = glbnvbuf2;
+    glbnvbuf2 = tmp;
 }
 
 static void nvimcom_eval_expr(const char *buf)
@@ -658,21 +582,49 @@ static void nvimcom_eval_expr(const char *buf)
          * a semicolon. */
         PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
         if(er && verbose > 1){
-            strcpy(rep, "RWarningMsg('Error running: ");
+            strcpy(rep, "call RWarningMsg('Error running: ");
             strncat(rep, buf2, 80);
             strcat(rep, "')");
-            nvimcom_nvimclient(rep, edsrvr);
+            send_to_nvim(rep);
         }
         UNPROTECT(1);
     } else {
         if (verbose > 1) {
-            strcpy(rep, "RWarningMsg('Invalid command: ");
+            strcpy(rep, "call RWarningMsg('Invalid command: ");
             strncat(rep, buf2, 80);
             strcat(rep, "')");
-            nvimcom_nvimclient(rep, edsrvr);
+            send_to_nvim(rep);
         }
     }
     UNPROTECT(2);
+}
+
+static void send_libnames(void)
+{
+    PkgInfo *pkg;
+    unsigned long totalsz = 9;
+    char *libbuf;
+    pkg = pkgList;
+    do {
+        totalsz += pkg->strlen;
+        pkg = pkg->next;
+    } while (pkg);
+
+    libbuf = malloc(totalsz + 1);
+
+    libbuf[0] = 0;
+    nvimcom_strcat(libbuf, "+L");
+    pkg = pkgList;
+    do {
+        nvimcom_strcat(libbuf, pkg->name);
+        nvimcom_strcat(libbuf, "\003");
+        nvimcom_strcat(libbuf, pkg->version);
+        nvimcom_strcat(libbuf, "\004");
+        pkg = pkg->next;
+    } while (pkg);
+    libbuf[totalsz] = 0;
+    send_to_nvim(libbuf);
+    free(libbuf);
 }
 
 static int nvimcom_checklibs(void)
@@ -695,7 +647,7 @@ static int nvimcom_checklibs(void)
 
     nlibs = newnlibs;
 
-    needsfillmsg = 1;
+    needs_lib_msg = 1;
 
     for(int i = 0; i < newnlibs; i++){
         PROTECT(l = STRING_ELT(a, i));
@@ -728,20 +680,6 @@ static int nvimcom_checklibs(void)
     }
     UNPROTECT(1);
 
-    char fn[576];
-    snprintf(fn, 575, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *f = fopen(fn, "w");
-    if(f == NULL){
-        REprintf("Error: Could not write to '%s'. [nvimcom]\n", fn);
-        return(newnlibs);
-    }
-    pkg = pkgList;
-    do {
-        fprintf(f, "%s_%s\n", pkg->name, pkg->version);
-        pkg = pkg->next;
-    } while (pkg);
-    fclose(f);
-
     return(newnlibs);
 }
 
@@ -751,13 +689,21 @@ static Rboolean nvimcom_task(__attribute__((unused))SEXP expr,
         __attribute__((unused))Rboolean visible,
         __attribute__((unused))void *userData)
 {
+    if (verbose > 4)
+        REprintf("nvimcom_task()\n");
 #ifdef WIN32
     r_is_busy = 0;
 #endif
-    nvimcom_checklibs();
-    if(edsrvr[0] != 0 && needsfillmsg){
-        needsfillmsg = 0;
-        nvimcom_nvimclient("+BuildOmnils", edsrvr);
+    if (nrs_port[0] != 0) {
+        nvimcom_checklibs();
+        if(autoglbenv)
+            nvimcom_globalenv_list();
+        if (needs_lib_msg)
+            send_libnames();
+        if (needs_glbenv_msg)
+            send_glb_env();
+        needs_lib_msg = 0;
+        needs_glbenv_msg = 0;
     }
     if(setwidth && getenv("COLUMNS")){
         int columns = atoi(getenv("COLUMNS"));
@@ -779,11 +725,7 @@ static Rboolean nvimcom_task(__attribute__((unused))SEXP expr,
                 Rprintf("nvimcom: width = %d columns\n", columns);
         }
     }
-    if(autoglbenv){
-        nvimcom_globalenv_list();
-    } else {
-        nvimcom_nvimclient("RTaskCompleted()", edsrvr);
-    }
+    /* send_to_nvim("call RTaskCompleted()"); */
     return(TRUE);
 }
 
@@ -806,6 +748,8 @@ static void nvimcom_exec(__attribute__((unused))void *nothing){
 /* Code adapted from CarbonEL.
  * Thanks to Simon Urbanek for the suggestion on r-devel mailing list. */
 static void nvimcom_uih(__attribute__((unused))void *data) {
+    if (verbose > 4)
+        REprintf("nvimcom_uih()\n");
     char buf[16];
     if(read(ifd, buf, 1) < 1)
         REprintf("nvimcom error: read < 1\n");
@@ -815,6 +759,8 @@ static void nvimcom_uih(__attribute__((unused))void *data) {
 
 static void nvimcom_fire(void)
 {
+    if (verbose > 4)
+        REprintf("nvimcom_fire()\n");
     if(fired)
         return;
     fired = 1;
@@ -828,7 +774,7 @@ static void nvimcom_fire(void)
 static void SrcrefInfo(void)
 {
     if(debugging == 0){
-        nvimcom_nvimclient("StopRDebugging()", edsrvr);
+        send_to_nvim("call StopRDebugging()");
         return;
     }
     /* If we have a valid R_Srcref, use it */
@@ -843,8 +789,8 @@ static void SrcrefInfo(void)
                 char *buf2 = calloc(sizeof(char), (2 * slen + 32));
                 snprintf(buf, 2 * slen + 1, "%s", CHAR(STRING_ELT(filename, 0)));
                 nvimcom_squo(buf, buf2, 2 * slen + 32);
-                snprintf(buf, 2 * slen + 31, "RDebugJump('%s', %d)", buf2, asInteger(R_Srcref));
-                nvimcom_nvimclient(buf, edsrvr);
+                snprintf(buf, 2 * slen + 31, "call RDebugJump('%s', %d)", buf2, asInteger(R_Srcref));
+                send_to_nvim(buf);
                 free(buf);
                 free(buf2);
             }
@@ -872,36 +818,38 @@ static int nvimcom_read_console(const char *prompt,
 }
 #endif
 
-static void nvimcom_send_running_info(int bindportn)
+static void nvimcom_send_running_info(const char *r_info)
 {
     char msg[2176];
 #ifdef WIN32
 #ifdef _WIN64
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%" PRId64 "', '%" PRId64 "', '%s')",
-            nvimcom_version, nvimcom_home, bindportn, R_PID,
+    snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %" PRId64 ", '%" PRId64 "', '%s')",
+            nvimcom_version, nvimcom_home, R_PID,
             (long long)GetForegroundWindow(), r_info);
 #else
-    snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%ld', '%s')",
-            nvimcom_version, nvimcom_home, bindportn, R_PID,
+    snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '%ld', '%s')",
+            nvimcom_version, nvimcom_home, R_PID,
             (long)GetForegroundWindow(), r_info);
 #endif
 #else
     if(getenv("WINDOWID"))
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '%s', '%s')",
-                nvimcom_version, nvimcom_home, bindportn, R_PID,
+        snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '%s', '%s')",
+                nvimcom_version, nvimcom_home, R_PID,
                 getenv("WINDOWID"), r_info);
     else
-        snprintf(msg, 2175, "SetNvimcomInfo('%s', '%s', '%d', '%d', '0', '%s')",
-                nvimcom_version, nvimcom_home, bindportn, R_PID, r_info);
+        snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '0', '%s')",
+                nvimcom_version, nvimcom_home, R_PID, r_info);
 #endif
-    nvimcom_nvimclient(msg, edsrvr);
+    send_to_nvim(msg);
 }
 
 static void nvimcom_parse_received_msg(char *buf)
 {
     char *p;
 
-    if(verbose > 2){
+    if(verbose > 3){
+        REprintf("nvimcom received: %s\n", buf);
+    } else if(verbose > 2){
         p = buf + strlen(getenv("NVIMR_ID")) + 1;
         REprintf("nvimcom Received: [%c] %s\n", buf[0], p);
     }
@@ -913,7 +861,7 @@ static void nvimcom_parse_received_msg(char *buf)
         case 'N':
             autoglbenv = 0;
             break;
-        case 'G': // Write GlobalEnvList_
+        case 'G':
 #ifdef WIN32
             if(!r_is_busy)
                 nvimcom_globalenv_list();
@@ -977,187 +925,31 @@ static void nvimcom_parse_received_msg(char *buf)
     }
 }
 
-#ifndef WIN32
-static void *nvimcom_server_thread(__attribute__((unused))void *arg)
-{
-    unsigned short bindportn = 10000;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
-
-    struct addrinfo hints;
-    struct addrinfo *rp;
-    struct addrinfo *res;
-    struct sockaddr_storage peer_addr;
-    char bindport[16];
-    socklen_t peer_addr_len = sizeof(struct sockaddr_storage);
-
-#ifndef __APPLE__
-    // block SIGINT
-    {
-        sigset_t set;
-        sigemptyset(&set);
-        sigaddset(&set, SIGINT);
-        sigprocmask(SIG_BLOCK, &set, NULL);
-    }
-#endif
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-    rp = NULL;
-    result = 1;
-    while(rp == NULL && bindportn < 10049){
-        bindportn++;
-        sprintf(bindport, "%d", bindportn);
-        if(getenv("NVIM_IP_ADDRESS"))
-            result = getaddrinfo(NULL, bindport, &hints, &res);
-        else
-            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
-        if(result != 0){
-            REprintf("Error at getaddrinfo: %s [nvimcom]\n", gai_strerror(result));
-            nvimcom_failure = 1;
-            return(NULL);
-        }
-
-        for (rp = res; rp != NULL; rp = rp->ai_next) {
-            sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-            if (sfd == -1)
-                continue;
-            if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                break;       /* Success */
-            close(sfd);
-        }
-        freeaddrinfo(res);   /* No longer needed */
-    }
-
-    if (rp == NULL) {        /* No address succeeded */
-        REprintf("Error: Could not bind. [nvimcom]\n");
-        nvimcom_failure = 1;
-        return(NULL);
-    }
-
-    snprintf(myport, 127, "%d", bindportn);
-
-    if(verbose > 1)
-        REprintf("nvimcom port: %d\n", bindportn);
-
-    // Save a file to indicate that nvimcom is running
-    nvimcom_send_running_info(bindportn);
-
-    char endmsg[128];
-    snprintf(endmsg, 127, "%scall STOP >>> Now <<< !!!", getenv("NVIMR_SECRET"));
-
-    /* Read datagrams and reply to sender */
-    for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(sfd, buf, bsize, 0,
-                (struct sockaddr *) &peer_addr, &peer_addr_len);
-        if (nread == -1){
-            if(verbose > 1)
-                REprintf("nvimcom: recvfrom failed\n");
-            continue;     /* Ignore failed request */
-        }
-        if(strncmp(endmsg, buf, 28) == 0)
-            break;
-        nvimcom_parse_received_msg(buf);
-    }
-    return(NULL);
-}
-#endif
-
 #ifdef WIN32
-static void nvimcom_server_thread(void *arg)
-{
-    unsigned short bindportn = 10000;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
-
-    WSADATA wsaData;
-    SOCKADDR_IN RecvAddr;
-    SOCKADDR_IN peer_addr;
-    int peer_addr_len = sizeof (peer_addr);
-    int nattp = 0;
-    int nfail = 0;
-    int lastfail = 0;
-
-    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != NO_ERROR) {
-        REprintf("WSAStartup failed with error %d\n", result);
-        return;
-    }
-
-    while(bindportn < 10049){
-        bindportn++;
-        sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (sfd == INVALID_SOCKET) {
-            REprintf("Error: socket failed with error %d [nvimcom]\n", WSAGetLastError());
-            return;
-        }
-
-        RecvAddr.sin_family = AF_INET;
-        RecvAddr.sin_port = htons(bindportn);
-        RecvAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-        nattp++;
-        if(bind(sfd, (SOCKADDR *) & RecvAddr, sizeof (RecvAddr)) == 0)
-            break;
-        lastfail = WSAGetLastError();
-        nfail++;
-        if(verbose > 1)
-            REprintf("nvimcom: Could not bind to port %d [error  %d].\n", bindportn, lastfail);
-    }
-    if(nfail > 0 && verbose > 1){
-        if(nattp > nfail)
-            REprintf("nvimcom: finally, bind to port %d was successful.\n", bindportn);
-    }
-    if(nattp == nfail){
-        if(nfail == 1)
-            REprintf("nvimcom: bind failed once with error %d.\n", lastfail);
-        else
-            REprintf("nvimcom: bind failed %d times and the last error was \"%d\".\n", nfail, lastfail);
-        nvimcom_failure = 1;
-        return;
-    }
-
-    if(verbose > 1)
-        REprintf("nvimcom port: %d\n", bindportn);
-
-    // Save a file to indicate that nvimcom is running
-    nvimcom_send_running_info(bindportn);
-
-    /* Read datagrams and reply to sender */
-    for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(sfd, buf, bsize, 0, (SOCKADDR *) &peer_addr, &peer_addr_len);
-        if (nread == SOCKET_ERROR) {
-            REprintf("nvimcom: recvfrom failed with error %d\n", WSAGetLastError());
-            return;
-        }
-        nvimcom_parse_received_msg(buf);
-    }
-
-    REprintf("nvimcom: Finished receiving. Closing socket.\n");
-    result = closesocket(sfd);
-    if (result == SOCKET_ERROR) {
-        REprintf("closesocket failed with error %d\n", WSAGetLastError());
-        return;
-    }
-    WSACleanup();
-    return;
-}
+static void server_thread(__attribute__((unused))void *arg)
+#else
+static void *server_thread(__attribute__((unused))void *arg)
 #endif
-
+{
+    size_t len;
+    for (;;) {
+        char buff[1024];
+        bzero(buff, sizeof(buff));
+        len = read(sockfd, buff, sizeof(buff));
+        if (len == 0 || buff[0] == 0 || buff[0] == EOF) {
+            if (len == 0)
+                REprintf("Connection with nvimrserver was lost\n");
+            if (buff[0] == EOF)
+                REprintf("server_thread: buff[0] == EOF\n");
+            close(sockfd);
+            break;
+        }
+        nvimcom_parse_received_msg(buff);
+    }
+#ifndef WIN32
+    return NULL;
+#endif
+}
 
 void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv, char **pth, char **rinfo)
 {
@@ -1172,10 +964,9 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 
     if(getenv("NVIMR_TMPDIR")){
         strncpy(nvimcom_home, *pth, 1023);
-        strncpy(r_info, *rinfo, 1023);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
-            strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);
+            strncpy(nvimsecr, getenv("NVIMR_SECRET"), 31);
         else
             REprintf("nvimcom: Environment variable NVIMR_SECRET is missing.\n");
     } else {
@@ -1186,11 +977,28 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 
     if(getenv("NVIMR_PORT"))
-        strncpy(edsrvr, getenv("NVIMR_PORT"), 127);
-    if(verbose > 1)
-        REprintf("nclientserver port: %s\n", edsrvr);
+        strncpy(nrs_port, getenv("NVIMR_PORT"), 15);
 
-    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
+    if(verbose > 0)
+        REprintf("nvimcom %s loaded\n", nvimcom_version);
+    if(verbose > 1){
+        if(getenv("NVIM_IP_ADDRESS")) {
+            REprintf("  NVIM_IP_ADDRESS: %s\n", getenv("NVIM_IP_ADDRESS"));
+        }
+        REprintf("  NVIMR_PORT: %s\n", nrs_port);
+        REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
+        REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
+        REprintf("  NVIMR_COMPLDIR: %s\n", getenv("NVIMR_COMPLDIR"));
+        REprintf("  nvimcom dir: %s\n", nvimcom_home);
+        REprintf("  R info: %s\n\n", *rinfo);
+    }
+
+    tcp_header_len = strlen(nvimsecr) + 9;
+    glbnvbuf1 = (char*)calloc(glbnvbufsize, sizeof(char));
+    glbnvbuf2 = (char*)calloc(glbnvbufsize, sizeof(char));
+    send_ge_buf = (char*)calloc(glbnvbufsize + 64, sizeof(char));
+    if(!glbnvbuf1 || !glbnvbuf2 || !send_ge_buf)
+        REprintf("nvimcom: Error allocating memory.\n");
 
 #ifndef WIN32
     *flag_eval = 0;
@@ -1205,30 +1013,46 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 #endif
 
+    if (atoi(nrs_port) > 0) {
+        struct sockaddr_in servaddr;
+        // socket create and verification
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd != -1) {
+            bzero(&servaddr, sizeof(servaddr));
+
+            // assign IP, PORT
+            servaddr.sin_family = AF_INET;
+            if (getenv("NVIM_IP_ADDRESS"))
+                servaddr.sin_addr.s_addr = inet_addr(getenv("NVIM_IP_ADDRESS"));
+            else
+                servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+            servaddr.sin_port = htons(atoi(nrs_port));
+
+            // connect the client socket to server socket
+            if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
 #ifdef WIN32
-    tid = _beginthread(nvimcom_server_thread, 0, NULL);
+                tid = _beginthread(server_thread, 0, NULL);
 #else
-    strcpy(myport, "0");
-    pthread_create(&tid, NULL, nvimcom_server_thread, NULL);
+                pthread_create(&tid, NULL, server_thread, NULL);
 #endif
+                nvimcom_send_running_info(*rinfo);
+            } else {
+                REprintf(NULL, "nvimcom: connection with the server failed (%s)\n",
+                        nrs_port);
+                nvimcom_failure = 1;
+            }
+        } else {
+            REprintf("nvimcom: socket creation failed (%u:%d)\n",
+                    servaddr.sin_addr.s_addr, atoi(nrs_port));
+            nvimcom_failure = 1;
+        }
+    }
 
     if(nvimcom_failure == 0){
-        glbnvbuf1 = (char*)calloc(glbnvbufsize, sizeof(char));
-        glbnvbuf2 = (char*)calloc(glbnvbufsize, sizeof(char));
-        if(!glbnvbuf1 || !glbnvbuf2)
-            REprintf("nvimcom: Error allocating memory.\n");
-
         Rf_addTaskCallback(nvimcom_task, NULL, free, "NVimComHandler", NULL);
 
         nvimcom_initialized = 1;
-        if(verbose > 0)
-            REprintf("nvimcom %s loaded\n", nvimcom_version);
-        if(verbose > 1){
-            REprintf("    NVIMR_TMPDIR = %s\n    NVIMR_ID = %s\n",
-                    tmpdir, getenv("NVIMR_ID"));
-            if(getenv("R_IP_ADDRESS"))
-                REprintf("R_IP_ADDRESS: %s\n", getenv("R_IP_ADDRESS"));
-        }
+
 #ifdef WIN32
         r_is_busy = 0;
 #else
@@ -1237,7 +1061,9 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
             ptr_R_ReadConsole = nvimcom_read_console;
         }
 #endif
-
+        nvimcom_checklibs();
+        needs_lib_msg = 0;
+        send_libnames();
     }
 }
 
@@ -1260,7 +1086,6 @@ void nvimcom_Stop(void)
         if (debug_r)
             ptr_R_ReadConsole = save_ptr_R_ReadConsole;
         close(sfd);
-        nvimcom_nvimclient("STOP >>> Now <<< !!!", myport);
         pthread_join(tid, NULL);
 #endif
 
@@ -1277,6 +1102,8 @@ void nvimcom_Stop(void)
             free(glbnvbuf1);
         if(glbnvbuf2)
             free(glbnvbuf2);
+        if (send_ge_buf)
+            free(send_ge_buf);
         if(verbose)
             REprintf("nvimcom stopped\n");
     }

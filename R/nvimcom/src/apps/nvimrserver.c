@@ -15,6 +15,7 @@
 #include <inttypes.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 #ifdef _WIN64
 #define PRI_SIZET PRIu64
 #else
@@ -40,11 +41,11 @@ static char compl_cb[64];
 static char compl_info[64];
 static char compldir[256];
 static char tmpdir[256];
+static char localtmpdir[256];
 static char liblist[576];
 static char globenv[576];
-static char glbnvls[576];
-static int glbnv_size;
 static int auto_obbr;
+static size_t glbnv_buffer_sz;
 static char *glbnv_buffer;
 static char *compl_buffer;
 static unsigned long compl_buffer_size = 32768;
@@ -54,11 +55,11 @@ static int more_to_build;
 void omni2ob(void);
 void lib2ob(void);
 void update_inst_libs(void);
-void update_pkg_list(void);
-void update_glblenv_buffer(void);
+void update_pkg_list(char *libnms);
+void update_glblenv_buffer(char *g);
 static void build_omnils(void);
-static void finish_bol(int nob);
-void complete(const char *id, char *base, char *funcnm);
+static void finish_bol();
+void complete(const char *id, char *base, char *funcnm, char *args);
 
 // List of paths to libraries
 typedef struct libpaths_ {
@@ -109,33 +110,34 @@ static int nLibObjs;
 
 int nGlbEnvFun;
 
-static char NvimcomPort[16];
+static int r_conn;
 static char VimSecret[128];
 static int VimSecretLen;
 
 #ifdef WIN32
-static SOCKET Sfd;
 static int Tid;
-static int winbindport;
 #else
-static int Sfd = -1;
 static pthread_t Tid;
-static char myport[128];
 #endif
+struct sockaddr_in servaddr;
+static int sockfd;
+static int connfd;
 
-// #define Debug_NCS
-#ifdef Debug_NCS
+#define Debug_NRS_
 static void Log(const char *fmt, ...)
 {
+#ifdef Debug_NRS
     va_list argptr;
-    FILE *f = fopen("/dev/shm/nclientserver_log", "a");
+    FILE *f = fopen("/dev/shm/nvimrserver_log", "a");
     va_start(argptr, fmt);
     vfprintf(f, fmt, argptr);
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-}
+#else
+    // empty function
 #endif
+}
 
 static char *str_cat(char* dest, const char* src)
 {
@@ -220,347 +222,225 @@ static void RegisterPort(int bindportn)
 
 static void ParseMsg(char *b)
 {
-    if(strstr(b, VimSecret) != b){
-        fprintf(stderr, "Strange string received: \"%s\"\n", b);
-        fflush(stderr);
-        return;
-    }
+    Log("ParseMsg(): strlen(b) = %zu", strlen(b));
 
-    b += VimSecretLen;
-
-    // Log("tcp:   %s", b);
-
-    // Update the GlobalEnv buffer before sending the message to Nvim-R
-    // because it must be ready for omni completion
-    if(str_here(b, "call GlblEnvUpdated(1)"))
-        update_glblenv_buffer();
-
-    if(str_here(b, "+BuildOmnils")){
-        update_pkg_list();
-        build_omnils();
-        if (auto_obbr)
-            lib2ob();
-    }
-
-    if (str_here(b, "+FinishBOL")) {
-        b += 10;
-        if (*b == '1')
-            update_inst_libs();
+    if (*b == '+') {
         b++;
-        finish_bol(atoi(b));
-        return;
-    }
-
-    if (str_here(b, "+FinishArgsCompletion")) {
-        // strtok doesn't work here because "base" might be empty.
-        char *id = b + 22;
-        char *base = id;
-        while (*base != ';')
-            base++;
-        *base = 0;
-        base++;
-        char *fnm = base;
-        while (*fnm != ';')
-            fnm++;
-        *fnm = 0;
-        fnm++;
-        b = fnm;
-        while (*b != 0 && *b != '\n')
-            b++;
-        *b = 0;
-        complete(id, base, fnm);
+        switch (*b) {
+            case 'G':
+                b++;
+                update_glblenv_buffer(b);
+                if(auto_obbr)   // Update the Object Browser after sending the message to Nvim-R to
+                    omni2ob();  // avoid unnecessary delays in omni completion
+                break;
+            case 'L':
+                b++;
+                update_pkg_list(b);
+                build_omnils();
+                if(auto_obbr)
+                    lib2ob();
+                break;
+            case 'A': // strtok doesn't work here because "base" might be empty.
+                b++;
+                char *args;
+                char *id = b;
+                char *base = id;
+                while (*base != ';')
+                    base++;
+                *base = 0;
+                base++;
+                char *fnm = base;
+                while (*fnm != ';')
+                    fnm++;
+                *fnm = 0;
+                fnm++;
+                args = fnm;
+                while (*args != 0 && *args != ';')
+                    args++;
+                *args = 0;
+                args++;
+                b = args;
+                while (*b != 0 && *b != '\n')
+                    b++;
+                *b = 0;
+                complete(id, base, fnm, args);
+                break;
+        }
         return;
     }
 
     // Send the command to Nvim-R
-    if (*b != '+'){
-        printf("%s\n", b);
-        fflush(stdout);
-    }
-
-    // Update the Object Browser after sending the message to Nvim-R to
-    // avoid unnecessary delays in omni completion
-    if(auto_obbr && str_here(b, "call GlblEnvUpdated(1)"))
-        omni2ob();
+    printf("%s\n", b);
+    fflush(stdout);
 }
 
-#ifndef WIN32
-static void *NeovimServer(__attribute__((unused))void *arg)
+// Adapted from
+// https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+static void init_listening()
 {
-    unsigned short bindportn = 10100;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
+    Log("init_listening()");
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in cli;
+#ifdef WIN32
+    int len;
+#else
+    socklen_t len;
+#endif
+    int res = 1;
+    int port = 10101;
 
-    struct addrinfo hints;
-    struct addrinfo *rp;
-    struct addrinfo *res;
-    struct sockaddr_storage peer_addr;
-    int Sfd = -1;
-    char bindport[16];
-    socklen_t peer_addr_len = sizeof(struct sockaddr_storage);
-
-    // block SIGINT
-    {
-        sigset_t set;
-        sigemptyset(&set);
-        sigaddset(&set, SIGINT);
-        sigprocmask(SIG_BLOCK, &set, NULL);
+    if (sockfd == -1) {
+        fprintf(stderr, "socket creation failed...\n");
+        fflush(stderr);
+        exit(1);
     }
 
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-    rp = NULL;
-    result = 1;
-    while(rp == NULL && bindportn < 10149){
-        bindportn++;
-        sprintf(bindport, "%d", bindportn);
-        if(getenv("R_IP_ADDRESS"))
-            result = getaddrinfo(NULL, bindport, &hints, &res);
+    bzero(&servaddr, sizeof(servaddr));
+
+    // assign IP, PORT
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    while (port < 10199) {
+        servaddr.sin_port = htons(port);
+        res = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        if (res == 0)
+            break;
+        port++;
+    }
+    if (res == 0) {
+        RegisterPort(port);
+        Log("init_listening: RegisterPort");
+    } else {
+        fprintf(stderr, "Failed to bind to port %d\n", port);
+        fflush(stderr);
+        exit(2);
+    }
+
+    // Now server is ready to listen and verification
+    if ((listen(sockfd, 5)) != 0) {
+        fprintf(stderr, "Listen failed...\n");
+        fflush(stderr);
+        exit(3);
+    }
+    Log("init_listening: Listen succeeded");
+
+    len = sizeof(cli);
+
+    // Accept the data packet from client and verification
+    connfd = accept(sockfd, (struct sockaddr*)&cli, &len);
+    if (connfd < 0) {
+        fprintf(stderr, "server accept failed...\n");
+        fflush(stderr);
+        exit(4);
+    }
+    r_conn = 1;
+    Log("init_listening: accept succeeded");
+}
+
+static void get_whole_msg(char *b)
+{
+    static char *finalbuffer;
+    static unsigned long fb_size = 1024;
+
+    Log("get_whole_msg()");
+    char *p;
+    char tmp[1];
+    int msg_size;
+
+    if(strstr(b, VimSecret) != b){
+        fprintf(stderr, "Strange string received {%s}: \"%s\"\n", VimSecret, b);
+        fflush(stderr);
+        return;
+    }
+    p = b + VimSecretLen;
+
+    // Get the message size
+    p[9] = 0;
+    msg_size = atoi(p);
+    p += 10;
+
+    // Allocate enough memory to the final buffer
+    if (finalbuffer) {
+        if (msg_size > fb_size)
+            finalbuffer = grow_buffer(&finalbuffer, &fb_size, msg_size - fb_size + 1024);
         else
-            result = getaddrinfo("127.0.0.1", bindport, &hints, &res);
-        if(result != 0){
-            fprintf(stderr, "Error at getaddrinfo (%s)\n", gai_strerror(result));
-            fflush(stderr);
-            return NULL;
-        }
-
-        for (rp = res; rp != NULL; rp = rp->ai_next) {
-            Sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-            if (Sfd == -1)
-                continue;
-            if (bind(Sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                break;       /* Success */
-            close(Sfd);
-        }
-        freeaddrinfo(res);   /* No longer needed */
+            memset(finalbuffer, 0, fb_size);
+    } else {
+        if (msg_size > fb_size)
+            fb_size = msg_size + 1024;
+        finalbuffer = calloc(fb_size, sizeof(char));
     }
 
-    if (rp == NULL) {        /* No address succeeded */
-        fprintf(stderr, "Could not bind\n");
-        fflush(stderr);
-        return NULL;
-    }
-
-    RegisterPort(bindportn);
-
-    snprintf(myport, 127, "%d", bindportn);
-    char endmsg[128];
-    snprintf(endmsg, 127, "%scall >>> STOP Now <<< !!!", getenv("NVIMR_SECRET"));
-
-    /* Read datagrams and reply to sender */
+    p = finalbuffer;
     for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(Sfd, buf, bsize, 0,
-                (struct sockaddr *) &peer_addr, &peer_addr_len);
-        if (nread == -1){
-            fprintf(stderr, "recvfrom failed [port %d]\n", bindportn);
+        if((read(connfd, tmp, 1) == 1)) {
+            *p = *tmp;
+        } else {
+            fprintf(stderr, "Read 0 byte from TCP connection (R quit?)\n");
             fflush(stderr);
-            continue;     /* Ignore failed request */
         }
-        if(strncmp(endmsg, buf, 28) == 0)
+        if (*p == '\001')
             break;
-
-        ParseMsg(buf);
+        p++;
     }
-    close(Sfd);
-    return NULL;
+    *p = 0;
+
+    // FIXME: Delete this check when the code proved to be reliable
+    if (strlen(finalbuffer) != msg_size) {
+        fprintf(stderr, "Divergent TCP message size: %zu x %d\n", strlen(p), msg_size);
+        fflush(stderr);
+    }
+
+    ParseMsg(finalbuffer);
 }
-#endif
 
 #ifdef WIN32
-static void NeovimServer(void *arg)
-{
-    unsigned short bindportn = 10100;
-    ssize_t nread;
-    int bsize = 5012;
-    char buf[bsize];
-    int result;
-
-    WSADATA wsaData;
-    SOCKADDR_IN RecvAddr;
-    SOCKADDR_IN peer_addr;
-    SOCKET Sfd;
-    int peer_addr_len = sizeof (peer_addr);
-    int nattp = 0;
-    int nfail = 0;
-
-    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != NO_ERROR) {
-        fprintf(stderr, "WSAStartup failed with error %d.\n", result);
-        fflush(stderr);
-        return;
-    }
-
-    while(bindportn < 10149){
-        bindportn++;
-        Sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (Sfd == INVALID_SOCKET) {
-            fprintf(stderr, "socket failed with error %d\n", WSAGetLastError());
-            fflush(stderr);
-            return;
-        }
-
-        RecvAddr.sin_family = AF_INET;
-        RecvAddr.sin_port = htons(bindportn);
-        RecvAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-        nattp++;
-        if(bind(Sfd, (SOCKADDR *) & RecvAddr, sizeof (RecvAddr)) == 0)
-            break;
-        nfail++;
-    }
-    if(nattp == nfail){
-        fprintf(stderr, "Could not bind\n");
-        fflush(stderr);
-        return;
-    }
-
-    winbindport = bindportn;
-    RegisterPort(bindportn);
-
-    /* Read datagrams and reply to sender */
-    for (;;) {
-        memset(buf, 0, bsize);
-
-        nread = recvfrom(Sfd, buf, bsize, 0,
-                (SOCKADDR *) &peer_addr, &peer_addr_len);
-        if (nread == SOCKET_ERROR) {
-            fprintf(stderr, "recvfrom failed with error %d [port %d]\n",
-                    bindportn, WSAGetLastError());
-            fflush(stderr);
-            return;
-        }
-        if(strstr(buf, "QUIT_NVINSERVER_NOW"))
-            break;
-
-        ParseMsg(buf);
-    }
-    result = closesocket(Sfd);
-    if (result == SOCKET_ERROR) {
-        fprintf(stderr, "closesocket failed with error %d\n", WSAGetLastError());
-        fflush(stderr);
-        return;
-    }
-    WSACleanup();
-    return;
-}
+static void receive_msg(void *arg)
+#else
+static void *receive_msg()
 #endif
+{
+    size_t blen = VimSecretLen + 9;
+    char b[32];
+    size_t rlen;
 
+    for (;;) {
+        bzero(b, blen);
+        rlen = read(connfd, b, blen);
+        if (rlen == 0) {
+            fprintf(stderr, "Read 0 byte (R quit?)\n");
+            fflush(stderr);
+            r_conn = 0;
+            close(sockfd);
+            init_listening();
+        } else if (rlen != blen) {
+            fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
+            fflush(stderr);
+        } else {
+            Log("TCP in [%zu bytes] (message header): %s", blen, b);
+            get_whole_msg(b);
+        }
+    }
 #ifndef WIN32
-static void SendToServer(const char *port, const char *msg)
-{
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int s, a;
-    size_t len;
-
-    /* Obtain address(es) matching host/port */
-    if(strncmp(port, "0", 15) == 0){
-        fprintf(stderr, "Is R running?\n");
-        fflush(stderr);
-        return;
-    }
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;
-
-    if(getenv("R_IP_ADDRESS"))
-        a = getaddrinfo(getenv("R_IP_ADDRESS"), port, &hints, &result);
-    else
-        a = getaddrinfo("127.0.0.1", port, &hints, &result);
-    if (a != 0) {
-        fprintf(stderr, "Error in getaddrinfo [port = '%s'] [msg = '%s']: %s\n",
-                port, msg, gai_strerror(a));
-        fflush(stderr);
-        return;
-    }
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-        s = socket(rp->ai_family, rp->ai_socktype,
-                rp->ai_protocol);
-        if (s == -1)
-            continue;
-
-        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1)
-            break;     /* Success */
-
-        close(s);
-    }
-
-    if (rp == NULL) {     /* No address succeeded */
-        fprintf(stderr, "Could not connect.\n");
-        fflush(stderr);
-        return;
-    }
-
-    freeaddrinfo(result);    /* No longer needed */
-
-    len = strlen(msg);
-    if (write(s, msg, len) != (ssize_t)len) {
-        fprintf(stderr, "Partial/failed write.\n");
-        fflush(stderr);
-        return;
-    }
-    close(s);
-}
+    return NULL;
 #endif
+}
+
+void send_to_nvimcom(char *msg)
+{
+    Log("TCP out: %s", msg);
+    if (connfd) {
+        size_t len = strlen(msg);
+        if (write(connfd, msg, len) != (ssize_t)len) {
+            fprintf(stderr, "Partial/failed write.\n");
+            fflush(stderr);
+            return;
+        }
+    }
+}
 
 #ifdef WIN32
-static void SendToServer(const char *port, const char *msg)
-{
-    WSADATA wsaData;
-    struct sockaddr_in peer_addr;
-    SOCKET sfd;
-
-    if(strncmp(port, "0", 15) == 0){
-        fprintf(stderr, "Port is 0\n");
-        fflush(stderr);
-        return;
-    }
-
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if(sfd < 0){
-        fprintf(stderr, "Socket failed\n");
-        fflush(stderr);
-        return;
-    }
-
-    peer_addr.sin_family = AF_INET;
-    peer_addr.sin_port = htons(atoi(port));
-    peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    if(connect(sfd, (struct sockaddr *)&peer_addr, sizeof(peer_addr)) < 0){
-        fprintf(stderr, "Could not connect\n");
-        fflush(stderr);
-        return;
-    }
-
-    int len = strlen(msg);
-    if (send(sfd, msg, len+1, 0) < 0) {
-        fprintf(stderr, "Failed sending message\n");
-        fflush(stderr);
-        return;
-    }
-
-    if(closesocket(sfd) < 0){
-        fprintf(stderr, "Error closing socket\n");
-        fflush(stderr);
-    }
-}
-
 static void SendToRConsole(char *aString){
     if(!RConsole){
         fprintf(stderr, "R Console window ID not defined [SendToRConsole]\n");
@@ -574,7 +454,7 @@ static void SendToRConsole(char *aString){
 
     char msg[1024];
     snprintf(msg, 1023, "C%s%s", getenv("NVIMR_ID"), aString);
-    SendToServer(NvimcomPort, msg);
+    send_to_nvimcom(msg);
     Sleep(0.02);
 
     // Necessary to force RConsole to actually process the line
@@ -772,17 +652,13 @@ void start_server(void)
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
 
-#ifdef WIN32
-    Sleep(1000);
-#else
-    sleep(1);
-#endif
+    init_listening();
 
+    // Receive messages from TCP and output them to stdout
 #ifdef WIN32
-    Tid = _beginthread(NeovimServer, 0, NULL);
+    Tid = _beginthread(receive_msg, 0, NULL);
 #else
-    strcpy(myport, "0");
-    pthread_create(&Tid, NULL, NeovimServer, NULL);
+    pthread_create(&Tid, NULL, receive_msg, NULL);
 #endif
 }
 
@@ -831,6 +707,7 @@ char *read_file(const char *fn, int verbose)
     rewind(f);
     if(sz == 0){
         // List of objects is empty. Perhaps no object was created yet.
+        fclose(f);
         return NULL;
     }
 
@@ -839,6 +716,7 @@ char *read_file(const char *fn, int verbose)
         fclose(f);
         fputs("Error allocating memory\n", stderr);
         fflush(stderr);
+        return NULL;
     }
 
     if(1 != fread(buffer, sz, 1 , f)){
@@ -852,12 +730,8 @@ char *read_file(const char *fn, int verbose)
     return buffer;
 }
 
-char *read_omnils_file(const char *fn, int *size)
+void *check_omils_buffer(char *buffer, int *size)
 {
-    char * buffer = read_file(fn, 1);
-    if(!buffer)
-        return NULL;
-
     // Ensure that there are exactly 7 \006 between new line characters
     buffer = count_sep(buffer, size);
 
@@ -872,12 +746,22 @@ char *read_omnils_file(const char *fn, int *size)
             p++;
         }
     }
-
     return buffer;
+}
+
+char *read_omnils_file(const char *fn, int *size)
+{
+    Log("read_omnils_file(%s)", fn);
+    char * buffer = read_file(fn, 1);
+    if(!buffer)
+        return NULL;
+
+    return check_omils_buffer(buffer, size);
 }
 
 char *get_pkg_descr(const char *pkgnm)
 {
+    Log("get_pkg_descr(%s)", pkgnm);
     InstLibs *il = instlibs;
     while (il) {
         if (strcmp(il->name, pkgnm) == 0) {
@@ -900,6 +784,8 @@ void pkg_delete(PkgData *pd)
         free(pd->descr);
     if(pd->omnils)
         free(pd->omnils);
+    if(pd->args)
+        free(pd->args);
     free(pd);
 }
 
@@ -981,6 +867,7 @@ static int run_R_code(const char *s, int senderror)
         fclose(f);
     } else {
         fprintf(stderr, "Failed to write \"%s/bo_code.R\"\n", fnm);
+        fflush(stderr);
         return 1;
     }
 
@@ -1005,12 +892,14 @@ static int run_R_code(const char *s, int senderror)
 
     if (! CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
         fprintf(stderr, "CreatePipe error\n");
+        fflush(stderr);
         return 1;
     }
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
     if (! SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
         fprintf(stderr, "SetHandleInformation error\n");
+        fflush(stderr);
         return 1;
     }
 
@@ -1034,8 +923,12 @@ static int run_R_code(const char *s, int senderror)
 
     // Create the child process.
 
+    char buf[512];
+    snprintf(buf, 511, "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
+            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"));
+
     res = CreateProcess(NULL,
-            "R.exe --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",  // Command line
+            "",  // Command line
             NULL,          // process security attributes
             NULL,          // primary thread security attributes
             TRUE,          // handles are inherited
@@ -1097,11 +990,13 @@ static int run_R_code(const char *s, int senderror)
 #else
     char b[1024];
     snprintf(b, 1023,
-            "R --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
-            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"", tmpdir, tmpdir, tmpdir);
+            "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
+            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"",
+            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
+    Log("R command: %s", b);
 
-    int stt;
-    if ((stt = system(b)) != 0) {
+    int stt = system(b);
+    if (stt != 0 && stt != 512) { // ssh success status seems to be 512
         if (senderror) {
             printf("call ShowBuildOmnilsError('%d')\n", stt);
             fflush(stdout);
@@ -1203,6 +1098,7 @@ void parse_descr(char *descr, const char *fnm) {
 
 void update_inst_libs(void)
 {
+    Log("update_inst_libs()");
     DIR *d;
     struct dirent *dir;
     char fname[512];
@@ -1272,6 +1168,7 @@ void update_inst_libs(void)
 // the omnils_ and fun_ files in compldir.
 static void build_omnils(void)
 {
+    Log("build_omnils()");
     unsigned long nsz;
 
     if (building_omnils) {
@@ -1314,20 +1211,10 @@ static void build_omnils(void)
         // more frequently. 3. The Object Browser only needs the omnils_.
 
         n_omnils_build++;
-        p = str_cat(p, ")\nb <- nvimcom:::nvim.buildomnils(p)\n"
-                ".C('nvimcom_send_msg_to_port', paste0('+FinishBOL', b, '");
-        snprintf(buf, 63, "%d", n_omnils_build);
-        p = str_cat(p, buf);
-        p = str_cat(p, "'), '");
-#ifdef WIN32
-        snprintf(buf, 63, "%d", winbindport);
-        p = str_cat(p, buf);
-#else
-        p = str_cat(p, myport);
-#endif
-        p = str_cat(p, "', PACKAGE = 'nvimcom')\n"
-                "nvimcom:::nvim.buildargs(p)\n");
+        p = str_cat(p, ")\nnvimcom:::nvim.buildomnils(p)\n");
+        p = str_cat(p, "nvimcom:::nvim.buildargs(p)\n");
         run_R_code(compl_buffer, 1);
+        finish_bol();
     }
     building_omnils = 0;
 
@@ -1358,10 +1245,9 @@ static void build_omnils(void)
 }
 
 // Called asynchronously and only if an omnils_ file was actually built.
-static void finish_bol(int nob)
+static void finish_bol()
 {
-    if (n_omnils_build > nob)
-        return;
+    Log("finish_bol()");
 
     char buf[1024];
 
@@ -1380,7 +1266,7 @@ static void finish_bol(int nob)
 
     // Finally create a list of built omnils_ because libnames_ might have
     // already changed and Nvim-R would try to read omnils_ files not built yet.
-    snprintf(buf, 511, "%s/libs_in_ncs_%s", tmpdir, getenv("NVIMR_ID"));
+    snprintf(buf, 511, "%s/libs_in_nrs_%s", localtmpdir, getenv("NVIMR_ID"));
     FILE *f = fopen(buf, "w");
     if (f) {
         PkgData *pkg = pkgList;
@@ -1427,20 +1313,12 @@ char *complete_instlibs(char *p, const char *base) {
     return p;
 }
 
-void update_pkg_list(void)
+void update_pkg_list(char *libnms)
 {
+    Log("update_pkg_list()");
     char buf[512];
-    char *s, *vrsn;
-    char lbnm[128];
+    char *s, *nm, *vrsn;
     PkgData *pkg;
-
-    snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
-    FILE *flib = fopen(buf, "r");
-    if(!flib){
-        fprintf(stderr, "Failed to open \"%s\"\n", buf);
-        fflush(stderr);
-        return;
-    }
 
     // Consider that all packages were unloaded
     pkg = pkgList;
@@ -1449,23 +1327,66 @@ void update_pkg_list(void)
         pkg = pkg->next;
     }
 
-    while((s = fgets(lbnm, 127, flib))){
-        while(*s != '_')
-            s++;
-        *s = 0;
-        s++;
-        vrsn = s;
-        while(*s != '\n')
-            s++;
-        *s = 0;
+    if (libnms) {
+        // called by nvimcom
+        Log("update_pkg_list != NULL");
+        while (*libnms) {
+            nm = libnms;
+            while(*libnms != '\003')
+                libnms++;
+            *libnms = 0;
+            libnms++;
+            vrsn = libnms;
+            while(*libnms != '\004')
+                libnms++;
+            *libnms = 0;
+            libnms++;
+            if (*libnms == '\n') // this was the last package
+                libnms++;
 
-        pkg = get_pkg(lbnm);
-        if (pkg)
-            pkg->loaded = 1;
-        else
-            add_pkg(lbnm, vrsn);
+            if (strstr(nm, " ") || strstr(vrsn, " ")) {
+                break;
+            }
+
+            pkg = get_pkg(nm);
+            if (pkg)
+                pkg->loaded = 1;
+            else
+                add_pkg(nm, vrsn);
+        }
+    } else {
+        // Called during the initialization with libnames_ created by
+        // R/before_nrs.R to highlight function from the `library()` and
+        // `require()` commands present in the file being edited.
+        char lbnm[128];
+        Log("update_pkg_list == NULL");
+
+        snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
+        FILE *flib = fopen(buf, "r");
+        if(!flib){
+            fprintf(stderr, "Failed to open \"%s\"\n", buf);
+            fflush(stderr);
+            return;
+        }
+
+        while((s = fgets(lbnm, 127, flib))){
+            while(*s != '_')
+                s++;
+            *s = 0;
+            s++;
+            vrsn = s;
+            while(*s != '\n')
+                s++;
+            *s = 0;
+
+            pkg = get_pkg(lbnm);
+            if (pkg)
+                pkg->loaded = 1;
+            else
+                add_pkg(lbnm, vrsn);
+        }
+        fclose(flib);
     }
-    fclose(flib);
 
     // No command run yet
     if(!pkgList)
@@ -1738,16 +1659,29 @@ void hi_glbenv_fun(void)
     fflush(stdout);
 }
 
-void update_glblenv_buffer(void)
+void update_glblenv_buffer(char *g)
 {
-    if(glbnv_buffer)
-        free(glbnv_buffer);
-    glbnv_buffer = read_omnils_file(glbnvls, &glbnv_size);
-    if(glbnv_buffer == NULL)
+    Log("update_glblenv_buffer()");
+    int n = 0;
+    int max;
+    int glbnv_size;
+
+    if(glbnv_buffer) {
+        if (strlen(g) > glbnv_buffer_sz) {
+            free(glbnv_buffer);
+            glbnv_buffer_sz = strlen(g) + 4096;
+            glbnv_buffer = malloc(glbnv_buffer_sz * sizeof(char));
+        }
+    } else {
+        glbnv_buffer_sz = strlen(g) + 4096;
+        glbnv_buffer = malloc(glbnv_buffer_sz * sizeof(char));
+    }
+    strcpy(glbnv_buffer, g);
+    if (check_omils_buffer(glbnv_buffer, &glbnv_size) == NULL)
         return;
 
-    int n = 0;
-    int max = glbnv_size - 5;
+    max = glbnv_size - 5;
+
     for(int i = 0; i < max; i++)
         if(glbnv_buffer[i] == '\003'){
             n++;
@@ -1762,6 +1696,7 @@ void update_glblenv_buffer(void)
 
 void omni2ob(void)
 {
+    Log("omni2ob()");
     FILE *f = fopen(globenv, "w");
     if(!f){
         fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
@@ -1786,6 +1721,7 @@ void omni2ob(void)
 
 void lib2ob(void)
 {
+    Log("lib2ob()");
     FILE *f = fopen(liblist, "w");
     if(!f){
         fprintf(stderr, "Failed to open \"%s\"\n", liblist);
@@ -1908,17 +1844,30 @@ static void fill_inst_libs(void)
     free(b);
 }
 
-static void init_vars(void)
+static void send_nrs_info(void)
 {
-#ifdef Debug_NCS
+    printf("call EchoNCSInfo('Loaded packages:");
+    PkgData *pkg = pkgList;
+    while(pkg){
+        printf(" %s", pkg->name);
+        pkg = pkg->next;
+    }
+    printf("')\n");
+    fflush(stdout);
+}
+
+static void init(void)
+{
+#ifdef Debug_NRS
     time_t t;
     time(&t);
-    FILE *f = fopen("/dev/shm/nclientserver_log", "w");
-    fprintf(f, "NCLIENTSERVER LOG | %s\n\n", ctime(&t));
+    FILE *f = fopen("/dev/shm/nvimrserver_log", "w");
+    fprintf(f, "NSERVER LOG | %s\n\n", ctime(&t));
     fclose(f);
 #endif
 
     char envstr[1024];
+
     envstr[0] = 0;
     if(getenv("LC_MESSAGES"))
         strcat(envstr, getenv("LC_MESSAGES"));
@@ -1951,9 +1900,14 @@ static void init_vars(void)
     strncpy(compl_info, getenv("NVIMR_COMPLInfo"), 63);
     strncpy(compldir, getenv("NVIMR_COMPLDIR"), 255);
     strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 255);
-    snprintf(liblist, 575, "%s/liblist_%s", tmpdir, getenv("NVIMR_ID"));
-    snprintf(globenv, 575, "%s/globenv_%s", tmpdir, getenv("NVIMR_ID"));
-    snprintf(glbnvls, 575, "%s/GlobalEnvList_%s", tmpdir, getenv("NVIMR_ID"));
+    if (getenv("NVIMR_LOCAL_TMPDIR")) {
+        strncpy(localtmpdir, getenv("NVIMR_LOCAL_TMPDIR"), 255);
+    } else {
+        strncpy(localtmpdir, getenv("NVIMR_TMPDIR"), 255);
+    }
+
+    snprintf(liblist, 575, "%s/liblist_%s", localtmpdir, getenv("NVIMR_ID"));
+    snprintf(globenv, 575, "%s/globenv_%s", localtmpdir, getenv("NVIMR_ID"));
 
     if(getenv("NVIMR_OPENDF"))
         OpenDF = 1;
@@ -2007,9 +1961,13 @@ static void init_vars(void)
         }
     }
     update_inst_libs();
-    update_pkg_list();
+    update_pkg_list(NULL);
     build_omnils();
-    finish_bol(1);
+
+    printf("let g:rplugin.nrs_running = 1\n");
+    fflush(stdout);
+
+    Log("init() finished");
 }
 
 int count_twice(const char *b1, const char *b2, const char ch)
@@ -2073,7 +2031,7 @@ void completion_info(const char *wrd, const char *pkg)
                 snprintf(compl_buffer, 1024, "%s/args_for_completion", tmpdir);
                 remove(compl_buffer);
                 snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
-                SendToServer(NvimcomPort, compl_buffer);
+                send_to_nvimcom(compl_buffer);
                 return;
             }
 
@@ -2213,38 +2171,6 @@ char *parse_omnls(const char *s, const char *base, const char *pkg, char *p)
     return p;
 }
 
-char *get_arg_compl(char *p, const char *base)
-{
-    char *s, *t;
-    unsigned long nsz;
-    // Get documentation info for each item
-    char buf[512];
-    snprintf(buf, 511, "%s/args_for_completion", tmpdir);
-    s = read_file(buf, 1);
-    if(s){
-        nsz = strlen(s) + 1024 + (p - compl_buffer);
-        if (compl_buffer_size < nsz)
-            p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
-        snprintf(buf, 511, "{'word': '%s", base);
-#ifdef WIN32
-        t = strtok(s, "\n\r");
-#else
-        t = strtok(s, "\n");
-#endif
-        while(t){
-            if(strstr(t, buf))
-                p = str_cat(p, t);
-#ifdef WIN32
-            t = strtok(NULL, "\n\r");
-#else
-            t = strtok(NULL, "\n");
-#endif
-        }
-        free(s);
-    }
-    return p;
-}
-
 void resolve_arg_item(char *pkg, char *fnm, char *itm)
 {
     char item[128];
@@ -2329,8 +2255,9 @@ char *complete_args(char *p, char *funcnm)
     return p;
 }
 
-void complete(const char *id, char *base, char *funcnm)
+void complete(const char *id, char *base, char *funcnm, char *args)
 {
+    Log("complete(%s, %s, %s, _)", id, base, funcnm, args);
     char *p;
 
     memset(compl_buffer, 0, compl_buffer_size);
@@ -2347,10 +2274,10 @@ void complete(const char *id, char *base, char *funcnm)
             return;
         } else {
             // Normal completion of arguments
-            if (*NvimcomPort == '0')
+            if (r_conn == 0)
                 p = complete_args(p, funcnm);
             else
-                p = get_arg_compl(p, base);
+                p = str_cat(p, args);
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
@@ -2387,61 +2314,29 @@ void complete(const char *id, char *base, char *funcnm)
     fflush(stdout);
 }
 
-int main(int argc, char **argv){
-
+void stdin_loop()
+{
     char line[1024];
-    if(argc == 3 && getenv("NVIMR_PORT") && getenv("NVIMR_SECRET")){
-        snprintf(line, 1023, "%scall SyncTeX_backward('%s', %s)",
-                getenv("NVIMR_SECRET"), argv[1], argv[2]);
-        SendToServer(getenv("NVIMR_PORT"), line);
-        return 0;
-    }
-
     FILE *f;
     char *msg;
     char t;
     memset(line, 0, 1024);
-    strcpy(NvimcomPort, "0");
-
-    init_vars();
-
-#ifdef WIN32
-    Windows_setup();
-#endif
-
-    start_server();
 
     while(fgets(line, 1023, stdin)){
 
         for(unsigned int i = 0; i < strlen(line); i++)
             if(line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
-        // Log("stdin: %s",  line);
+        Log("stdin:   %s",  line);
         msg = line;
         switch(*msg){
-            case '1': // SetPort
-                msg++;
-#ifdef WIN32
-                char *r = msg;
-                while(*r != ' ')
-                    r++;
-                *r = 0;
-                r++;
-                memcpy(NvimcomPort, msg, 15);
-#ifdef _WIN64
-                RConsole = (HWND)atoll(r);
-#else
-                RConsole = (HWND)atol(r);
-#endif
-                if(msg[0] == '0')
-                    RConsole = NULL;
-#else
-                memcpy(NvimcomPort, msg, 15);
-#endif
+            case '1': // Start server and wait nvimcom contact
+                start_server();
+                Log("server started");
                 break;
             case '2': // Send message
                 msg++;
-                SendToServer(NvimcomPort, msg);
+                send_to_nvimcom(msg);
                 break;
             case '3':
                 msg++;
@@ -2484,15 +2379,8 @@ int main(int argc, char **argv){
                 }
                 break;
             case '4': // Print pkg info
-                update_glblenv_buffer();
-                printf("call NclientserverInfo('Loaded packages:");
-                PkgData *pkg = pkgList;
-                while(pkg){
-                    printf(" %s", pkg->name);
-                    pkg = pkg->next;
-                }
-                printf("')\n");
-                fflush(stdout);
+                update_glblenv_buffer(NULL);
+                send_nrs_info();
                 break;
             case '5':
                 msg++;
@@ -2503,7 +2391,7 @@ int main(int argc, char **argv){
                 msg++;
                 if (*msg == '\004') {
                     msg++;
-                    complete(id, msg, "\004");
+                    complete(id, msg, "\004", NULL);
                 } else if (*msg == '\005') {
                     msg++;
                     char *base = msg;
@@ -2511,9 +2399,9 @@ int main(int argc, char **argv){
                         msg++;
                     *msg = 0;
                     msg++;
-                    complete(id, base, msg);
+                    complete(id, base, msg, NULL);
                 } else {
-                    complete(id, msg, NULL);
+                    complete(id, msg, NULL, NULL);
                 }
                 break;
             case '6':
@@ -2587,13 +2475,13 @@ int main(int argc, char **argv){
         }
         memset(line, 0, 1024);
     }
+}
+
+int main(int argc, char **argv){
+    init();
 #ifdef WIN32
-    closesocket(Sfd);
-    WSACleanup();
-#else
-    close(Sfd);
-    SendToServer(myport, ">>> STOP Now <<< !!!");
-    pthread_join(Tid, NULL);
+    Windows_setup();
 #endif
+    stdin_loop();
     return 0;
 }

@@ -6,10 +6,10 @@ else
 endif
 
 # Note: -lWs2_32 must be after the object files
-all: nclientserver.exe
+all: nvimrserver.exe
 
-nclientserver.exe: nclientserver.c
-	$(CC) $(CFLAGS) nclientserver.c -o nclientserver.exe -lWs2_32
+nvimrserver.exe: nvimrserver.c
+	$(CC) $(CFLAGS) nvimrserver.c -o nvimrserver.exe -lWs2_32
 
 clean:
 

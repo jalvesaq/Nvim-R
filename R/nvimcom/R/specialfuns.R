@@ -17,7 +17,7 @@ nvim.edit <- function(name, file, title) {
     sink()
 
     .C("nvimcom_msg_to_nvim",
-       paste0("EditRObject('", initial, "')"),
+       paste0("call EditRObject('", initial, "')"),
        PACKAGE = "nvimcom")
 
     while (file.exists(waitf))
@@ -32,17 +32,20 @@ vi <- function(name = NULL, file = "") {
     nvim.edit(name, file)
 }
 
-nvim_capture_source_output <- function(s, o) {
-    capture.output(base::source(s, echo = TRUE), file = o)
-    .C("nvimcom_msg_to_nvim", paste0("GetROutput('", o, "')"), PACKAGE = "nvimcom")
+nvim_capture_source_output <- function(s, nm) {
+    o <- capture.output(base::source(s, echo = TRUE), file = NULL)
+    o <- paste0(o, collapse = "\002")
+    o <- gsub("'", "\004", o)
+    .C("nvimcom_msg_to_nvim", paste0("call GetROutput('", nm, "', '", o, "')"),
+       PACKAGE = "nvimcom")
 }
 
 nvim_dput <- function(oname, howto = "tabnew") {
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
-    eval(parse(text = paste0("dput(", oname, ")")))
-    sink()
+    o <- capture.output(eval(parse(text = paste0("dput(", oname, ")"))))
+    o <- paste0(o, collapse = "\002")
+    o <- gsub("'", "\004", o)
     .C("nvimcom_msg_to_nvim",
-       paste0('ShowRObj("', howto, '", "', oname, '", "r")'),
+       paste0("call ShowRObj('", howto, "', '", oname, "', 'r', '", o, "')"),
        PACKAGE = "nvimcom")
 }
 
@@ -68,7 +71,7 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
         }
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               paste0("RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
+               paste0("call RWarningMsg('", '"', oname, '"', " not found in .GlobalEnv')"),
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
@@ -79,21 +82,21 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
         }
         if (!is.null(R_df_viewer)) {
             .C("nvimcom_msg_to_nvim",
-               paste0("g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
+               paste0("call g:SendCmdToR(printf(g:R_df_viewer, '", oname, "'))"),
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
         if (getOption("nvimcom.delim") == "\t") {
-            write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
-                        fileEncoding = fenc,
-                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+            txt <- capture.output(write.table(o, sep = "\t", row.names = FALSE, quote = FALSE,
+                                              fileEncoding = fenc))
         } else {
-            write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
-                        fileEncoding = fenc,
-                        file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert"))
+            txt <- capture.output(write.table(o, sep = getOption("nvimcom.delim"), row.names = FALSE,
+                                              fileEncoding = fenc))
         }
+        txt <- paste0(txt, collapse = "\002")
+        txt <- gsub("'", "\004", txt)
         .C("nvimcom_msg_to_nvim",
-           paste0("RViewDF('", oname, "', '", howto, "')"),
+           paste0("call RViewDF('", oname, "', '", howto, "', '", txt, "')"),
            PACKAGE = "nvimcom")
     } else {
         nvim_dput(oname, howto)
@@ -125,7 +128,7 @@ source.and.clean <- function(f, ...) {
     source(f, ...)
 }
 
-nvim_format <- function(l1, l2, wco, sw) {
+nvim_format <- function(l1, l2, wco, sw, txt) {
     if (is.null(getOption("nvimcom.formatfun"))) {
         if ("styler" %in% rownames(installed.packages())) {
            options(nvimcom.formatfun = "style_text")
@@ -134,50 +137,51 @@ nvim_format <- function(l1, l2, wco, sw) {
                 options(nvimcom.formatfun = "tidy_source")
             } else {
                 .C("nvimcom_msg_to_nvim",
-                   "RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
+                   "call RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
                    PACKAGE = "nvimcom")
                 return(invisible(NULL))
             }
         }
     }
 
+    txt <- strsplit(gsub("\004", "'", txt), "\002")[[1]]
     if (getOption("nvimcom.formatfun") == "tidy_source") {
-        ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
-                                       file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
-                                       width.cutoff = wco))
+        ok <- formatR::tidy_source(text = txt, width.cutoff = wco, output = FALSE)
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               "RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
+               "call RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
+        txt <- gsub("'", "\004", gsub("\n", "\002", ok$text.tidy))
     } else if (getOption("nvimcom.formatfun") == "style_text") {
-        txt <- readLines(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"))
         ok <- try(styler::style_text(txt, indent_by = sw))
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
-               "RWarningMsg('Error trying to execute the function styler::style_text()')",
+               "call RWarningMsg('Error trying to execute the function styler::style_text()')",
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
-        writeLines(ok, paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"))
+        txt <- gsub("'", "\004", paste0(ok, collapse = "\002"))
     }
 
     .C("nvimcom_msg_to_nvim",
-       paste0("FinishRFormatCode(", l1, ", ", l2, ")"),
+       paste0("call FinishRFormatCode(", l1, ", ", l2, ", '", txt, "')"),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
 
 nvim_insert <- function(cmd, howto = "tabnew") {
-    try(ok <- capture.output(cmd, file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/Rinsert")))
-    if (inherits(ok, "try-error")) {
+    try(o <- capture.output(cmd))
+    if (inherits(o, "try-error")) {
         .C("nvimcom_msg_to_nvim",
-           paste0("RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
+           paste0("call RWarningMsg('Error trying to execute the command \"", cmd, "\"')"),
            PACKAGE = "nvimcom")
     } else {
+        o <- paste0(o, collapse = "\002")
+        o <- gsub("'", "\004", o)
         .C("nvimcom_msg_to_nvim",
-           paste0('FinishRInsert("', howto, '")'),
+           paste0("call FinishRInsert('", howto, "', '", o, "')"),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -303,15 +307,15 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
 ###############################################################################
 
 nvim.GlobalEnv.fun.args <- function(funcname) {
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
-    cat(nvim.args(funcname))
-    sink()
+    txt <- nvim.args(funcname)
+    txt <- gsub('\\\\\\"', '\005', txt)
+    txt <- gsub('"', '\\\\"', txt)
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
         .C("nvimcom_msg_to_nvim",
-           paste0('FinishGlbEnvFunArgs("', funcname, '")'), PACKAGE = "nvimcom")
+           paste0('call FinishGlbEnvFunArgs("', funcname, '", "', txt, '")'), PACKAGE = "nvimcom")
     } else {
         .C("nvimcom_msg_to_nvim",
-           paste0("v:lua.require'cmp_nvim_r'.finish_glbenv_fun()"),
+           paste0("call v:lua.require'cmp_nvim_r'.finish_ge_fun_args(\"", txt, '")'),
            PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
@@ -326,31 +330,33 @@ nvim.get.summary <- function(obj, wdth) {
 
     owd <- getOption("width")
     options(width = wdth)
-    sink(paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
         sobj <- try(summary(obj), silent = TRUE)
-        print(sobj)
+        txt <- capture.output(print(sobj))
     } else {
+        txt <- ""
         if (!is.null(attr(obj, "label")))
-            cat("\n\n", attr(obj, "label"))
-        cat("\n\n```rout\n")
+            txt <- append(txt, capture.output(cat("\n\n", attr(obj, "label"))))
+        txt <- append(txt, capture.output(cat("\n\n```rout\n")))
         if (is.factor(obj) || is.numeric(obj)) {
             sobj <- try(summary(obj), silent = TRUE)
-            print(sobj)
+            txt <- append(txt, capture.output(print(sobj)))
         } else {
             sobj <- try(utils::str(obj), silent = TRUE)
-            print(sobj)
+            txt <- append(txt, capture.output(print(sobj)))
         }
-        cat("```\n")
+        txt <- append(txt, capture.output(cat("```\n")))
     }
-    sink()
     options(width = owd)
 
+    txt <- paste0(txt, collapse = "\n")
+    txt <- gsub("'", "\004", gsub("\n", "\002", txt))
+
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
-        .C("nvimcom_msg_to_nvim", "FinishGetSummary()", PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("call FinishGetSummary('", txt, "')"), PACKAGE = "nvimcom")
     } else {
-        .C("nvimcom_msg_to_nvim", "v:lua.require'cmp_nvim_r'.finish_get_summary()",
-           PACKAGE = "nvimcom")
+        .C("nvimcom_msg_to_nvim", paste0("call v:lua.require'cmp_nvim_r'.finish_summary('", txt, "')"),
+                                         PACKAGE = "nvimcom")
     }
     return(invisible(NULL))
 }
@@ -441,10 +447,10 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
             }
         }
     }
-    writeLines(text = res,
-               con = paste0(Sys.getenv("NVIMR_TMPDIR"), "/args_for_completion"))
+
+    res <- paste0(res, collapse = " ")
     .C("nvimcom_msg_to_nvim",
-       paste("+FinishArgsCompletion", id, argkey, rkeyword0, sep = ";"),
+       paste0("+A", id, ";", argkey, ";", rkeyword0, ";", res),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
