@@ -964,7 +964,7 @@ built-in terminal (which is the default on Unix), if you use Vim to start R,
 but then close Vim, some variables will become outdated. Additionally, Nvim-R
 sets the value of its internal variable SendCmdToR from SendCmdToR_fake to the
 appropriate value when R is successfully started. It is possible to set the
-values of all those variables and start the TCP client-server manually, but it
+values of all those variables and start the TCP server manually, but it
 is not practical to do so.
 
 Please see the explanation on the communication between Vim and R at the end

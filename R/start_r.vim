@@ -795,11 +795,6 @@ function RFormatCode() range
         return
     endif
 
-    let lns = getline(a:firstline, a:lastline)
-    call writefile(lns, g:rplugin.tmpdir . "/unformatted_code")
-    call AddForDeletion(g:rplugin.tmpdir . "/unformatted_code")
-    call AddForDeletion(g:rplugin.tmpdir . "/formatted_code")
-
     let wco = &textwidth
     if wco == 0
         let wco = 78
@@ -809,15 +804,15 @@ function RFormatCode() range
         let wco = 180
     endif
 
-    call SendToNvimcom("E", 'nvimcom:::nvim_format(' . a:firstline . ', ' . a:lastline . ', ' . wco . ', ' . &shiftwidth. ')')
+    let lns = getline(a:firstline, a:lastline)
+    let txt = substitute(substitute(join(lns, "\002"), '\\', '\\\\', 'g'), "'", "\004", "g")
+    call SendToNvimcom("E", "nvimcom:::nvim_format(" . a:firstline . ", " . a:lastline . ", " . wco . ", " . &shiftwidth. ", '" . txt . "')")
 endfunction
 
-function FinishRFormatCode(lnum1, lnum2)
-    let lns = readfile(g:rplugin.tmpdir . "/formatted_code")
+function FinishRFormatCode(lnum1, lnum2, txt)
+    let lns =  split(substitute(a:txt, "\004", "'", "g"), "\002")
     silent exe a:lnum1 . "," . a:lnum2 . "delete"
     call append(a:lnum1 - 1, lns)
-    call delete(g:rplugin.tmpdir . "/formatted_code")
-    call delete(g:rplugin.tmpdir . "/unformatted_code")
     echo (a:lnum2 - a:lnum1 + 1) . " lines formatted."
 endfunction
 

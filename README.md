@@ -57,11 +57,10 @@ The animated GIF below shows R running in a Neovim terminal buffer. We can note:
 ## The communication between R and either Vim or Neovim
 
 The diagram below shows how the communication between Vim/Neovim and R works.
-The black arrow represents all commands that you trigger in the editor and
-that you can see being pasted into R Console.
-
 ![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.png "Neovim-R communication")
 
+The black arrow represents all commands that you trigger in the editor and
+that you can see being pasted into R Console.
 There are three different ways of sending the commands to R Console:
 
   - When running R in a Neovim built-in terminal, the function `chansend()`

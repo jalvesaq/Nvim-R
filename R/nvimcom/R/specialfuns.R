@@ -128,7 +128,7 @@ source.and.clean <- function(f, ...) {
     source(f, ...)
 }
 
-nvim_format <- function(l1, l2, wco, sw) {
+nvim_format <- function(l1, l2, wco, sw, txt) {
     if (is.null(getOption("nvimcom.formatfun"))) {
         if ("styler" %in% rownames(installed.packages())) {
            options(nvimcom.formatfun = "style_text")
@@ -144,18 +144,17 @@ nvim_format <- function(l1, l2, wco, sw) {
         }
     }
 
+    txt <- strsplit(gsub("\004", "'", txt), "\002")[[1]]
     if (getOption("nvimcom.formatfun") == "tidy_source") {
-        ok <- try(formatR::tidy_source(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"),
-                                       file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"),
-                                       width.cutoff = wco))
+        ok <- formatR::tidy_source(text = txt, width.cutoff = wco, output = FALSE)
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
                "call RWarningMsg('Error trying to execute the function formatR::tidy_source()')",
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
+        txt <- gsub("'", "\004", gsub("\n", "\002", ok$text.tidy))
     } else if (getOption("nvimcom.formatfun") == "style_text") {
-        txt <- readLines(paste0(Sys.getenv("NVIMR_TMPDIR"), "/unformatted_code"))
         ok <- try(styler::style_text(txt, indent_by = sw))
         if (inherits(ok, "try-error")) {
             .C("nvimcom_msg_to_nvim",
@@ -163,11 +162,11 @@ nvim_format <- function(l1, l2, wco, sw) {
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
-        writeLines(ok, paste0(Sys.getenv("NVIMR_TMPDIR"), "/formatted_code"))
+        txt <- gsub("'", "\004", paste0(ok, collapse = "\002"))
     }
 
     .C("nvimcom_msg_to_nvim",
-       paste0("call FinishRFormatCode(", l1, ", ", l2, ")"),
+       paste0("call FinishRFormatCode(", l1, ", ", l2, ", '", txt, "')"),
        PACKAGE = "nvimcom")
     return(invisible(NULL))
 }
