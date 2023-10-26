@@ -17,7 +17,7 @@ let s:did_global_stuff = 1
 
 if !exists('g:rplugin')
     " Attention: also in functions.vim because either of them might be sourced first.
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': [], 'ncs_running': 0, 'myport': 0, 'R_pid': 0}
+    let g:rplugin = {'debug_info': {}, 'libs_in_nrs': [], 'nrs_running': 0, 'myport': 0, 'R_pid': 0}
 endif
 
 let g:rplugin.debug_info['Time'] = {'common_global': reltime()}
@@ -651,7 +651,7 @@ function RVimLeave()
     if has('nvim')
         for job in keys(g:rplugin.jobs)
             if IsJobRunning(job)
-                if job == 'ClientServer' || job == 'BibComplete'
+                if job == 'Server' || job == 'BibComplete'
                     " Avoid warning of exit status 141
                     call JobStdin(g:rplugin.jobs[job], "9\n")
                     sleep 20m
@@ -724,7 +724,7 @@ function AutoStartR(...)
     if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
         return
     endif
-    if v:vim_did_enter == 0 || g:rplugin.ncs_running == 0
+    if v:vim_did_enter == 0 || g:rplugin.nrs_running == 0
         call timer_start(100, 'AutoStartR')
         return
     endif
@@ -809,7 +809,7 @@ else
 endif
 
 " When accessing R remotely, a local tmp directory is used by the
-" nclientserver to save the contents of the ObjectBrowser to avoid traffic
+" nvimrserver to save the contents of the ObjectBrowser to avoid traffic
 " over the ssh connection
 let g:rplugin.localtmpdir = g:rplugin.tmpdir
 
@@ -948,7 +948,7 @@ else
 endif
 
 " The environment variables NVIMR_COMPLCB and NVIMR_COMPLInfo must be defined
-" before starting the nclientserver because it needs them at startup.
+" before starting the nvimrserver because it needs them at startup.
 " The R_set_omnifunc must be defined before finalizing the source of common_buffer.vim.
 if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
     let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
@@ -1090,8 +1090,8 @@ endif
 autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_r.vim"
 
 function GlobalRInit(...)
-    let g:rplugin.debug_info['Time']['start_ncs'] = reltime()
-    exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_ncs.vim"
+    let g:rplugin.debug_info['Time']['start_nrs'] = reltime()
+    exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_nrs.vim"
     " Set security variables
     if has('nvim') && !has("nvim-0.7.0")
         let $NVIMR_ID = substitute(reltimefloat(reltime()), '.*\.', '', '')
@@ -1100,9 +1100,9 @@ function GlobalRInit(...)
         let $NVIMR_ID = rand(srand())
         let $NVIMR_SECRET = rand()
     end
-    let g:rplugin.debug_info['Time']['R_before_ncs'] = reltime()
+    let g:rplugin.debug_info['Time']['R_before_nrs'] = reltime()
     call CheckNvimcomVersion()
-    let g:rplugin.debug_info['Time']['start_ncs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_ncs'], reltime()))
+    let g:rplugin.debug_info['Time']['start_nrs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_nrs'], reltime()))
 endfunction
 
 function PreGlobalRealInit()

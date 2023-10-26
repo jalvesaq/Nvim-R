@@ -2,7 +2,7 @@
 "
 " The menu must be built and rendered very quickly (< 100ms) to make auto
 " completion feasible. That is, the data must be cached (OK, nvim.bol.R),
-" indexed (not yet) and processed quickly (OK, nclientserver.c).
+" indexed (not yet) and processed quickly (OK, nvimrserver.c).
 "
 " The float window that appears when an item is selected can be slower.
 " That is, we can call a function in nvimcom to get the contents of the float
@@ -278,12 +278,12 @@ function AskForComplInfo()
                 let pkg = s:compl_event['completed_item']['user_data']['pkg']
                 let wrd = s:compl_event['completed_item']['word']
                 " Request function description and usage
-                call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+                call JobStdin(g:rplugin.jobs["Server"], "6" . wrd . "\002" . pkg . "\n")
             elseif has_key(s:compl_event['completed_item']['user_data'], 'cls')
                 if s:compl_event['completed_item']['user_data']['cls'] == 'v'
                     let pkg = s:compl_event['completed_item']['user_data']['env']
                     let wrd = s:compl_event['completed_item']['user_data']['word']
-                    call JobStdin(g:rplugin.jobs["ClientServer"], "6" . wrd . "\002" . pkg . "\n")
+                    call JobStdin(g:rplugin.jobs["Server"], "6" . wrd . "\002" . pkg . "\n")
                 else
                     " Neovim doesn't allow to open a float window from here:
                     call timer_start(1, 'CreateNewFloat', {})
@@ -336,9 +336,9 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-" We can't transfer this function to the nclientserver because
+" We can't transfer this function to the nvimrserver because
 " nvimcom:::nvim_complete_args runs the function methods(), and we couldn't do
-" something similar in the nclientserver.
+" something similar in the nvimrserver.
 function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     if a:rkeyword0 == ""
         return
@@ -355,7 +355,7 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     endif
     let msg .= ')'
 
-    " Save documentation of arguments to be used by nclientserver
+    " Save documentation of arguments to be used by nvimrserver
     call SendToNvimcom("E", msg)
 endfunction
 
@@ -502,7 +502,7 @@ function CompleteR(findstart, base)
             let isfa = nra[3] ? v:false : IsFirstRArg(getline("."), nra[6])
             if (nra[0] == "library" || nra[0] == "require") && isfa
                 let s:waiting_compl_menu = 1
-                call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" . "\004" . a:base . "\n")
+                call JobStdin(g:rplugin.jobs["Server"], "5" . s:completion_id . "\003" . "\004" . a:base . "\n")
                 return WaitRCompletion()
             endif
 
@@ -522,7 +522,7 @@ function CompleteR(findstart, base)
             unlet s:compl_menu
         endif
         let s:waiting_compl_menu = 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "5" . s:completion_id . "\003" .  a:base . "\n")
+        call JobStdin(g:rplugin.jobs["Server"], "5" . s:completion_id . "\003" .  a:base . "\n")
         return WaitRCompletion()
     endif
 endfunction

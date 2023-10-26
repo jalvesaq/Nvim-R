@@ -54,7 +54,7 @@ static int nvimcom_failure = 0;
 static int nlibs = 0;
 static int needs_lib_msg = 0;
 static int needs_glbenv_msg = 0;
-static char ncs_port[16];
+static char nrs_port[16];
 static char nvimsecr[128];
 
 static char *glbnvbuf1;
@@ -694,7 +694,7 @@ static Rboolean nvimcom_task(__attribute__((unused))SEXP expr,
 #ifdef WIN32
     r_is_busy = 0;
 #endif
-    if (ncs_port[0] != 0) {
+    if (nrs_port[0] != 0) {
         nvimcom_checklibs();
         if(autoglbenv)
             nvimcom_globalenv_list();
@@ -938,7 +938,7 @@ static void *server_thread(__attribute__((unused))void *arg)
         len = read(sockfd, buff, sizeof(buff));
         if (len == 0 || buff[0] == 0 || buff[0] == EOF) {
             if (len == 0)
-                REprintf("Connection with nclientserver was lost\n");
+                REprintf("Connection with nvimrserver was lost\n");
             if (buff[0] == EOF)
                 REprintf("server_thread: buff[0] == EOF\n");
             close(sockfd);
@@ -977,7 +977,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 
     if(getenv("NVIMR_PORT"))
-        strncpy(ncs_port, getenv("NVIMR_PORT"), 15);
+        strncpy(nrs_port, getenv("NVIMR_PORT"), 15);
 
     if(verbose > 0)
         REprintf("nvimcom %s loaded\n", nvimcom_version);
@@ -985,7 +985,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         if(getenv("NVIM_IP_ADDRESS")) {
             REprintf("  NVIM_IP_ADDRESS: %s\n", getenv("NVIM_IP_ADDRESS"));
         }
-        REprintf("  NVIMR_PORT: %s\n", ncs_port);
+        REprintf("  NVIMR_PORT: %s\n", nrs_port);
         REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
         REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
         REprintf("  NVIMR_COMPLDIR: %s\n", getenv("NVIMR_COMPLDIR"));
@@ -1013,7 +1013,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     }
 #endif
 
-    if (atoi(ncs_port) > 0) {
+    if (atoi(nrs_port) > 0) {
         struct sockaddr_in servaddr;
         // socket create and verification
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -1026,7 +1026,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
                 servaddr.sin_addr.s_addr = inet_addr(getenv("NVIM_IP_ADDRESS"));
             else
                 servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-            servaddr.sin_port = htons(atoi(ncs_port));
+            servaddr.sin_port = htons(atoi(nrs_port));
 
             // connect the client socket to server socket
             if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
@@ -1038,12 +1038,12 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
                 nvimcom_send_running_info(*rinfo);
             } else {
                 REprintf(NULL, "nvimcom: connection with the server failed (%s)\n",
-                        ncs_port);
+                        nrs_port);
                 nvimcom_failure = 1;
             }
         } else {
             REprintf("nvimcom: socket creation failed (%u:%d)\n",
-                    servaddr.sin_addr.s_addr, atoi(ncs_port));
+                    servaddr.sin_addr.s_addr, atoi(nrs_port));
             nvimcom_failure = 1;
         }
     }

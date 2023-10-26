@@ -129,10 +129,6 @@ function RStart_Zathura(fullpath)
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
             let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
             if pid > 0 && pid <= max_pid
-                " Instead of killing, it would be better to reset the backward
-                " command, but Zathura does not have a Dbus message for this,
-                " and we would have to change nclientserver to receive NVIMR_PORT
-                " and NVIMR_SECRET as part of argv[].
                 call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
                 sleep 5m
                 call system('kill ' . pid)

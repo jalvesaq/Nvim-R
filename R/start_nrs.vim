@@ -1,5 +1,5 @@
-" Functions to start nclientserver or that are called only after the
-" nclientserver is running
+" Functions to start nvimrserver or that are called only after the
+" nvimrserver is running
 
 " Check if it's necessary to build and install nvimcom before attempting to load it
 function CheckNvimcomVersion()
@@ -14,10 +14,10 @@ function CheckNvimcomVersion()
     let libs = ListRLibsFromBuffer()
     let flines += ['nvim_r_home <- "' . g:rplugin.home . '"',
                 \ 'libs <- c(' . libs . ')']
-    let flines += readfile(g:rplugin.home . "/R/before_ncs.R")
-    let scrptnm = g:rplugin.tmpdir . "/before_ncs.R"
+    let flines += readfile(g:rplugin.home . "/R/before_nrs.R")
+    let scrptnm = g:rplugin.tmpdir . "/before_nrs.R"
     call writefile(flines, scrptnm)
-    call AddForDeletion(g:rplugin.tmpdir . "/before_ncs.R")
+    call AddForDeletion(g:rplugin.tmpdir . "/before_nrs.R")
 
     " Run the script as a job, setting callback functions to receive its
     " stdout, stderr and exit code.
@@ -35,9 +35,10 @@ function CheckNvimcomVersion()
     let s:RBerr = []
     let s:RWarn = []
     if exists("g:R_remote_compldir")
-        let scrptnm = g:R_remote_compldir . "/tmp/before_ncs.R"
+        let scrptnm = g:R_remote_compldir . "/tmp/before_nrs.R"
     endif
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
+    call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
 endfunction
 
 function MkRdir()
@@ -113,7 +114,7 @@ endfunction
 function RInitExit(...)
     let cnv_again = 0
     if a:2 == 0 || a:2 == 512 " ssh success seems to be 512
-        call StartNClientServer()
+        call StartNServer()
     elseif a:2 == 71
         " No writable directory to update nvimcom
         " Avoid redraw of status line while waiting user input in MkRdir()
@@ -145,7 +146,7 @@ function RInitExit(...)
     let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
     let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
     call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
-    call AddForDeletion(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/libs_in_nrs_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
     if len(s:RWarn) > 0
         let g:rplugin.debug_info['RInit Warning'] = ''
@@ -155,15 +156,15 @@ function RInitExit(...)
         endfor
     endif
     if cnv_again == 0
-        let g:rplugin.debug_info['Time']['R_before_ncs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['R_before_ncs'], reltime()))
+        let g:rplugin.debug_info['Time']['R_before_nrs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['R_before_nrs'], reltime()))
     endif
 endfunction
 
 function FindNCSpath(libdir)
     if has('win32')
-        let ncs = 'nclientserver.exe'
+        let ncs = 'nvimrserver.exe'
     else
-        let ncs = 'nclientserver'
+        let ncs = 'nvimrserver'
     endif
     if filereadable(a:libdir . '/nvimcom/bin/' . ncs)
         return a:libdir . '/nvimcom/bin/' . ncs
@@ -177,14 +178,14 @@ function FindNCSpath(libdir)
     return ''
 endfunction
 
-" Check and set some variables and, finally, start the nclientserver
-function StartNClientServer()
-    if IsJobRunning("ClientServer")
+" Check and set some variables and, finally, start the nvimrserver
+function StartNServer()
+    if IsJobRunning("Server")
         return
     endif
 
     if exists("g:R_local_R_library_dir")
-        let s:ncs_path = FindNCSpath(g:R_local_R_library_dir)
+        let s:nrs_path = FindNCSpath(g:R_local_R_library_dir)
     else
         if filereadable(g:rplugin.compldir . '/nvimcom_info')
             let info = readfile(g:rplugin.compldir . '/nvimcom_info')
@@ -192,7 +193,7 @@ function StartNClientServer()
                 " Update nvimcom information
                 let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
                 let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-                let s:ncs_path = FindNCSpath(info[1])
+                let s:nrs_path = FindNCSpath(info[1])
             else
                 call delete(g:rplugin.compldir . '/nvimcom_info')
                 call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
@@ -204,10 +205,10 @@ function StartNClientServer()
         endif
     endif
 
-    let ncspath = substitute(s:ncs_path, '/nclientserver.*', '', '')
-    let ncs = substitute(s:ncs_path, '.*/nclientserver', 'nclientserver', '')
+    let ncspath = substitute(s:nrs_path, '/nvimrserver.*', '', '')
+    let ncs = substitute(s:nrs_path, '.*/nvimrserver', 'nvimrserver', '')
 
-    " Some pdf viewers run nclientserver to send SyncTeX messages back to Vim
+    " Some pdf viewers run nvimrserver to send SyncTeX messages back to Vim
     if $PATH !~ ncspath
         if has('win32')
             let $PATH = ncspath . ';' . $PATH
@@ -216,7 +217,7 @@ function StartNClientServer()
         endif
     endif
 
-    " Options in the nclientserver application are set through environment variables
+    " Options in the nvimrserver application are set through environment variables
     if g:R_objbr_opendf
         let $NVIMR_OPENDF = "TRUE"
     endif
@@ -230,13 +231,13 @@ function StartNClientServer()
 
     let $NVIMR_LOCAL_TMPDIR = g:rplugin.localtmpdir
 
-    " We have to set R's home directory on Window because nclientserver will
+    " We have to set R's home directory on Window because nvimrserver will
     " run R to build the list for omni completion.
     if has('win32')
         call SetRHome()
     endif
-    let g:rplugin.jobs["ClientServer"] = StartJob([ncs], g:rplugin.job_handlers)
-    " let g:rplugin.jobs["ClientServer"] = StartJob(['valgrind', '--log-file=/dev/shm/nclientserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
+    let g:rplugin.jobs["Server"] = StartJob([ncs], g:rplugin.job_handlers)
+    " let g:rplugin.jobs["Server"] = StartJob(['valgrind', '--log-file=/dev/shm/nvimrserver_valgrind_log', '--leak-check=full', ncs], g:rplugin.job_handlers)
     if has('win32')
         call UnsetRHome()
     endif
@@ -273,9 +274,9 @@ function ListRLibsFromBuffer()
     return libs
 endfunction
 
-" Get information from nclientserver (currently only the names of loaded libraries).
+" Get information from nvimrserver (currently only the names of loaded libraries).
 function RequestNCSInfo()
-    call JobStdin(g:rplugin.jobs["ClientServer"], "4\n")
+    call JobStdin(g:rplugin.jobs["Server"], "4\n")
 endfunction
 
 command RGetNCSInfo :call RequestNCSInfo()
@@ -285,7 +286,7 @@ function EchoNCSInfo(info)
     echo a:info
 endfunction
 
-" Called by nclientserver when it gets error running R code
+" Called by nvimrserver when it gets error running R code
 function ShowBuildOmnilsError(stt)
     if filereadable(g:rplugin.tmpdir . '/run_R_stderr')
         let ferr = readfile(g:rplugin.tmpdir . '/run_R_stderr')
@@ -305,12 +306,12 @@ endfunction
 " This function is called for the first time before R is running because we
 " support syntax highlighting and omni completion of default libraries' objects.
 function UpdateSynRhlist()
-    if !filereadable(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
+    if !filereadable(g:rplugin.localtmpdir . "/libs_in_nrs_" . $NVIMR_ID)
         return
     endif
 
-    let g:rplugin.libs_in_ncs = readfile(g:rplugin.localtmpdir . "/libs_in_ncs_" . $NVIMR_ID)
-    for lib in g:rplugin.libs_in_ncs
+    let g:rplugin.libs_in_nrs = readfile(g:rplugin.localtmpdir . "/libs_in_nrs_" . $NVIMR_ID)
+    for lib in g:rplugin.libs_in_nrs
         call AddToRhelpList(lib)
     endfor
     if exists("*FunHiOtherBf")

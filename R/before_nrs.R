@@ -24,7 +24,7 @@ if (is.na(isdir)) {
 
 setwd(Sys.getenv("NVIMR_TMPDIR"))
 
-# Save libPaths for nclientserver
+# Save libPaths for nvimrserver
 libp <- unique(c(unlist(strsplit(Sys.getenv("R_LIBS_USER"),
                                  .Platform$path.sep)), .libPaths()))
 cat(libp, sep = "\n", colapse = "\n", file = "libPaths")

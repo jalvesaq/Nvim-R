@@ -123,12 +123,12 @@ struct sockaddr_in servaddr;
 static int sockfd;
 static int connfd;
 
-#define Debug_NCS_
+#define Debug_NRS_
 static void Log(const char *fmt, ...)
 {
-#ifdef Debug_NCS
+#ifdef Debug_NRS
     va_list argptr;
-    FILE *f = fopen("/dev/shm/nclientserver_log", "a");
+    FILE *f = fopen("/dev/shm/nvimrserver_log", "a");
     va_start(argptr, fmt);
     vfprintf(f, fmt, argptr);
     fprintf(f, "\n");
@@ -1266,7 +1266,7 @@ static void finish_bol()
 
     // Finally create a list of built omnils_ because libnames_ might have
     // already changed and Nvim-R would try to read omnils_ files not built yet.
-    snprintf(buf, 511, "%s/libs_in_ncs_%s", localtmpdir, getenv("NVIMR_ID"));
+    snprintf(buf, 511, "%s/libs_in_nrs_%s", localtmpdir, getenv("NVIMR_ID"));
     FILE *f = fopen(buf, "w");
     if (f) {
         PkgData *pkg = pkgList;
@@ -1356,7 +1356,7 @@ void update_pkg_list(char *libnms)
         }
     } else {
         // Called during the initialization with libnames_ created by
-        // R/before_ncs.R to highlight function from the `library()` and
+        // R/before_nrs.R to highlight function from the `library()` and
         // `require()` commands present in the file being edited.
         char lbnm[128];
         Log("update_pkg_list == NULL");
@@ -1844,7 +1844,7 @@ static void fill_inst_libs(void)
     free(b);
 }
 
-static void send_ncs_info(void)
+static void send_nrs_info(void)
 {
     printf("call EchoNCSInfo('Loaded packages:");
     PkgData *pkg = pkgList;
@@ -1858,11 +1858,11 @@ static void send_ncs_info(void)
 
 static void init(void)
 {
-#ifdef Debug_NCS
+#ifdef Debug_NRS
     time_t t;
     time(&t);
-    FILE *f = fopen("/dev/shm/nclientserver_log", "w");
-    fprintf(f, "NCLIENTSERVER LOG | %s\n\n", ctime(&t));
+    FILE *f = fopen("/dev/shm/nvimrserver_log", "w");
+    fprintf(f, "NSERVER LOG | %s\n\n", ctime(&t));
     fclose(f);
 #endif
 
@@ -1964,7 +1964,7 @@ static void init(void)
     update_pkg_list(NULL);
     build_omnils();
 
-    printf("let g:rplugin.ncs_running = 1\n");
+    printf("let g:rplugin.nrs_running = 1\n");
     fflush(stdout);
 
     Log("init() finished");
@@ -2380,7 +2380,7 @@ void stdin_loop()
                 break;
             case '4': // Print pkg info
                 update_glblenv_buffer(NULL);
-                send_ncs_info();
+                send_nrs_info();
                 break;
             case '5':
                 msg++;

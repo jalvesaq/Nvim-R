@@ -62,7 +62,7 @@ function SendCmdToR_NotYet(...)
     return 0
 endfunction
 
-" This function is called by nclientserver when its server binds to a specific port.
+" This function is called by nvimrserver when its server binds to a specific port.
 let s:waiting_to_start_r = ''
 function RSetMyPort(p)
     let g:rplugin.myport = a:p
@@ -71,7 +71,6 @@ function RSetMyPort(p)
         call StartR(s:waiting_to_start_r)
         let s:waiting_to_start_r = ''
     endif
-    call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
 endfunction
 
 function StartR(whatr)
@@ -84,16 +83,16 @@ function ReallyStartR(whatr)
     let s:wait_nvimcom = 1
 
     if g:rplugin.myport == 0
-        if IsJobRunning("ClientServer") == 0
-            call RWarningMsg("Cannot start R: nclientserver not running")
+        if IsJobRunning("Server") == 0
+            call RWarningMsg("Cannot start R: nvimrserver not running")
             return
         endif
-        if g:rplugin.ncs_running == 0
-            call RWarningMsg("nclientserver not ready yet")
+        if g:rplugin.nrs_running == 0
+            call RWarningMsg("nvimrserver not ready yet")
             return
         endif
         let s:waiting_to_start_r = a:whatr
-        call JobStdin(g:rplugin.jobs["ClientServer"], "1\n") " Start the TCP server
+        call JobStdin(g:rplugin.jobs["Server"], "1\n") " Start the TCP server
         return
     endif
 
@@ -337,8 +336,8 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
         endif
     endif
 
-    if IsJobRunning("ClientServer")
-        " Set RConsole window ID in nclientserver to ArrangeWindows()
+    if IsJobRunning("Server")
+        " Set RConsole window ID in nvimrserver to ArrangeWindows()
         if has("win32")
             if $RCONSOLE == "0"
                 call RWarningMsg("nvimcom did not save R window ID")
@@ -351,12 +350,12 @@ function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
     if exists("g:RStudio_cmd")
         if has("win32") && g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["Server"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif has("win32")
         if g:R_arrange_windows && filereadable(g:rplugin.compldir . "/win_pos")
             " ArrangeWindows
-            call JobStdin(g:rplugin.jobs["ClientServer"], "85" . g:rplugin.compldir . "\n")
+            call JobStdin(g:rplugin.jobs["Server"], "85" . g:rplugin.compldir . "\n")
         endif
     elseif g:R_applescript
         call foreground()
@@ -409,7 +408,7 @@ function RQuit(how)
 
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
         " SaveWinPos
-        call JobStdin(g:rplugin.jobs["ClientServer"], "84" . $NVIMR_COMPLDIR . "\n")
+        call JobStdin(g:rplugin.jobs["Server"], "84" . $NVIMR_COMPLDIR . "\n")
     endif
 
     if bufloaded('Object_Browser')
@@ -454,7 +453,7 @@ let s:wait_nvimcom = 0
 " Internal communication with R
 "==============================================================================
 
-" Send a message to nclientserver job which will send the message to nvimcom
+" Send a message to nvimrserver job which will send the message to nvimcom
 " through a TCP connection.
 function SendToNvimcom(code, attch)
     if s:wait_nvimcom
@@ -466,11 +465,11 @@ function SendToNvimcom(code, attch)
         return
     endif
 
-    if !IsJobRunning("ClientServer")
-        call RWarningMsg("ClientServer not running.")
+    if !IsJobRunning("Server")
+        call RWarningMsg("Server not running.")
         return
     endif
-    call JobStdin(g:rplugin.jobs["ClientServer"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
+    call JobStdin(g:rplugin.jobs["Server"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
 endfunction
 
 
@@ -479,7 +478,7 @@ endfunction
 " date
 "==============================================================================
 
-" Called by nclientserver. When g:rplugin has the key 'localfun', the function
+" Called by nvimrserver. When g:rplugin has the key 'localfun', the function
 " is also called by SourceRFunList() (R/functions.vim)
 function UpdateLocalFunctions(funnames)
     let g:rplugin.localfun = a:funnames
@@ -608,7 +607,7 @@ function RObjBrowser(...)
     let s:running_objbr = 1
 
     " call RealUpdateRGlbEnv(1)
-    call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
+    call JobStdin(g:rplugin.jobs["Server"], "31\n")
     call SendToNvimcom("A", "RObjBrowser")
 
     call StartObjBrowser()
@@ -625,7 +624,7 @@ function RObjBrowser(...)
 endfunction
 
 function RBrOpenCloseLs(stt)
-    call JobStdin(g:rplugin.jobs["ClientServer"], "34" . a:stt . g:rplugin.curview . "\n")
+    call JobStdin(g:rplugin.jobs["Server"], "34" . a:stt . g:rplugin.curview . "\n")
 endfunction
 
 
@@ -1812,9 +1811,9 @@ function RClearConsole()
         return
     endif
     if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
-        call JobStdin(g:rplugin.jobs["ClientServer"], "86\n")
+        call JobStdin(g:rplugin.jobs["Server"], "86\n")
         sleep 50m
-        call JobStdin(g:rplugin.jobs["ClientServer"], "87\n")
+        call JobStdin(g:rplugin.jobs["Server"], "87\n")
     else
         call g:SendCmdToR("\014", 0)
     endif

@@ -7,8 +7,8 @@ R/nvimcom/src/compile_flags.txt
 R/nvimcom/src/apps/*.o
 R/nvimcom/src/apps/*.so
 R/nvimcom/src/apps/*.dll
-R/nvimcom/src/apps/nclientserver
-R/nvimcom/src/apps/nclientserver.exe
+R/nvimcom/src/apps/nvimrserver
+R/nvimcom/src/apps/nvimrserver.exe
 R/nvimcom/src/apps/compile_flags.txt
 R/__pycache__/
 R/*.pyc

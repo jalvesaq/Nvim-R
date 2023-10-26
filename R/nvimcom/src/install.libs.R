@@ -5,9 +5,9 @@ file.copy(files, dest, overwrite = TRUE)
 if(file.exists("symbols.rds"))
     file.copy("symbols.rds", dest, overwrite = TRUE)
 
-exec <- "apps/nclientserver"
+exec <- "apps/nvimrserver"
 if(WINDOWS)
-    exec <- "apps/nclientserver.exe"
+    exec <- "apps/nvimrserver.exe"
 if(any(file.exists(exec))){
     dest <- file.path(R_PACKAGE_DIR,  paste0('bin', R_ARCH))
     dir.create(dest, recursive = TRUE, showWarnings = FALSE)

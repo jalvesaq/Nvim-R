@@ -213,12 +213,12 @@ To see messages received by Neovim, uncomment the first line of the function
 `ROnJobStdout()` at `R/nvimrcom.vim` and delete the string "DEBUG:". It will
 become:
 >
-  call writefile(a:data, "/dev/shm/nclientserver_stdout", "a")
+  call writefile(a:data, "/dev/shm/nvimrserver_stdout", "a")
 <
 Then, in another terminal or in another Tmux pane, you would have to use tail
 to follow the output:
 >
-  tail -f /dev/shm/nclientserver_stdout
+  tail -f /dev/shm/nvimrserver_stdout
 <
 If R does not start with the <LocalLeader>rf command and you get an error
 message instead, you may want to set the path to the R executable (see
@@ -2428,9 +2428,9 @@ very simple and would wrongly recognize `data` as the name of the
 >
    ggplot(data = my_data_frame, mapping = aes(
 <
-Nvim-R receives the list of objects for omni completion from the nclientserver
+Nvim-R receives the list of objects for omni completion from the nvimrserver
 job running in the background. If the list is too big to be transmitted
-through nclientserver's `stdout`, the completion might be aborted.
+through nvimrserver's `stdout`, the completion might be aborted.
 
 If editing Quarto documents, Nvim-R will try to find the file
 `yaml-intelligence-resources.json` which is part of `quarto` application and
