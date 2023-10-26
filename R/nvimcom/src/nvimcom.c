@@ -55,7 +55,7 @@ static int nlibs = 0;
 static int needs_lib_msg = 0;
 static int needs_glbenv_msg = 0;
 static char nrs_port[16];
-static char nvimsecr[128];
+static char nvimsecr[32];
 
 static char *glbnvbuf1;
 static char *glbnvbuf2;
@@ -966,7 +966,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         strncpy(nvimcom_home, *pth, 1023);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
-            strncpy(nvimsecr, getenv("NVIMR_SECRET"), 127);
+            strncpy(nvimsecr, getenv("NVIMR_SECRET"), 31);
         else
             REprintf("nvimcom: Environment variable NVIMR_SECRET is missing.\n");
     } else {
