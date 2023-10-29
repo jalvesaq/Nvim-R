@@ -1008,15 +1008,16 @@ endfunction
 function ShowRDoc(rkeyword, txt)
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
-        let msgs = split(a:rkeyword)
-        let msg = "The topic '" . msgs[-1] . "' was found in more than one library:\n"
-        for idx in range(1, len(msgs) - 2)
-            let msg .= idx . " : " . msgs[idx] . "\n"
+        let topic = split(a:rkeyword)[1]
+        let libs = split(a:txt)
+        let msg = "The topic '" . topic . "' was found in more than one library:\n"
+        for idx in range(0, len(libs) - 1)
+            let msg .= idx + 1 . " : " . libs[idx] . "\n"
         endfor
         redraw
         let chn = input(msg . "Please, select one of them: ")
-        if chn > 0 && chn < (len(msgs) - 1)
-            call SendToNvimcom("E", 'nvimcom:::nvim.help("' . msgs[-1] . '", ' . s:htw . 'L, package="' . msgs[chn] . '")')
+        if chn > 0 && chn <= len(libs)
+            call SendToNvimcom("E", 'nvimcom:::nvim.help("' . topic . '", ' . s:htw . 'L, package="' . libs[chn - 1] . '")')
         endif
         return
     endif
@@ -1042,7 +1043,7 @@ function ShowRDoc(rkeyword, txt)
         exe "sb " . g:rplugin.rscript_name
         exe "set switchbuf=" . savesb
     endif
-    call SetRTextWidth(rkeyw)
+    call SetRTextWidth(a:rkeyword)
 
     let rdoccaption = substitute(s:rdoctitle, '\', '', "g")
     if a:rkeyword =~ "R History"
@@ -1101,15 +1102,6 @@ function ShowRDoc(rkeyword, txt)
     if a:rkeyword =~ "R History"
         set filetype=r
         call cursor(1, 1)
-    elseif a:rkeyword =~ "^MULTILIB"
-        syn match Special '<Enter>'
-        exe 'syn match String /"' . rkeyw . '"/'
-        for idx in range(1, len(msgs) - 2)
-            exe "syn match PreProc '^   " . msgs[idx] . "'"
-        endfor
-        exe 'nnoremap <buffer><silent> <CR> :call AskRDoc("' . rkeyw . '", expand("<cword>"), 0)<CR>'
-        redraw
-        call cursor(5, 4)
     elseif a:rkeyword =~ '(help)' || search("\x08", "nw") > 0
         set filetype=rdoc
         call cursor(1, 1)

@@ -436,6 +436,9 @@ void send_to_nvimcom(char *msg)
             fflush(stderr);
             return;
         }
+    } else {
+        fprintf(stderr, "nvimcom is not connected");
+        fflush(stderr);
     }
 }
 

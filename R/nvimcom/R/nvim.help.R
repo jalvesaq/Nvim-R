@@ -1,6 +1,6 @@
 
 nvim.hmsg <- function(files, header, title, delete.file) {
-    doc <- gsub("'", "\003", paste(readLines(files[1]), collapse = "\002"))
+    doc <- gsub("'", "\004", paste(readLines(files[1]), collapse = "\002"))
     ttl <- sub("R Help on '(.*)'", "\\1 (help)", title)
     ttl <- sub("R Help on \u2018(.*)\u2019", "\\1 (help)", ttl)
     ttl <- gsub("'", "''", ttl)
@@ -79,8 +79,9 @@ nvim.help <- function(topic, w, firstobj, package) {
         if (missing(package)) {
             h <- sub("/help/.*", "", h)
             h <- sub(".*/", "", h)
-            msg <- paste("MULTILIB", paste(h, collapse = " "), topic)
-            .C("nvimcom_msg_to_nvim", paste0("call ShowRDoc('", msg, "')"), PACKAGE = "nvimcom")
+            .C("nvimcom_msg_to_nvim",
+               paste0("call ShowRDoc('MULTILIB ", topic, "', '", paste(h, collapse = " "), "')"),
+               PACKAGE = "nvimcom")
             return(invisible(NULL))
         } else {
             h <- h[grep(paste0("/", package, "/"), h)]
