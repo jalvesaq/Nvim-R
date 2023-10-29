@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <dirent.h>
 #ifdef WIN32
@@ -52,6 +53,8 @@ static unsigned long compl_buffer_size = 32768;
 static int n_omnils_build;
 static int building_omnils;
 static int more_to_build;
+static int has_args_to_read;
+
 void omni2ob(void);
 void lib2ob(void);
 void update_inst_libs(void);
@@ -374,12 +377,10 @@ static void get_whole_msg(char *b)
 
     p = finalbuffer;
     for (;;) {
-        if((read(connfd, tmp, 1) == 1)) {
+        if((read(connfd, tmp, 1) == 1))
             *p = *tmp;
-        } else {
-            fprintf(stderr, "Read 0 byte from TCP connection (R quit?)\n");
-            fflush(stderr);
-        }
+        else
+            break;
         if (*p == '\001')
             break;
         p++;
@@ -408,9 +409,7 @@ static void *receive_msg()
     for (;;) {
         bzero(b, blen);
         rlen = read(connfd, b, blen);
-        if (rlen == 0) {
-            fprintf(stderr, "Read 0 byte (R quit?)\n");
-            fflush(stderr);
+        if (rlen == 0) { // R quit
             r_conn = 0;
             close(sockfd);
             init_listening();
@@ -1164,6 +1163,36 @@ void update_inst_libs(void)
     }
 }
 
+static void read_args(void)
+{
+    if (more_to_build) {
+        has_args_to_read = 1;
+        return;
+    }
+
+    char buf[1024];
+    PkgData *pkg = pkgList;
+    char *p;
+
+    pkg = pkgList;
+    while (pkg) {
+        if (!pkg->args) {
+            snprintf(buf, 1023, "%s/args_%s_%s", compldir, pkg->name, pkg->version);
+            pkg->args = read_file(buf, 0);
+            if (pkg->args) {
+                p = pkg->args;
+                while (*p) {
+                    if (*p == '\006')
+                        *p = 0;
+                    p++;
+                }
+            }
+        }
+        pkg = pkg->next;
+    }
+    has_args_to_read = 0;
+}
+
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_ and fun_ files in compldir.
 static void build_omnils(void)
@@ -1212,7 +1241,6 @@ static void build_omnils(void)
 
         n_omnils_build++;
         p = str_cat(p, ")\nnvimcom:::nvim.buildomnils(p)\n");
-        p = str_cat(p, "nvimcom:::nvim.buildargs(p)\n");
         run_R_code(compl_buffer, 1);
         finish_bol();
     }
@@ -1225,23 +1253,19 @@ static void build_omnils(void)
         build_omnils();
     }
 
-    pkg = pkgList;
-    while (pkg) {
-        if (!pkg->args) {
-            snprintf(buf, 1023, "%s/args_%s_%s", compldir, pkg->name, pkg->version);
-            pkg->args = read_file(buf, 0);
-            if (pkg->args) {
-                p = pkg->args;
-                while (*p) {
-                    if (*p == '\006')
-                        *p = 0;
-                    p++;
-                }
-            }
-        }
-        pkg = pkg->next;
+    // Delete args_lock if it's too old
+    snprintf(buf, 1023, "%s/args_lock", compldir);
+    struct stat filestat;
+    if ((stat(buf, &filestat) == 0)) {
+        time_t t = time(&t);
+        t = t - filestat.st_mtime; // st_mtime is a macro defined as st_mtim.tv_sec;
+        if (t < 3600)
+            return;
+        unlink(buf);
     }
 
+    if (has_args_to_read)
+        read_args();
 }
 
 // Called asynchronously and only if an omnils_ file was actually built.
@@ -2028,8 +2052,6 @@ void completion_info(const char *wrd, const char *pkg)
                 s++;
 
             if (f[1][0] == '\003' && str_here(f[4], "['not_checked']")) {
-                snprintf(compl_buffer, 1024, "%s/args_for_completion", tmpdir);
-                remove(compl_buffer);
                 snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
                 send_to_nvimcom(compl_buffer);
                 return;
@@ -2330,7 +2352,7 @@ void stdin_loop()
         Log("stdin:   %s",  line);
         msg = line;
         switch(*msg){
-            case '1': // Start server and wait nvimcom contact
+            case '1': // Start server and wait nvimcom connection
                 start_server();
                 Log("server started");
                 break;
@@ -2378,9 +2400,16 @@ void stdin_loop()
                         break;
                 }
                 break;
-            case '4': // Print pkg info
-                update_glblenv_buffer(NULL);
-                send_nrs_info();
+            case '4': // Miscellaneous commands
+                msg++;
+                switch (*msg) {
+                    case '1':
+                        read_args();
+                        break;
+                    case '2':
+                        send_nrs_info();
+                        break;
+                }
                 break;
             case '5':
                 msg++;

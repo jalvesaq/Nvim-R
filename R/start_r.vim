@@ -130,8 +130,6 @@ function ReallyStartR(whatr)
         call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
     endif
 
-    call AddForDeletion(g:rplugin.tmpdir . "/args_for_completion")
-
     " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
     let start_options = ['Sys.setenv("R_DEFAULT_PACKAGES" = "' . s:r_default_pkgs . '")']
 

@@ -276,7 +276,7 @@ endfunction
 
 " Get information from nvimrserver (currently only the names of loaded libraries).
 function RequestNCSInfo()
-    call JobStdin(g:rplugin.jobs["Server"], "4\n")
+    call JobStdin(g:rplugin.jobs["Server"], "42\n")
 endfunction
 
 command RGetNCSInfo :call RequestNCSInfo()
@@ -303,6 +303,47 @@ function ShowBuildOmnilsError(stt)
     endif
 endfunction
 
+function s:BAExit(...)
+    if a:2 == 0 || a:2 == 512 " ssh success seems to be 512
+        call JobStdin(g:rplugin.jobs["Server"], "41\n")
+    endif
+endfunction
+
+function s:BuildAllArgs(...)
+    if filereadable(g:rplugin.compldir . '/args_lock')
+        call timer_start(5000, function("s:BuildAllArgs"))
+        return
+    endif
+
+    let flist = glob(g:rplugin.compldir . '/omnils_*', v:false, v:true)
+    call map(flist, 'substitute(v:val, "/omnils_", "/args_", "")')
+    let rscrpt = ['library("nvimcom", warn.conflicts = FALSE)']
+    for afile in flist
+        if filereadable(afile) == 0
+            let pkg = substitute(substitute(afile, ".*/args_", "", ""), "_.*", "", "")
+            let rscrpt += ['nvimcom:::nvim.buildargs("' . afile . '", "' . pkg . '")']
+        endif
+    endfor
+    if len(rscrpt) == 1
+        return
+    endif
+    call writefile([""], g:rplugin.compldir . '/args_lock')
+    let rscrpt += ['unlink("' . g:rplugin.compldir . '/args_lock")']
+
+    let scrptnm = g:rplugin.tmpdir . "/build_args.R"
+    call AddForDeletion(g:rplugin.tmpdir . "/build_args")
+    call writefile(rscrpt, scrptnm)
+    if exists("g:R_remote_compldir")
+        let scrptnm = g:R_remote_compldir . "/tmp/build_args.R"
+    endif
+    if has('nvim')
+        let jobh = {'on_exit': function('s:BAExit')}
+    else
+        let jobh = {'exit_cb': 's:BAExit'}
+    endif
+    let g:rplugin.jobs["Build_args"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
+endfunction
+
 " This function is called for the first time before R is running because we
 " support syntax highlighting and omni completion of default libraries' objects.
 function UpdateSynRhlist()
@@ -315,9 +356,11 @@ function UpdateSynRhlist()
         call AddToRhelpList(lib)
     endfor
     if exists("*FunHiOtherBf")
-        " R/functions.vim will not be source if r_syntax_fun_pattern = 1
+        " R/functions.vim will not be sourced if r_syntax_fun_pattern = 1
         call FunHiOtherBf()
     endif
+    " Building args_ files is too time consuming. Do it asynchronously.
+    call timer_start(1, function("s:BuildAllArgs"))
 endfunction
 
 " Filter words to :Rhelp

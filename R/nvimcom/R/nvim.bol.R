@@ -346,18 +346,7 @@ filter.objlist <- function(x) {
     x[!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", x) & !grepl("^\\.__", x)]
 }
 
-nvim.buildargs <- function(pkg) {
-    if (length(pkg) > 1) {
-        for (p in pkg)
-            nvim.buildargs(p)
-        return(invisible(NULL))
-    }
-
-    afile <- paste0(Sys.getenv("NVIMR_COMPLDIR"), "/", "args_", pkg, "_",
-                utils::packageDescription(pkg)$Version)
-    if (file.exists(afile))
-        return(invisible(NULL))
-
+nvim.buildargs <- function(afile, pkg) {
     ok <- try(require(pkg, warn.conflicts = FALSE,
                       quietly = TRUE, character.only = TRUE))
     if (!ok)
@@ -382,7 +371,7 @@ nvim.buildargs <- function(pkg) {
         if (is.primitive(x)) {
             a <- args(x)
             if (is.null(a))
-                return(invisible(NULL))
+                next
             frm <- formals(a)
         } else
             frm <- formals(x)

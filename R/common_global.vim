@@ -829,15 +829,6 @@ if !isdirectory(g:rplugin.localtmpdir)
 endif
 let $NVIMR_TMPDIR = g:rplugin.tmpdir
 
-let g:TheVars = {
-            \ 'NVIMR_TMPDIR': $NVIMR_TMPDIR,
-            \ 'NVIMR_COMPLDIR': $NVIMR_COMPLDIR,
-            \ 'NVIMR_REMOTE_TMPDIR': $NVIMR_REMOTE_TMPDIR,
-            \ 'NVIMR_REMOTE_COMPLDIR': $NVIMR_REMOTE_COMPLDIR,
-            \ 'compldir': g:rplugin.compldir,
-            \ 'tmpdir': g:rplugin.tmpdir,
-            \ 'localtmpdir': g:rplugin.localtmpdir}
-
 " Delete options with invalid values
 if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
     call RWarningMsg('"R_set_omnifunc" must be a list')

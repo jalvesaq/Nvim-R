@@ -326,7 +326,6 @@ function SetComplInfo(dctnr)
         let usage = join(usage, ", ")
         let s:usage = a:dctnr['word'] . '(' . usage . ')'
     elseif a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
-        call delete(g:rplugin.tmpdir . "/args_for_completion")
         call SendToNvimcom("E", 'nvimcom:::nvim.get.summary(' . a:dctnr['word'] . ', 59)')
         return
     endif
@@ -343,7 +342,6 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     if a:rkeyword0 == ""
         return
     endif
-    call delete(g:rplugin.tmpdir . "/args_for_completion")
     let msg = 'nvimcom:::nvim_complete_args("' . a:id . '", "' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
         let msg .= ', firstobj = "' . a:firstobj . '"'
