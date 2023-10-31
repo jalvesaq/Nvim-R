@@ -65,10 +65,12 @@ function! UpdateOB(what)
         let fcntt = readfile(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
     endif
     if has("nvim")
-        let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
+        if nvim_win_is_valid(g:rplugin.ob_winnr)
+            let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
+        endif
         call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:true)
         call nvim_buf_set_lines(g:rplugin.ob_buf, 0, nvim_buf_line_count(g:rplugin.ob_buf), 0, fcntt)
-        if obcur[0] <= len(fcntt)
+        if nvim_win_is_valid(g:rplugin.ob_winnr) && obcur[0] <= len(fcntt)
             call nvim_win_set_cursor(g:rplugin.ob_winnr, obcur)
         endif
         call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:false)
