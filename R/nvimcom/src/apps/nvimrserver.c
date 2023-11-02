@@ -273,7 +273,7 @@ static void ParseMsg(char *b)
     }
 
     // Send the command to Nvim-R
-    printf("%s\n", b);
+    printf("\005%" PRI_SIZET "\005%s\n", strlen(b), b);
     fflush(stdout);
 }
 

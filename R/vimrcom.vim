@@ -32,27 +32,39 @@ function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
     " DEBUG: call writefile([cmd], "/dev/shm/nvimrserver_vim_stdout", "a")
+
     if cmd[0] == "\005"
         " Check the size of possibly very big string (dictionary for menu completion).
         let cmdsplt = split(cmd, "\005")
-        if str2nr(cmdsplt[0]) == strlen(cmdsplt[1])
-            exe cmdsplt[1]
+        let size = str2nr(cmdsplt[0])
+        let received = strlen(cmdsplt[1])
+        if size == received
+            let cmd = cmdsplt[1]
         else
             let s:waiting_more_input = 1
             let s:incomplete_input['size'] = size
             let s:incomplete_input['received'] = received
             let s:incomplete_input['str'] = cmdsplt[1]
-            call timer_start(20, 'StopWaitingNCS')
+            call timer_start(100, 'StopWaitingNCS')
+            return
         endif
-    elseif s:waiting_more_input
+    endif
+
+    if s:waiting_more_input
         let s:incomplete_input['received'] += strlen(cmd)
         if s:incomplete_input['received'] == s:incomplete_input['size']
             let s:waiting_more_input = 0
-            exe s:incomplete_input['str'] . cmd
+            let cmd = s:incomplete_input['str'] . cmd
         else
             let s:incomplete_input['str'] .= cmd
+            if s:incomplete_input['received'] > s:incomplete_input['size']
+                call RWarningMsg('Received larger than expected message.')
+            endif
+            return
         endif
-    elseif cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
+    endif
+
+    if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
         exe cmd
     elseif cmd != ""
         if len(cmd) > 128
