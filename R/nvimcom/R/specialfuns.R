@@ -443,7 +443,7 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
                                           "', 'env': '", ifelse(is.null(pkg), ".GlobalEnv", pkg),
                                           "', 'cls': 'v', 'descr': '",
                                           ifelse(is.null(nlab), "", nvim.fix.string(nlab)),
-                                          "'}},\n"))
+                                          "'}},"))
             }
         }
     }

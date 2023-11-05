@@ -49,7 +49,9 @@ static int auto_obbr;
 static size_t glbnv_buffer_sz;
 static char *glbnv_buffer;
 static char *compl_buffer;
+static char *finalbuffer;
 static unsigned long compl_buffer_size = 32768;
+static unsigned long fb_size = 1024;
 static int n_omnils_build;
 static int building_omnils;
 static int more_to_build;
@@ -172,7 +174,9 @@ static int ascii_ic_cmp(const char *a, const char *b)
 
 static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
 {
+    Log("grow_buffer(%zu, %zu) %s [%zu, %zu]", *sz, inc, compl_buffer_size, fb_size);
     *sz += inc;
+    Log("grow_buffer new size: %zu", *sz);
     char *tmp = calloc(*sz, sizeof(char));
     strcpy(tmp, *b);
     free(*b);
@@ -343,9 +347,6 @@ static void init_listening()
 
 static void get_whole_msg(char *b)
 {
-    static char *finalbuffer;
-    static unsigned long fb_size = 1024;
-
     Log("get_whole_msg()");
     char *p;
     char tmp[1];
@@ -365,10 +366,9 @@ static void get_whole_msg(char *b)
 
     // Allocate enough memory to the final buffer
     if (finalbuffer) {
+        memset(finalbuffer, 0, fb_size);
         if (msg_size > fb_size)
             finalbuffer = grow_buffer(&finalbuffer, &fb_size, msg_size - fb_size + 1024);
-        else
-            memset(finalbuffer, 0, fb_size);
     } else {
         if (msg_size > fb_size)
             fb_size = msg_size + 1024;
@@ -2282,7 +2282,10 @@ char *complete_args(char *p, char *funcnm)
 
 void complete(const char *id, char *base, char *funcnm, char *args)
 {
-    Log("complete(%s, %s, %s, _)", id, base, funcnm, args);
+    if (args)
+        Log("complete(%s, %s, %s, [%c%c%c%c...])", id, base, funcnm, args[0], args[1], args[2], args[3]);
+    else
+        Log("complete(%s, %s, %s, NULL)", id, base, funcnm);
     char *p;
 
     memset(compl_buffer, 0, compl_buffer_size);
@@ -2299,10 +2302,14 @@ void complete(const char *id, char *base, char *funcnm, char *args)
             return;
         } else {
             // Normal completion of arguments
-            if (r_conn == 0)
+            if (r_conn == 0) {
                 p = complete_args(p, funcnm);
-            else
+            } else {
+                if ((strlen(args) + 1024) > compl_buffer_size)
+                    p = grow_buffer(&compl_buffer, &compl_buffer_size, strlen(args) + 1024 - compl_buffer_size);
+
                 p = str_cat(p, args);
+            }
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
