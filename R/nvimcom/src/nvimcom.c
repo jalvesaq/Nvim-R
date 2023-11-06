@@ -97,7 +97,7 @@ PkgInfo *pkgList;
 
 
 static int nvimcom_checklibs(void);
-static void send_to_nvim(const char *msg);
+static void send_to_nvim(char *msg);
 static void nvimcom_eval_expr(const char *buf);
 
 #ifdef WIN32
@@ -139,7 +139,7 @@ static char *nvimcom_grow_buffers(void)
     return(glbnvbuf2 + strlen(glbnvbuf2));
 }
 
-static void send_to_nvim(const char *msg)
+static void send_to_nvim(char *msg)
 {
     unsigned long sent = 0;
     char b[64];
@@ -172,9 +172,18 @@ static void send_to_nvim(const char *msg)
     if (sent != tcp_header_len)
         REprintf("Error sending message header to Nvim-R: %zu x %zu\n", tcp_header_len, sent);
 
-    sent = write(sockfd, msg, len);
-    if (sent != len)
-        REprintf("Error sending message to Nvim-R: %zu x %zu\n", len, sent);
+    sent = 0;
+    int loop = 0;
+    while (sent < len && loop < 100) {
+        sent += write(sockfd, msg, len);
+        msg += sent;
+        loop++;
+        if (sent > len)
+            REprintf("Error sending message to Nvim-R: %zu x %zu\n", len, sent);
+    }
+
+    if (loop == 100)
+        REprintf("Too many loops to send message to Nvim-R: %zu x %zu\n", len, sent);
 
     // End the message with \001
     sent = write(sockfd, "\001", 1);
