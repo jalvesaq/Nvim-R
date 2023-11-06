@@ -139,8 +139,6 @@ static void Log(const char *fmt, ...)
     fprintf(f, "\n");
     va_end(argptr);
     fclose(f);
-#else
-    // empty function
 #endif
 }
 
@@ -174,9 +172,8 @@ static int ascii_ic_cmp(const char *a, const char *b)
 
 static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
 {
-    Log("grow_buffer(%zu, %zu) %s [%zu, %zu]", *sz, inc, compl_buffer_size, fb_size);
+    Log("grow_buffer(%zu, %zu) [%zu, %zu]", *sz, inc, compl_buffer_size, fb_size);
     *sz += inc;
-    Log("grow_buffer new size: %zu", *sz);
     char *tmp = calloc(*sz, sizeof(char));
     strcpy(tmp, *b);
     free(*b);

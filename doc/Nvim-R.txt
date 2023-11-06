@@ -1061,7 +1061,7 @@ of
 
 
 ------------------------------------------------------------------------------
-								*R_auto_start*
+							  *R_auto_start*
 							  *R_objbr_auto_start*
 6.1. Automatic start: R and Object Browser~
 
@@ -1089,7 +1089,7 @@ See also: |R_after_ob_open|.
 ------------------------------------------------------------------------------
 							 *R-built-in-terminal*
 6.2. R in Vim/Neovim built-in terminal~
-							       *R_esc_term*
+								  *R_esc_term*
 By default, R runs in a Vim/Neovim buffer created with the command |:term|,
 and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
 In Terminal mode, What you type is passed directly to R while in Normal mode
@@ -1227,7 +1227,7 @@ used to send commands from Vim/Neovim to R.
 
 ------------------------------------------------------------------------------
 							     *R_external_term*
-							       *R_silent_term*
+							     *R_silent_term*
 6.3. Terminal emulator (Linux/Unix only)~
 
 Note: The options of this section are ignored on Mac OS X, where the command
@@ -1280,9 +1280,9 @@ put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							      *R_save_win_pos*
+							   *R_save_win_pos*
 							   *R_arrange_windows*
-							      *R_set_home_env*
+							   *R_set_home_env*
 6.4. Windows specific options~
 								 *Rtools-path*
 If R cannot find either `make` or `gcc` while trying to compile nvimcom, you
@@ -1368,12 +1368,12 @@ That is, the underscore will be replaced with the assign operator only if it
 is preceded by a space and followed by a non-word character.
 
 ------------------------------------------------------------------------------
-							  *R_objbr_w*
-							  *R_objbr_h*
-							  *R_objbr_place*
-							  *R_objbr_opendf*
-							  *R_objbr_openlist*
-							  *R_objbr_allnames*
+							    *R_objbr_w*
+							    *R_objbr_h*
+							    *R_objbr_place*
+							    *R_objbr_opendf*
+							    *R_objbr_openlist*
+							    *R_objbr_allnames*
 6.6. Object Browser options~
 
 By default, the Object Browser will be created at the right of the script
@@ -1622,9 +1622,9 @@ that the file is open in a new split window, put in your |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							    *R_enable_comment*
+							  *R_enable_comment*
 							  *R_indent_commented*
-							   *R_rcomment_string*
+							  *R_rcomment_string*
 6.12. Comment and uncomment code~
 
 Nvim-R can comment and uncomment code, but this feature is turned off by
@@ -1748,7 +1748,7 @@ window.
 
 ------------------------------------------------------------------------------
 							       *R_applescript*
-								 *RStudio_cmd*
+							       *RStudio_cmd*
 6.15. Integration with R.app (OS X only) and RStudio~
 
 If you are on Mac OS X and want to use the R.app graphical application, put in
@@ -1824,7 +1824,7 @@ while others have no command to clear the console. You should set the value of
 <
 
 ------------------------------------------------------------------------------
-							       *R_source_args*
+							   *R_source_args*
 							   *R_commented_lines*
 6.18. Arguments to R source() function~
 
@@ -1909,7 +1909,7 @@ Other options to be passed to `rmarkdown::render()` might be defined with
 <
 
 ------------------------------------------------------------------------------
-							*R_quarto_render_args*
+						       *R_quarto_render_args*
 						       *R_quarto_preview_args*
 6.21. Quarto's render and preview options~
 
@@ -2195,7 +2195,7 @@ in your |vimrc|.  Example:
 
 ------------------------------------------------------------------------------
 								   *R_nvim_wd*
-6.32 Start R in working directory of Vim~
+6.32. Start R in working directory of Vim~
 
 When you are editing an R file (.R, .Rnw, .Rd, .Rmd, .Rrst, or .qmd) and start
 R, the R package nvimcom runs the command `setwd()` with the directory of the
@@ -2214,9 +2214,9 @@ in |vimrc|:
 <
 
 ------------------------------------------------------------------------------
-							       *R_after_start*
+							     *R_after_start*
 							     *R_after_ob_open*
-6.33 Commands to be executed after either R startup or Object Browser opening~
+6.33. Commands to be executed after either R startup or Object Browser opening~
 
 If you want the execution of Vim, R, or external commands right after R
 startup, set the value of `R_after_start` in your |vimrc|. The `R_after_start`
@@ -2293,7 +2293,7 @@ is open, set the value of `R_after_ob_open` as a list of commands. Example:
 
 ------------------------------------------------------------------------------
 								     *R_debug*
-6.34 Support for debugging functions~
+6.34. Support for debugging functions~
 
 Put the line below in your |vimrc| if do not want that the cursor jumps to the
 line being debugged (when `browser()` is run). Highlighting of the line being
@@ -2317,7 +2317,7 @@ debug. You can hold the highlighted line in the middle of the window with
 							    *R_user_maps_only*
 							    *R_disable_cmds*
 							    *R_filetypes*
-6.35 Disable Nvim-R commands~
+6.35. Disable Nvim-R commands~
 
 The Nvim-R sets many default key bindings.  The user can set custom
 key bindings (|Nvim-R-key-bindings|).  If you wish Nvim-R to only
@@ -2345,7 +2345,7 @@ list will be supported.
 ------------------------------------------------------------------------------
 								  *R_tmpdir*
 								  *R_compldir*
-6.36 Temporary files directories~
+6.36. Temporary files directories~
 
 You can change the directories where temporary files are created and
 stored by setting in your |vimrc| the values of `R_tmpdir` and
@@ -2363,11 +2363,11 @@ want to know what they are, while editing an R file, do in Normal mode:
 
 ------------------------------------------------------------------------------
 							      *R_set_omnifunc*
-								*R_fun_data_1*
-								*R_fun_data_2*
+							      *R_fun_data_1*
+							      *R_fun_data_2*
 							      *R_quarto_intel*
-							         *R_bib_compl*
-6.37 Omni completion~
+							      *R_bib_compl*
+6.37. Omni completion~
 
 There are two ways of getting automatic completion of R objects names while
 you type: using Nvim-R's built-in completion system (as a source for
@@ -2466,7 +2466,7 @@ better than Nvim-R. Examples:
 
 ------------------------------------------------------------------------------
 							   *R_remote_compldir*
-6.38 Options for accessing Remote R from local Vim~
+6.38. Options for accessing Remote R from local Vim~
 
 See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 
@@ -2474,7 +2474,7 @@ See https://github.com/jalvesaq/Nvim-R/wiki/Remote-access
 							      *Nvim-R-df-view*
 							      *R_csv_app*
 							      *R_csv_delim*
-6.39 View a data.frame or matrix~
+6.39. View a data.frame or matrix~
 
 
 You can see data.frames and matrices in external applications with
@@ -2527,7 +2527,7 @@ name of the object under the cursor.
 
 ------------------------------------------------------------------------------
 							      *Nvim-R-SyncTeX*
-6.40 SyncTeX support~
+6.40. SyncTeX support~
 
 SyncTeX is a communication system used by some PDF viewers and by some text
 editors which allow users to jump from a specific line in the text editor to
