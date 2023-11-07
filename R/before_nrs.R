@@ -59,7 +59,7 @@ cat(libp, sep = "\n", colapse = "\n", file = "libPaths")
 # Check R version
 R_version <- paste0(version[c("major", "minor")], collapse = ".")
 
-if (R_version < "4.0.0")
+if (package_version(R_version) < "4.0.0")
     out("RWarn: Nvim-R requires R >= 4.0.0")
 
 R_version <- sub("[0-9]$", "", R_version)
