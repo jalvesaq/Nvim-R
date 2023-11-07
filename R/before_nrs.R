@@ -6,6 +6,33 @@ out <- function(x) {
     flush(stdout())
 }
 
+pkgs_exist <- function(pkgs) {
+    lengths(lapply(pkgs, find.package, quiet = TRUE)) == 1
+}
+
+nvimcom_install_paths <- function() {
+    p <- file.path(libp, "nvimcom")
+    dirname(p[dir.exists(p)])
+}
+
+# Returns a vector for a single package, or a matrix for multiple packages.
+simple_pkginfo <- function(pkgs, libs = NULL) {
+    pkg_desc <- function(p, lib = NULL) {
+        desc <- packageDescription(p, lib)
+        lib_path <- dirname(dirname(dirname(attr(desc, "file"))))
+        c(t(unlist(desc))[, c("Version", "Built")], LibPath = lib_path)
+    }
+
+    info <- t(if (is.null(libs)) {
+        mapply(pkg_desc, pkgs)
+    } else {
+        mapply(pkg_desc, pkgs, libs)
+    })
+
+    info[, "Built"] <- sub("R ([^;]*).*", "\\1", info[, "Built"])
+    info[, c("Version", "LibPath", "Built")]
+}
+
 isdir <- file.info(Sys.getenv("NVIMR_TMPDIR"))[["isdir"]]
 if (is.na(isdir)) {
     out(paste0("RWarn: R: NVIMR_TMPDIR (`", Sys.getenv("NVIMR_TMPDIR"), "`) not found."))
@@ -40,19 +67,19 @@ R_version <- sub("[0-9]$", "", R_version)
 need_new_nvimcom <- ""
 
 check_nvimcom_installation <- function() {
-    ip <- utils::installed.packages()
-    if (length(grep("^nvimcom$", rownames(ip))) == 0) {
+    install_paths <- nvimcom_install_paths()
+    if (length(install_paths) == 0) {
         if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
             out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
         else
             out("RWarn: Failed to install nvimcom.")
         quit(save = "no", status = 61)
     }
-    if (length(grep("^nvimcom$", rownames(ip))) > 1) {
+    if (length(install_paths) > 1) {
         out("RWarn: More than one nvimcom versions installed.")
         quit(save = "no", status = 62)
     }
-    nvimcom_version <- ip["nvimcom", "Version"]
+    nvimcom_version <- packageVersion("nvimcom", install_paths)
     if (nvimcom_version != needed_nvc_version) {
         out("RWarn: Failed to update nvimcom.")
         quit(save = "no", status = 63)
@@ -63,9 +90,9 @@ check_nvimcom_installation <- function() {
 # the rest of Nvim-R. I will also not be found if running Vim in MSYS2 and R
 # on Windows because the directory names change between the two systems.
 if (!is.null(needed_nvc_version)) {
-    ip <- utils::installed.packages()
-    if (length(grep("^nvimcom$", rownames(ip))) == 1) {
-        nvimcom_info <- ip["nvimcom", c("Version", "LibPath", "Built")]
+    install_paths <- nvimcom_install_paths()
+    if (length(install_paths) == 1) {
+        nvimcom_info <- simple_pkginfo("nvimcom", install_paths)
         if (!grepl(paste0('^', R_version), nvimcom_info["Built"])) {
             need_new_nvimcom <- "R version mismatch"
         } else {
@@ -82,7 +109,7 @@ if (!is.null(needed_nvc_version)) {
             }
         }
     } else {
-        if (length(grep("^nvimcom$", rownames(ip))) == 0)
+        if (length(install_paths) == 0)
             need_new_nvimcom <- "Nvimcom not installed"
     }
 
@@ -133,22 +160,22 @@ if (!is.null(needed_nvc_version)) {
 }
 
 # Save ~/.cache/Nvim-R/nvimcom_info
-ip <- utils::installed.packages()
-if (length(grep("^nvimcom$", rownames(ip))) == 1) {
-    nvimcom_info <- unname(ip["nvimcom", c("Version", "LibPath", "Built")])
+install_paths <- nvimcom_install_paths()
+if (length(install_paths) == 1) {
+    nvimcom_info <- simple_pkginfo("nvimcom", install_paths)
     writeLines(nvimcom_info, paste0(Sys.getenv("NVIMR_COMPLDIR"), "/nvimcom_info"))
 
     # Build omnils_, fun_ and args_ files, if necessary
     library("nvimcom", warn.conflicts = FALSE)
-    libs <- libs[libs %in% rownames(ip)]
-    cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
-        '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))
+    libs <- libs[pkgs_exist(libs)]
+    cat(paste(libs, simple_pkginfo(libs)[, "Version"], collapse = "\n", sep = "_"),
+        "\n", sep = "", file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))
     nvimcom:::nvim.buildomnils(libs)
     out("echo ''")
     quit(save = "no")
 }
 
-if (length(grep("^nvimcom$", rownames(ip))) == 0) {
+if (length(install_paths) == 0) {
     out("RWarn: nvimcom is not installed.")
     for (p in libp)
         if (dir.exists(paste0(p, "/00LOCK-nvimcom")))
@@ -156,8 +183,8 @@ if (length(grep("^nvimcom$", rownames(ip))) == 0) {
     quit(save = "no", status = 67)
 }
 
-if (length(grep("^nvimcom$", rownames(ip))) > 1) {
+if (length(install_paths) > 1) {
     out(paste0("RWarn: nvimcom is installed in more than one directory: ",
-               paste0(ip[grep("^nvimcom$", rownames(ip)), "LibPath"], collapse = ", ")))
+               toString(install_paths)))
     quit(save = "no", status = 68)
 }
