@@ -130,17 +130,15 @@ source.and.clean <- function(f, ...) {
 
 nvim_format <- function(l1, l2, wco, sw, txt) {
     if (is.null(getOption("nvimcom.formatfun"))) {
-        if ("styler" %in% rownames(installed.packages())) {
-           options(nvimcom.formatfun = "style_text")
+        if (length(find.package("styler", quiet = TRUE)) == 1) {
+            options(nvimcom.formatfun = "style_text")
+        } else if (length(find.package("formatR", quiet = TRUE)) == 1) {
+            options(nvimcom.formatfun = "tidy_source")
         } else {
-            if ("formatR" %in% rownames(installed.packages())) {
-                options(nvimcom.formatfun = "tidy_source")
-            } else {
-                .C("nvimcom_msg_to_nvim",
-                   "call RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
-                   PACKAGE = "nvimcom")
-                return(invisible(NULL))
-            }
+            .C("nvimcom_msg_to_nvim",
+               "call RWarningMsg('You have to install either formatR or styler in order to run :Rformat')",
+               PACKAGE = "nvimcom")
+            return(invisible(NULL))
         }
     }
 

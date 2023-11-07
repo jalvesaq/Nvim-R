@@ -8,5 +8,5 @@ importFrom("methods", "existsFunction", "slotNames")
 importFrom("graphics", "boxplot", "hist", "par", "plot")
 importFrom("stats", "runif")
 importFrom("utils", "browseURL", "capture.output", "example", "find",
-           "getAnywhere", "installed.packages", "methods",
+           "getAnywhere", "methods",
            "packageDescription", "read.table", "str", "Sweave", "write.table")

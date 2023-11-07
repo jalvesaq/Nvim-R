@@ -39,21 +39,20 @@ NvimcomEnv$pkgdescr <- list()
 
     if (interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != "") {
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
-        ip <- utils::installed.packages()
-        nvinf <- ip["nvimcom", c("Version", "LibPath", "Built")]
+        nvinf <- packageDescription("nvimcom")
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.setwidth")),
            as.integer(getOption("nvimcom.autoglbenv")),
            as.integer(getOption("nvimcom.debug_r")),
-           nvinf[1],
-           nvinf[2],
-           paste(nvinf[3],
+           nvinf$Version,
+           nvinf$LibPath,
+           paste(sub("R ([^;]*).*", "\\1", nvinf$Built),
                  getOption("OutDec"),
                  gsub("\n", "#N#", getOption("prompt")),
                  getOption("continue"),
-                 as.integer(length(grep("colorout", rownames(ip))) == 1),
+                 length(find.package("colorout", quiet = TRUE)),
                  sep = "\x02"),
            PACKAGE = "nvimcom")
     }
