@@ -97,7 +97,7 @@ PkgInfo *pkgList;
 
 
 static int nvimcom_checklibs(void);
-static void send_to_nvim(const char *msg);
+static void send_to_nvim(char *msg);
 static void nvimcom_eval_expr(const char *buf);
 
 #ifdef WIN32
@@ -139,9 +139,9 @@ static char *nvimcom_grow_buffers(void)
     return(glbnvbuf2 + strlen(glbnvbuf2));
 }
 
-static void send_to_nvim(const char *msg)
+static void send_to_nvim(char *msg)
 {
-    unsigned long sent = 0;
+    size_t sent;
     char b[64];
     size_t len;
 
@@ -170,11 +170,37 @@ static void send_to_nvim(const char *msg)
     snprintf(b, 63, "%s%09zu", nvimsecr, len);
     sent = write(sockfd, b, tcp_header_len);
     if (sent != tcp_header_len)
-        REprintf("Error sending message header to Nvim-R: %zu x %zu\n", tcp_header_len, sent);
+        REprintf("Error sending message header to Nvim-R: %zu x %zu\n",
+                tcp_header_len, sent);
 
-    sent = write(sockfd, msg, len);
-    if (sent != len)
-        REprintf("Error sending message to Nvim-R: %zu x %zu\n", len, sent);
+    // based on code found on php source
+    char *pCur = msg;
+    char *pEnd = msg + len;
+    int loop = 0;
+    while (pCur < pEnd) {
+        sent = write(sockfd, pCur, pEnd - pCur);
+        if (sent >= 0) {
+            pCur += sent;
+            if (pCur > pEnd) {
+                // TODO: delete this check because it's supposed to be impossible to happen
+                REprintf("Impossible error sending message to Nvim-R: %zu x %zu\n",
+                        len, pCur - msg);
+                return;
+            }
+        } else if (sent == -1) {
+            REprintf("Error sending message to Nvim-R: %zu x %zu\n",
+                    len, pCur - msg);
+            return;
+        }
+        loop++;
+        if (loop == 100) {
+            // The goal here is to avoid infinite loop.
+            // TODO: Maybe delete this check because php code does not have something similar
+            REprintf("Too many attempts to send message to Nvim-R: %zu x %zu\n",
+                    len, sent);
+            return;
+        }
+    }
 
     // End the message with \001
     sent = write(sockfd, "\001", 1);
