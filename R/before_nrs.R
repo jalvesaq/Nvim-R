@@ -40,22 +40,24 @@ R_version <- sub("[0-9]$", "", R_version)
 need_new_nvimcom <- ""
 
 check_nvimcom_installation <- function() {
-    ip <- utils::installed.packages()
-    if (length(grep("^nvimcom$", rownames(ip))) == 0) {
-        if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
-            out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
-        else
-            out("RWarn: Failed to install nvimcom.")
-        quit(save = "no", status = 61)
-    }
-    if (length(grep("^nvimcom$", rownames(ip))) > 1) {
-        out("RWarn: More than one nvimcom versions installed.")
-        quit(save = "no", status = 62)
-    }
-    nvimcom_version <- ip["nvimcom", "Version"]
-    if (nvimcom_version != needed_nvc_version) {
-        out("RWarn: Failed to update nvimcom.")
-        quit(save = "no", status = 63)
+    np <- find.package("nvimcom", quiet = TRUE, verbose = FALSE)
+    if (length(np) == 1) {
+        nd <- utils::packageDescription("nvimcom")
+        if (nd$Version != needed_nvc_version) {
+            out("RWarn: Failed to update nvimcom.")
+            quit(save = "no", status = 63)
+        }
+    } else {
+        if (length(np) == 0) {
+            if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
+                out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
+            else
+                out("RWarn: Failed to install nvimcom.")
+            quit(save = "no", status = 61)
+        } else {
+            out("RWarn: More than one nvimcom versions installed.")
+            quit(save = "no", status = 62)
+        }
     }
 }
 
@@ -63,26 +65,26 @@ check_nvimcom_installation <- function() {
 # the rest of Nvim-R. I will also not be found if running Vim in MSYS2 and R
 # on Windows because the directory names change between the two systems.
 if (!is.null(needed_nvc_version)) {
-    ip <- utils::installed.packages()
-    if (length(grep("^nvimcom$", rownames(ip))) == 1) {
-        nvimcom_info <- ip["nvimcom", c("Version", "LibPath", "Built")]
-        if (!grepl(paste0('^', R_version), nvimcom_info["Built"])) {
-            need_new_nvimcom <- "R version mismatch"
+    np <- find.package("nvimcom", quiet = TRUE, verbose = FALSE)
+    if (length(np) == 1) {
+        nd <- utils::packageDescription("nvimcom")
+        if (!grepl(paste0('^R ', R_version), nd$Built)) {
+            need_new_nvimcom <- paste0("R version mismatch: '", R_version, "' vs '", nd$Built, "'")
         } else {
-            if (nvimcom_info["Version"] != needed_nvc_version) {
+            if (nd$Version != needed_nvc_version) {
                 need_new_nvimcom <- "nvimcom version mismatch"
-                fi <- file.info(paste0(nvimcom_info["LibPath"], "/nvimcom/DESCRIPTION"))
+                fi <- file.info(paste0(np, "/DESCRIPTION"))
                 if (sum(grepl("uname", names(fi))) == 1 &&
                     Sys.getenv("USER") != "" &&
                     Sys.getenv("USER") != fi[["uname"]]) {
                     need_new_nvimcom <-
-                        paste0(need_new_nvimcom, " (nvimcom ", nvimcom_info[["Version"]],
-                               " was installed in `", nvimcom_info[["LibPath"]], "` by \"", fi[["uname"]], "\")")
+                        paste0(need_new_nvimcom, " (nvimcom ", nd$Version,
+                               " was installed in `", np, "` by \"", fi[["uname"]], "\")")
                 }
             }
         }
     } else {
-        if (length(grep("^nvimcom$", rownames(ip))) == 0)
+        if (length(np) == 0)
             need_new_nvimcom <- "Nvimcom not installed"
     }
 
@@ -141,7 +143,7 @@ if (length(grep("^nvimcom$", rownames(ip))) == 1) {
     # Build omnils_, fun_ and args_ files, if necessary
     library("nvimcom", warn.conflicts = FALSE)
     libs <- libs[libs %in% rownames(ip)]
-    cat(paste(libs, utils::installed.packages()[libs, 'Version'], collapse = '\n', sep = '_'),
+    cat(paste(libs, ip[libs, 'Version'], collapse = '\n', sep = '_'),
         '\n', sep = '', file = paste0(Sys.getenv("NVIMR_TMPDIR"), "/libnames_", Sys.getenv("NVIMR_ID")))
     nvimcom:::nvim.buildomnils(libs)
     out("echo ''")
