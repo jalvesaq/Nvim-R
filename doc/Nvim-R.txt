@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.17
+Version: 0.9.18
 For Neovim >= 0.6.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
@@ -2768,6 +2768,9 @@ See also: |R_source|.
 								 *Nvim-R-news*
 8. News~
 
+0.9.18 (2022-09-29)
+
+ * TCP communication on Windows is broken.
  * Integration with cmp-nvim-r, a source for nvim-cmp.
  * Delete options R_auto_omni and R_hi_fun_globenv.
  * New options: R_filetypes, R_fun_data_1 and R_fun_data_2, R_quarto_intel,
