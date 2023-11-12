@@ -124,7 +124,7 @@ Main dependencies:~
        include "nvimcom" among the packages to be loaded (see
        |nvimcom-not-loaded|).
 
-     - On Windows, you have to install Rtools40 to be able to build the
+     - On Windows, you have to install Rtools to be able to build the
        package: https://cran.r-project.org/bin/windows/Rtools/
 
 
@@ -254,7 +254,7 @@ path where nvimcom was installed.
 
 On Windows, nvimcom compilation will fail if your `.Rprofile` outputs anything
 during R Startup. It will also fail with a message about `--slave` not being a
-`gcc` option if either `make.exe` or `gcc.exe` from RTools40 are not the first
+`gcc` option if either `make.exe` or `gcc.exe` from RTools are not the first
 ones found in your systems' `PATH` (see |R_path| and |Rtools-path|).
 
 

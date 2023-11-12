@@ -283,15 +283,15 @@ static void ParseMsg(char *b)
 static void init_listening()
 {
     Log("init_listening()");
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in cli;
 #ifdef WIN32
     int len;
 #else
     socklen_t len;
 #endif
+    struct sockaddr_in cli;
     int res = 1;
     int port = 10101;
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd == -1) {
         fprintf(stderr, "socket creation failed...\n");
@@ -922,12 +922,18 @@ static int run_R_code(const char *s, int senderror)
 
     // Create the child process.
 
-    char buf[512];
-    snprintf(buf, 511, "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
-            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"));
+
+    char b[1024];
+    snprintf(b, 1023, "NVIMR_TMPDIR=%s", getenv("NVIMR_REMOTE_TMPDIR"));
+    putenv(b);
+    snprintf(b, 1023, "NVIMR_COMPLDIR=%s", getenv("NVIMR_REMOTE_COMPLDIR"));
+    putenv(b);
+    snprintf(b, 1023,
+            "%s --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
+	    getenv("NVIMR_RPATH"));
 
     res = CreateProcess(NULL,
-            "",  // Command line
+            b,  // Command line
             NULL,          // process security attributes
             NULL,          // primary thread security attributes
             TRUE,          // handles are inherited
@@ -943,6 +949,11 @@ static int run_R_code(const char *s, int senderror)
         fflush(stderr);
         return 0;
     }
+
+    snprintf(b, 1023, "NVIMR_TMPDIR=%s", tmpdir);
+    putenv(b);
+    snprintf(b, 1023, "NVIMR_COMPLDIR=%s", compldir);
+    putenv(b);
 
     DWORD exit_code;
     WaitForSingleObject(pi.hProcess, INFINITE);
