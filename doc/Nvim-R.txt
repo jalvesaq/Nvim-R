@@ -2418,9 +2418,10 @@ passed as argument for `with`) will have column names of the first argument of
 the parent function included in the completion menu. You have to set the value
 of `R_fun_data_2` in your |vimrc| to include more functions. `R_fun_data_2` is a
 dictionary with parent functions as keys. The value of each key is a list of
-functions that are expected to be nested in the parent function. Example:
+functions that are expected to be nested in the parent function. If the name
+of the nested function is `*`, it will match name. Example:
 >
-   let R_fun_data_2 = {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']}
+   let R_fun_data_2 = {'ggplot': ['aes'], 'with': ['*']}
 <
 Note: The algorithm for finding the first argument of the parent function is
 very simple and would wrongly recognize `data` as the name of the

@@ -867,7 +867,7 @@ if type(g:R_bib_compl) == v:t_string
 endif
 
 let g:R_fun_data_1 = get(g:, 'R_fun_data_1', ['select', 'rename', 'mutate', 'filter'])
-let g:R_fun_data_2 = get(g:, 'R_fun_data_2', {'ggplot': ['aes'], 'with': ['lm', 'glm', 'lmer']})
+let g:R_fun_data_2 = get(g:, 'R_fun_data_2', {'ggplot': ['aes'], 'with': ['*']})
 
 if exists(":terminal") != 2
     let g:R_external_term = get(g:, "R_external_term", 1)

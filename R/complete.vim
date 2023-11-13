@@ -415,7 +415,7 @@ function NeedRArguments(line, cpos)
                         endif
                     endfor
                     for key in keys(g:R_fun_data_2)
-                        if index(g:R_fun_data_2[key], rkeyword0) > -1
+                        if g:R_fun_data_2[key][0] == '*' || index(g:R_fun_data_2[key], rkeyword0) > -1
                             let listdf = 2
                             let rkeyword1 = key
                             break
