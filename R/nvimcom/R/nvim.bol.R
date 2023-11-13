@@ -461,9 +461,10 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     return(invisible(NULL))
 }
 
-# This function calls nvim.bol which writes two files in ~/.cache/Nvim-R:
+# This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
 #   - fun_    : function names for syntax highlighting
 #   - omnils_ : data for omni completion and object browser
+#   - args_   : data for omni completion of function arguments
 nvim.buildomnils <- function(p) {
     if (length(p) > 1) {
         n <- 0

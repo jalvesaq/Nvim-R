@@ -283,7 +283,7 @@ function WaitNvimcomStart()
     call timer_start(1000, "CheckIfNvimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(nvimcomversion, nvimcomhome, rpid, wid, r_info)
+function SetNvimcomInfo(nvimcomversion, rpid, wid, r_info)
     let g:rplugin.debug_info['Time']['start_R'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_R'], reltime()))
     if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
         let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')

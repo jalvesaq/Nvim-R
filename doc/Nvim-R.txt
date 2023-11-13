@@ -2768,7 +2768,7 @@ See also: |R_source|.
 								 *Nvim-R-news*
 8. News~
 
-0.9.18 (2022-09-29)
+0.9.18 (2023-11-12)
 
  * TCP communication on Windows is broken.
  * Integration with cmp-nvim-r, a source for nvim-cmp.

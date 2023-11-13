@@ -130,10 +130,10 @@ source.and.clean <- function(f, ...) {
 
 nvim_format <- function(l1, l2, wco, sw, txt) {
     if (is.null(getOption("nvimcom.formatfun"))) {
-        if ("styler" %in% rownames(installed.packages())) {
+        if (length(find.package("styler", quiet = TRUE, verbose = FALSE)) > 0) {
            options(nvimcom.formatfun = "style_text")
         } else {
-            if ("formatR" %in% rownames(installed.packages())) {
+            if (length(find.package("formatR")) > 0) {
                 options(nvimcom.formatfun = "tidy_source")
             } else {
                 .C("nvimcom_msg_to_nvim",

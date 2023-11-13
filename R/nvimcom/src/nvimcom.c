@@ -71,7 +71,6 @@ static int autoglbenv = 0;
 static clock_t tm;
 
 static char tmpdir[512];
-static char nvimcom_home[1024];
 static int setwidth = 0;   // Set the option width after each command is executed
 static int oldcolwd = 0;   // Last set width
 
@@ -849,22 +848,22 @@ static void nvimcom_send_running_info(const char *r_info)
     char msg[2176];
 #ifdef WIN32
 #ifdef _WIN64
-    snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %" PRId64 ", '%" PRId64 "', '%s')",
-            nvimcom_version, nvimcom_home, R_PID,
+    snprintf(msg, 2175, "call SetNvimcomInfo('%s', %" PRId64 ", '%" PRId64 "', '%s')",
+            nvimcom_version, R_PID,
             (long long)GetForegroundWindow(), r_info);
 #else
-    snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '%ld', '%s')",
-            nvimcom_version, nvimcom_home, R_PID,
+    snprintf(msg, 2175, "call SetNvimcomInfo('%s', %d, '%ld', '%s')",
+            nvimcom_version, R_PID,
             (long)GetForegroundWindow(), r_info);
 #endif
 #else
     if(getenv("WINDOWID"))
-        snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '%s', '%s')",
-                nvimcom_version, nvimcom_home, R_PID,
+        snprintf(msg, 2175, "call SetNvimcomInfo('%s', %d, '%s', '%s')",
+                nvimcom_version, R_PID,
                 getenv("WINDOWID"), r_info);
     else
-        snprintf(msg, 2175, "call SetNvimcomInfo('%s', '%s', %d, '0', '%s')",
-                nvimcom_version, nvimcom_home, R_PID, r_info);
+        snprintf(msg, 2175, "call SetNvimcomInfo('%s', %d, '0', '%s')",
+                nvimcom_version, R_PID, r_info);
 #endif
     send_to_nvim(msg);
 }
@@ -977,7 +976,7 @@ static void *server_thread(__attribute__((unused))void *arg)
 #endif
 }
 
-void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv, char **pth, char **rinfo)
+void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv, char **rinfo)
 {
     verbose = *vrb;
     allnames = *anm;
@@ -989,7 +988,6 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     strncpy(nvimcom_version, *vcv, 31);
 
     if(getenv("NVIMR_TMPDIR")){
-        strncpy(nvimcom_home, *pth, 1023);
         strncpy(tmpdir, getenv("NVIMR_TMPDIR"), 500);
         if(getenv("NVIMR_SECRET"))
             strncpy(nvimsecr, getenv("NVIMR_SECRET"), 31);
@@ -1015,7 +1013,6 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         REprintf("  NVIMR_ID: %s\n", getenv("NVIMR_ID"));
         REprintf("  NVIMR_TMPDIR: %s\n", tmpdir);
         REprintf("  NVIMR_COMPLDIR: %s\n", getenv("NVIMR_COMPLDIR"));
-        REprintf("  nvimcom dir: %s\n", nvimcom_home);
         REprintf("  R info: %s\n\n", *rinfo);
     }
 

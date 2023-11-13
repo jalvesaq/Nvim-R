@@ -166,12 +166,12 @@ function FindNCSpath(libdir)
     else
         let ncs = 'nvimrserver'
     endif
-    if filereadable(a:libdir . '/nvimcom/bin/' . ncs)
-        return a:libdir . '/nvimcom/bin/' . ncs
-    elseif filereadable(a:libdir . '/nvimcom/bin/x64/' . ncs)
-        return a:libdir . '/nvimcom/bin/x64/' . ncs
-    elseif filereadable(a:libdir . '/nvimcom/bin/i386/' . ncs)
-        return a:libdir . '/nvimcom/bin/i386/' . ncs
+    if filereadable(a:libdir . '/bin/' . ncs)
+        return a:libdir . '/bin/' . ncs
+    elseif filereadable(a:libdir . '/bin/x64/' . ncs)
+        return a:libdir . '/bin/x64/' . ncs
+    elseif filereadable(a:libdir . '/bin/i386/' . ncs)
+        return a:libdir . '/bin/i386/' . ncs
     endif
 
     call RWarningMsg('Application "' . ncs . '" not found at "' . a:libdir . '"')
@@ -185,7 +185,7 @@ function StartNServer()
     endif
 
     if exists("g:R_local_R_library_dir")
-        let s:nrs_path = FindNCSpath(g:R_local_R_library_dir)
+        let nrs_path = FindNCSpath(g:R_local_R_library_dir . '/nvimcom')
     else
         if filereadable(g:rplugin.compldir . '/nvimcom_info')
             let info = readfile(g:rplugin.compldir . '/nvimcom_info')
@@ -193,7 +193,7 @@ function StartNServer()
                 " Update nvimcom information
                 let g:rplugin.nvimcom_info = {'version': info[0], 'home': info[1], 'Rversion': info[2]}
                 let g:rplugin.debug_info['nvimcom_info'] = g:rplugin.nvimcom_info
-                let s:nrs_path = FindNCSpath(info[1])
+                let nrs_path = FindNCSpath(info[1])
             else
                 call delete(g:rplugin.compldir . '/nvimcom_info')
                 call RWarningMsg("ERROR in nvimcom_info! Please, do :RDebugInfo for details.")
@@ -205,8 +205,8 @@ function StartNServer()
         endif
     endif
 
-    let ncspath = substitute(s:nrs_path, '/nvimrserver.*', '', '')
-    let ncs = substitute(s:nrs_path, '.*/nvimrserver', 'nvimrserver', '')
+    let ncspath = substitute(nrs_path, '/nvimrserver.*', '', '')
+    let ncs = substitute(nrs_path, '.*/nvimrserver', 'nvimrserver', '')
 
     " Some pdf viewers run nvimrserver to send SyncTeX messages back to Vim
     if $PATH !~ ncspath
