@@ -133,7 +133,7 @@ nvim_format <- function(l1, l2, wco, sw, txt) {
         if (length(find.package("styler", quiet = TRUE, verbose = FALSE)) > 0) {
            options(nvimcom.formatfun = "style_text")
         } else {
-            if (length(find.package("formatR")) > 0) {
+            if (length(find.package("formatR", quiet = TRUE, verbose = FALSE)) > 0) {
                 options(nvimcom.formatfun = "tidy_source")
             } else {
                 .C("nvimcom_msg_to_nvim",
