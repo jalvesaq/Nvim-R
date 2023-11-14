@@ -319,6 +319,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     int er = 0;
     char buf[576];
     char bbuf[512];
+    char *ptr;
 
     if((strlen(glbnvbuf2 + lastglbnvbsz)) > 31744)
         p = nvimcom_grow_buffers();
@@ -383,6 +384,12 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
         if(length(label) > 0){
             if(Rf_isValidString(label)){
                 snprintf(buf, 159, "\006\006%s", CHAR(STRING_ELT(label, 0)));
+                ptr = buf;
+                while (*ptr) {
+                    if (*ptr == '\n') // A new line will make nvimrserver crash
+                        *ptr = ' ';
+                    ptr++;
+                }
                 p = nvimcom_strcat(p, buf);
                 p = nvimcom_strcat(p, "\006\n"); // The new line must be added here because the label will be truncated if too long.
             } else {

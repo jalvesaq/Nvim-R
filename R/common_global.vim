@@ -911,20 +911,6 @@ let g:R_latexcmd         = get(g:, "R_latexcmd",          ["default"])
 let g:R_texerr           = get(g:, "R_texerr",                      1)
 let g:R_rmd_environment  = get(g:, "R_rmd_environment",  ".GlobalEnv")
 let g:R_rmarkdown_args   = get(g:, "R_rmarkdown_args",             "")
-let g:R_indent_commented = get(g:, "R_indent_commented",            1)
-
-if !exists("g:r_indent_ess_comments")
-    let g:r_indent_ess_comments = 0
-endif
-if g:r_indent_ess_comments
-    if g:R_indent_commented
-        let g:R_rcomment_string = get(g:, "R_rcomment_string", "## ")
-    else
-        let g:R_rcomment_string = get(g:, "R_rcomment_string", "### ")
-    endif
-else
-    let g:R_rcomment_string = get(g:, "R_rcomment_string", "# ")
-endif
 
 if type(g:R_external_term) == v:t_number && g:R_external_term == 0
     let g:R_save_win_pos = 0
@@ -941,6 +927,7 @@ endif
 " The environment variables NVIMR_COMPLCB and NVIMR_COMPLInfo must be defined
 " before starting the nvimrserver because it needs them at startup.
 " The R_set_omnifunc must be defined before finalizing the source of common_buffer.vim.
+let g:rplugin.update_glbenv = 0
 if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
     let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
     let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
@@ -1096,13 +1083,9 @@ function GlobalRInit(...)
     let g:rplugin.debug_info['Time']['start_nrs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_nrs'], reltime()))
 endfunction
 
-function PreGlobalRealInit()
-    call timer_start(1, "GlobalRInit")
-endfunction
-
 if v:vim_did_enter == 0
-    autocmd VimEnter * call PreGlobalRealInit()
+    autocmd VimEnter * call timer_start(1, "GlobalRInit")
 else
-    call GlobalRInit()
+    call timer_start(1, "GlobalRInit")
 endif
 let g:rplugin.debug_info['Time']['common_global'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['common_global'], reltime()))

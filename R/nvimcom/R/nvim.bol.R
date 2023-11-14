@@ -414,6 +414,7 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 
         l <- length(obj.list)
         if (l > 0) {
+            # Build omnils_ for both omni completion and Object Browser
             sink(omnilist, append = FALSE)
             for (obj in obj.list) {
                 ol <- try(nvim.omni.line(obj, curpack, curlib, 0))
@@ -464,7 +465,6 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
 # This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
 #   - fun_    : function names for syntax highlighting
 #   - omnils_ : data for omni completion and object browser
-#   - args_   : data for omni completion of function arguments
 nvim.buildomnils <- function(p) {
     if (length(p) > 1) {
         n <- 0

@@ -201,3 +201,17 @@ function RCreateCommentMaps()
     call RCreateMaps('ni', 'RRightComment',     ';', ':call MovePosRCodeComment("normal")')
     call RCreateMaps('v',  'RRightComment',     ';', ':call MovePosRCodeComment("selection")')
 endfunction
+
+let g:R_indent_commented = get(g:, "R_indent_commented",            1)
+if !exists("g:r_indent_ess_comments")
+    let g:r_indent_ess_comments = 0
+endif
+if g:r_indent_ess_comments
+    if g:R_indent_commented
+        let g:R_rcomment_string = get(g:, "R_rcomment_string", "## ")
+    else
+        let g:R_rcomment_string = get(g:, "R_rcomment_string", "### ")
+    endif
+else
+    let g:R_rcomment_string = get(g:, "R_rcomment_string", "# ")
+endif

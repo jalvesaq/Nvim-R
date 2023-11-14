@@ -331,7 +331,7 @@ function s:BuildAllArgs(...)
     let rscrpt += ['unlink("' . g:rplugin.compldir . '/args_lock")']
 
     let scrptnm = g:rplugin.tmpdir . "/build_args.R"
-    call AddForDeletion(g:rplugin.tmpdir . "/build_args")
+    call AddForDeletion(scrptnm)
     call writefile(rscrpt, scrptnm)
     if exists("g:R_remote_compldir")
         let scrptnm = g:R_remote_compldir . "/tmp/build_args.R"
