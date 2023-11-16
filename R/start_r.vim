@@ -4,20 +4,26 @@
 
 " Delete provisory links
 unlet g:RAction
+unlet g:RAskHelp
 unlet g:RBrOpenCloseLs
+unlet g:RBuildTags
 unlet g:RClearAll
 unlet g:RClearConsole
+unlet g:RFormatCode
+unlet g:RInsert
 unlet g:RMakeRmd
 unlet g:RObjBrowser
 unlet g:RQuit
 unlet g:RSendPartOfLine
+unlet g:RSourceDirectory
+unlet g:SendFileToR
 unlet g:SendFunctionToR
 unlet g:SendLineToR
 unlet g:SendLineToRAndInsertOutput
 unlet g:SendMBlockToR
 unlet g:SendParagraphToR
 unlet g:SendSelectionToR
-unlet g:SendFileToR
+unlet g:SignalToR
 
 "==============================================================================
 " Functions to start and close R
