@@ -751,9 +751,15 @@ function RNotRunning(...)
 endfunction
 
 let g:RAction = function('RNotRunning')
+let g:RAskHelp = function('RNotRunning')
 let g:RBrOpenCloseLs = function('RNotRunning')
 let g:RClearAll = function('RNotRunning')
 let g:RClearConsole = function('RNotRunning')
+let g:RFormatCode = function('RNotRunning')
+let g:RInsert = function('RNotRunning')
+let g:RBuildTags = function('RNotRunning')
+let g:SignalToR = function('RNotRunning')
+let g:RSourceDirectory = function('RNotRunning')
 let g:RMakeRmd = function('RNotRunning')
 let g:RObjBrowser = function('RNotRunning')
 let g:RQuit = function('RNotRunning')
@@ -766,7 +772,6 @@ let g:SendParagraphToR = function('RNotRunning')
 let g:SendSelectionToR = function('RNotRunning')
 let g:SendCmdToR = function('SendCmdToR_fake')
 let g:SendFileToR = function('SendCmdToR_fake')
-
 
 
 "==============================================================================
