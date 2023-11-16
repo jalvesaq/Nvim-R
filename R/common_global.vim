@@ -180,6 +180,12 @@ endif
 
 " Convert _ into <-
 function ReplaceUnderS()
+    if g:R_assign == 0
+        " See https://github.com/jalvesaq/Nvim-R/issues/668
+        exe 'iunmap <buffer> ' g:R_assign_map
+        exe "normal! a" . g:R_assign_map
+        return
+    endif
     if &filetype != "r" && b:IsInRCode(0) != 1
         let isString = 1
     else
