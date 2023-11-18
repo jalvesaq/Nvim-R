@@ -107,7 +107,6 @@ extern void Rconsolecmd(char *cmd); // Defined in R: src/gnuwin32/rui.c
 static int sfd = -1;
 static pthread_t tid;
 #endif
-static int sockfd;
 
 static char *nvimcom_strcat(char* dest, const char* src)
 {
@@ -140,13 +139,16 @@ static char *nvimcom_grow_buffers(void)
 
 static void send_to_nvim(char *msg)
 {
+    if (sfd == -1)
+	return;
+
     size_t sent;
     char b[64];
     size_t len;
 
     if (verbose > 2) {
         if (strlen(msg) < 128)
-            REprintf("send_to_nvim [%d] {%s}: %s\n", sockfd, nvimsecr, msg);
+            REprintf("send_to_nvim [%d] {%s}: %s\n", sfd, nvimsecr, msg);
     }
 
     len = strlen(msg);
@@ -167,17 +169,30 @@ static void send_to_nvim(char *msg)
     */
 
     snprintf(b, 63, "%s%09zu", nvimsecr, len);
-    sent = write(sockfd, b, tcp_header_len);
-    if (sent != tcp_header_len)
-        REprintf("Error sending message header to Nvim-R: %zu x %zu\n",
-                tcp_header_len, sent);
+    //sent = write(sfd, b, tcp_header_len);
+    sent = send(sfd, b, tcp_header_len, 0);
+    if (sent != tcp_header_len) {
+        if (sent == -1)
+            REprintf("Error sending message header to Nvim-R: -1\n");
+        else
+            REprintf("Error sending message header to Nvim-R: %zu x %zu\n",
+                     tcp_header_len, sent);
+#ifdef WIN32
+	closesocket(sfd);
+	WSACleanup();
+#else
+	close(sfd);
+#endif
+	sfd = -1;
+	return;
+    }
 
     // based on code found on php source
     char *pCur = msg;
     char *pEnd = msg + len;
     int loop = 0;
     while (pCur < pEnd) {
-        sent = write(sockfd, pCur, pEnd - pCur);
+        sent = send(sfd, pCur, pEnd - pCur, 0);
         if (sent >= 0) {
             pCur += sent;
             if (pCur > pEnd) {
@@ -202,7 +217,7 @@ static void send_to_nvim(char *msg)
     }
 
     // End the message with \001
-    sent = write(sockfd, "\001", 1);
+    sent = send(sfd, "\001", 1, 0);
     if (sent != 1)
         REprintf("Error sending final byte to Nvim-R: 1 x %zu\n", sent);
 }
@@ -967,13 +982,18 @@ static void *server_thread(__attribute__((unused))void *arg)
     for (;;) {
         char buff[1024];
         bzero(buff, sizeof(buff));
-        len = read(sockfd, buff, sizeof(buff));
+        len = recv(sfd, buff, sizeof(buff), 0);
         if (len == 0 || buff[0] == 0 || buff[0] == EOF) {
             if (len == 0)
                 REprintf("Connection with nvimrserver was lost\n");
             if (buff[0] == EOF)
                 REprintf("server_thread: buff[0] == EOF\n");
-            close(sockfd);
+#ifdef WIN32
+            closesocket(sfd);
+	    WSACleanup();
+#else
+            close(sfd);
+#endif
             break;
         }
         nvimcom_parse_received_msg(buff);
@@ -1045,9 +1065,17 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 
     if (atoi(nrs_port) > 0) {
         struct sockaddr_in servaddr;
+#ifdef WIN32
+	WSADATA d;
+	int wr = WSAStartup(MAKEWORD(2, 2), &d);
+	if (wr != 0) {
+	    fprintf(stderr, "WSAStartup failed: %d\n", wr);
+	    fflush(stderr);
+	}
+#endif
         // socket create and verification
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd != -1) {
+        sfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sfd != -1) {
             bzero(&servaddr, sizeof(servaddr));
 
             // assign IP, PORT
@@ -1059,7 +1087,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
             servaddr.sin_port = htons(atoi(nrs_port));
 
             // connect the client socket to server socket
-            if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
+            if (connect(sfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
 #ifdef WIN32
                 tid = _beginthread(server_thread, 0, NULL);
 #else
@@ -1110,12 +1138,15 @@ void nvimcom_Stop(void)
     if(nvimcom_initialized){
         Rf_removeTaskCallbackByName("NVimComHandler");
 #ifdef WIN32
-        closesocket(sfd);
+        // closesocket(sfd);
+        close(sfd);
         WSACleanup();
+        // FIXME: how to terminate the thread?
 #else
         if (debug_r)
             ptr_R_ReadConsole = save_ptr_R_ReadConsole;
         close(sfd);
+        pthread_cancel(tid);
         pthread_join(tid, NULL);
 #endif
 

@@ -291,6 +291,15 @@ static void init_listening()
     struct sockaddr_in cli;
     int res = 1;
     int port = 10101;
+
+#ifdef WIN32
+    WSADATA d;
+    int wr = WSAStartup(MAKEWORD(2, 2), &d);
+    if (wr != 0) {
+	fprintf(stderr, "WSAStartup failed: %d\n", wr);
+	fflush(stderr);
+    }
+#endif
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd == -1) {
@@ -374,7 +383,7 @@ static void get_whole_msg(char *b)
 
     p = finalbuffer;
     for (;;) {
-        if((read(connfd, tmp, 1) == 1))
+        if((recv(connfd, tmp, 1, 0) == 1))
             *p = *tmp;
         else
             break;
@@ -405,14 +414,30 @@ static void *receive_msg()
 
     for (;;) {
         bzero(b, blen);
-        rlen = read(connfd, b, blen);
+        rlen = recv(connfd, b, blen, 0);
         if (rlen == 0) { // R quit
             r_conn = 0;
             close(sockfd);
+#ifdef WIN32
+	    WSACleanup();
+#endif
             init_listening();
+        } else if (rlen == -1) {
+            fprintf(stderr, "Error reading TCP socket: -1\n");
+            fflush(stderr);
+            close(sockfd);
+#ifdef WIN32
+	    WSACleanup();
+#endif
+	    break;
         } else if (rlen != blen) {
             fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
             fflush(stderr);
+            close(sockfd);
+#ifdef WIN32
+	    WSACleanup();
+#endif
+	    break;
         } else {
             Log("TCP in [%zu bytes] (message header): %s", blen, b);
             get_whole_msg(b);
@@ -428,7 +453,7 @@ void send_to_nvimcom(char *msg)
     Log("TCP out: %s", msg);
     if (connfd) {
         size_t len = strlen(msg);
-        if (write(connfd, msg, len) != (ssize_t)len) {
+        if (send(connfd, msg, len, 0) != (ssize_t)len) {
             fprintf(stderr, "Partial/failed write.\n");
             fflush(stderr);
             return;
