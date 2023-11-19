@@ -140,7 +140,7 @@ static char *nvimcom_grow_buffers(void)
 static void send_to_nvim(char *msg)
 {
     if (sfd == -1)
-	return;
+        return;
 
     size_t sent;
     char b[64];
@@ -178,13 +178,13 @@ static void send_to_nvim(char *msg)
             REprintf("Error sending message header to Nvim-R: %zu x %zu\n",
                      tcp_header_len, sent);
 #ifdef WIN32
-	closesocket(sfd);
-	WSACleanup();
+        closesocket(sfd);
+        WSACleanup();
 #else
-	close(sfd);
+        close(sfd);
 #endif
-	sfd = -1;
-	return;
+        sfd = -1;
+        return;
     }
 
     // based on code found on php source
@@ -995,7 +995,7 @@ static void *server_thread(__attribute__((unused))void *arg)
                 REprintf("server_thread: buff[0] == EOF\n");
 #ifdef WIN32
             closesocket(sfd);
-	    WSACleanup();
+            WSACleanup();
 #else
             close(sfd);
 #endif
@@ -1073,12 +1073,12 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
     if (atoi(nrs_port) > 0) {
         struct sockaddr_in servaddr;
 #ifdef WIN32
-	WSADATA d;
-	int wr = WSAStartup(MAKEWORD(2, 2), &d);
-	if (wr != 0) {
-	    fprintf(stderr, "WSAStartup failed: %d\n", wr);
-	    fflush(stderr);
-	}
+        WSADATA d;
+        int wr = WSAStartup(MAKEWORD(2, 2), &d);
+        if (wr != 0) {
+            fprintf(stderr, "WSAStartup failed: %d\n", wr);
+            fflush(stderr);
+        }
 #endif
         // socket create and verification
         sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -1146,9 +1146,10 @@ void nvimcom_Stop(void)
     if(nvimcom_initialized){
         Rf_removeTaskCallbackByName("NVimComHandler");
 #ifdef WIN32
-        closesocket(sfd); // FIXME: connection doesn't close on nvimrserver side
+        closesocket(sfd);
         WSACleanup();
         TerminateThread(tid, 0);
+        CloseHandle(tid);
 #else
         if (debug_r)
             ptr_R_ReadConsole = save_ptr_R_ReadConsole;

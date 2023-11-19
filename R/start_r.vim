@@ -451,6 +451,7 @@ function ClearRInfo()
     if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && has("nvim")
         call CloseRTerm()
     endif
+    call JobStdin(g:rplugin.jobs["Server"], "43\n")
 endfunction
 
 let s:wait_nvimcom = 0

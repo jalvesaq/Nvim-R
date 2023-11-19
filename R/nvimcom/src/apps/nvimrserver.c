@@ -296,8 +296,8 @@ static void init_listening()
     WSADATA d;
     int wr = WSAStartup(MAKEWORD(2, 2), &d);
     if (wr != 0) {
-	fprintf(stderr, "WSAStartup failed: %d\n", wr);
-	fflush(stderr);
+        fprintf(stderr, "WSAStartup failed: %d\n", wr);
+        fflush(stderr);
     }
 #endif
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -415,38 +415,24 @@ static void *receive_msg()
     for (;;) {
         bzero(b, blen);
         rlen = recv(connfd, b, blen, 0);
-        if (rlen == 0) { // R quit
+        if (rlen == blen) {
+            Log("TCP in [%zu bytes] (message header): %s", blen, b);
+            get_whole_msg(b);
+        } else {
             r_conn = 0;
 #ifdef WIN32
             closesocket(sockfd);
-	    WSACleanup();
+            WSACleanup();
 #else
             close(sockfd);
 #endif
+            if (rlen != -1 && rlen != 0) {
+                fprintf(stderr, "TCP socket -1: restarting...\n");
+                fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
+                fflush(stderr);
+                break;
+            }
             init_listening();
-        } else if (rlen == -1) {
-            fprintf(stderr, "Error reading TCP socket: -1\n");
-            fflush(stderr);
-#ifdef WIN32
-            closesocket(sockfd);
-	    WSACleanup();
-#else
-            close(sockfd);
-#endif
-	    break;
-        } else if (rlen != blen) {
-            fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
-            fflush(stderr);
-#ifdef WIN32
-            closesocket(sockfd);
-	    WSACleanup();
-#else
-            close(sockfd);
-#endif
-	    break;
-        } else {
-            Log("TCP in [%zu bytes] (message header): %s", blen, b);
-            get_whole_msg(b);
         }
     }
 #ifndef WIN32
@@ -960,8 +946,8 @@ static int run_R_code(const char *s, int senderror)
     snprintf(b, 1023, "NVIMR_COMPLDIR=%s", getenv("NVIMR_REMOTE_COMPLDIR"));
     putenv(b);
     snprintf(b, 1023,
-            "%s --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
-	    getenv("NVIMR_RPATH"));
+             "%s --quiet --no-restore --no-save --no-echo --slave -f bo_code.R",
+             getenv("NVIMR_RPATH"));
 
     res = CreateProcess(NULL,
             b,  // Command line
@@ -2457,6 +2443,11 @@ void stdin_loop()
                         break;
                     case '2':
                         send_nrs_info();
+                        break;
+                    case '3':
+                        update_glblenv_buffer("");
+                        if (auto_obbr)
+                            omni2ob();
                         break;
                 }
                 break;
