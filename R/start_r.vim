@@ -464,12 +464,12 @@ let s:wait_nvimcom = 0
 " Send a message to nvimrserver job which will send the message to nvimcom
 " through a TCP connection.
 function SendToNvimcom(code, attch)
-    if s:wait_nvimcom
-        if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
-            call RWarningMsg("R is not running")
-        elseif string(g:SendCmdToR) == "function('SendCmdToR_NotYet')"
-            call RWarningMsg("R is not ready yet")
-        endif
+    if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
+        call RWarningMsg("R is not running")
+        return
+    endif
+    if s:wait_nvimcom && string(g:SendCmdToR) == "function('SendCmdToR_NotYet')"
+        call RWarningMsg("R is not ready yet")
         return
     endif
 
