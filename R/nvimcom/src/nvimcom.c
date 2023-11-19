@@ -983,7 +983,7 @@ static void *server_thread(__attribute__((unused))void *arg)
         char buff[1024];
         bzero(buff, sizeof(buff));
         len = recv(sfd, buff, sizeof(buff), 0);
-        if (len == 0 || buff[0] == 0 || buff[0] == EOF) {
+        if (len == 0 || buff[0] == 0 || buff[0] == EOF || strstr(buff, "QuitNow") == buff) {
             if (len == 0)
                 REprintf("Connection with nvimrserver was lost\n");
             if (buff[0] == EOF)

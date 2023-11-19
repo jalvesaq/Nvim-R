@@ -410,9 +410,12 @@ function RQuit(how)
         endif
     endif
 
-    if has("win32") && type(g:R_external_term) == v:t_number && g:R_external_term == 1
-        " SaveWinPos
-        call JobStdin(g:rplugin.jobs["Server"], "84" . $NVIMR_COMPLDIR . "\n")
+    if has("win32")
+	if type(g:R_external_term) == v:t_number && g:R_external_term == 1
+	    " SaveWinPos
+	    call JobStdin(g:rplugin.jobs["Server"], "84" . $NVIMR_COMPLDIR . "\n")
+	endif
+	call JobStdin(g:rplugin.jobs["Server"], "2QuitNow\n")
     endif
 
     if bufloaded('Object_Browser')
