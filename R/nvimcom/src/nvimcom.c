@@ -983,7 +983,12 @@ static void *server_thread(__attribute__((unused))void *arg)
         char buff[1024];
         bzero(buff, sizeof(buff));
         len = recv(sfd, buff, sizeof(buff), 0);
-        if (len == 0 || buff[0] == 0 || buff[0] == EOF || strstr(buff, "QuitNow") == buff) {
+#ifdef WIN32
+        if (len == 0 || buff[0] == 0 || buff[0] == EOF || strstr(buff, "QuitNow") == buff)
+#else
+        if (len == 0 || buff[0] == 0 || buff[0] == EOF)
+#endif
+        {
             if (len == 0)
                 REprintf("Connection with nvimrserver was lost\n");
             if (buff[0] == EOF)
