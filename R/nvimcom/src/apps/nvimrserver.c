@@ -417,25 +417,31 @@ static void *receive_msg()
         rlen = recv(connfd, b, blen, 0);
         if (rlen == 0) { // R quit
             r_conn = 0;
-            close(sockfd);
 #ifdef WIN32
+            closesocket(sockfd);
 	    WSACleanup();
+#else
+            close(sockfd);
 #endif
             init_listening();
         } else if (rlen == -1) {
             fprintf(stderr, "Error reading TCP socket: -1\n");
             fflush(stderr);
-            close(sockfd);
 #ifdef WIN32
+            closesocket(sockfd);
 	    WSACleanup();
+#else
+            close(sockfd);
 #endif
 	    break;
         } else if (rlen != blen) {
             fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
             fflush(stderr);
-            close(sockfd);
 #ifdef WIN32
+            closesocket(sockfd);
 	    WSACleanup();
+#else
+            close(sockfd);
 #endif
 	    break;
         } else {

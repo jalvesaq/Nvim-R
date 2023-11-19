@@ -101,7 +101,7 @@ static void nvimcom_eval_expr(const char *buf);
 
 #ifdef WIN32
 SOCKET sfd;
-static int tid;
+static HANDLE tid;
 extern void Rconsolecmd(char *cmd); // Defined in R: src/gnuwin32/rui.c
 #else
 static int sfd = -1;
@@ -973,7 +973,7 @@ static void nvimcom_parse_received_msg(char *buf)
 }
 
 #ifdef WIN32
-static void server_thread(__attribute__((unused))void *arg)
+static DWORD WINAPI server_thread(__attribute__((unused))void *arg)
 #else
 static void *server_thread(__attribute__((unused))void *arg)
 #endif
@@ -1003,7 +1003,9 @@ static void *server_thread(__attribute__((unused))void *arg)
         }
         nvimcom_parse_received_msg(buff);
     }
-#ifndef WIN32
+#ifdef WIN32
+    return 0;
+#else
     return NULL;
 #endif
 }
@@ -1094,7 +1096,8 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
             // connect the client socket to server socket
             if (connect(sfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == 0) {
 #ifdef WIN32
-                tid = _beginthread(server_thread, 0, NULL);
+                DWORD ti;
+                tid = CreateThread(NULL, 0, server_thread, NULL, 0, &ti);
 #else
                 pthread_create(&tid, NULL, server_thread, NULL);
 #endif
@@ -1143,10 +1146,9 @@ void nvimcom_Stop(void)
     if(nvimcom_initialized){
         Rf_removeTaskCallbackByName("NVimComHandler");
 #ifdef WIN32
-        // closesocket(sfd);
-        close(sfd);
+        closesocket(sfd); // FIXME: connection doesn't close on nvimrserver side
         WSACleanup();
-        // FIXME: how to terminate the thread?
+        TerminateThread(tid, 0);
 #else
         if (debug_r)
             ptr_R_ReadConsole = save_ptr_R_ReadConsole;
