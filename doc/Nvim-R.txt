@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.18
+Version: 0.9.19
 For Neovim >= 0.6.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
@@ -2768,6 +2768,10 @@ See also: |R_source|.
 ==============================================================================
 								 *Nvim-R-news*
 8. News~
+
+0.9.19 (2023-11-22)
+
+ * Make TCP connection on Windows work again, and fix minor bugs.
 
 0.9.18 (2023-11-12)
 
