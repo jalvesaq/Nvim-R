@@ -94,7 +94,6 @@ typedef struct pkg_info_ {
 
 PkgInfo *pkgList;
 
-
 static int nvimcom_checklibs(void);
 static void send_to_nvim(char *msg);
 static void nvimcom_eval_expr(const char *buf);
@@ -324,13 +323,12 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
 
     int xgroup = 0; // 1 = function, 2 = data.frame, 3 = list, 4 = s4
     char newenv[576];
-    char curenvB[512];
     char ebuf[64];
-    int len;
+    int len = 0;
     const char *ename;
-    SEXP listNames, label, lablab, eexp, elmt = R_NilValue;
-    SEXP cmdSexp, cmdexpr, ans, cmdSexp2, cmdexpr2;
-    ParseStatus status, status2;
+    SEXP listNames, txt, lablab, eexp, elmt = R_NilValue;
+    SEXP cmdSexp, cmdexpr, sn = R_NilValue;
+    ParseStatus status;
     int er = 0;
     char buf[576];
     char bbuf[512];
@@ -372,107 +370,97 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
     }
 
     // Specific class of object, if any
-    PROTECT(label = getAttrib(*x, R_ClassSymbol));
-    if(!isNull(label)){
-        p = nvimcom_strcat(p, CHAR(STRING_ELT(label, 0)));
+    PROTECT(txt = getAttrib(*x, R_ClassSymbol));
+    if(!isNull(txt)){
+        p = nvimcom_strcat(p, CHAR(STRING_ELT(txt, 0)));
     }
     UNPROTECT(1);
 
     p = nvimcom_strcat(p, "\006.GlobalEnv\006");
 
-    if(xgroup == 2){
-        snprintf(buf, 127, "\006\006 [%d, %d]\006\n", length(Rf_GetRowNames(*x)), length(*x));
-        p = nvimcom_strcat(p, buf);
-    } else if(xgroup == 3){
-        snprintf(buf, 127, "\006\006 [%d]\006\n", length(*x));
-        p = nvimcom_strcat(p, buf);
-    } else if(xgroup == 1){
+    if(xgroup == 1){
         /* It would be necessary to port args2buff() from src/main/deparse.c to here but it's too big.
            So, it's better to call nvimcom:::nvim.args() during omni completion.
            FORMALS() may return an object that will later crash R:
            https://github.com/jalvesaq/Nvim-R/issues/543#issuecomment-748981771 */
-        p = nvimcom_strcat(p, "['not_checked']\006\006\006\n");
-    } else {
-        PROTECT(lablab = allocVector(STRSXP, 1));
-        SET_STRING_ELT(lablab, 0, mkChar("label"));
-        PROTECT(label = getAttrib(*x, lablab));
-        if(length(label) > 0){
-            if(Rf_isValidString(label)){
-                snprintf(buf, 159, "\006\006%s", CHAR(STRING_ELT(label, 0)));
-                ptr = buf;
-                while (*ptr) {
-                    if (*ptr == '\n') // A new line will make nvimrserver crash
-                        *ptr = ' ';
-                    ptr++;
-                }
-                p = nvimcom_strcat(p, buf);
-                p = nvimcom_strcat(p, "\006\n"); // The new line must be added here because the label will be truncated if too long.
-            } else {
-                p = nvimcom_strcat(p, "\006\006Error: label is not a valid string.\006\n");
+        p = nvimcom_strcat(p, "['not_checked']\006\006");
+    }
+
+    // Add label
+    PROTECT(lablab = allocVector(STRSXP, 1));
+    SET_STRING_ELT(lablab, 0, mkChar("label"));
+    PROTECT(txt = getAttrib(*x, lablab));
+    if(length(txt) > 0){
+        if(Rf_isValidString(txt)){
+            snprintf(buf, 159, "\006\006%s", CHAR(STRING_ELT(txt, 0)));
+            ptr = buf;
+            while (*ptr) {
+                if (*ptr == '\n') // A new line will make nvimrserver crash
+                    *ptr = ' ';
+                ptr++;
             }
+            p = nvimcom_strcat(p, buf);
         } else {
-            p = nvimcom_strcat(p, "\006\006\006\n");
+            p = nvimcom_strcat(p, "\006\006Error: label is not a valid string.");
+        }
+    } else {
+        p = nvimcom_strcat(p, "\006\006");
+    }
+    UNPROTECT(2);
+
+    // Add the object length
+    if(xgroup == 2){
+        snprintf(buf, 127, " [%d, %d]", length(Rf_GetRowNames(*x)), length(*x));
+        p = nvimcom_strcat(p, buf);
+    } else if(xgroup == 3){
+        snprintf(buf, 127, " [%d]", length(*x));
+        p = nvimcom_strcat(p, buf);
+    } else if (xgroup == 4) {
+        snprintf(buf, 575, "%s%s", curenv, xname);
+        nvimcom_backtick(buf, bbuf);
+        snprintf(buf, 575, "slotNames(%s)", bbuf);
+        PROTECT(cmdSexp = allocVector(STRSXP, 1));
+        SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
+        PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
+        if (status == PARSE_OK) {
+            PROTECT(sn = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
+            if (er)
+                REprintf("nvimcom error executing command: slotNames(%s%s)\n", curenv, xname);
+            else
+                len = length(sn);
+            UNPROTECT(1);
+        } else {
+            REprintf("nvimcom error: invalid value in slotNames(%s%s)\n", curenv, xname);
         }
         UNPROTECT(2);
+        snprintf(buf, 127, " [%d]", len);
+        p = nvimcom_strcat(p, buf);
     }
+
+    // finish the line
+    p = nvimcom_strcat(p, "\006\n");
 
     if(xgroup > 1){
         if(1000 * ((double)clock() - tm) / CLOCKS_PER_SEC > 300.0){
             maxdepth = curdepth;
+            if (verbose > 3)
+                printf("nvimcom: slow at building list of objects (%g ms)\n",
+                       round(1000 * ((double)clock() - tm) / CLOCKS_PER_SEC > 300.0));
             return p;
         }
 
-        strncpy(curenvB, curenv, 500);
-        if(xgroup == 4) // S4 object
-            snprintf(newenv, 575, "%s%s@", curenvB, xname);
-        else
-            snprintf(newenv, 575, "%s%s$", curenvB, xname);
-
         if(xgroup == 4){
-            snprintf(buf, 575, "%s%s", curenvB, xname);
-            nvimcom_backtick(buf, bbuf);
-            snprintf(buf, 575, "slotNames(%s)", bbuf);
-            PROTECT(cmdSexp = allocVector(STRSXP, 1));
-            SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
-            PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
-
-            if (status != PARSE_OK) {
-                REprintf("nvimcom error: invalid value in slotNames(%s%s)\n", curenvB, xname);
-            } else {
-                PROTECT(ans = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
-                if(er){
-                    REprintf("nvimcom error executing command: slotNames(%s%s)\n", curenvB, xname);
-                } else {
-                    len = length(ans);
-                    // Remove the newline and the \006 delimiters and add the S4 object length
-                    p--; p--; p--; p--;
-                    *p = 0;
-                    snprintf(buf, 127, "\006\006 [%d]\006\n", len);
-                    p = nvimcom_strcat(p, buf);
-                    if(len > 0){
-                        for(int i = 0; i < len; i++){
-                            ename = CHAR(STRING_ELT(ans, i));
-                            snprintf(buf, 575, "%s%s@%s", curenvB, xname, ename);
-                            nvimcom_backtick(buf, bbuf);
-                            PROTECT(cmdSexp2 = allocVector(STRSXP, 1));
-                            SET_STRING_ELT(cmdSexp2, 0, mkChar(bbuf));
-                            PROTECT(cmdexpr2 = R_ParseVector(cmdSexp2, -1, &status2, R_NilValue));
-                            if (status2 != PARSE_OK) {
-                                REprintf("nvimcom error: invalid code \"%s@%s\"\n", xname, ename);
-                            } else {
-                                PROTECT(elmt = R_tryEvalSilent(VECTOR_ELT(cmdexpr2, 0), R_GlobalEnv, &er));
-                                if(!er)
-                                    p = nvimcom_glbnv_line(&elmt, ename, newenv, p, depth + 1);
-                                UNPROTECT(1);
-                            }
-                            UNPROTECT(2);
-                        }
-                    }
+            snprintf(newenv, 575, "%s%s@", curenv, xname);
+            if(len > 0){
+                for(int i = 0; i < len; i++){
+                    ename = CHAR(STRING_ELT(sn, i));
+                    PROTECT(elmt = R_do_slot(*x, Rf_install(ename)));
+                    p = nvimcom_glbnv_line(&elmt, ename, newenv, p, depth + 1);
+                    UNPROTECT(1);
                 }
-                UNPROTECT(1);
             }
-            UNPROTECT(2);
         } else {
+            snprintf(newenv, 575, "%s%s$", curenv, xname);
             PROTECT(listNames = getAttrib(*x, R_NamesSymbol));
             len = length(listNames);
             if(len == 0){ /* Empty list? */
@@ -556,8 +544,8 @@ static void nvimcom_globalenv_list(void)
     }
     UNPROTECT(1);
 
-    int len1 = strlen(glbnvbuf1);
-    int len2 = strlen(glbnvbuf2);
+    size_t len1 = strlen(glbnvbuf1);
+    size_t len2 = strlen(glbnvbuf2);
     int changed = len1 != len2;
     if (verbose > 4)
         REprintf("globalenv_list(0) len1 = %zu, len2 = %zu\n", len1, len2);
@@ -1076,8 +1064,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         WSADATA d;
         int wr = WSAStartup(MAKEWORD(2, 2), &d);
         if (wr != 0) {
-            fprintf(stderr, "WSAStartup failed: %d\n", wr);
-            fflush(stderr);
+            REprintf("WSAStartup failed: %d\n", wr);
         }
 #endif
         // socket create and verification
@@ -1103,7 +1090,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
 #endif
                 nvimcom_send_running_info(*rinfo);
             } else {
-                REprintf(NULL, "nvimcom: connection with the server failed (%s)\n",
+                REprintf("nvimcom: connection with the server failed (%s)\n",
                         nrs_port);
                 nvimcom_failure = 1;
             }

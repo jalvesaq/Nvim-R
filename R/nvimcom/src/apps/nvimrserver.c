@@ -129,6 +129,7 @@ static int sockfd;
 static int connfd;
 
 #define Debug_NRS_
+__attribute__((format(printf,1,2)))
 static void Log(const char *fmt, ...)
 {
 #ifdef Debug_NRS
@@ -172,7 +173,7 @@ static int ascii_ic_cmp(const char *a, const char *b)
 
 static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
 {
-    Log("grow_buffer(%zu, %zu) [%zu, %zu]", *sz, inc, compl_buffer_size, fb_size);
+    Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size, fb_size);
     *sz += inc;
     char *tmp = calloc(*sz, sizeof(char));
     strcpy(tmp, *b);
@@ -226,7 +227,7 @@ static void RegisterPort(int bindportn)
 
 static void ParseMsg(char *b)
 {
-    Log("ParseMsg(): strlen(b) = %zu", strlen(b));
+    Log("ParseMsg(): strlen(b) = %" PRI_SIZET "", strlen(b));
 
     if (*b == '+') {
         b++;
@@ -395,7 +396,7 @@ static void get_whole_msg(char *b)
 
     // FIXME: Delete this check when the code proved to be reliable
     if (strlen(finalbuffer) != msg_size) {
-        fprintf(stderr, "Divergent TCP message size: %zu x %d\n", strlen(p), msg_size);
+        fprintf(stderr, "Divergent TCP message size: %" PRI_SIZET " x %d\n", strlen(p), msg_size);
         fflush(stderr);
     }
 
@@ -416,7 +417,7 @@ static void *receive_msg()
         bzero(b, blen);
         rlen = recv(connfd, b, blen, 0);
         if (rlen == blen) {
-            Log("TCP in [%zu bytes] (message header): %s", blen, b);
+            Log("TCP in [%" PRI_SIZET " bytes] (message header): %s", blen, b);
             get_whole_msg(b);
         } else {
             r_conn = 0;
@@ -428,7 +429,7 @@ static void *receive_msg()
 #endif
             if (rlen != -1 && rlen != 0) {
                 fprintf(stderr, "TCP socket -1: restarting...\n");
-                fprintf(stderr, "Wrong TCP data length: %zu x %zu\n", blen, rlen);
+                fprintf(stderr, "Wrong TCP data length: %" PRI_SIZET " x %" PRI_SIZET "\n", blen, rlen);
                 fflush(stderr);
                 break;
             }
