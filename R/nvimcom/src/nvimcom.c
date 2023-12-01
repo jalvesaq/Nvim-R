@@ -383,7 +383,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv, 
            So, it's better to call nvimcom:::nvim.args() during omni completion.
            FORMALS() may return an object that will later crash R:
            https://github.com/jalvesaq/Nvim-R/issues/543#issuecomment-748981771 */
-        p = nvimcom_strcat(p, "['not_checked']\006\006");
+        p = nvimcom_strcat(p, "['not_checked']");
     }
 
     // Add label
