@@ -328,6 +328,7 @@ nvim.get.summary <- function(obj, wdth) {
     if (isnull == TRUE)
         return(invisible(NULL))
 
+
     owd <- getOption("width")
     options(width = wdth)
     if (Sys.getenv("NVIMR_COMPLCB") == "SetComplMenu") {
@@ -335,15 +336,16 @@ nvim.get.summary <- function(obj, wdth) {
         txt <- capture.output(print(sobj))
     } else {
         txt <- ""
-        if (!is.null(attr(obj, "label")))
-            txt <- append(txt, capture.output(cat("\n\n", attr(obj, "label"))))
+        objlbl <- attr(obj, "label")
+        if (!is.null(objlbl))
+            txt <- append(txt, capture.output(cat("\n\n", objlbl)))
         txt <- append(txt, capture.output(cat("\n\n```rout\n")))
-        if (is.factor(obj) || is.numeric(obj)) {
+        if (is.factor(obj) || is.numeric(obj) || is.logical(obj)) {
             sobj <- try(summary(obj), silent = TRUE)
             txt <- append(txt, capture.output(print(sobj)))
         } else {
-            sobj <- try(utils::str(obj), silent = TRUE)
-            txt <- append(txt, capture.output(print(sobj)))
+            sobj <- try(capture.output(utils::str(obj)), silent = TRUE)
+            txt <- append(txt, sobj)
         }
         txt <- append(txt, capture.output(cat("```\n")))
     }
