@@ -298,7 +298,7 @@ static void nvimcom_pkg_info_add(const char *nm, const char *vrsn)
     }
 }
 
-PkgInfo *nvimcom_get_pkg(const char *nm)
+static PkgInfo *nvimcom_get_pkg(const char *nm)
 {
     if(!pkgList)
         return NULL;

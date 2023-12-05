@@ -362,7 +362,7 @@ static void rd_md(char **o1, char **o2)
     *o2 = p2;
 }
 
-void pre_rd_md(char **b1, char **b2, char *maxp)
+static void pre_rd_md(char **b1, char **b2, char *maxp)
 {
     char *p1 = *b1;
     char *p2 = *b2;
