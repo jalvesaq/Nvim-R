@@ -884,7 +884,21 @@ others would be very time consuming to fix without breaking anything.
 
 
 ------------------------------------------------------------------------------
-5.1. R's source() issues~
+5.1. R must be started by Vim~
+
+The communication between Vim and R will work only if R was started by the
+running Vim instance through the <LocalLeader>rf command. If you use Nvim-R to
+start R in an external terminal and, then close Vim and open it again, there
+will be no communication between R and the new Vim instance.
+
+Please see the explanation on the communication between Vim and R at the end
+of
+
+   https://github.com/jalvesaq/Nvim-R/blob/master/README.md
+
+
+------------------------------------------------------------------------------
+5.2. R's source() issues~
 
 The R's `source()` function of the base package prints an extra new line
 between commands if the option `echo = TRUE`, and error and warning messages
@@ -895,7 +909,7 @@ difficult to find errors in the code sent to R. Details:
 
 
 ------------------------------------------------------------------------------
-5.2. The menu may not reflect some of your custom key bindings~
+5.3. The menu may not reflect some of your custom key bindings~
 
 If you have created a custom key binding for Nvim-R, the menu in GVim will not
 always reflect the correct key binding if it is not the same for Normal,
@@ -903,7 +917,7 @@ Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
-5.3. Functions are not always correctly sent to R~
+5.4. Functions are not always correctly sent to R~
 
 The plugin is only capable of recognizing functions defined using the `<-`
 operator. Also, only the current function scope is sent to R. See:
@@ -912,7 +926,7 @@ operator. Also, only the current function scope is sent to R. See:
 
 
 ------------------------------------------------------------------------------
-5.4. Wrong message that "R is busy" (Windows only)~
+5.5. Wrong message that "R is busy" (Windows only)~
 
 On Windows, when code is sent from Vim to R Console, the nvimcom library
 sets the value of the internal variable `r_is_busy` to 1. The value is set
@@ -927,7 +941,7 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.5. Error if there is no package installed (Neovim on Windows only)~
+5.6. Error if there is no package installed (Neovim on Windows only)~
 
 On Windows, Neovim fails to recognize that a directory is not writable, and
 this is required by Nvim-R to detect if it is necessary to create the
@@ -938,39 +952,23 @@ is to manually open R and install any package with the `install.packages()`
 command before using Nvim-R.
 
 
-5.6. ~/.Rprofile should not output anything (Windows only)~
+5.7. ~/.Rprofile should not output anything (Windows only)~
 
 The compilation of `nvimcom` during R startup will fail on Windows if your
 `~/.Rprofile` outputs anything. Example of how to replicate the bug:
 >
    print("Hello bug!")
 <
+5.8 You can't put `syntax enable` in your `init.vim` (OS X only)~
 
-------------------------------------------------------------------------------
-5.7. R must be started by Vim~
+It seems that if you put the command `syntax enable` in your `init.vim` on OS
+X, file type plugins are immediately sourced. Consequently, some Nvim-R
+variables (`R_disable_cmds`, `R_user_maps_only`, and `R_enable_comment`) will
+be used at their default values even if their values have been set in
+the `init.vim`. The workaround is do not include the superfluous command
+`syntax enable` in the `init.vim`. For details, please, access:
 
-The communication between Vim and R will work only if R was started by
-Vim through the <LocalLeader>rf command because the plugin was designed to
-connect each Vim instance with its own R instance.
-
-If you start R before Vim, it will not inherit from Vim the environment
-variables `R_DEFAULT_PACKAGES`, `NVIMR_TMPDIR`, `NVIMR_COMPLDIR`, `NVIMR_ID`, and
-`NVIMR_SECRET`. The first one induces R to load nvimcom; the second variable is
-the path used by the R package nvimcom to save temporary files used by Nvim-R
-to: perform omni completion, show R documentation in a Vim buffer, and update
-the Object Browser. The two last ones are used by Nvim-R and by nvimcom to
-know that the connections are valid. Unless you are running R in a Neovim's
-built-in terminal (which is the default on Unix), if you use Vim to start R,
-but then close Vim, some variables will become outdated. Additionally, Nvim-R
-sets the value of its internal variable SendCmdToR from SendCmdToR_fake to the
-appropriate value when R is successfully started. It is possible to set the
-values of all those variables and start the TCP server manually, but it
-is not practical to do so.
-
-Please see the explanation on the communication between Vim and R at the end
-of
-
-   https://github.com/jalvesaq/Nvim-R/blob/master/README.md
+   https://github.com/jalvesaq/Nvim-R/issues/668
 
 
 ==============================================================================
