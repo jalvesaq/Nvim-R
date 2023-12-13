@@ -1989,7 +1989,8 @@ the X server) you may want to put in your |vimrc|:
        let R_openpdf = 1
    endif
 <
-The default value of `R_openpdf` is 1 on Mac OS X and 2 on other systems.
+The default value of `R_openpdf` is 1 on Mac OS X and 2 on Windows. On Linux,
+it is 1 on Wayland and 2 on the X Server.
 
 On Windows, Nvim-R will call Sumatra to open the PDF, and, on Mac OS X, it
 will call Skim. On Linux, you can change the value of `R_pdfviewer` in your

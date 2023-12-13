@@ -78,11 +78,15 @@ function RRaiseWindow(wttl)
     endif
 endfunction
 
-if g:rplugin.is_darwin
+if g:rplugin.is_darwin || $WAYLAND_DISPLAY != ""
     let g:R_openpdf = get(g:, "R_openpdf", 1)
-    let g:R_pdfviewer = "skim"
 else
     let g:R_openpdf = get(g:, "R_openpdf", 2)
+endif
+
+if g:rplugin.is_darwin
+    let g:R_pdfviewer = "skim"
+else
     if has("win32")
         let g:R_pdfviewer = "sumatra"
     else
