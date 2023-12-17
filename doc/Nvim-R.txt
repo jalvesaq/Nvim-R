@@ -1985,12 +1985,13 @@ that you generate the pdf, you should put in put in your |vimrc|:
 If you use Linux or other Unix and eventually use the system console (without
 the X server) you may want to put in your |vimrc|:
 >
-   if $DISPLAY != "" || $WAYLAND_DISPLAY != ""
-       let R_openpdf = 1
+   if $DISPLAY == "" && $WAYLAND_DISPLAY == ""
+       let R_openpdf = 0
    endif
 <
 The default value of `R_openpdf` is 1 on Mac OS X and 2 on Windows. On Linux,
-it is 1 on Wayland and 2 on the X Server.
+it is 2 on the X Server and on Sway Window Manager and 1 on other Wayland
+compositors.
 
 On Windows, Nvim-R will call Sumatra to open the PDF, and, on Mac OS X, it
 will call Skim. On Linux, you can change the value of `R_pdfviewer` in your
@@ -2012,7 +2013,6 @@ The meanings of different values of `R_openhtml` are:
 
    0: Never open the html.
    1: Always open the html.
-   2: Decide between opening the html and reloading the page (Linux only).
 
 The browser application called by Nvim-R is whatever is returned by the R
 command `getOption("browser")`, unless it is NULL. In this case, Nvim-R will

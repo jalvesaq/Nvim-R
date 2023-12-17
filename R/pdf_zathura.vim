@@ -22,33 +22,36 @@ function ROpenPDF2(fullpath)
         return
     endif
 
-    if $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != ""
-        if g:rplugin.has_awbt
-            sleep 200m " Time to Zathura reload the PDF
-            let fname = substitute(a:fullpath, ".*/", "", "")
-            if RRaiseWindow(fname) == 0
-                call RStart_Zathura(a:fullpath)
-            endif
-        else
-            call RStart_Zathura(a:fullpath)
-        endif
-        return
-    endif
+    " Time to Zathura reload the PDF
+    sleep 200m
 
-    if !has_key(g:rplugin.zathura_pid, a:fullpath)
+    let fname = substitute(a:fullpath, ".*/", "", "")
+
+    " Check if Zathura was already opened and is still running
+    if has_key(g:rplugin.zathura_pid, a:fullpath)
+        if g:rplugin.zathura_pid[a:fullpath] != 0
+            let zrun = system("ps -p " . g:rplugin.zathura_pid[a:fullpath])
+            if zrun =~ g:rplugin.zathura_pid[a:fullpath]
+                if RRaiseWindow(fname)
+                    return
+                else
+                    call RStart_Zathura(a:fullpath)
+                    return
+                endif
+            else
+                let g:rplugin.zathura_pid[a:fullpath] = 0
+                call RStart_Zathura(a:fullpath)
+                return
+            endif
+        endif
+    else
         let g:rplugin.zathura_pid[a:fullpath] = 0
     endif
-    let fname = substitute(a:fullpath, ".*/", "", "")
-    if system("wmctrl -xl") =~ 'Zathura.*' . fname &&
-                \ has_key(g:rplugin.zathura_pid, a:fullpath) &&
-                \ g:rplugin.zathura_pid[a:fullpath] != 0
-        call system("wmctrl -a '" . fname . "'")
-    else
-        call RStart_Zathura(a:fullpath)
-    endif
 
-    if g:rplugin.has_wmctrl
-        call system("wmctrl -a '" . substitute(a:fullpath, ".*/", "", "") . "'")
+    " Check if Zathura was already running
+    if RRaiseWindow(fname) == 0
+        call RStart_Zathura(a:fullpath)
+        return
     endif
 endfunction
 

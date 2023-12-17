@@ -59,26 +59,48 @@ let g:rplugin.has_awbt = 0
 function RRaiseWindow(wttl)
     if g:rplugin.has_wmctrl
         call system("wmctrl -a '" . a:wttl . "'")
-        return 1
-    elseif $WAYLAND_DISPLAY != "" && $GNOME_SHELL_SESSION_MODE != "" && g:rplugin.has_awbt
-        let sout = system("busctl --user call org.gnome.Shell " .
-                    \ "/de/lucaswerkmeister/ActivateWindowByTitle " .
-                    \ "de.lucaswerkmeister.ActivateWindowByTitle " .
-                    \ "activateBySubstring s '" . a:wttl . "'")
         if v:shell_error
-            call RWarningMsg('Error running Gnome Shell Extension "Activate Window By Title": '
-                        \ . substitute(sout, "\n", " ", "g"))
-            return 0
-        endif
-        if sout =~ 'false'
             return 0
         else
             return 1
         endif
+    elseif $WAYLAND_DISPLAY != ""
+        if $GNOME_SHELL_SESSION_MODE != "" && g:rplugin.has_awbt
+            let sout = system("busctl --user call org.gnome.Shell " .
+                        \ "/de/lucaswerkmeister/ActivateWindowByTitle " .
+                        \ "de.lucaswerkmeister.ActivateWindowByTitle " .
+                        \ "activateBySubstring s '" . a:wttl . "'")
+            if v:shell_error
+                call RWarningMsg('Error running Gnome Shell Extension "Activate Window By Title": '
+                            \ . substitute(sout, "\n", " ", "g"))
+                return 0
+            endif
+            if sout =~ 'false'
+                return 0
+            else
+                return 1
+            endif
+        elseif $XDG_CURRENT_DESKTOP == "sway"
+            let sout = system("swaymsg -t get_tree")
+            if v:shell_error
+                call RWarningMsg('Error running swaymsg: ' . substitute(sout, "\n", " ", "g"))
+                return 0
+            endif
+            if sout =~ a:wttl
+                " Should move to the workspace where Zathura is, and, then, try to focus the window?
+                " call system('swaymsg for_window [title="' . a:wttl . '"] focus')
+                return 1
+            else
+                return 0
+            endif
+        endif
     endif
+    return 0
 endfunction
 
-if g:rplugin.is_darwin || $WAYLAND_DISPLAY != ""
+if $XDG_CURRENT_DESKTOP == "sway"
+    let g:R_openpdf = get(g:, "R_openpdf", 2)
+elseif g:rplugin.is_darwin || $WAYLAND_DISPLAY != ""
     let g:R_openpdf = get(g:, "R_openpdf", 1)
 else
     let g:R_openpdf = get(g:, "R_openpdf", 2)
