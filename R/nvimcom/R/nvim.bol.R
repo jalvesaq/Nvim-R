@@ -95,41 +95,41 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
     for (field in names(frm)) {
         type <- typeof(frm[[field]])
         if (extrainfo) {
-            str1 <- paste0("{'word': '", field)
+            str1 <- paste0("{\x12word\x12: \x12", field)
             if (type == "symbol") {
-                str2 <- paste0("', 'menu': ' '")
+                str2 <- paste0("\x12, \x12menu\x12: \x12 \x12")
             } else if (type == "character") {
-                str2 <- paste0(" = ', 'menu': '\"", nvim.fix.string(frm[[field]]), "\"'")
+                str2 <- paste0(" = \x12, \x12menu\x12: \x12\"", nvim.fix.string(frm[[field]]), "\"\x12")
             } else if (type == "logical" || type == "double" || type == "integer") {
-                str2 <- paste0(" = ', 'menu': '", as.character(frm[[field]]), "'")
+                str2 <- paste0(" = \x12, \x12menu\x12: \x12", as.character(frm[[field]]), "\x12")
             } else if (type == "NULL") {
-                str2 <- paste0(" = ', 'menu': 'NULL'")
+                str2 <- paste0(" = \x12, \x12menu\x12: \x12NULL\x12")
             } else if (type == "language") {
-                str2 <- paste0(" = ', 'menu': '",
-                               nvim.fix.string(deparse(frm[[field]]), FALSE), "'")
+                str2 <- paste0(" = \x12, \x12menu\x12: \x12",
+                               nvim.fix.string(deparse(frm[[field]]), FALSE), "\x12")
             } else {
-                str2 <- paste0("', 'menu': ' '")
+                str2 <- paste0("\x12, \x12menu\x12: \x12 \x12")
             }
             if (pkgname != ".GlobalEnv" && extrainfo && length(frm) > 0)
-                res <- append(res, paste0(str1, str2, ", 'user_data': {'cls': 'a', 'argument': '",
-                                          arglist[[field]], "'}}, "))
+                res <- append(res, paste0(str1, str2, ", \x12user_data\x12: {\x12cls\x12: \x12a\x12, \x12argument\x12: \x12",
+                                          arglist[[field]], "\x12}}, "))
             else
                 res <- append(res, paste0(str1, str2, "}, "))
         } else {
             if (type == "symbol") {
-                res <- append(res, paste0("['", field, "'], "))
+                res <- append(res, paste0("[\x12", field, "\x12], "))
             } else if (type == "character") {
-                res <- append(res, paste0("['", field, "', '\"",
-                                          nvim.fix.string(frm[[field]]), "\"'], "))
+                res <- append(res, paste0("[\x12", field, "\x12, \x12\"",
+                                          nvim.fix.string(frm[[field]]), "\"\x12], "))
             } else if (type == "logical" || type == "double" || type == "integer") {
-                res <- append(res, paste0("['", field, "', '", as.character(frm[[field]]), "'], "))
+                res <- append(res, paste0("[\x12", field, "\x12, \x12", as.character(frm[[field]]), "\x12], "))
             } else if (type == "NULL") {
-                res <- append(res, paste0("['", field, "', 'NULL'], "))
+                res <- append(res, paste0("[\x12", field, "\x12, \x12NULL\x12], "))
             } else if (type == "language") {
-                res <- append(res, paste0("['", field, "', '",
-                                          nvim.fix.string(deparse(frm[[field]]), FALSE), "'], "))
+                res <- append(res, paste0("[\x12", field, "\x12, \x12",
+                                          nvim.fix.string(deparse(frm[[field]]), FALSE), "\x12], "))
             } else {
-                res <- append(res, paste0("['", field, "'], "))
+                res <- append(res, paste0("[\x12", field, "\x12], "))
                 warning(paste0("nvim.args: ", funcname, " [", field, "]", " (typeof = ", type, ")"))
             }
         }
@@ -209,9 +209,6 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
             }
         }
     }
-
-    # The magrittr package has (or used to have) an alias named `n'est pas`
-    x <- gsub("'", "\004", x)
 
     if (is.null(xx)) {
         x.class <- ""

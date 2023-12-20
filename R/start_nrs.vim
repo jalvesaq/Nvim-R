@@ -303,7 +303,7 @@ function ShowBuildOmnilsError(stt)
     endif
 endfunction
 
-function s:BAExit(...)
+function BAAExit(...)
     if a:2 == 0 || a:2 == 512 " ssh success seems to be 512
         call JobStdin(g:rplugin.jobs["Server"], "41\n")
     endif
@@ -337,9 +337,9 @@ function s:BuildAllArgs(...)
         let scrptnm = g:R_remote_compldir . "/tmp/build_args.R"
     endif
     if has('nvim')
-        let jobh = {'on_exit': function('s:BAExit')}
+        let jobh = {'on_exit': function('BAAExit')}
     else
-        let jobh = {'exit_cb': 's:BAExit'}
+        let jobh = {'exit_cb': 'BAAExit'}
     endif
     let g:rplugin.jobs["Build_args"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
 endfunction

@@ -153,7 +153,7 @@ nvim_format <- function(l1, l2, wco, sw, txt) {
                PACKAGE = "nvimcom")
             return(invisible(NULL))
         }
-        txt <- gsub("'", "\004", gsub("\n", "\002", ok$text.tidy))
+        txt <- gsub("'", "\004", paste0(ok$text.tidy, collapse = "\002"))
     } else if (getOption("nvimcom.formatfun") == "style_text") {
         ok <- try(styler::style_text(txt, indent_by = sw))
         if (inherits(ok, "try-error")) {

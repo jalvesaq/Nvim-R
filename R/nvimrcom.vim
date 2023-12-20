@@ -41,9 +41,9 @@ function ROnJobStdout(job_id, data, etype)
             continue
         endif
 
-        if cmd[0] == "\005"
+        if cmd[0] == "\001"
             " Check the size of possibly very big string (dictionary for menu completion).
-            let cmdsplt = split(cmd, "\005")
+            let cmdsplt = split(cmd, "\001")
             let size = str2nr(cmdsplt[0])
             let received = strlen(cmdsplt[1])
             if size == received

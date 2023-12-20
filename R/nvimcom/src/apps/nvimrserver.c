@@ -275,7 +275,7 @@ static void ParseMsg(char *b)
     }
 
     // Send the command to Nvim-R
-    printf("\005%" PRI_SIZET "\005%s\n", strlen(b), b);
+    printf("\001%" PRI_SIZET "\001%s\n", strlen(b), b);
     fflush(stdout);
 }
 
@@ -760,6 +760,10 @@ void *check_omils_buffer(char *buffer, int *size)
         while(*p){
             if(*p == '\006')
                 *p = 0;
+            if (*p == '\'')
+                *p = '\004';
+            if (*p == '\x12')
+                *p = '\'';
             p++;
         }
     }
@@ -1340,29 +1344,30 @@ static void finish_bol()
 char *complete_instlibs(char *p, const char *base) {
     update_inst_libs();
 
+    if (!instlibs)
+        return p;
+
     unsigned long len;
     InstLibs *il;
 
-    if (instlibs) {
-        il = instlibs;
-        while (il) {
-            len = strlen(il->descr) + (p - compl_buffer) + 1024;
-            while (compl_buffer_size < len) {
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
-            }
+    il = instlibs;
+    while (il) {
+        len = strlen(il->descr) + (p - compl_buffer) + 1024;
+        if (compl_buffer_size < len)
+            p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
 
-            if (str_here(il->name, base) && il->si) {
-                p = str_cat(p, "{'word': '");
-                p = str_cat(p, il->name);
-                p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
-                p = str_cat(p, il->title);
-                p = str_cat(p, "', 'descr': '");
-                p = str_cat(p, il->descr);
-                p = str_cat(p, "', 'cls': 'l'}},");
-            }
-            il = il->next;
+        if (str_here(il->name, base) && il->si) {
+            p = str_cat(p, "{'word': '");
+            p = str_cat(p, il->name);
+            p = str_cat(p, "', 'menu': '[pkg]', 'user_data': {'ttl': '");
+            p = str_cat(p, il->title);
+            p = str_cat(p, "', 'descr': '");
+            p = str_cat(p, il->descr);
+            p = str_cat(p, "', 'cls': 'l'}},");
         }
+        il = il->next;
     }
+
     return p;
 }
 
@@ -1533,12 +1538,13 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     char base2[128];
     char prefix[128];
     char newprfx[96];
+    char nm[160];
     char descr[160];
     const char *f[7];
     const char *s;    // Diagnostic pointer
     const char *bsnm; // Name of object including its parent list, data.frame or S4 object
     int df;           // Is data.frame? If yes, start open unless closeddf = 1
-    int i, j;
+    int i;
     int ne;
 
     nLibObjs--;
@@ -1566,7 +1572,19 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     else
         df = OpenLS;
 
-    // Replace \004 with curly closing single quote
+    // Replace \004 with single quote
+    i = 0;
+    s = f[0];
+    while (s[i] && i < 159) {
+        if (s[i] == '\004')
+            nm[i] = '\'';
+        else
+            nm[i] = s[i];
+        i++;
+    }
+    nm[i] = 0;
+
+    // Replace \004 with single quote
     if(f[1][0] == '\003')
         s = f[5];
     else
@@ -1574,31 +1592,22 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     if(s[0] == 0){
         descr[0] = 0;
     } else {
-        i = 0; j = 0;
+        i = 0;
         while(s[i] && i < 159){
-            if(s[i] == '\004'){
-                if(nvimcom_is_utf8){
-                    descr[j] = '\xe2';
-                    j++;
-                    descr[j] = '\x80';
-                    j++;
-                    descr[j] = '\x99';
-                } else {
-                    descr[j] = '\'';
-                }
-            } else {
-                descr[j] = s[i];
-            }
-            i++; j++;
+            if(s[i] == '\004')
+                descr[i] = '\'';
+            else
+                descr[i] = s[i];
+            i++;
         }
-        descr[j] = 0;
+        descr[i] = 0;
     }
 
     if(!(bsnm[0] == '.' && allnames == 0)){
         if(f[1][0] == '\003')
-            fprintf(fl, "   %s(#%s\t%s\n", prfx, f[0], descr);
+            fprintf(fl, "   %s(#%s\t%s\n", prfx, nm, descr);
         else
-            fprintf(fl, "   %s%c#%s\t%s\n", prfx, f[1][0], f[0], descr);
+            fprintf(fl, "   %s%c#%s\t%s\n", prfx, f[1][0], nm, descr);
     }
 
     if(*p == 0)
@@ -1693,22 +1702,27 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
 
 void hi_glbenv_fun(void)
 {
-    char *p = glbnv_buffer;
+    char *g = glbnv_buffer;
+    char *p = compl_buffer;
     char *s;
 
-    printf("call UpdateLocalFunctions('");
-    while(*p){
-        s = p;
+    memset(compl_buffer, 0, compl_buffer_size);
+    p = str_cat(p, "call UpdateLocalFunctions('");
+    while(*g){
+        s = g;
         while(*s != 0)
             s++;
         s++;
-        if (*s == '\003')
-            printf("%s ", p);
-        while(*p != '\n')
-            p++;
-        p++;
+        if (*s == '\003') {
+            p = str_cat(p, g);
+            p = str_cat(p, " ");
+        }
+        while(*g != '\n')
+            g++;
+        g++;
     }
-    printf("')\n");
+    p = str_cat(p, "')");
+    printf("\001%" PRI_SIZET "\001%s\n", strlen(compl_buffer), compl_buffer);
     fflush(stdout);
 }
 
@@ -2080,7 +2094,7 @@ void completion_info(const char *wrd, const char *pkg)
             if(*s == '\n')
                 s++;
 
-            if (f[1][0] == '\003' && str_here(f[4], "['not_checked']")) {
+            if (f[1][0] == '\003' && str_here(f[4], "[\x12not_checked\x12]")) {
                 snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
                 send_to_nvimcom(compl_buffer);
                 return;
@@ -2122,7 +2136,7 @@ void completion_info(const char *wrd, const char *pkg)
 // Return the menu items for omni completion, but don't include function
 // usage, and tittle and description of objects because if the buffer becomes
 // too big it will be truncated.
-char *parse_omnls(const char *s, const char *base, const char *pkg, char *p)
+char *parse_omnils(const char *s, const char *base, const char *pkg, char *p)
 {
     int i;
     unsigned long nsz;
@@ -2322,7 +2336,7 @@ void complete(const char *id, char *base, char *funcnm, char *args)
         if (*funcnm == '\004') {
             // Get menu completion for installed libraries
             p = complete_instlibs(p, base);
-            printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+            printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
                     strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
@@ -2334,12 +2348,18 @@ void complete(const char *id, char *base, char *funcnm, char *args)
                 if ((strlen(args) + 1024) > compl_buffer_size)
                     p = grow_buffer(&compl_buffer, &compl_buffer_size, strlen(args) + 1024 - compl_buffer_size);
 
+                char *s = args;
+                while (*s) {
+                    if (*s == '\x12')
+                        *s = '\'';
+                    s++;
+                }
                 p = str_cat(p, args);
             }
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+            printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
                     strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
@@ -2348,7 +2368,7 @@ void complete(const char *id, char *base, char *funcnm, char *args)
 
     // Finish filling the compl_buffer
     if(glbnv_buffer)
-        p = parse_omnls(glbnv_buffer, base, NULL, p);
+        p = parse_omnils(glbnv_buffer, base, NULL, p);
     PkgData *pd = pkgList;
 
     // Check if base is "pkg::fun"
@@ -2363,11 +2383,11 @@ void complete(const char *id, char *base, char *funcnm, char *args)
 
     while(pd){
         if (pd->omnils && (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0)))
-            p = parse_omnls(pd->omnils, base, pkg, p);
+            p = parse_omnils(pd->omnils, base, pkg, p);
         pd = pd->next;
     }
 
-    printf("\005%" PRI_SIZET "\005call %s(%s, [%s])\n",
+    printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
             strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
     fflush(stdout);
 }

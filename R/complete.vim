@@ -301,6 +301,7 @@ function FinishGlbEnvFunArgs(fnm, txt)
         let usage = substitute(a:txt, "\002", "\n", "g")
         let usage = substitute(usage, "\004", "''", "g")
         let usage = substitute(usage, "\005", '\\"', "g")
+        let usage = substitute(usage, "\x12", "'", "g")
         let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
         let usage = eval(usage)
         call map(usage, 'join(v:val, " = ")')
@@ -320,18 +321,20 @@ function SetComplInfo(dctnr)
     " Replace user_data with the complete version
     let s:compl_event['completed_item']['user_data'] = deepcopy(a:dctnr)
 
-    if a:dctnr['cls'] == 'f'
+    if has_key(a:dctnr, 'cls') && a:dctnr['cls'] == 'f'
         let usage = deepcopy(a:dctnr['usage'])
         call map(usage, 'join(v:val, " = ")')
         let usage = join(usage, ", ")
         let s:usage = a:dctnr['word'] . '(' . usage . ')'
-    elseif a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
+    elseif has_key(a:dctnr, 'word') && a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
         call SendToNvimcom("E", 'nvimcom:::nvim.get.summary(' . a:dctnr['word'] . ', 59)')
         return
     endif
 
     if len(a:dctnr) > 0
         call CreateNewFloat()
+    else
+        call CloseFloatWin()
     endif
 endfunction
 
@@ -459,6 +462,9 @@ endfunction
 
 function SetComplMenu(id, cmn)
     let s:compl_menu = deepcopy(a:cmn)
+    for idx in range(len(s:compl_menu))
+        let s:compl_menu[idx]['word'] = substitute(s:compl_menu[idx]['word'], "\004", "'", "g")
+    endfor
     let s:waiting_compl_menu = 0
 endfunction
 
