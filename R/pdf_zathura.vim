@@ -123,10 +123,14 @@ function StartZathuraVim(fullpath)
 endfunction
 
 function RStart_Zathura(fullpath)
-    " Use wmctrl to check if the pdf is already open and get Zathura's PID to
-    " close the document and kill Zathura.
     let fname = substitute(a:fullpath, ".*/", "", "")
-    if g:rplugin.has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
+
+    if has_key(g:rplugin.zathura_pid, a:fullpath) && g:rplugin.zathura_pid[a:fullpath] != 0
+        " Use the recorded pid to kill Zathura
+        call system('kill ' . g:rplugin.zathura_pid[a:fullpath])
+    elseif g:rplugin.has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
+        " Use wmctrl to check if the pdf is already open and get Zathura's PID
+        " to close the document and kill Zathura.
         let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . fname . '"')
         if len(info) > 0
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
