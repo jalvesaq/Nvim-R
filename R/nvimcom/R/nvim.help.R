@@ -1,6 +1,6 @@
 
 nvim.hmsg <- function(files, header, title, delete.file) {
-    doc <- gsub("'", "\004", paste(readLines(files[1]), collapse = "\002"))
+    doc <- gsub("'", "\x13", paste(readLines(files[1]), collapse = "\x14"))
     ttl <- sub("R Help on '(.*)'", "\\1 (help)", title)
     ttl <- sub("R Help on \u2018(.*)\u2019", "\\1 (help)", ttl)
     ttl <- gsub("'", "''", ttl)

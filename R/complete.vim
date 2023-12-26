@@ -298,11 +298,11 @@ function AskForComplInfo()
 endfunction
 
 function FinishGlbEnvFunArgs(fnm, txt)
-        let usage = substitute(a:txt, "\002", "\n", "g")
-        let usage = substitute(usage, "\004", "''", "g")
+        let usage = substitute(a:txt, "\x14", "\n", "g")
+        let usage = substitute(usage, "\x13", "''", "g")
         let usage = substitute(usage, "\005", '\\"', "g")
         let usage = substitute(usage, "\x12", "'", "g")
-        let usage = '[' . substitute(usage, "\004", "'", 'g') . ']'
+        let usage = '[' . usage . ']'
         let usage = eval(usage)
         call map(usage, 'join(v:val, " = ")')
         let usage = join(usage, ", ")
@@ -312,7 +312,7 @@ function FinishGlbEnvFunArgs(fnm, txt)
 endfunction
 
 function FinishGetSummary(txt)
-    let summary = split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let summary = split(substitute(a:txt, "\x13", "'", "g"), "\x14")
     let s:compl_event['completed_item']['user_data']['summary'] = summary
     call CreateNewFloat()
 endfunction
@@ -463,7 +463,7 @@ endfunction
 function SetComplMenu(id, cmn)
     let s:compl_menu = deepcopy(a:cmn)
     for idx in range(len(s:compl_menu))
-        let s:compl_menu[idx]['word'] = substitute(s:compl_menu[idx]['word'], "\004", "'", "g")
+        let s:compl_menu[idx]['word'] = substitute(s:compl_menu[idx]['word'], "\x13", "'", "g")
     endfor
     let s:waiting_compl_menu = 0
 endfunction

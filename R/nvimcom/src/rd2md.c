@@ -32,7 +32,7 @@ typedef struct pattern {
 // packages : \code (1814), \R (220), \emph (97), sQuote (76), \eqn (59),
 // \dQuote (41), \link (30), \pkg (29) etc...
 static struct pattern rd[] = {
-    // Optmized for default R 4.2.2 packages
+    // Optimized for default R 4.2.2 packages
     {"code",          4,   8,  "`",             "`"},
     {"R",             1,   0,  "*R*",           "\000"},
     {"emph",          4,   1,  "*",             "*"},
@@ -42,10 +42,10 @@ static struct pattern rd[] = {
     {"pkg",           3,   1,  "\000",          "\000"},
     {"linkS4class",   11,  1,  "\000",          "\000"},
     {"link",          4,   5,  "‘",             "’"},
-    {"item{",         5,   9,  "\002  • ",      "\002"},
-    {"item ",         5,   0,  "\002  • ",      "\000"},
-    {"itemize",       7,   1,  "\002",          "\002"},
-    {"item",          4,   1,  "\002  • ",      "\000"},
+    {"item{",         5,   9,  "\x14  • ",      "\x14"},
+    {"item ",         5,   0,  "\x14  • ",      "\000"},
+    {"itemize",       7,   1,  "\x14",          "\x14"},
+    {"item",          4,   1,  "\x14  • ",      "\000"},
     {"dots",          4,   0,  "...",           "\000"},
     {"bold",          4,   1,  "**",            "**"},
     {"file",          4,   1,  "‘",             "’"},
@@ -55,14 +55,14 @@ static struct pattern rd[] = {
     {"ifelse",        6,   7,  NULL,            NULL},
     {"samp",          4,   1,  "`",             "`"},
     {"env",           3,   1,  "\000",          "\000"},
-    {"describe",      8,   1,  "\002",          "\002"},
+    {"describe",      8,   1,  "\x14",          "\x14"},
     {"Sigma",         5,   0,  "Σ",             "\000"},
 
     // Common in some other packages
     {"if{html}",      8,   4,  NULL,            NULL},
     {"figure",        6,   2,  "\000",          "\000"},
     {"href",          4,   6,  NULL,            NULL},
-    {"preformatted",  12,  1,  "\002```\002",   "```\002"},
+    {"preformatted",  12,  1,  "\x14```\x14",   "```\x14"},
 
     // The rest
     {"alpha",         5,   0,  "α",             "\000"},
@@ -95,9 +95,9 @@ static struct pattern rd[] = {
     {"ll",            2,   0,  "≪",             "\000"},
     {"gg",            2,   0,  "≫",             "\000"},
     {"infty",         5,   0,  "∞",             "\000"},
-    {"tabular",       7,   3,  "\002",          "\002"},
+    {"tabular",       7,   3,  "\x14",          "\x14"},
     {"tab",           3,   0,  "\t",            "\000"},
-    {"cr",            2,   0,  "\002",          "\000"},
+    {"cr",            2,   0,  "\x14",          "\000"},
     {"sqrt",          4,   1,  "*√",             "*"},
     {"strong",        6,   1,  "**",            "**"},
     {"email",         5,   1,  "\000",          "\000"},
@@ -110,7 +110,7 @@ static struct pattern rd[] = {
     {"ldots",         5,   0,  "…",             "\000"},
     {"verb",          4,   1,  "`",             "`"},
     {"out",           3,   1,  "\000",          "\000"},
-    {"examples",      8,   1,  "\002```r\002",  "```\002"},
+    {"examples",      8,   1,  "\x14```r\x14",  "```\x14"},
     {NULL, 0, 0, NULL, NULL}
 };
 
@@ -139,8 +139,8 @@ static char * insert_str(char *p, const char *s)
     return p;
 }
 
-// Consider that there is an opening brackets just before `p` and find the
-// matching closing brace. There no check for escaped brackets.
+// Consider that there is an opening bracket just before `p` and find the
+// matching closing brace. There is no check for escaped brackets.
 static int find_matching_sqrbrckt(const char *p)
 {
     int n = 1;
@@ -157,7 +157,7 @@ static int find_matching_sqrbrckt(const char *p)
 }
 
 // Consider that there is an opening curly brace just before `p` and find the
-// matching closing brace. There no check for escaped braces.
+// matching closing brace. There is no check for escaped braces.
 static int find_matching_bracket(const char *p)
 {
     int n = 1;
@@ -416,7 +416,7 @@ SEXP rd2md(SEXP txt)
     pre_rd_md(&p1, &p2, a + maxp);
 
     // Final cleanup for nvimcom/Nvim-R:
-    // - Replace \n with \002 within pre-formatted code to restore them during omni completion.
+    // - Replace \n with \x14 within pre-formatted code to restore them during omni completion.
     // - Replace \n with empty space to avoid problems for Vim dictionaries
     p1 = b;
     p2 = a;
@@ -430,7 +430,7 @@ SEXP rd2md(SEXP txt)
             *p1 = *p2; p1++; p2++;
             while (p2[0] && p2[1] && p2[2] && !(p2[0] == '`' && p2[1] == '`' && p2[2] == '`')) {
                 if (*p2 == '\n')
-                    *p2 = '\002';
+                    *p2 = '\x14';
                 *p1 = *p2; p1++; p2++;
             }
         } else {
@@ -456,7 +456,7 @@ SEXP rd2md(SEXP txt)
 
     // Delete trailing spaces
     p1--;
-    while (p1 && (*p1 == ' ' || *p1 == '\002')) {
+    while (p1 && (*p1 == ' ' || *p1 == '\x14')) {
         *p1 = 0;
         p1--;
     }
@@ -465,7 +465,7 @@ SEXP rd2md(SEXP txt)
     p1 = b;
     while (*p1) {
         if (*p1 == '\'')
-            *p1 = '\004';
+            *p1 = '\x13';
         p1++;
     }
 

@@ -1,7 +1,7 @@
 # R may break strings while sending them even if they are short
 out <- function(x) {
-    # Nvim-R will wait for more input if the string doesn't end with "\002"
-    y <- paste0(x, "\002\n")
+    # Nvim-R will wait for more input if the string doesn't end with "\x14"
+    y <- paste0(x, "\x14\n")
     cat(y)
     flush(stdout())
 }

@@ -160,7 +160,7 @@ static void send_to_nvim(char *msg)
          NVIMR_SECRET : Prefix NVIMR_SECRET to msg to increase security
          000000000    : Size of message in 9 digits
          msg          : The message
-         \001         : Final byte
+         \x11         : Final byte
 
        Note: when the msg is very big, it's faster to send the final message in
        three pieces than to call snprintf() to assemble everything in a single
@@ -215,8 +215,8 @@ static void send_to_nvim(char *msg)
         }
     }
 
-    // End the message with \001
-    sent = send(sfd, "\001", 1, 0);
+    // End the message with \x11
+    sent = send(sfd, "\x11", 1, 0);
     if (sent != 1)
         REprintf("Error sending final byte to Nvim-R: 1 x %zu\n", sent);
 }

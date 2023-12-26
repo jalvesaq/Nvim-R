@@ -305,7 +305,7 @@ function SetNvimcomInfo(nvimcomversion, rpid, wid, r_info)
     let g:rplugin.R_pid = a:rpid
     let $RCONSOLE = a:wid
 
-    let Rinfo = split(a:r_info, "\x02")
+    let Rinfo = split(a:r_info, "\x12")
     let s:R_version = Rinfo[0]
     if !exists("g:R_OutDec")
         let g:R_OutDec = Rinfo[1]
@@ -515,7 +515,7 @@ function ShowRObj(howto, bname, ftype, txt)
     call AddForDeletion(g:rplugin.tmpdir . "/" . bfnm)
     silent exe a:howto . ' ' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . '/' . bfnm
     silent exe 'set ft=' . a:ftype
-    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
+    call setline(1, split(substitute(a:txt, "\x13", "'", "g"), "\x14"))
     set nomodified
 endfunction
 
@@ -813,12 +813,12 @@ function RFormatCode() range
     endif
 
     let lns = getline(a:firstline, a:lastline)
-    let txt = substitute(substitute(join(lns, "\002"), '\\', '\\\\', 'g'), "'", "\004", "g")
+    let txt = substitute(substitute(join(lns, "\x14"), '\\', '\\\\', 'g'), "'", "\x13", "g")
     call SendToNvimcom("E", "nvimcom:::nvim_format(" . a:firstline . ", " . a:lastline . ", " . wco . ", " . &shiftwidth. ", '" . txt . "')")
 endfunction
 
 function FinishRFormatCode(lnum1, lnum2, txt)
-    let lns =  split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let lns =  split(substitute(a:txt, "\x13", "'", "g"), "\x14")
     silent exe a:lnum1 . "," . a:lnum2 . "delete"
     call append(a:lnum1 - 1, lns)
     echo (a:lnum2 - a:lnum1 + 1) . " lines formatted."
@@ -842,7 +842,7 @@ function SendLineToRAndInsertOutput()
 endfunction
 
 function FinishRInsert(type, txt)
-    let ilines = split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let ilines = split(substitute(a:txt, "\x13", "'", "g"), "\x14")
     if a:type == "comment"
         call map(ilines, '"# " . v:val')
     endif
@@ -856,13 +856,13 @@ function GetROutput(fnm, txt)
             let tnum += 1
         endwhile
         exe 'tabnew so' . tnum
-        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
+        call setline(1, split(substitute(a:txt, "\x13", "'", "g"), "\x14"))
         set filetype=rout
         setlocal buftype=nofile
         setlocal noswapfile
     else
         exe 'tabnew ' a:fnm
-        call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
+        call setline(1, split(substitute(a:txt, "\x13", "'", "g"), "\x14"))
     endif
     normal! gT
     redraw
@@ -872,7 +872,7 @@ endfunction
 function RViewDF(oname, howto, txt)
     if exists('g:R_csv_app')
         let tsvnm = g:rplugin.tmpdir . '/' . a:oname . '.tsv'
-        call writefile(split(substitute(a:txt, "\004", "'", "g"), "\002"), tsvnm)
+        call writefile(split(substitute(a:txt, "\x13", "'", "g"), "\x14"), tsvnm)
         call AddForDeletion(tsvnm)
 
         if g:R_csv_app =~ '%s'
@@ -907,7 +907,7 @@ function RViewDF(oname, howto, txt)
     let location = a:howto
     silent exe location . ' ' . a:oname
     " silent 1,$d
-    call setline(1, split(substitute(a:txt, "\004", "'", "g"), "\002"))
+    call setline(1, split(substitute(a:txt, "\x13", "'", "g"), "\x14"))
     setlocal filetype=csv
     setlocal nomodified
     setlocal bufhidden=wipe
@@ -1107,7 +1107,7 @@ function ShowRDoc(rkeyword, txt)
     let save_unnamed_reg = @@
     set modifiable
     sil normal! ggdG
-    let fcntt = split(substitute(a:txt, "\004", "'", "g"), "\002")
+    let fcntt = split(substitute(a:txt, "\x13", "'", "g"), "\x14")
     call setline(1, fcntt)
     if a:rkeyword =~ "R History"
         set filetype=r

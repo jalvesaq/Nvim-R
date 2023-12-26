@@ -52,7 +52,7 @@ NvimcomEnv$pkgdescr <- list()
                  gsub("\n", "#N#", getOption("prompt")),
                  getOption("continue"),
                  as.integer(length(find.package("colorout", quiet = TRUE, verbose = FALSE)) > 0),
-                 sep = "\x02"),
+                 sep = "\x12"),
            PACKAGE = "nvimcom")
     }
     if (!is.na(utils::localeToCharset()[1]) &&

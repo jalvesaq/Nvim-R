@@ -182,10 +182,10 @@ static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
     return tmp;
 }
 
-void fix_004(char *s)
+void fix_x13(char *s)
 {
     while (*s != 0) {
-        if (*s == '\004')
+        if (*s == '\x13')
             *s = '\'';
         s++;
     }
@@ -195,7 +195,7 @@ void fix_single_quote(char *s)
 {
     while (*s != 0) {
         if (*s == '\'')
-            *s = '\004';
+            *s = '\x13';
         s++;
     }
 }
@@ -275,7 +275,7 @@ static void ParseMsg(char *b)
     }
 
     // Send the command to Nvim-R
-    printf("\001%" PRI_SIZET "\001%s\n", strlen(b), b);
+    printf("\x11%" PRI_SIZET "\x11%s\n", strlen(b), b);
     fflush(stdout);
 }
 
@@ -388,7 +388,7 @@ static void get_whole_msg(char *b)
             *p = *tmp;
         else
             break;
-        if (*p == '\001')
+        if (*p == '\x11')
             break;
         p++;
     }
@@ -761,7 +761,7 @@ void *check_omils_buffer(char *buffer, int *size)
             if(*p == '\006')
                 *p = 0;
             if (*p == '\'')
-                *p = '\004';
+                *p = '\x13';
             if (*p == '\x12')
                 *p = '\'';
             p++;
@@ -788,7 +788,7 @@ char *get_pkg_descr(const char *pkgnm)
         if (strcmp(il->name, pkgnm) == 0) {
             char *s = malloc((strlen(il->title) + 1) * sizeof(char));
             strcpy(s, il->title);
-            fix_004(s);
+            fix_x13(s);
             return s;
         }
         il = il->next;
@@ -1572,11 +1572,11 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     else
         df = OpenLS;
 
-    // Replace \004 with single quote
+    // Replace \x13 with single quote
     i = 0;
     s = f[0];
     while (s[i] && i < 159) {
-        if (s[i] == '\004')
+        if (s[i] == '\x13')
             nm[i] = '\'';
         else
             nm[i] = s[i];
@@ -1584,7 +1584,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     }
     nm[i] = 0;
 
-    // Replace \004 with single quote
+    // Replace \x13 with single quote
     if(f[1][0] == '\003')
         s = f[5];
     else
@@ -1594,7 +1594,7 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     } else {
         i = 0;
         while(s[i] && i < 159){
-            if(s[i] == '\004')
+            if(s[i] == '\x13')
                 descr[i] = '\'';
             else
                 descr[i] = s[i];
@@ -1722,7 +1722,7 @@ void hi_glbenv_fun(void)
         g++;
     }
     p = str_cat(p, "')");
-    printf("\001%" PRI_SIZET "\001%s\n", strlen(compl_buffer), compl_buffer);
+    printf("\x11%" PRI_SIZET "\x11%s\n", strlen(compl_buffer), compl_buffer);
     fflush(stdout);
 }
 
@@ -2336,7 +2336,7 @@ void complete(const char *id, char *base, char *funcnm, char *args)
         if (*funcnm == '\004') {
             // Get menu completion for installed libraries
             p = complete_instlibs(p, base);
-            printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
+            printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
                     strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
@@ -2359,7 +2359,7 @@ void complete(const char *id, char *base, char *funcnm, char *args)
         }
         if(base[0] == 0){
             // base will be empty if completing only function arguments
-            printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
+            printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
                     strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
@@ -2387,7 +2387,7 @@ void complete(const char *id, char *base, char *funcnm, char *args)
         pd = pd->next;
     }
 
-    printf("\001%" PRI_SIZET "\001" "call %s(%s, [%s])\n",
+    printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
             strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
     fflush(stdout);
 }

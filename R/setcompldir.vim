@@ -72,7 +72,7 @@ endif
 " Create or update the README (omnils_ files will be regenerated if older than
 " the README).
 let s:need_readme = 0
-let s:first_line = 'Last change in this file: 20/12/2023'
+let s:first_line = 'Last change in this file: 2023-12-24'
 if !filereadable(g:rplugin.compldir . "/README")
     let s:need_readme = 1
 else
@@ -137,11 +137,11 @@ if s:need_readme
                 \ '',
                 \ '  - There is a final \006 at the end of the line.',
                 \ '',
-                \ '  - All single quotes are replaced with the byte \004.',
+                \ '  - All single quotes are replaced with the byte \x13.',
                 \ '',
                 \ '  - All \x12 will later be replaced with single quotes.',
                 \ '',
-                \ '  - Line breaks are indicated by \002.']
+                \ '  - Line breaks are indicated by \x14.']
 
     call writefile(s:readme, g:rplugin.compldir . "/README")
     " Useful to force update of omnils_ files after a change in its format.

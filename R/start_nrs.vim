@@ -70,13 +70,13 @@ function RInitStdout(...)
     endif
     if s:RoutLine != ''
         let rcmd = s:RoutLine . rcmd
-        if rcmd !~ "\002"
+        if rcmd !~ "\x14"
             let s:RoutLine = rcmd
             return
         endif
     endif
     if rcmd =~ '^RWarn: ' || rcmd =~ '^let ' || rcmd =~ '^echo '
-        if rcmd !~ "\002"
+        if rcmd !~ "\x14"
             " R has sent an incomplete line
             let s:RoutLine .= rcmd
             return
@@ -85,7 +85,7 @@ function RInitStdout(...)
 
         " In spite of flush(stdout()), rcmd might be concatenating two commands
         " (https://github.com/jalvesaq/Nvim-R/issues/713)
-        let rcmdl = split(rcmd, "\002", 0)
+        let rcmdl = split(rcmd, "\x14", 0)
         for rcmd in rcmdl
             if rcmd =~ '^RWarn: '
                 let s:RWarn += [substitute(rcmd, '^RWarn: ', '', '')]

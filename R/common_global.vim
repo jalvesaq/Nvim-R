@@ -62,8 +62,8 @@ endfunction
 
 function FormatTxt(text, splt, jn, maxl)
     let maxlen = a:maxl - len(a:jn)
-    let atext = substitute(a:text, "\004", "'", "g")
-    let plist = split(atext, "\002")
+    let atext = substitute(a:text, "\x13", "'", "g")
+    let plist = split(atext, "\x14")
     let txt = ''
     for prg in plist
         let txt .= "\n " . FormatPrgrph(prg, a:splt, a:jn, maxlen)

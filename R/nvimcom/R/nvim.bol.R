@@ -4,7 +4,7 @@ nvim.fix.string <- function(x, sdq = TRUE) {
     x <- gsub("\n", "\\\\n", x)
     x <- gsub("\r", "\\\\r", x)
     x <- gsub("\t", "\\\\t", x)
-    x <- gsub("'", "\004", x)
+    x <- gsub("'", "\x13", x)
     if (sdq) {
         x <- gsub('"', '\\\\"', x)
     } else {
@@ -501,7 +501,7 @@ nvim.buildomnils <- function(p) {
     }
 
     if (need_build) {
-        msg <- paste0("echo 'Building completion list for \"", p, "\"'\002\n")
+        msg <- paste0("echo 'Building completion list for \"", p, "\"'\x14\n")
         cat(msg)
         flush(stdout())
         unlink(c(paste0(bdir, pbuilt), paste0(bdir, fbuilt), paste0(bdir, abuilt)))

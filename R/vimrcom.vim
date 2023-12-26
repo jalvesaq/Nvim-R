@@ -33,9 +33,9 @@ function ROnJobStdout(job_id, msg)
     let cmd = substitute(cmd, '\r', '', 'g')
     " DEBUG: call writefile([cmd], "/dev/shm/nvimrserver_vim_stdout", "a")
 
-    if cmd[0] == "\001"
+    if cmd[0] == "\x11"
         " Check the size of possibly very big string (dictionary for menu completion).
-        let cmdsplt = split(cmd, "\001")
+        let cmdsplt = split(cmd, "\x11")
         let size = str2nr(cmdsplt[0])
         let received = strlen(cmdsplt[1])
         if size == received

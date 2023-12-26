@@ -62,7 +62,7 @@ goal.
 
        if [ "x$REMOTE_DIR_IS_MOUNTED" = "x" ]
        then
-           echo "RWarn: Remote directory '$REMOTE_CACHE_DIR' not mounted. Quit Vim and start it again.\002"
+           echo "RWarn: Remote directory '$REMOTE_CACHE_DIR' not mounted. Quit Vim and start it again.\x14"
            sshfs $REMOTE_LOGIN_HOST:$REMOTE_CACHE_DIR $LOCAL_MOUNT_POINT
            sync
            exit 153
