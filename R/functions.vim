@@ -83,7 +83,10 @@ function FunHiOtherBf()
     " Syntax highlight other buffers
     if has("nvim")
         for bId in nvim_list_bufs()
-            call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
+            let bsyn = nvim_buf_get_option(bId, "syntax")
+            if bsyn == 'r' || bsyn == 'quarto' || bsyn == 'rhelp' || bsyn == 'rmd' || bsyn == 'rnoweb' || bsyn == 'rrst'
+                call nvim_set_option_value("syntax", bsyn, {'buf': bId})
+            endif
         endfor
     else
         silent exe 'set syntax=' . &syntax

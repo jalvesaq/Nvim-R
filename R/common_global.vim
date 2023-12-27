@@ -108,7 +108,7 @@ function RFloatWarn(wmsg)
             call setbufvar(s:warn_buf, '&tabstop', 2)
             call setbufvar(s:warn_buf, '&undolevels', -1)
         endif
-        call nvim_buf_set_option(s:warn_buf, 'syntax', 'off')
+        call nvim_set_option_value('syntax', 'off', {'buf': s:warn_buf})
         call nvim_buf_set_lines(s:warn_buf, 0, -1, v:true, fmsgl)
         let opts = {'relative': 'editor', 'width': realwidth, 'height': wht,
                     \ 'col': winwidth(0) - realwidth,

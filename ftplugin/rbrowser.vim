@@ -68,12 +68,12 @@ function! UpdateOB(what)
         if nvim_win_is_valid(g:rplugin.ob_winnr)
             let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
         endif
-        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:true)
+        call nvim_set_option_value("modifiable", v:true, {'buf': g:rplugin.ob_buf})
         call nvim_buf_set_lines(g:rplugin.ob_buf, 0, nvim_buf_line_count(g:rplugin.ob_buf), 0, fcntt)
         if nvim_win_is_valid(g:rplugin.ob_winnr) && obcur[0] <= len(fcntt)
             call nvim_win_set_cursor(g:rplugin.ob_winnr, obcur)
         endif
-        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:false)
+        call nvim_set_option_value("modifiable", v:false, {'buf': g:rplugin.ob_buf})
     else
         if has_key(g:rplugin, "curbuf") && g:rplugin.curbuf != "Object_Browser"
             let savesb = &switchbuf

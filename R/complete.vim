@@ -204,7 +204,7 @@ function CreateNewFloat(...)
             call setbufvar(s:float_buf, '&tabstop', 2)
             call setbufvar(s:float_buf, '&undolevels', -1)
         endif
-        call nvim_buf_set_option(s:float_buf, 'syntax', 'rdocpreview')
+        call nvim_set_option_value('syntax', 'rdocpreview', {'buf': s:float_buf})
 
         call nvim_buf_set_lines(s:float_buf, 0, -1, v:true, flines)
 

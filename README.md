@@ -28,7 +28,8 @@ Please read the plugin's
 
 ## Screenshots
 
-The animated GIF below shows R running in a Neovim terminal buffer. We can note:
+The animated GIF below shows R running in a [Neovim] terminal buffer. We can
+note:
 
    1. The editor has some code to load Afrobarometer data on Mozambique, R is
       running below the editor and the Object Browser is on the right side. On
@@ -102,10 +103,8 @@ but temporary files are used in a few cases.
 
    - [colorout](https://github.com/jalvesaq/colorout): a package to colorize R's output.
 
-   - [R-Vim-runtime](https://github.com/jalvesaq/R-Vim-runtime): development version of some Vim runtime files for R,
-     including `ftplugin/quarto.vim` and `syntax/quarto.vim`.
+   - [R-Vim-runtime](https://github.com/jalvesaq/R-Vim-runtime): development version of some Vim runtime files for R.
 
-[vim-plug]: https://github.com/junegunn/vim-plug
 [Neovim]: https://github.com/neovim/neovim
 [southernlights]: https://github.com/jalvesaq/southernlights
 [colorout]: https://github.com/jalvesaq/colorout
