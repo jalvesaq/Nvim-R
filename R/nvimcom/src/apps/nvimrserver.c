@@ -31,31 +31,31 @@ HWND RConsole = NULL;
 #define PRI_SIZET "zu"
 #endif
 
-static char strL[8];
-static char strT[8];
-static int OpenDF;
-static int OpenLS;
-static int nvimcom_is_utf8;
-static int allnames;
+static char strL[8];        // String for last element prefix in tree view
+static char strT[8];        // String for tree element prefix in tree view
+static int OpenDF;          // Flag for open data frames in tree view
+static int OpenLS;          // Flag for open lists in tree view
+static int nvimcom_is_utf8; // Flag for UTF-8 encoding
+static int allnames; // Flag for showing all names, including starting with '.'
 
-static char compl_cb[64];
-static char compl_info[64];
-static char compldir[256];
-static char tmpdir[256];
-static char localtmpdir[256];
-static char liblist[576];
-static char globenv[576];
-static int auto_obbr;
-static size_t glbnv_buffer_sz;
-static char *glbnv_buffer;
-static char *compl_buffer;
-static char *finalbuffer;
-static unsigned long compl_buffer_size = 32768;
-static unsigned long fb_size = 1024;
-static int n_omnils_build;
-static int building_omnils;
-static int more_to_build;
-static int has_args_to_read;
+static char compl_cb[64];      // Completion callback buffer
+static char compl_info[64];    // Completion info buffer
+static char compldir[256];     // Directory for completion files
+static char tmpdir[256];       // Temporary directory
+static char localtmpdir[256];  // Local temporary directory
+static char liblist[576];      // Library list buffer
+static char globenv[576];      // Global environment buffer
+static int auto_obbr;          // Auto object browser flag
+static size_t glbnv_buffer_sz; // Global environment buffer size
+static char *glbnv_buffer;     // Global environment buffer
+static char *compl_buffer;     // Completion buffer
+static char *finalbuffer;      // Final buffer for message processing
+static unsigned long compl_buffer_size = 32768; // Completion buffer size
+static unsigned long fb_size = 1024;            // Final buffer size
+static int n_omnils_build;                      // number of omni lists to build
+static int building_omnils;                     // Flag for building Omni lists
+static int more_to_build;                       // Flag for more lists to build
+static int has_args_to_read;                    // Flag for args to read
 
 void omni2ob(void);
 void lib2ob(void);
