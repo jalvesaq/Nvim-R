@@ -12,3 +12,5 @@ ln -sf hooks/pre-commit .git/hooks/pre-commit
 
 As of now, The pre-commit hook will check if
 all staged C file in the repository are formatted correctly.
+
+Make sure `clang-format` is installed on your system.
