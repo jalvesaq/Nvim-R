@@ -57,14 +57,15 @@ static int building_omnils;                     // Flag for building Omni lists
 static int more_to_build;                       // Flag for more lists to build
 static int has_args_to_read;                    // Flag for args to read
 
-void omni2ob(void);
-void lib2ob(void);
-void update_inst_libs(void);
-void update_pkg_list(char *libnms);
-void update_glblenv_buffer(char *g);
-static void build_omnils(void);
-static void finish_bol();
-void complete(const char *id, char *base, char *funcnm, char *args);
+void omni2ob(void);                 // Convert Omni completion to Object Browser
+void lib2ob(void);                  // Convert Library to object browser
+void update_inst_libs(void);        // Update installed libraries
+void update_pkg_list(char *libnms); // Update package list
+void update_glblenv_buffer(char *g); // Update global environment buffer
+static void build_omnils(void);      // Build Omni lists
+static void finish_bol();            // Finish building of lists
+void complete(const char *id, char *base, char *funcnm,
+              char *args); // Perform completion
 
 // List of paths to libraries
 typedef struct libpaths_ {
@@ -183,7 +184,7 @@ static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
     return tmp;
 }
 
-void fix_x13(char *s)
+void fix_x13(char *s) // Replace all instances of '\x13' in the string with '\''
 {
     while (*s != 0) {
         if (*s == '\x13')
@@ -192,7 +193,8 @@ void fix_x13(char *s)
     }
 }
 
-void fix_single_quote(char *s)
+void fix_single_quote(
+    char *s) // Replace all instances of single quote in the string with '\x13'
 {
     while (*s != 0) {
         if (*s == '\'')
@@ -201,7 +203,8 @@ void fix_single_quote(char *s)
     }
 }
 
-int str_here(const char *o, const char *b)
+int str_here(const char *o,
+             const char *b) // Check if string b is at the start of string o
 {
     while(*b && *o){
         if(*o != *b)
@@ -214,12 +217,12 @@ int str_here(const char *o, const char *b)
     return 1;
 }
 
-static void HandleSigTerm(__attribute__((unused))int s)
+static void HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM
 {
     exit(0);
 }
 
-static void RegisterPort(int bindportn)
+static void RegisterPort(int bindportn) // Function to register port number to R
 {
     // Register the port:
     printf("call RSetMyPort('%d')\n", bindportn);
