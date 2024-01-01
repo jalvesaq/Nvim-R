@@ -95,7 +95,7 @@ typedef struct liststatus_ {
   struct liststatus_ *right; // Right node
 } ListStatus;
 
-static ListStatus *listTree = NULL;
+static ListStatus *listTree = NULL; // Root node of the list status tree
 
 // Store information from an R library
 typedef struct pkg_data_ {
@@ -115,24 +115,24 @@ typedef struct pkg_data_ {
 PkgData *pkgList;    // Pointer to first package data
 static int nLibObjs; // Number of library objects
 
-int nGlbEnvFun;
+int nGlbEnvFun; // Number of global environment functions
 
-static int r_conn;
-static char VimSecret[128];
-static int VimSecretLen;
+static int r_conn;          // R connection status flag
+static char VimSecret[128]; // Secret for communication with Vim
+static int VimSecretLen;    // Length of Vim secret
 
 #ifdef WIN32
-static int Tid;
+static int Tid; // Thread ID
 #else
-static pthread_t Tid;
+static pthread_t Tid; // Thread ID
 #endif
-struct sockaddr_in servaddr;
-static int sockfd;
-static int connfd;
+struct sockaddr_in servaddr; // Server address structure
+static int sockfd;           // socket file descriptor
+static int connfd;           // Connection file descriptor
 
 #define Debug_NRS_
-__attribute__((format(printf,1,2)))
-static void Log(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void
+Log(const char *fmt, ...) // Logging function for debugging
 {
 #ifdef Debug_NRS
     va_list argptr;
@@ -145,14 +145,16 @@ static void Log(const char *fmt, ...)
 #endif
 }
 
-static char *str_cat(char* dest, const char* src)
+static char *str_cat(char *dest,
+                     const char *src) // Function to concatenate strings
 {
     while(*dest) dest++;
     while((*dest++ = *src++));
     return --dest;
 }
 
-static int ascii_ic_cmp(const char *a, const char *b)
+static int ascii_ic_cmp(const char *a,
+                        const char *b) // ASCII case-insensitive compare
 {
     int d;
     unsigned x, y;
@@ -172,8 +174,8 @@ static int ascii_ic_cmp(const char *a, const char *b)
     return 0;
 }
 
-
-static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
+static char *grow_buffer(char **b, unsigned long *sz,
+                         unsigned long inc) // Function to grow a buffer
 {
     Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size, fb_size);
     *sz += inc;
@@ -229,7 +231,7 @@ static void RegisterPort(int bindportn) // Function to register port number to R
     fflush(stdout);
 }
 
-static void ParseMsg(char *b)
+static void ParseMsg(char *b) // Parse the message from R
 {
     Log("ParseMsg(): strlen(b) = %" PRI_SIZET "", strlen(b));
 
@@ -285,7 +287,7 @@ static void ParseMsg(char *b)
 
 // Adapted from
 // https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
-static void init_listening()
+static void init_listening() // Initialise listening for incoming connections
 {
     Log("init_listening()");
 #ifdef WIN32
@@ -356,7 +358,7 @@ static void init_listening()
     Log("init_listening: accept succeeded");
 }
 
-static void get_whole_msg(char *b)
+static void get_whole_msg(char *b) // Get the whole message from the socket
 {
     Log("get_whole_msg()");
     char *p;
@@ -408,9 +410,10 @@ static void get_whole_msg(char *b)
 }
 
 #ifdef WIN32
-static void receive_msg(void *arg)
+static void
+receive_msg(void *arg) // Thread function to receive messages on Windows
 #else
-static void *receive_msg()
+static void *receive_msg() // Thread function to receive messages on Unix
 #endif
 {
     size_t blen = VimSecretLen + 9;
@@ -445,7 +448,7 @@ static void *receive_msg()
 #endif
 }
 
-void send_to_nvimcom(char *msg)
+void send_to_nvimcom(char *msg) // Function to send messages to Nvim-R
 {
     Log("TCP out: %s", msg);
     if (connfd) {
@@ -645,7 +648,7 @@ static void ArrangeWindows(char *cachedir){
     fclose(f);
 }
 
-void Windows_setup()
+void Windows_setup() // Setup Windows-specific configurations
 {
     // Set the value of NvimHwnd
     if(getenv("WINDOWID")){
@@ -668,7 +671,7 @@ void Windows_setup()
 }
 #endif
 
-void start_server(void)
+void start_server(void) // Start server and listen for connections
 {
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
@@ -683,7 +686,7 @@ void start_server(void)
 #endif
 }
 
-char *count_sep(char *b1, int *size)
+char *count_sep(char *b1, int *size) // Count separators in buffer
 {
     *size = strlen(b1);
     // Some packages do not export any objects.
