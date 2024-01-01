@@ -1,13 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <dirent.h>
+#include <ctype.h>     // Character type functions
+#include <dirent.h>    // Directory entry
+#include <signal.h>    // Signal handling
+#include <stdarg.h>    // Variable argument functions
+#include <stdio.h>     // Standard input/output definitions
+#include <stdlib.h>    // Standard library
+#include <string.h>    // String handling functions
+#include <sys/stat.h>  // Data returned by the stat() function
+#include <sys/types.h> // Data types
+#include <unistd.h>    // POSIX operating system API
 #ifdef WIN32
 #include <winsock2.h>
 #include <process.h>
