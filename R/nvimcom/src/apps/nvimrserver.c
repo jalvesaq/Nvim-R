@@ -68,29 +68,30 @@ void complete(const char *id, char *base, char *funcnm, char *args);
 
 // List of paths to libraries
 typedef struct libpaths_ {
-    char *path;
-    struct libpaths_ *next;
+  char *path;             // Path to library
+  struct libpaths_ *next; // Next path
 } LibPath;
 
-LibPath *libpaths;
+LibPath *libpaths; // Pointer to first library path
 
 // List of installed libraries
 typedef struct instlibs_ {
-    char *name;
-    char *title;
-    char *descr;
-    int si; // still installed?
-    struct instlibs_ *next;
+  char *name;             // Library name
+  char *title;            // Library title
+  char *descr;            // Library description
+  int si;                 // still installed flag
+  struct instlibs_ *next; // Next installed library
 } InstLibs;
 
-InstLibs *instlibs;
+InstLibs *instlibs; // Pointer to first installed library
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
-    char *key;  // Name of the object or library. Library names are prefixed with "package:"
-    int status; // 0: closed; 1: open
-    struct liststatus_ *left;
-    struct liststatus_ *right;
+  char *key;  // Name of the object or library. Library names are prefixed with
+              // "package:"
+  int status; // 0: closed; 1: open
+  struct liststatus_ *left;  // Left node
+  struct liststatus_ *right; // Right node
 } ListStatus;
 
 static ListStatus *listTree = NULL;
@@ -104,14 +105,14 @@ typedef struct pkg_data_ {
     char *omnils;    // a copy of the omnils_ file
     char *args;      // a copy of the args_ file
     int nobjs;       // number of objects in the omnils_
-    int loaded;      // in libnames_
-    int to_build;    // name sent to build list
-    int built;       // omnils_ found
-    struct pkg_data_ *next;
+    int loaded;             // Loaded flag in libnames_
+    int to_build;           // Flag to indicate if the name is sent to build list
+    int built;              // Flag to indicate if omnils_ found
+    struct pkg_data_ *next; // Pointer to next package data
 } PkgData;
 
-PkgData *pkgList;
-static int nLibObjs;
+PkgData *pkgList;    // Pointer to first package data
+static int nLibObjs; // Number of library objects
 
 int nGlbEnvFun;
 
