@@ -448,7 +448,7 @@ static void *receive_msg() // Thread function to receive messages on Unix
 #endif
 }
 
-void send_to_nvimcom(char *msg) // Function to send messages to Nvim-R
+void send_to_nvimcom(char *msg) // Function to send messages to R (nvimcom package)
 {
     Log("TCP out: %s", msg);
     if (connfd) {
