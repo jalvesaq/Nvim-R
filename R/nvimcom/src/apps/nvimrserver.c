@@ -1,13 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <dirent.h>
+#include <ctype.h>     // Character type functions
+#include <dirent.h>    // Directory entry
+#include <signal.h>    // Signal handling
+#include <stdarg.h>    // Variable argument functions
+#include <stdio.h>     // Standard input/output definitions
+#include <stdlib.h>    // Standard library
+#include <string.h>    // String handling functions
+#include <sys/stat.h>  // Data returned by the stat() function
+#include <sys/types.h> // Data types
+#include <unistd.h>    // POSIX operating system API
 #ifdef WIN32
 #include <winsock2.h>
 #include <process.h>
@@ -31,69 +31,71 @@ HWND RConsole = NULL;
 #define PRI_SIZET "zu"
 #endif
 
-static char strL[8];
-static char strT[8];
-static int OpenDF;
-static int OpenLS;
-static int nvimcom_is_utf8;
-static int allnames;
+static char strL[8];        // String for last element prefix in tree view
+static char strT[8];        // String for tree element prefix in tree view
+static int OpenDF;          // Flag for open data frames in tree view
+static int OpenLS;          // Flag for open lists in tree view
+static int nvimcom_is_utf8; // Flag for UTF-8 encoding
+static int allnames; // Flag for showing all names, including starting with '.'
 
-static char compl_cb[64];
-static char compl_info[64];
-static char compldir[256];
-static char tmpdir[256];
-static char localtmpdir[256];
-static char liblist[576];
-static char globenv[576];
-static int auto_obbr;
-static size_t glbnv_buffer_sz;
-static char *glbnv_buffer;
-static char *compl_buffer;
-static char *finalbuffer;
-static unsigned long compl_buffer_size = 32768;
-static unsigned long fb_size = 1024;
-static int n_omnils_build;
-static int building_omnils;
-static int more_to_build;
-static int has_args_to_read;
+static char compl_cb[64];      // Completion callback buffer
+static char compl_info[64];    // Completion info buffer
+static char compldir[256];     // Directory for completion files
+static char tmpdir[256];       // Temporary directory
+static char localtmpdir[256];  // Local temporary directory
+static char liblist[576];      // Library list buffer
+static char globenv[576];      // Global environment buffer
+static int auto_obbr;          // Auto object browser flag
+static size_t glbnv_buffer_sz; // Global environment buffer size
+static char *glbnv_buffer;     // Global environment buffer
+static char *compl_buffer;     // Completion buffer
+static char *finalbuffer;      // Final buffer for message processing
+static unsigned long compl_buffer_size = 32768; // Completion buffer size
+static unsigned long fb_size = 1024;            // Final buffer size
+static int n_omnils_build;                      // number of omni lists to build
+static int building_omnils;                     // Flag for building Omni lists
+static int more_to_build;                       // Flag for more lists to build
+static int has_args_to_read;                    // Flag for args to read
 
-void omni2ob(void);
-void lib2ob(void);
-void update_inst_libs(void);
-void update_pkg_list(char *libnms);
-void update_glblenv_buffer(char *g);
-static void build_omnils(void);
-static void finish_bol();
-void complete(const char *id, char *base, char *funcnm, char *args);
+void omni2ob(void);                 // Convert Omni completion to Object Browser
+void lib2ob(void);                  // Convert Library to object browser
+void update_inst_libs(void);        // Update installed libraries
+void update_pkg_list(char *libnms); // Update package list
+void update_glblenv_buffer(char *g); // Update global environment buffer
+static void build_omnils(void);      // Build Omni lists
+static void finish_bol();            // Finish building of lists
+void complete(const char *id, char *base, char *funcnm,
+              char *args); // Perform completion
 
 // List of paths to libraries
 typedef struct libpaths_ {
-    char *path;
-    struct libpaths_ *next;
+  char *path;             // Path to library
+  struct libpaths_ *next; // Next path
 } LibPath;
 
-LibPath *libpaths;
+LibPath *libpaths; // Pointer to first library path
 
 // List of installed libraries
 typedef struct instlibs_ {
-    char *name;
-    char *title;
-    char *descr;
-    int si; // still installed?
-    struct instlibs_ *next;
+  char *name;             // Library name
+  char *title;            // Library title
+  char *descr;            // Library description
+  int si;                 // still installed flag
+  struct instlibs_ *next; // Next installed library
 } InstLibs;
 
-InstLibs *instlibs;
+InstLibs *instlibs; // Pointer to first installed library
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
-    char *key;  // Name of the object or library. Library names are prefixed with "package:"
-    int status; // 0: closed; 1: open
-    struct liststatus_ *left;
-    struct liststatus_ *right;
+  char *key;  // Name of the object or library. Library names are prefixed with
+              // "package:"
+  int status; // 0: closed; 1: open
+  struct liststatus_ *left;  // Left node
+  struct liststatus_ *right; // Right node
 } ListStatus;
 
-static ListStatus *listTree = NULL;
+static ListStatus *listTree = NULL; // Root node of the list status tree
 
 // Store information from an R library
 typedef struct pkg_data_ {
@@ -104,33 +106,33 @@ typedef struct pkg_data_ {
     char *omnils;    // a copy of the omnils_ file
     char *args;      // a copy of the args_ file
     int nobjs;       // number of objects in the omnils_
-    int loaded;      // in libnames_
-    int to_build;    // name sent to build list
-    int built;       // omnils_ found
-    struct pkg_data_ *next;
+    int loaded;             // Loaded flag in libnames_
+    int to_build;           // Flag to indicate if the name is sent to build list
+    int built;              // Flag to indicate if omnils_ found
+    struct pkg_data_ *next; // Pointer to next package data
 } PkgData;
 
-PkgData *pkgList;
-static int nLibObjs;
+PkgData *pkgList;    // Pointer to first package data
+static int nLibObjs; // Number of library objects
 
-int nGlbEnvFun;
+int nGlbEnvFun; // Number of global environment functions
 
-static int r_conn;
-static char VimSecret[128];
-static int VimSecretLen;
+static int r_conn;          // R connection status flag
+static char VimSecret[128]; // Secret for communication with Vim
+static int VimSecretLen;    // Length of Vim secret
 
 #ifdef WIN32
-static int Tid;
+static int Tid; // Thread ID
 #else
-static pthread_t Tid;
+static pthread_t Tid; // Thread ID
 #endif
-struct sockaddr_in servaddr;
-static int sockfd;
-static int connfd;
+struct sockaddr_in servaddr; // Server address structure
+static int sockfd;           // socket file descriptor
+static int connfd;           // Connection file descriptor
 
 #define Debug_NRS_
-__attribute__((format(printf,1,2)))
-static void Log(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void
+Log(const char *fmt, ...) // Logging function for debugging
 {
 #ifdef Debug_NRS
     va_list argptr;
@@ -143,14 +145,16 @@ static void Log(const char *fmt, ...)
 #endif
 }
 
-static char *str_cat(char* dest, const char* src)
+static char *str_cat(char *dest,
+                     const char *src) // Function to concatenate strings
 {
     while(*dest) dest++;
     while((*dest++ = *src++));
     return --dest;
 }
 
-static int ascii_ic_cmp(const char *a, const char *b)
+static int ascii_ic_cmp(const char *a,
+                        const char *b) // ASCII case-insensitive compare
 {
     int d;
     unsigned x, y;
@@ -170,8 +174,8 @@ static int ascii_ic_cmp(const char *a, const char *b)
     return 0;
 }
 
-
-static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
+static char *grow_buffer(char **b, unsigned long *sz,
+                         unsigned long inc) // Function to grow a buffer
 {
     Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size, fb_size);
     *sz += inc;
@@ -182,7 +186,7 @@ static char *grow_buffer(char **b, unsigned long *sz, unsigned long inc)
     return tmp;
 }
 
-void fix_x13(char *s)
+void fix_x13(char *s) // Replace all instances of '\x13' in the string with '\''
 {
     while (*s != 0) {
         if (*s == '\x13')
@@ -191,7 +195,8 @@ void fix_x13(char *s)
     }
 }
 
-void fix_single_quote(char *s)
+void fix_single_quote(
+    char *s) // Replace all instances of single quote in the string with '\x13'
 {
     while (*s != 0) {
         if (*s == '\'')
@@ -200,7 +205,8 @@ void fix_single_quote(char *s)
     }
 }
 
-int str_here(const char *o, const char *b)
+int str_here(const char *o,
+             const char *b) // Check if string b is at the start of string o
 {
     while(*b && *o){
         if(*o != *b)
@@ -213,19 +219,19 @@ int str_here(const char *o, const char *b)
     return 1;
 }
 
-static void HandleSigTerm(__attribute__((unused))int s)
+static void HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM
 {
     exit(0);
 }
 
-static void RegisterPort(int bindportn)
+static void RegisterPort(int bindportn) // Function to register port number to R
 {
     // Register the port:
     printf("call RSetMyPort('%d')\n", bindportn);
     fflush(stdout);
 }
 
-static void ParseMsg(char *b)
+static void ParseMsg(char *b) // Parse the message from R
 {
     Log("ParseMsg(): strlen(b) = %" PRI_SIZET "", strlen(b));
 
@@ -281,7 +287,7 @@ static void ParseMsg(char *b)
 
 // Adapted from
 // https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
-static void init_listening()
+static void init_listening() // Initialise listening for incoming connections
 {
     Log("init_listening()");
 #ifdef WIN32
@@ -352,7 +358,7 @@ static void init_listening()
     Log("init_listening: accept succeeded");
 }
 
-static void get_whole_msg(char *b)
+static void get_whole_msg(char *b) // Get the whole message from the socket
 {
     Log("get_whole_msg()");
     char *p;
@@ -404,9 +410,10 @@ static void get_whole_msg(char *b)
 }
 
 #ifdef WIN32
-static void receive_msg(void *arg)
+static void
+receive_msg(void *arg) // Thread function to receive messages on Windows
 #else
-static void *receive_msg()
+static void *receive_msg() // Thread function to receive messages on Unix
 #endif
 {
     size_t blen = VimSecretLen + 9;
@@ -441,7 +448,7 @@ static void *receive_msg()
 #endif
 }
 
-void send_to_nvimcom(char *msg)
+void send_to_nvimcom(char *msg) // Function to send messages to R (nvimcom package)
 {
     Log("TCP out: %s", msg);
     if (connfd) {
@@ -641,7 +648,7 @@ static void ArrangeWindows(char *cachedir){
     fclose(f);
 }
 
-void Windows_setup()
+void Windows_setup() // Setup Windows-specific configurations
 {
     // Set the value of NvimHwnd
     if(getenv("WINDOWID")){
@@ -664,7 +671,7 @@ void Windows_setup()
 }
 #endif
 
-void start_server(void)
+void start_server(void) // Start server and listen for connections
 {
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
@@ -679,7 +686,7 @@ void start_server(void)
 #endif
 }
 
-char *count_sep(char *b1, int *size)
+char *count_sep(char *b1, int *size) // Count separators in buffer
 {
     *size = strlen(b1);
     // Some packages do not export any objects.
