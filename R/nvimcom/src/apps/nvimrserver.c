@@ -9,25 +9,25 @@
 #include <sys/types.h> // Data types
 #include <unistd.h>    // POSIX operating system API
 #ifdef WIN32
-#include <winsock2.h>
-#include <process.h>
-#include <windows.h>
-#include <time.h>
 #include <inttypes.h>
+#include <process.h>
+#include <time.h>
+#include <windows.h>
+#include <winsock2.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
-#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#define bzero(b, len) (memset((b), '\0', (len)), (void)0)
 #ifdef _WIN64
 #define PRI_SIZET PRIu64
 #else
 #define PRI_SIZET PRIu32
 #endif
 #else
-#include <stdint.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdint.h>
+#include <sys/socket.h>
 #define PRI_SIZET "zu"
 #endif
 
@@ -69,46 +69,46 @@ void complete(const char *id, char *base, char *funcnm,
 
 // List of paths to libraries
 typedef struct libpaths_ {
-  char *path;             // Path to library
-  struct libpaths_ *next; // Next path
+    char *path;             // Path to library
+    struct libpaths_ *next; // Next path
 } LibPath;
 
 LibPath *libpaths; // Pointer to first library path
 
 // List of installed libraries
 typedef struct instlibs_ {
-  char *name;             // Library name
-  char *title;            // Library title
-  char *descr;            // Library description
-  int si;                 // still installed flag
-  struct instlibs_ *next; // Next installed library
+    char *name;             // Library name
+    char *title;            // Library title
+    char *descr;            // Library description
+    int si;                 // still installed flag
+    struct instlibs_ *next; // Next installed library
 } InstLibs;
 
 InstLibs *instlibs; // Pointer to first installed library
 
 // Is a list or library open or closed in the Object Browser?
 typedef struct liststatus_ {
-  char *key;  // Name of the object or library. Library names are prefixed with
-              // "package:"
-  int status; // 0: closed; 1: open
-  struct liststatus_ *left;  // Left node
-  struct liststatus_ *right; // Right node
+    char *key; // Name of the object or library. Library names are prefixed with
+               // "package:"
+    int status;                // 0: closed; 1: open
+    struct liststatus_ *left;  // Left node
+    struct liststatus_ *right; // Right node
 } ListStatus;
 
 static ListStatus *listTree = NULL; // Root node of the list status tree
 
 // Store information from an R library
 typedef struct pkg_data_ {
-    char *name;      // the package name
-    char *version;   // the package version number
-    char *fname;     // omnils_ file name in the compldir
-    char *descr;     // the package short description
-    char *omnils;    // a copy of the omnils_ file
-    char *args;      // a copy of the args_ file
-    int nobjs;       // number of objects in the omnils_
-    int loaded;             // Loaded flag in libnames_
-    int to_build;           // Flag to indicate if the name is sent to build list
-    int built;              // Flag to indicate if omnils_ found
+    char *name;    // the package name
+    char *version; // the package version number
+    char *fname;   // omnils_ file name in the compldir
+    char *descr;   // the package short description
+    char *omnils;  // a copy of the omnils_ file
+    char *args;    // a copy of the args_ file
+    int nobjs;     // number of objects in the omnils_
+    int loaded;    // Loaded flag in libnames_
+    int to_build;  // Flag to indicate if the name is sent to build list
+    int built;     // Flag to indicate if omnils_ found
     struct pkg_data_ *next; // Pointer to next package data
 } PkgData;
 
@@ -148,8 +148,10 @@ Log(const char *fmt, ...) // Logging function for debugging
 static char *str_cat(char *dest,
                      const char *src) // Function to concatenate strings
 {
-    while(*dest) dest++;
-    while((*dest++ = *src++));
+    while (*dest)
+        dest++;
+    while ((*dest++ = *src++))
+        ;
     return --dest;
 }
 
@@ -165,7 +167,7 @@ static int ascii_ic_cmp(const char *a,
             x += 32;
         if (y <= 'Z')
             y += 32;
-        d =  x - y;
+        d = x - y;
         if (d != 0)
             return d;
         a++;
@@ -177,7 +179,8 @@ static int ascii_ic_cmp(const char *a,
 static char *grow_buffer(char **b, unsigned long *sz,
                          unsigned long inc) // Function to grow a buffer
 {
-    Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size, fb_size);
+    Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size,
+        fb_size);
     *sz += inc;
     char *tmp = calloc(*sz, sizeof(char));
     strcpy(tmp, *b);
@@ -208,18 +211,19 @@ void fix_single_quote(
 int str_here(const char *o,
              const char *b) // Check if string b is at the start of string o
 {
-    while(*b && *o){
-        if(*o != *b)
+    while (*b && *o) {
+        if (*o != *b)
             return 0;
         o++;
         b++;
     }
-    if(*b)
+    if (*b)
         return 0;
     return 1;
 }
 
-static void HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM
+static void
+HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM
 {
     exit(0);
 }
@@ -238,44 +242,45 @@ static void ParseMsg(char *b) // Parse the message from R
     if (*b == '+') {
         b++;
         switch (*b) {
-            case 'G':
-                b++;
-                update_glblenv_buffer(b);
-                if(auto_obbr)   // Update the Object Browser after sending the message to Nvim-R to
-                    omni2ob();  // avoid unnecessary delays in omni completion
-                break;
-            case 'L':
-                b++;
-                update_pkg_list(b);
-                build_omnils();
-                if(auto_obbr)
-                    lib2ob();
-                break;
-            case 'A': // strtok doesn't work here because "base" might be empty.
-                b++;
-                char *args;
-                char *id = b;
-                char *base = id;
-                while (*base != ';')
-                    base++;
-                *base = 0;
+        case 'G':
+            b++;
+            update_glblenv_buffer(b);
+            if (auto_obbr) // Update the Object Browser after sending the
+                           // message to Nvim-R to
+                omni2ob(); // avoid unnecessary delays in omni completion
+            break;
+        case 'L':
+            b++;
+            update_pkg_list(b);
+            build_omnils();
+            if (auto_obbr)
+                lib2ob();
+            break;
+        case 'A': // strtok doesn't work here because "base" might be empty.
+            b++;
+            char *args;
+            char *id = b;
+            char *base = id;
+            while (*base != ';')
                 base++;
-                char *fnm = base;
-                while (*fnm != ';')
-                    fnm++;
-                *fnm = 0;
+            *base = 0;
+            base++;
+            char *fnm = base;
+            while (*fnm != ';')
                 fnm++;
-                args = fnm;
-                while (*args != 0 && *args != ';')
-                    args++;
-                *args = 0;
+            *fnm = 0;
+            fnm++;
+            args = fnm;
+            while (*args != 0 && *args != ';')
                 args++;
-                b = args;
-                while (*b != 0 && *b != '\n')
-                    b++;
-                *b = 0;
-                complete(id, base, fnm, args);
-                break;
+            *args = 0;
+            args++;
+            b = args;
+            while (*b != 0 && *b != '\n')
+                b++;
+            *b = 0;
+            complete(id, base, fnm, args);
+            break;
         }
         return;
     }
@@ -323,7 +328,7 @@ static void init_listening() // Initialise listening for incoming connections
 
     while (port < 10199) {
         servaddr.sin_port = htons(port);
-        res = bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        res = bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
         if (res == 0)
             break;
         port++;
@@ -348,7 +353,7 @@ static void init_listening() // Initialise listening for incoming connections
     len = sizeof(cli);
 
     // Accept the data packet from client and verification
-    connfd = accept(sockfd, (struct sockaddr*)&cli, &len);
+    connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
     if (connfd < 0) {
         fprintf(stderr, "server accept failed...\n");
         fflush(stderr);
@@ -365,7 +370,7 @@ static void get_whole_msg(char *b) // Get the whole message from the socket
     char tmp[1];
     int msg_size;
 
-    if(strstr(b, VimSecret) != b){
+    if (strstr(b, VimSecret) != b) {
         fprintf(stderr, "Strange string received {%s}: \"%s\"\n", VimSecret, b);
         fflush(stderr);
         return;
@@ -381,7 +386,8 @@ static void get_whole_msg(char *b) // Get the whole message from the socket
     if (finalbuffer) {
         memset(finalbuffer, 0, fb_size);
         if (msg_size > fb_size)
-            finalbuffer = grow_buffer(&finalbuffer, &fb_size, msg_size - fb_size + 1024);
+            finalbuffer =
+                grow_buffer(&finalbuffer, &fb_size, msg_size - fb_size + 1024);
     } else {
         if (msg_size > fb_size)
             fb_size = msg_size + 1024;
@@ -390,7 +396,7 @@ static void get_whole_msg(char *b) // Get the whole message from the socket
 
     p = finalbuffer;
     for (;;) {
-        if((recv(connfd, tmp, 1, 0) == 1))
+        if ((recv(connfd, tmp, 1, 0) == 1))
             *p = *tmp;
         else
             break;
@@ -402,7 +408,8 @@ static void get_whole_msg(char *b) // Get the whole message from the socket
 
     // FIXME: Delete this check when the code proved to be reliable
     if (strlen(finalbuffer) != msg_size) {
-        fprintf(stderr, "Divergent TCP message size: %" PRI_SIZET " x %d\n", strlen(p), msg_size);
+        fprintf(stderr, "Divergent TCP message size: %" PRI_SIZET " x %d\n",
+                strlen(p), msg_size);
         fflush(stderr);
     }
 
@@ -436,7 +443,10 @@ static void *receive_msg() // Thread function to receive messages on Unix
 #endif
             if (rlen != -1 && rlen != 0) {
                 fprintf(stderr, "TCP socket -1: restarting...\n");
-                fprintf(stderr, "Wrong TCP data length: %" PRI_SIZET " x %" PRI_SIZET "\n", blen, rlen);
+                fprintf(stderr,
+                        "Wrong TCP data length: %" PRI_SIZET " x %" PRI_SIZET
+                        "\n",
+                        blen, rlen);
                 fflush(stderr);
                 break;
             }
@@ -448,7 +458,8 @@ static void *receive_msg() // Thread function to receive messages on Unix
 #endif
 }
 
-void send_to_nvimcom(char *msg) // Function to send messages to R (nvimcom package)
+void send_to_nvimcom(
+    char *msg) // Function to send messages to R (nvimcom package)
 {
     Log("TCP out: %s", msg);
     if (connfd) {
@@ -465,15 +476,15 @@ void send_to_nvimcom(char *msg) // Function to send messages to R (nvimcom packa
 }
 
 #ifdef WIN32
-static void SendToRConsole(char *aString){
-    if(!RConsole){
+static void SendToRConsole(char *aString) {
+    if (!RConsole) {
         fprintf(stderr, "R Console window ID not defined [SendToRConsole]\n");
         fflush(stderr);
         return;
     }
 
     // The application (such as NeovimQt) might not define $WINDOWID
-    if(!NvimHwnd)
+    if (!NvimHwnd)
         NvimHwnd = GetForegroundWindow();
 
     char msg[1024];
@@ -485,8 +496,8 @@ static void SendToRConsole(char *aString){
     PostMessage(RConsole, WM_NULL, 0, 0);
 }
 
-static void RClearConsole(){
-    if(!RConsole){
+static void RClearConsole() {
+    if (!RConsole) {
         fprintf(stderr, "R Console window ID not defined [RClearConsole]\n");
         fflush(stderr);
         return;
@@ -502,21 +513,21 @@ static void RClearConsole(){
     PostMessage(RConsole, WM_NULL, 0, 0);
 }
 
-static void SaveWinPos(char *cachedir){
-    if(!RConsole){
+static void SaveWinPos(char *cachedir) {
+    if (!RConsole) {
         fprintf(stderr, "R Console window ID not defined [SaveWinPos]\n");
         fflush(stderr);
         return;
     }
 
     RECT rcR, rcV;
-    if(!GetWindowRect(RConsole, &rcR)){
+    if (!GetWindowRect(RConsole, &rcR)) {
         fprintf(stderr, "Could not get R Console position\n");
         fflush(stderr);
         return;
     }
 
-    if(!GetWindowRect(NvimHwnd, &rcV)){
+    if (!GetWindowRect(NvimHwnd, &rcV)) {
         fprintf(stderr, "Could not get Neovim position\n");
         fflush(stderr);
         return;
@@ -530,19 +541,18 @@ static void SaveWinPos(char *cachedir){
     char fname[1032];
     snprintf(fname, 1031, "%s/win_pos", cachedir);
     FILE *f = fopen(fname, "w");
-    if(f == NULL){
+    if (f == NULL) {
         fprintf(stderr, "Could not write to '%s'\n", fname);
         fflush(stderr);
         return;
     }
-    fprintf(f, "%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n",
-            rcR.left, rcR.top, rcR.right, rcR.bottom,
-            rcV.left, rcV.top, rcV.right, rcV.bottom);
+    fprintf(f, "%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n", rcR.left, rcR.top,
+            rcR.right, rcR.bottom, rcV.left, rcV.top, rcV.right, rcV.bottom);
     fclose(f);
 }
 
-static void ArrangeWindows(char *cachedir){
-    if(!RConsole){
+static void ArrangeWindows(char *cachedir) {
+    if (!RConsole) {
         fprintf(stderr, "R Console window ID not defined [ArrangeWindows]\n");
         fflush(stderr);
         return;
@@ -551,7 +561,7 @@ static void ArrangeWindows(char *cachedir){
     char fname[1032];
     snprintf(fname, 1031, "%s/win_pos", cachedir);
     FILE *f = fopen(fname, "r");
-    if(f == NULL){
+    if (f == NULL) {
         fprintf(stderr, "Could not read '%s'\n", fname);
         fflush(stderr);
         return;
@@ -559,7 +569,7 @@ static void ArrangeWindows(char *cachedir){
 
     RECT rcR, rcV;
     char b[32];
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcR.left = atol(b);
     } else {
         fprintf(stderr, "Error reading R left position\n");
@@ -567,7 +577,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcR.top = atol(b);
     } else {
         fprintf(stderr, "Error reading R top position\n");
@@ -575,7 +585,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcR.right = atol(b);
     } else {
         fprintf(stderr, "Error reading R right position\n");
@@ -583,7 +593,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcR.bottom = atol(b);
     } else {
         fprintf(stderr, "Error reading R bottom position\n");
@@ -591,7 +601,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcV.left = atol(b);
     } else {
         fprintf(stderr, "Error reading Neovim left position\n");
@@ -599,7 +609,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcV.top = atol(b);
     } else {
         fprintf(stderr, "Error reading Neovim top position\n");
@@ -607,7 +617,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcV.right = atol(b);
     } else {
         fprintf(stderr, "Error reading Neovim right position\n");
@@ -615,7 +625,7 @@ static void ArrangeWindows(char *cachedir){
         fclose(f);
         return;
     }
-    if((fgets(b, 31, f))){
+    if ((fgets(b, 31, f))) {
         rcV.bottom = atol(b);
     } else {
         fprintf(stderr, "Error reading Neovim bottom position\n");
@@ -624,10 +634,10 @@ static void ArrangeWindows(char *cachedir){
         return;
     }
 
-    if(rcR.left > 0 && rcR.top > 0 && rcR.right > 0 && rcR.bottom > 0 &&
-            rcR.right > rcR.left && rcR.bottom > rcR.top){
-        if(!SetWindowPos(RConsole, HWND_TOP,
-                    rcR.left, rcR.top, rcR.right, rcR.bottom, 0)){
+    if (rcR.left > 0 && rcR.top > 0 && rcR.right > 0 && rcR.bottom > 0 &&
+        rcR.right > rcR.left && rcR.bottom > rcR.top) {
+        if (!SetWindowPos(RConsole, HWND_TOP, rcR.left, rcR.top, rcR.right,
+                          rcR.bottom, 0)) {
             fprintf(stderr, "Error positioning RConsole window\n");
             fflush(stderr);
             fclose(f);
@@ -635,10 +645,10 @@ static void ArrangeWindows(char *cachedir){
         }
     }
 
-    if(rcV.left > 0 && rcV.top > 0 && rcV.right > 0 && rcV.bottom > 0 &&
-            rcV.right > rcV.left && rcV.bottom > rcV.top){
-        if(!SetWindowPos(NvimHwnd, HWND_TOP,
-                    rcV.left, rcV.top, rcV.right, rcV.bottom, 0)){
+    if (rcV.left > 0 && rcV.top > 0 && rcV.right > 0 && rcV.bottom > 0 &&
+        rcV.right > rcV.left && rcV.bottom > rcV.top) {
+        if (!SetWindowPos(NvimHwnd, HWND_TOP, rcV.left, rcV.top, rcV.right,
+                          rcV.bottom, 0)) {
             fprintf(stderr, "Error positioning Neovim window\n");
             fflush(stderr);
         }
@@ -651,7 +661,7 @@ static void ArrangeWindows(char *cachedir){
 void Windows_setup() // Setup Windows-specific configurations
 {
     // Set the value of NvimHwnd
-    if(getenv("WINDOWID")){
+    if (getenv("WINDOWID")) {
 #ifdef _WIN64
         NvimHwnd = (HWND)atoll(getenv("WINDOWID"));
 #else
@@ -660,9 +670,9 @@ void Windows_setup() // Setup Windows-specific configurations
     } else {
         // The application (such as NeovimQt) might not define $WINDOWID
         NvimHwnd = FindWindow(NULL, "Neovim");
-        if(!NvimHwnd){
+        if (!NvimHwnd) {
             NvimHwnd = FindWindow(NULL, "nvim");
-            if(!NvimHwnd){
+            if (!NvimHwnd) {
                 fprintf(stderr, "\"Neovim\" window not found\n");
                 fflush(stderr);
             }
@@ -690,16 +700,16 @@ char *count_sep(char *b1, int *size) // Count separators in buffer
 {
     *size = strlen(b1);
     // Some packages do not export any objects.
-    if(*size == 1)
+    if (*size == 1)
         return b1;
 
     char *s = b1;
     int n = 0;
-    while(*s){
-        if(*s == '\006')
+    while (*s) {
+        if (*s == '\006')
             n++;
-        if(*s == '\n'){
-            if(n == 7){
+        if (*s == '\n') {
+            if (n == 7) {
                 n = 0;
             } else {
                 char b[64];
@@ -716,10 +726,9 @@ char *count_sep(char *b1, int *size) // Count separators in buffer
     return b1;
 }
 
-char *read_file(const char *fn, int verbose)
-{
+char *read_file(const char *fn, int verbose) {
     FILE *f = fopen(fn, "rb");
-    if(!f){
+    if (!f) {
         if (verbose) {
             fprintf(stderr, "Error opening '%s'", fn);
             fflush(stderr);
@@ -729,21 +738,21 @@ char *read_file(const char *fn, int verbose)
     fseek(f, 0L, SEEK_END);
     long sz = ftell(f);
     rewind(f);
-    if(sz == 0){
+    if (sz == 0) {
         // List of objects is empty. Perhaps no object was created yet.
         fclose(f);
         return NULL;
     }
 
     char *buffer = calloc(1, sz + 1);
-    if(!buffer){
+    if (!buffer) {
         fclose(f);
         fputs("Error allocating memory\n", stderr);
         fflush(stderr);
         return NULL;
     }
 
-    if(1 != fread(buffer, sz, 1 , f)){
+    if (1 != fread(buffer, sz, 1, f)) {
         fclose(f);
         free(buffer);
         fprintf(stderr, "Error reading '%s'\n", fn);
@@ -754,18 +763,17 @@ char *read_file(const char *fn, int verbose)
     return buffer;
 }
 
-void *check_omils_buffer(char *buffer, int *size)
-{
+void *check_omils_buffer(char *buffer, int *size) {
     // Ensure that there are exactly 7 \006 between new line characters
     buffer = count_sep(buffer, size);
 
-    if(!buffer)
+    if (!buffer)
         return NULL;
 
-    if(buffer){
+    if (buffer) {
         char *p = buffer;
-        while(*p){
-            if(*p == '\006')
+        while (*p) {
+            if (*p == '\006')
                 *p = 0;
             if (*p == '\'')
                 *p = '\x13';
@@ -777,18 +785,16 @@ void *check_omils_buffer(char *buffer, int *size)
     return buffer;
 }
 
-char *read_omnils_file(const char *fn, int *size)
-{
+char *read_omnils_file(const char *fn, int *size) {
     Log("read_omnils_file(%s)", fn);
-    char * buffer = read_file(fn, 1);
-    if(!buffer)
+    char *buffer = read_file(fn, 1);
+    if (!buffer)
         return NULL;
 
     return check_omils_buffer(buffer, size);
 }
 
-char *get_pkg_descr(const char *pkgnm)
-{
+char *get_pkg_descr(const char *pkgnm) {
     Log("get_pkg_descr(%s)", pkgnm);
     InstLibs *il = instlibs;
     while (il) {
@@ -803,50 +809,47 @@ char *get_pkg_descr(const char *pkgnm)
     return NULL;
 }
 
-void pkg_delete(PkgData *pd)
-{
+void pkg_delete(PkgData *pd) {
     free(pd->name);
     free(pd->version);
     free(pd->fname);
-    if(pd->descr)
+    if (pd->descr)
         free(pd->descr);
-    if(pd->omnils)
+    if (pd->omnils)
         free(pd->omnils);
-    if(pd->args)
+    if (pd->args)
         free(pd->args);
     free(pd);
 }
 
-void load_pkg_data(PkgData *pd)
-{
+void load_pkg_data(PkgData *pd) {
     int size;
     if (!pd->descr)
         pd->descr = get_pkg_descr(pd->name);
     pd->omnils = read_omnils_file(pd->fname, &size);
     pd->nobjs = 0;
-    if(pd->omnils){
+    if (pd->omnils) {
         pd->loaded = 1;
-        if(size > 2)
-            for(int i = 0; i < size; i++)
-                if(pd->omnils[i] == '\n')
+        if (size > 2)
+            for (int i = 0; i < size; i++)
+                if (pd->omnils[i] == '\n')
                     pd->nobjs++;
     }
 }
 
-PkgData *new_pkg_data(const char *nm, const char *vrsn)
-{
+PkgData *new_pkg_data(const char *nm, const char *vrsn) {
     char buf[1024];
 
     PkgData *pd = calloc(1, sizeof(PkgData));
-    pd->name = malloc((strlen(nm)+1) * sizeof(char));
+    pd->name = malloc((strlen(nm) + 1) * sizeof(char));
     strcpy(pd->name, nm);
-    pd->version = malloc((strlen(vrsn)+1) * sizeof(char));
+    pd->version = malloc((strlen(vrsn) + 1) * sizeof(char));
     strcpy(pd->version, vrsn);
     pd->descr = get_pkg_descr(pd->name);
     pd->loaded = 1;
 
     snprintf(buf, 1023, "%s/omnils_%s_%s", compldir, nm, vrsn);
-    pd->fname = malloc((strlen(buf)+1) * sizeof(char));
+    pd->fname = malloc((strlen(buf) + 1) * sizeof(char));
     strcpy(pd->fname, buf);
 
     // Check if both fun_ and omnils_ exist
@@ -861,31 +864,28 @@ PkgData *new_pkg_data(const char *nm, const char *vrsn)
     return pd;
 }
 
-PkgData *get_pkg(const char *nm)
-{
-    if(!pkgList)
+PkgData *get_pkg(const char *nm) {
+    if (!pkgList)
         return NULL;
 
     PkgData *pd = pkgList;
-    do{
-        if(strcmp(pd->name, nm) == 0)
+    do {
+        if (strcmp(pd->name, nm) == 0)
             return pd;
         pd = pd->next;
-    } while(pd);
+    } while (pd);
 
     return NULL;
 }
 
-void add_pkg(const char *nm, const char *vrsn)
-{
+void add_pkg(const char *nm, const char *vrsn) {
     PkgData *tmp = pkgList;
     pkgList = new_pkg_data(nm, vrsn);
     pkgList->next = tmp;
 }
 
 // Get a string with R code, save it in a file and source the file with R.
-static int run_R_code(const char *s, int senderror)
-{
+static int run_R_code(const char *s, int senderror) {
     char fnm[1024];
 
     snprintf(fnm, 1023, "%s/bo_code.R", tmpdir);
@@ -918,14 +918,14 @@ static int run_R_code(const char *s, int senderror)
     HANDLE g_hChildStd_OUT_Rd = NULL;
     HANDLE g_hChildStd_OUT_Wr = NULL;
 
-    if (! CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
+    if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) {
         fprintf(stderr, "CreatePipe error\n");
         fflush(stderr);
         return 1;
     }
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
-    if (! SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
+    if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) {
         fprintf(stderr, "SetHandleInformation error\n");
         fflush(stderr);
         return 1;
@@ -951,7 +951,6 @@ static int run_R_code(const char *s, int senderror)
 
     // Create the child process.
 
-
     char b[1024];
     snprintf(b, 1023, "NVIMR_TMPDIR=%s", getenv("NVIMR_REMOTE_TMPDIR"));
     putenv(b);
@@ -962,18 +961,18 @@ static int run_R_code(const char *s, int senderror)
              getenv("NVIMR_RPATH"));
 
     res = CreateProcess(NULL,
-            b,  // Command line
-            NULL,          // process security attributes
-            NULL,          // primary thread security attributes
-            TRUE,          // handles are inherited
-            CREATE_NO_WINDOW,             // creation flags
-            NULL,          // use parent's environment
-            tdir,             // use tmpdir directory
-            &si,  // STARTUPINFO pointer
-            &pi);  // receives PROCESS_INFORMATION
+                        b,                // Command line
+                        NULL,             // process security attributes
+                        NULL,             // primary thread security attributes
+                        TRUE,             // handles are inherited
+                        CREATE_NO_WINDOW, // creation flags
+                        NULL,             // use parent's environment
+                        tdir,             // use tmpdir directory
+                        &si,              // STARTUPINFO pointer
+                        &pi);             // receives PROCESS_INFORMATION
 
     // If an error occurs, exit the application.
-    if (! res) {
+    if (!res) {
         fprintf(stderr, "CreateProcess error: %ld\n", GetLastError());
         fflush(stderr);
         return 0;
@@ -995,7 +994,8 @@ static int run_R_code(const char *s, int senderror)
     CloseHandle(pi.hThread);
 
     // Close handle to the stderr pipes no longer needed by the child process.
-    // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+    // If they are not explicitly closed, there is no way to recognize that the
+    // child process has ended.
     CloseHandle(g_hChildStd_OUT_Wr);
 
     // Read output from the child process's pipe for STDOUT
@@ -1029,9 +1029,11 @@ static int run_R_code(const char *s, int senderror)
 #else
     char b[1024];
     snprintf(b, 1023,
-            "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore --no-save --no-echo --slave -f \"%s/bo_code.R\""
-            " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"",
-            getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"), getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
+             "NVIMR_TMPDIR=%s NVIMR_COMPLDIR=%s '%s' --quiet --no-restore "
+             "--no-save --no-echo --slave -f \"%s/bo_code.R\""
+             " > \"%s/run_R_stdout\" 2> \"%s/run_R_stderr\"",
+             getenv("NVIMR_REMOTE_TMPDIR"), getenv("NVIMR_REMOTE_COMPLDIR"),
+             getenv("NVIMR_RPATH"), tmpdir, tmpdir, tmpdir);
     Log("R command: %s", b);
 
     int stt = system(b);
@@ -1074,13 +1076,15 @@ void parse_descr(char *descr, const char *fnm) {
     dsc = NULL;
     InstLibs *lib, *ptr, *prev;
     while (k < l) {
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Title: ")) {
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) &&
+            str_here(descr + k, "Title: ")) {
             k += 7;
             ttl = descr + k;
             k = read_field_data(descr, k);
             descr[k] = 0;
         }
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) && str_here(descr + k, "Description: ")) {
+        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) &&
+            str_here(descr + k, "Description: ")) {
             k += 13;
             dsc = descr + k;
             k = read_field_data(descr, k);
@@ -1135,8 +1139,7 @@ void parse_descr(char *descr, const char *fnm) {
     }
 }
 
-void update_inst_libs(void)
-{
+void update_inst_libs(void) {
     Log("update_inst_libs()");
     DIR *d;
     struct dirent *dir;
@@ -1168,7 +1171,8 @@ void update_inst_libs(void)
                     }
                     if (r)
                         continue;
-                    snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path, dir->d_name);
+                    snprintf(fname, 511, "%s/%s/DESCRIPTION", lp->path,
+                             dir->d_name);
                     descr = read_file(fname, 1);
                     if (descr) {
                         n++;
@@ -1182,20 +1186,20 @@ void update_inst_libs(void)
         lp = lp->next;
     }
 
-
     // New libraries found. Overwrite ~/.cache/Nvim-R/inst_libs
     if (n) {
         char fname[1032];
         snprintf(fname, 1031, "%s/inst_libs", compldir);
         FILE *f = fopen(fname, "w");
-        if(f == NULL){
+        if (f == NULL) {
             fprintf(stderr, "Could not write to '%s'\n", fname);
             fflush(stderr);
         } else {
             il = instlibs;
             while (il) {
                 if (il->si)
-                    fprintf(f, "%s\006%s\006%s\n", il->name, il->title, il->descr);
+                    fprintf(f, "%s\006%s\006%s\n", il->name, il->title,
+                            il->descr);
                 il = il->next;
             }
             fclose(f);
@@ -1203,8 +1207,7 @@ void update_inst_libs(void)
     }
 }
 
-static void read_args(void)
-{
+static void read_args(void) {
     if (more_to_build) {
         has_args_to_read = 1;
         return;
@@ -1217,7 +1220,8 @@ static void read_args(void)
     pkg = pkgList;
     while (pkg) {
         if (!pkg->args) {
-            snprintf(buf, 1023, "%s/args_%s_%s", compldir, pkg->name, pkg->version);
+            snprintf(buf, 1023, "%s/args_%s_%s", compldir, pkg->name,
+                     pkg->version);
             pkg->args = read_file(buf, 0);
             if (pkg->args) {
                 p = pkg->args;
@@ -1235,8 +1239,7 @@ static void read_args(void)
 
 // Read the list of libraries loaded in R, and run another R instance to build
 // the omnils_ and fun_ files in compldir.
-static void build_omnils(void)
-{
+static void build_omnils(void) {
     Log("build_omnils()");
     unsigned long nsz;
 
@@ -1261,7 +1264,8 @@ static void build_omnils(void)
         if (pkg->to_build == 0) {
             nsz = strlen(pkg->name) + 1024 + (p - compl_buffer);
             if (compl_buffer_size < nsz)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
+                p = grow_buffer(&compl_buffer, &compl_buffer_size,
+                                nsz - compl_buffer_size);
             if (k == 0)
                 snprintf(buf, 63, "'%s'", pkg->name);
             else
@@ -1286,8 +1290,9 @@ static void build_omnils(void)
     }
     building_omnils = 0;
 
-    // If this function was called while it was running, build the remaining cache
-    // files before saving the list of libraries whose cache files were built.
+    // If this function was called while it was running, build the remaining
+    // cache files before saving the list of libraries whose cache files were
+    // built.
     if (more_to_build) {
         more_to_build = 0;
         build_omnils();
@@ -1298,7 +1303,8 @@ static void build_omnils(void)
     struct stat filestat;
     if ((stat(buf, &filestat) == 0)) {
         time_t t = time(&t);
-        t = t - filestat.st_mtime; // st_mtime is a macro defined as st_mtim.tv_sec;
+        t = t -
+            filestat.st_mtime; // st_mtime is a macro defined as st_mtim.tv_sec;
         if (t < 3600)
             return;
         unlink(buf);
@@ -1309,8 +1315,7 @@ static void build_omnils(void)
 }
 
 // Called asynchronously and only if an omnils_ file was actually built.
-static void finish_bol()
-{
+static void finish_bol() {
     Log("finish_bol()");
 
     char buf[1024];
@@ -1361,7 +1366,8 @@ char *complete_instlibs(char *p, const char *base) {
     while (il) {
         len = strlen(il->descr) + (p - compl_buffer) + 1024;
         if (compl_buffer_size < len)
-            p = grow_buffer(&compl_buffer, &compl_buffer_size, len - compl_buffer_size);
+            p = grow_buffer(&compl_buffer, &compl_buffer_size,
+                            len - compl_buffer_size);
 
         if (str_here(il->name, base) && il->si) {
             p = str_cat(p, "{'word': '");
@@ -1378,8 +1384,7 @@ char *complete_instlibs(char *p, const char *base) {
     return p;
 }
 
-void update_pkg_list(char *libnms)
-{
+void update_pkg_list(char *libnms) {
     Log("update_pkg_list()");
     char buf[512];
     char *s, *nm, *vrsn;
@@ -1387,7 +1392,7 @@ void update_pkg_list(char *libnms)
 
     // Consider that all packages were unloaded
     pkg = pkgList;
-    while(pkg){
+    while (pkg) {
         pkg->loaded = 0;
         pkg = pkg->next;
     }
@@ -1397,12 +1402,12 @@ void update_pkg_list(char *libnms)
         Log("update_pkg_list != NULL");
         while (*libnms) {
             nm = libnms;
-            while(*libnms != '\003')
+            while (*libnms != '\003')
                 libnms++;
             *libnms = 0;
             libnms++;
             vrsn = libnms;
-            while(*libnms != '\004')
+            while (*libnms != '\004')
                 libnms++;
             *libnms = 0;
             libnms++;
@@ -1428,19 +1433,19 @@ void update_pkg_list(char *libnms)
 
         snprintf(buf, 511, "%s/libnames_%s", tmpdir, getenv("NVIMR_ID"));
         FILE *flib = fopen(buf, "r");
-        if(!flib){
+        if (!flib) {
             fprintf(stderr, "Failed to open \"%s\"\n", buf);
             fflush(stderr);
             return;
         }
 
-        while((s = fgets(lbnm, 127, flib))){
-            while(*s != '_')
+        while ((s = fgets(lbnm, 127, flib))) {
+            while (*s != '_')
                 s++;
             *s = 0;
             s++;
             vrsn = s;
-            while(*s != '\n')
+            while (*s != '\n')
                 s++;
             *s = 0;
 
@@ -1454,20 +1459,20 @@ void update_pkg_list(char *libnms)
     }
 
     // No command run yet
-    if(!pkgList)
+    if (!pkgList)
         return;
 
     // Delete data from unloaded packages to ensure that reloaded packages go
     // to the bottom of the Object Browser list
     pkg = pkgList;
-    if(pkg->loaded == 0){
+    if (pkg->loaded == 0) {
         pkgList = pkg->next;
         pkg_delete(pkg);
     } else {
         PkgData *prev = pkg;
         pkg = pkg->next;
-        while(pkg){
-            if(pkg->loaded == 0){
+        while (pkg) {
+            if (pkg->loaded == 0) {
                 prev->next = pkg->next;
                 pkg_delete(pkg);
                 pkg = prev->next;
@@ -1479,51 +1484,47 @@ void update_pkg_list(char *libnms)
     }
 }
 
-ListStatus* search(const char *s)
-{
+ListStatus *search(const char *s) {
     ListStatus *node = listTree;
     int cmp = strcmp(node->key, s);
-    while(node && cmp != 0){
-        if(cmp > 0)
+    while (node && cmp != 0) {
+        if (cmp > 0)
             node = node->right;
         else
             node = node->left;
-        if(node)
+        if (node)
             cmp = strcmp(node->key, s);
     }
-    if(cmp == 0)
+    if (cmp == 0)
         return node;
     else
         return NULL;
 }
 
-ListStatus* new_ListStatus(const char *s, int stt)
-{
+ListStatus *new_ListStatus(const char *s, int stt) {
     ListStatus *p;
     p = calloc(1, sizeof(ListStatus));
-    p->key = malloc((strlen(s)+1)*sizeof(char));
+    p->key = malloc((strlen(s) + 1) * sizeof(char));
     strcpy(p->key, s);
     p->status = stt;
     return p;
 }
 
-ListStatus* insert(ListStatus *root, const char *s, int stt)
-{
-    if(!root)
+ListStatus *insert(ListStatus *root, const char *s, int stt) {
+    if (!root)
         return new_ListStatus(s, stt);
     int cmp = strcmp(root->key, s);
-    if(cmp > 0)
+    if (cmp > 0)
         root->right = insert(root->right, s, stt);
     else
         root->left = insert(root->left, s, stt);
     return root;
 }
 
-int get_list_status(const char *s, int stt)
-{
-    if(listTree){
+int get_list_status(const char *s, int stt) {
+    if (listTree) {
         ListStatus *p = search(s);
-        if(p)
+        if (p)
             return p->status;
         insert(listTree, s, stt);
         return stt;
@@ -1532,15 +1533,14 @@ int get_list_status(const char *s, int stt)
     return stt;
 }
 
-void toggle_list_status(const char *s)
-{
+void toggle_list_status(const char *s) {
     ListStatus *p = search(s);
-    if(p)
+    if (p)
         p->status = !p->status;
 }
 
-static const char *write_ob_line(const char *p, const char *bs, char *prfx, int closeddf, FILE *fl)
-{
+static const char *write_ob_line(const char *p, const char *bs, char *prfx,
+                                 int closeddf, FILE *fl) {
     char base1[128];
     char base2[128];
     char prefix[128];
@@ -1549,7 +1549,8 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     char descr[160];
     const char *f[7];
     const char *s;    // Diagnostic pointer
-    const char *bsnm; // Name of object including its parent list, data.frame or S4 object
+    const char *bsnm; // Name of object including its parent list, data.frame or
+                      // S4 object
     int df;           // Is data.frame? If yes, start open unless closeddf = 1
     int i;
     int ne;
@@ -1560,21 +1561,21 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     p += strlen(bs);
 
     i = 0;
-    while(i < 7){
+    while (i < 7) {
         f[i] = p;
         i++;
-        while(*p != 0)
+        while (*p != 0)
             p++;
         p++;
     }
-    while(*p != '\n' && *p != 0)
+    while (*p != '\n' && *p != 0)
         p++;
-    if(*p == '\n')
+    if (*p == '\n')
         p++;
 
-    if(closeddf)
+    if (closeddf)
         df = 0;
-    else if(f[1][0] == '$')
+    else if (f[1][0] == '$')
         df = OpenDF;
     else
         df = OpenLS;
@@ -1592,16 +1593,16 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     nm[i] = 0;
 
     // Replace \x13 with single quote
-    if(f[1][0] == '\003')
+    if (f[1][0] == '\003')
         s = f[5];
     else
         s = f[6];
-    if(s[0] == 0){
+    if (s[0] == 0) {
         descr[0] = 0;
     } else {
         i = 0;
-        while(s[i] && i < 159){
-            if(s[i] == '\x13')
+        while (s[i] && i < 159) {
+            if (s[i] == '\x13')
                 descr[i] = '\'';
             else
                 descr[i] = s[i];
@@ -1610,36 +1611,40 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
         descr[i] = 0;
     }
 
-    if(!(bsnm[0] == '.' && allnames == 0)){
-        if(f[1][0] == '\003')
+    if (!(bsnm[0] == '.' && allnames == 0)) {
+        if (f[1][0] == '\003')
             fprintf(fl, "   %s(#%s\t%s\n", prfx, nm, descr);
         else
             fprintf(fl, "   %s%c#%s\t%s\n", prfx, f[1][0], nm, descr);
     }
 
-    if(*p == 0)
+    if (*p == 0)
         return p;
 
-    if(f[1][0] == '[' || f[1][0] == '$' || f[1][0] == '<' || f[1][0] == ':'){
+    if (f[1][0] == '[' || f[1][0] == '$' || f[1][0] == '<' || f[1][0] == ':') {
         s = f[6];
-        s++; s++; s++; // Number of elements (list)
-        if(f[1][0] == '$'){
-            while(*s && *s != ' ')
+        s++;
+        s++;
+        s++; // Number of elements (list)
+        if (f[1][0] == '$') {
+            while (*s && *s != ' ')
                 s++;
             s++; // Number of columns (data.frame)
         }
         ne = atoi(s);
-        if(f[1][0] == '[' || f[1][0] == '$' || f[1][0] == ':'){
-            snprintf(base1, 127, "%s$", bsnm); // Named list
+        if (f[1][0] == '[' || f[1][0] == '$' || f[1][0] == ':') {
+            snprintf(base1, 127, "%s$", bsnm);  // Named list
             snprintf(base2, 127, "%s[[", bsnm); // Unnamed list
         } else {
             snprintf(base1, 127, "%s@", bsnm); // S4 object
-            snprintf(base2, 127, "%s[[", bsnm); // S4 object always have names but base2 must be defined
+            snprintf(
+                base2, 127, "%s[[",
+                bsnm); // S4 object always have names but base2 must be defined
         }
 
-        if(get_list_status(bsnm, df) == 0){
-            while(str_here(p, base1) || str_here(p, base2)){
-                while(*p != '\n')
+        if (get_list_status(bsnm, df) == 0) {
+            while (str_here(p, base1) || str_here(p, base2)) {
+                while (*p != '\n')
                     p++;
                 p++;
                 nLibObjs--;
@@ -1647,21 +1652,25 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
             return p;
         }
 
-        if(str_here(p, base1) == 0 && str_here(p, base2) == 0)
+        if (str_here(p, base1) == 0 && str_here(p, base2) == 0)
             return p;
 
         int len = strlen(prfx);
-        if(nvimcom_is_utf8){
+        if (nvimcom_is_utf8) {
             int j = 0, i = 0;
-            while(i < len){
-                if(prfx[i] == '\xe2'){
+            while (i < len) {
+                if (prfx[i] == '\xe2') {
                     i += 3;
-                    if(prfx[i-1] == '\x80' || prfx[i-1] == '\x94'){
-                        newprfx[j] = ' '; j++;
+                    if (prfx[i - 1] == '\x80' || prfx[i - 1] == '\x94') {
+                        newprfx[j] = ' ';
+                        j++;
                     } else {
-                        newprfx[j] = '\xe2'; j++;
-                        newprfx[j] = '\x94'; j++;
-                        newprfx[j] = '\x82'; j++;
+                        newprfx[j] = '\xe2';
+                        j++;
+                        newprfx[j] = '\x94';
+                        j++;
+                        newprfx[j] = '\x82';
+                        j++;
                     }
                 } else {
                     newprfx[j] = prfx[i];
@@ -1670,8 +1679,8 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
             }
             newprfx[j] = 0;
         } else {
-            for(int i = 0; i < len; i++){
-                if(prfx[i] == '-' || prfx[i] == '`')
+            for (int i = 0; i < len; i++) {
+                if (prfx[i] == '-' || prfx[i] == '`')
                     newprfx[i] = ' ';
                 else
                     newprfx[i] = prfx[i];
@@ -1680,24 +1689,24 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
         }
 
         // Check if the next list element really is there
-        while(str_here(p, base1) || str_here(p, base2)){
+        while (str_here(p, base1) || str_here(p, base2)) {
             // Check if this is the last element in the list
             s = p;
-            while(*s != '\n')
+            while (*s != '\n')
                 s++;
             s++;
             ne--;
-            if(ne == 0){
+            if (ne == 0) {
                 snprintf(prefix, 112, "%s%s", newprfx, strL);
             } else {
-                if(str_here(s, base1) || str_here(s, base2))
+                if (str_here(s, base1) || str_here(s, base2))
                     snprintf(prefix, 112, "%s%s", newprfx, strT);
                 else
                     snprintf(prefix, 112, "%s%s", newprfx, strL);
             }
 
-            if(*p){
-                if(str_here(p, base1))
+            if (*p) {
+                if (str_here(p, base1))
                     p = write_ob_line(p, base1, prefix, 0, fl);
                 else
                     p = write_ob_line(p, bsnm, prefix, 0, fl);
@@ -1707,24 +1716,23 @@ static const char *write_ob_line(const char *p, const char *bs, char *prfx, int 
     return p;
 }
 
-void hi_glbenv_fun(void)
-{
+void hi_glbenv_fun(void) {
     char *g = glbnv_buffer;
     char *p = compl_buffer;
     char *s;
 
     memset(compl_buffer, 0, compl_buffer_size);
     p = str_cat(p, "call UpdateLocalFunctions('");
-    while(*g){
+    while (*g) {
         s = g;
-        while(*s != 0)
+        while (*s != 0)
             s++;
         s++;
         if (*s == '\003') {
             p = str_cat(p, g);
             p = str_cat(p, " ");
         }
-        while(*g != '\n')
+        while (*g != '\n')
             g++;
         g++;
     }
@@ -1733,14 +1741,13 @@ void hi_glbenv_fun(void)
     fflush(stdout);
 }
 
-void update_glblenv_buffer(char *g)
-{
+void update_glblenv_buffer(char *g) {
     Log("update_glblenv_buffer()");
     int n = 0;
     int max;
     int glbnv_size;
 
-    if(glbnv_buffer) {
+    if (glbnv_buffer) {
         if (strlen(g) > glbnv_buffer_sz) {
             free(glbnv_buffer);
             glbnv_buffer_sz = strlen(g) + 4096;
@@ -1756,23 +1763,22 @@ void update_glblenv_buffer(char *g)
 
     max = glbnv_size - 5;
 
-    for(int i = 0; i < max; i++)
-        if(glbnv_buffer[i] == '\003'){
+    for (int i = 0; i < max; i++)
+        if (glbnv_buffer[i] == '\003') {
             n++;
             i += 7;
         }
 
-    if(n != nGlbEnvFun){
+    if (n != nGlbEnvFun) {
         nGlbEnvFun = n;
         hi_glbenv_fun();
     }
 }
 
-void omni2ob(void)
-{
+void omni2ob(void) {
     Log("omni2ob()");
     FILE *f = fopen(globenv, "w");
-    if(!f){
+    if (!f) {
         fprintf(stderr, "Error opening \"%s\" for writing\n", globenv);
         fflush(stderr);
         return;
@@ -1782,22 +1788,21 @@ void omni2ob(void)
 
     if (glbnv_buffer) {
         const char *s = glbnv_buffer;
-        while(*s)
+        while (*s)
             s = write_ob_line(s, "", "", 0, f);
     }
 
     fclose(f);
-    if(auto_obbr){
+    if (auto_obbr) {
         fputs("call UpdateOB('GlobalEnv')\n", stdout);
         fflush(stdout);
     }
 }
 
-void lib2ob(void)
-{
+void lib2ob(void) {
     Log("lib2ob()");
     FILE *f = fopen(liblist, "w");
-    if(!f){
+    if (!f) {
         fprintf(stderr, "Failed to open \"%s\"\n", liblist);
         fflush(stderr);
         return;
@@ -1810,19 +1815,19 @@ void lib2ob(void)
     int stt;
 
     pkg = pkgList;
-    while(pkg){
-        if(pkg->loaded){
-            if(pkg->descr)
+    while (pkg) {
+        if (pkg->loaded) {
+            if (pkg->descr)
                 fprintf(f, "   :#%s\t%s\n", pkg->name, pkg->descr);
             else
                 fprintf(f, "   :#%s\t\n", pkg->name);
             snprintf(lbnmc, 511, "%s:", pkg->name);
             stt = get_list_status(lbnmc, 0);
-            if(pkg->omnils && pkg->nobjs > 0 && stt == 1){
+            if (pkg->omnils && pkg->nobjs > 0 && stt == 1) {
                 p = pkg->omnils;
                 nLibObjs = pkg->nobjs - 1;
-                while(*p){
-                    if(nLibObjs == 0)
+                while (*p) {
+                    if (nLibObjs == 0)
                         p = write_ob_line(p, "", strL, 1, f);
                     else
                         p = write_ob_line(p, "", strT, 1, f);
@@ -1837,28 +1842,25 @@ void lib2ob(void)
     fflush(stdout);
 }
 
-void change_all(ListStatus *root, int stt)
-{
-    if(root != NULL){
+void change_all(ListStatus *root, int stt) {
+    if (root != NULL) {
         // Open all but libraries
-        if(!(stt == 1 && root->key[strlen(root->key) - 1] == ':'))
+        if (!(stt == 1 && root->key[strlen(root->key) - 1] == ':'))
             root->status = stt;
         change_all(root->left, stt);
         change_all(root->right, stt);
     }
 }
 
-void print_listTree(ListStatus *root, FILE *f)
-{
-    if(root != NULL){
+void print_listTree(ListStatus *root, FILE *f) {
+    if (root != NULL) {
         fprintf(f, "%d :: %s\n", root->status, root->key);
         print_listTree(root->left, f);
         print_listTree(root->right, f);
     }
 }
 
-static void fill_inst_libs(void)
-{
+static void fill_inst_libs(void) {
     InstLibs *il = NULL;
     char fname[1032];
     snprintf(fname, 1031, "%s/inst_libs", compldir);
@@ -1918,11 +1920,10 @@ static void fill_inst_libs(void)
     free(b);
 }
 
-static void send_nrs_info(void)
-{
+static void send_nrs_info(void) {
     printf("call EchoNCSInfo('Loaded packages:");
     PkgData *pkg = pkgList;
-    while(pkg){
+    while (pkg) {
         printf(" %s", pkg->name);
         pkg = pkg->next;
     }
@@ -1930,8 +1931,7 @@ static void send_nrs_info(void)
     fflush(stdout);
 }
 
-static void init(void)
-{
+static void init(void) {
 #ifdef Debug_NRS
     time_t t;
     time(&t);
@@ -1943,16 +1943,16 @@ static void init(void)
     char envstr[1024];
 
     envstr[0] = 0;
-    if(getenv("LC_MESSAGES"))
+    if (getenv("LC_MESSAGES"))
         strcat(envstr, getenv("LC_MESSAGES"));
-    if(getenv("LC_ALL"))
+    if (getenv("LC_ALL"))
         strcat(envstr, getenv("LC_ALL"));
-    if(getenv("LANG"))
+    if (getenv("LANG"))
         strcat(envstr, getenv("LANG"));
     int len = strlen(envstr);
-    for(int i = 0; i < len; i++)
+    for (int i = 0; i < len; i++)
         envstr[i] = toupper(envstr[i]);
-    if(strstr(envstr, "UTF-8") != NULL || strstr(envstr, "UTF8") != NULL){
+    if (strstr(envstr, "UTF-8") != NULL || strstr(envstr, "UTF8") != NULL) {
         nvimcom_is_utf8 = 1;
         strcpy(strL, "\xe2\x94\x94\xe2\x94\x80 ");
         strcpy(strT, "\xe2\x94\x9c\xe2\x94\x80 ");
@@ -1962,7 +1962,7 @@ static void init(void)
         strcpy(strT, "|- ");
     }
 
-    if(!getenv("NVIMR_SECRET")){
+    if (!getenv("NVIMR_SECRET")) {
         fprintf(stderr, "NVIMR_SECRET not found\n");
         fflush(stderr);
         exit(1);
@@ -1983,15 +1983,15 @@ static void init(void)
     snprintf(liblist, 575, "%s/liblist_%s", localtmpdir, getenv("NVIMR_ID"));
     snprintf(globenv, 575, "%s/globenv_%s", localtmpdir, getenv("NVIMR_ID"));
 
-    if(getenv("NVIMR_OPENDF"))
+    if (getenv("NVIMR_OPENDF"))
         OpenDF = 1;
     else
         OpenDF = 0;
-    if(getenv("NVIMR_OPENLS"))
+    if (getenv("NVIMR_OPENLS"))
         OpenLS = 1;
     else
         OpenLS = 0;
-    if(getenv("NVIMR_OBJBR_ALLNAMES"))
+    if (getenv("NVIMR_OBJBR_ALLNAMES"))
         allnames = 1;
     else
         allnames = 0;
@@ -2044,40 +2044,38 @@ static void init(void)
     Log("init() finished");
 }
 
-int count_twice(const char *b1, const char *b2, const char ch)
-{
+int count_twice(const char *b1, const char *b2, const char ch) {
     int n1 = 0;
     int n2 = 0;
-    for(unsigned long i = 0; i < strlen(b1); i++)
-        if(b1[i] == ch)
+    for (unsigned long i = 0; i < strlen(b1); i++)
+        if (b1[i] == ch)
             n1++;
-    for(unsigned long i = 0; i < strlen(b2); i++)
-        if(b2[i] == ch)
+    for (unsigned long i = 0; i < strlen(b2); i++)
+        if (b2[i] == ch)
             n2++;
     return n1 == n2;
 }
 
 // Return user_data of a specific item with function usage, title and
 // description to be displayed in the float window
-void completion_info(const char *wrd, const char *pkg)
-{
+void completion_info(const char *wrd, const char *pkg) {
     int i;
     unsigned long nsz;
     const char *f[7];
     char *s;
 
-    if(strcmp(pkg, ".GlobalEnv") == 0){
+    if (strcmp(pkg, ".GlobalEnv") == 0) {
         s = glbnv_buffer;
     } else {
         PkgData *pd = pkgList;
-        while(pd){
-            if(strcmp(pkg, pd->name) == 0)
+        while (pd) {
+            if (strcmp(pkg, pd->name) == 0)
                 break;
             else
                 pd = pd->next;
         }
 
-        if(pd == NULL)
+        if (pd == NULL)
             return;
 
         s = pd->omnils;
@@ -2086,34 +2084,39 @@ void completion_info(const char *wrd, const char *pkg)
     memset(compl_buffer, 0, compl_buffer_size);
     char *p = compl_buffer;
 
-    while(*s != 0){
-        if(strcmp(s, wrd) == 0){
+    while (*s != 0) {
+        if (strcmp(s, wrd) == 0) {
             i = 0;
-            while(i < 7){
+            while (i < 7) {
                 f[i] = s;
                 i++;
-                while(*s != 0)
+                while (*s != 0)
                     s++;
                 s++;
             }
-            while(*s != '\n' && *s != 0)
+            while (*s != '\n' && *s != 0)
                 s++;
-            if(*s == '\n')
+            if (*s == '\n')
                 s++;
 
             if (f[1][0] == '\003' && str_here(f[4], "[\x12not_checked\x12]")) {
-                snprintf(compl_buffer, 1024, "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n", getenv("NVIMR_ID"), wrd);
+                snprintf(compl_buffer, 1024,
+                         "E%snvimcom:::nvim.GlobalEnv.fun.args(\"%s\")\n",
+                         getenv("NVIMR_ID"), wrd);
                 send_to_nvimcom(compl_buffer);
                 return;
             }
 
-            // Avoid buffer overflow if the information is bigger than compl_buffer.
-            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 1024 + (p - compl_buffer);
+            // Avoid buffer overflow if the information is bigger than
+            // compl_buffer.
+            nsz = strlen(f[4]) + strlen(f[5]) + strlen(f[6]) + 1024 +
+                  (p - compl_buffer);
             if (compl_buffer_size < nsz)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
+                p = grow_buffer(&compl_buffer, &compl_buffer_size,
+                                nsz - compl_buffer_size);
 
             p = str_cat(p, "{'cls': '");
-            if(f[1][0] == '\003')
+            if (f[1][0] == '\003')
                 p = str_cat(p, "f");
             else
                 p = str_cat(p, f[1]);
@@ -2132,7 +2135,7 @@ void completion_info(const char *wrd, const char *pkg)
             fflush(stdout);
             return;
         }
-        while(*s != '\n')
+        while (*s != '\n')
             s++;
         s++;
     }
@@ -2143,40 +2146,42 @@ void completion_info(const char *wrd, const char *pkg)
 // Return the menu items for omni completion, but don't include function
 // usage, and tittle and description of objects because if the buffer becomes
 // too big it will be truncated.
-char *parse_omnils(const char *s, const char *base, const char *pkg, char *p)
-{
+char *parse_omnils(const char *s, const char *base, const char *pkg, char *p) {
     int i;
     unsigned long nsz;
     const char *f[7];
 
-    while(*s != 0){
-        if(str_here(s, base)){
+    while (*s != 0) {
+        if (str_here(s, base)) {
             i = 0;
-            while(i < 7){
+            while (i < 7) {
                 f[i] = s;
                 i++;
-                while(*s != 0)
+                while (*s != 0)
                     s++;
                 s++;
             }
-            while(*s != '\n' && *s != 0)
+            while (*s != '\n' && *s != 0)
                 s++;
-            if(*s == '\n')
+            if (*s == '\n')
                 s++;
 
-            // Skip elements of lists unless the user is really looking for them,
-            // and skip lists if the user is looking for one of its elements.
-            if(!count_twice(base, f[0], '@'))
+            // Skip elements of lists unless the user is really looking for
+            // them, and skip lists if the user is looking for one of its
+            // elements.
+            if (!count_twice(base, f[0], '@'))
                 continue;
-            if(!count_twice(base, f[0], '$'))
+            if (!count_twice(base, f[0], '$'))
                 continue;
-            if(!count_twice(base, f[0], '['))
+            if (!count_twice(base, f[0], '['))
                 continue;
 
-            // Avoid buffer overflow if the information is bigger than compl_buffer.
+            // Avoid buffer overflow if the information is bigger than
+            // compl_buffer.
             nsz = strlen(f[0]) + 1024 + (p - compl_buffer);
             if (compl_buffer_size < nsz)
-                p = grow_buffer(&compl_buffer, &compl_buffer_size, nsz - compl_buffer_size);
+                p = grow_buffer(&compl_buffer, &compl_buffer_size,
+                                nsz - compl_buffer_size);
 
             p = str_cat(p, "{'word': '");
             if (pkg) {
@@ -2185,57 +2190,58 @@ char *parse_omnils(const char *s, const char *base, const char *pkg, char *p)
             }
             p = str_cat(p, f[0]);
             p = str_cat(p, "', 'menu': '");
-            if(f[2][0] != 0){
+            if (f[2][0] != 0) {
                 p = str_cat(p, f[2]);
             } else {
-                switch(f[1][0]){
-                    case '{':
-                        p = str_cat(p, "num ");
-                        break;
-                    case '~':
-                        p = str_cat(p, "char");
-                        break;
-                    case '!':
-                        p = str_cat(p, "fac ");
-                        break;
-                    case '$':
-                        p = str_cat(p, "data");
-                        break;
-                    case '[':
-                        p = str_cat(p, "list");
-                        break;
-                    case '%':
-                        p = str_cat(p, "log ");
-                        break;
-                    case '\003':
-                        p = str_cat(p, "func");
-                        break;
-                    case '<':
-                        p = str_cat(p, "S4  ");
-                        break;
-                    case '&':
-                        p = str_cat(p, "lazy");
-                        break;
-                    case ':':
-                        p = str_cat(p, "env ");
-                        break;
-                    case '*':
-                        p = str_cat(p, "?   ");
-                        break;
+                switch (f[1][0]) {
+                case '{':
+                    p = str_cat(p, "num ");
+                    break;
+                case '~':
+                    p = str_cat(p, "char");
+                    break;
+                case '!':
+                    p = str_cat(p, "fac ");
+                    break;
+                case '$':
+                    p = str_cat(p, "data");
+                    break;
+                case '[':
+                    p = str_cat(p, "list");
+                    break;
+                case '%':
+                    p = str_cat(p, "log ");
+                    break;
+                case '\003':
+                    p = str_cat(p, "func");
+                    break;
+                case '<':
+                    p = str_cat(p, "S4  ");
+                    break;
+                case '&':
+                    p = str_cat(p, "lazy");
+                    break;
+                case ':':
+                    p = str_cat(p, "env ");
+                    break;
+                case '*':
+                    p = str_cat(p, "?   ");
+                    break;
                 }
             }
             p = str_cat(p, " [");
             p = str_cat(p, f[3]);
             p = str_cat(p, "]', 'user_data': {'cls': '");
-            if(f[1][0] == '\003')
+            if (f[1][0] == '\003')
                 p = str_cat(p, "f");
             else
                 p = str_cat(p, f[1]);
             p = str_cat(p, "', 'pkg': '");
             p = str_cat(p, f[3]);
-            p = str_cat(p, "'}}, "); // Don't include fields 4, 5 and 6 because big data will be truncated.
+            p = str_cat(p, "'}}, "); // Don't include fields 4, 5 and 6 because
+                                     // big data will be truncated.
         } else {
-            while(*s != '\n')
+            while (*s != '\n')
                 s++;
             s++;
         }
@@ -2243,8 +2249,7 @@ char *parse_omnils(const char *s, const char *base, const char *pkg, char *p)
     return p;
 }
 
-void resolve_arg_item(char *pkg, char *fnm, char *itm)
-{
+void resolve_arg_item(char *pkg, char *fnm, char *itm) {
     char item[128];
     snprintf(item, 127, "%s\005", itm);
     PkgData *p = pkgList;
@@ -2262,7 +2267,10 @@ void resolve_arg_item(char *pkg, char *fnm, char *itm)
                                 while (*s && *s != '\005')
                                     s++;
                                 s++;
-                                printf("call v:lua.require'cmp_nvim_r'.finish_get_args('%s')\n", s);
+                                printf("call "
+                                       "v:lua.require'cmp_nvim_r'.finish_get_"
+                                       "args('%s')\n",
+                                       s);
                                 fflush(stdout);
                             }
                             s++;
@@ -2281,8 +2289,7 @@ void resolve_arg_item(char *pkg, char *fnm, char *itm)
     }
 }
 
-char *complete_args(char *p, char *funcnm)
-{
+char *complete_args(char *p, char *funcnm) {
     // Check if function is "pkg::fun"
     char *pkg = NULL;
     if (strstr(funcnm, "::")) {
@@ -2295,11 +2302,12 @@ char *complete_args(char *p, char *funcnm)
 
     PkgData *pd = pkgList;
     char *s;
-    while(pd){
-        if (pd->omnils && (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0))) {
+    while (pd) {
+        if (pd->omnils &&
+            (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0))) {
             s = pd->omnils;
-            while(*s != 0){
-                if(strcmp(s, funcnm) == 0){
+            while (*s != 0) {
+                if (strcmp(s, funcnm) == 0) {
                     int i = 4;
                     while (i) {
                         s++;
@@ -2327,10 +2335,10 @@ char *complete_args(char *p, char *funcnm)
     return p;
 }
 
-void complete(const char *id, char *base, char *funcnm, char *args)
-{
+void complete(const char *id, char *base, char *funcnm, char *args) {
     if (args)
-        Log("complete(%s, %s, %s, [%c%c%c%c...])", id, base, funcnm, args[0], args[1], args[2], args[3]);
+        Log("complete(%s, %s, %s, [%c%c%c%c...])", id, base, funcnm, args[0],
+            args[1], args[2], args[3]);
     else
         Log("complete(%s, %s, %s, NULL)", id, base, funcnm);
     char *p;
@@ -2339,12 +2347,14 @@ void complete(const char *id, char *base, char *funcnm, char *args)
     p = compl_buffer;
 
     // Complete function arguments
-    if(funcnm){
+    if (funcnm) {
         if (*funcnm == '\004') {
             // Get menu completion for installed libraries
             p = complete_instlibs(p, base);
-            printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
-                    strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
+            printf("\x11%" PRI_SIZET "\x11"
+                   "call %s(%s, [%s])\n",
+                   strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11,
+                   compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
         } else {
@@ -2353,7 +2363,8 @@ void complete(const char *id, char *base, char *funcnm, char *args)
                 p = complete_args(p, funcnm);
             } else {
                 if ((strlen(args) + 1024) > compl_buffer_size)
-                    p = grow_buffer(&compl_buffer, &compl_buffer_size, strlen(args) + 1024 - compl_buffer_size);
+                    p = grow_buffer(&compl_buffer, &compl_buffer_size,
+                                    strlen(args) + 1024 - compl_buffer_size);
 
                 char *s = args;
                 while (*s) {
@@ -2364,17 +2375,19 @@ void complete(const char *id, char *base, char *funcnm, char *args)
                 p = str_cat(p, args);
             }
         }
-        if(base[0] == 0){
+        if (base[0] == 0) {
             // base will be empty if completing only function arguments
-            printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
-                    strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
+            printf("\x11%" PRI_SIZET "\x11"
+                   "call %s(%s, [%s])\n",
+                   strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11,
+                   compl_cb, id, compl_buffer);
             fflush(stdout);
             return;
         }
     }
 
     // Finish filling the compl_buffer
-    if(glbnv_buffer)
+    if (glbnv_buffer)
         p = parse_omnils(glbnv_buffer, base, NULL, p);
     PkgData *pd = pkgList;
 
@@ -2388,193 +2401,195 @@ void complete(const char *id, char *base, char *funcnm, char *args)
         base++;
     }
 
-    while(pd){
+    while (pd) {
         if (pd->omnils && (pkg == NULL || (pkg && strcmp(pd->name, pkg) == 0)))
             p = parse_omnils(pd->omnils, base, pkg, p);
         pd = pd->next;
     }
 
-    printf("\x11%" PRI_SIZET "\x11" "call %s(%s, [%s])\n",
-            strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb, id, compl_buffer);
+    printf("\x11%" PRI_SIZET "\x11"
+           "call %s(%s, [%s])\n",
+           strlen(compl_cb) + strlen(id) + strlen(compl_buffer) + 11, compl_cb,
+           id, compl_buffer);
     fflush(stdout);
 }
 
-void stdin_loop()
-{
+void stdin_loop() {
     char line[1024];
     FILE *f;
     char *msg;
     char t;
     memset(line, 0, 1024);
 
-    while(fgets(line, 1023, stdin)){
+    while (fgets(line, 1023, stdin)) {
 
-        for(unsigned int i = 0; i < strlen(line); i++)
-            if(line[i] == '\n' || line[i] == '\r')
+        for (unsigned int i = 0; i < strlen(line); i++)
+            if (line[i] == '\n' || line[i] == '\r')
                 line[i] = 0;
-        Log("stdin:   %s",  line);
+        Log("stdin:   %s", line);
         msg = line;
-        switch(*msg){
-            case '1': // Start server and wait nvimcom connection
-                start_server();
-                Log("server started");
+        switch (*msg) {
+        case '1': // Start server and wait nvimcom connection
+            start_server();
+            Log("server started");
+            break;
+        case '2': // Send message
+            msg++;
+            send_to_nvimcom(msg);
+            break;
+        case '3':
+            msg++;
+            switch (*msg) {
+            case '1': // Update GlobalEnv
+                auto_obbr = 1;
+                omni2ob();
                 break;
-            case '2': // Send message
-                msg++;
-                send_to_nvimcom(msg);
+            case '2': // Update Libraries
+                auto_obbr = 1;
+                lib2ob();
                 break;
-            case '3':
+            case '3': // Open/Close list
                 msg++;
-                switch(*msg){
-                    case '1': // Update GlobalEnv
-                        auto_obbr = 1;
-                        omni2ob();
-                        break;
-                    case '2': // Update Libraries
-                        auto_obbr = 1;
-                        lib2ob();
-                        break;
-                    case '3': // Open/Close list
-                        msg++;
-                        t = *msg;
-                        msg++;
-                        toggle_list_status(msg);
-                        if(t == 'G')
-                            omni2ob();
-                        else
-                            lib2ob();
-                        break;
-                    case '4': // Close/Open all
-                        msg++;
-                        if(*msg == 'O')
-                            change_all(listTree, 1);
-                        else
-                            change_all(listTree, 0);
-                        msg++;
-                        if(*msg == 'G')
-                            omni2ob();
-                        else
-                            lib2ob();
-                        break;
-                    case '7':
-                        f = fopen("/tmp/listTree", "w");
-                        print_listTree(listTree, f);
-                        fclose(f);
-                        break;
-                }
+                t = *msg;
+                msg++;
+                toggle_list_status(msg);
+                if (t == 'G')
+                    omni2ob();
+                else
+                    lib2ob();
                 break;
-            case '4': // Miscellaneous commands
+            case '4': // Close/Open all
                 msg++;
-                switch (*msg) {
-                    case '1':
-                        read_args();
-                        break;
-                    case '2':
-                        send_nrs_info();
-                        break;
-                    case '3':
-                        update_glblenv_buffer("");
-                        if (auto_obbr)
-                            omni2ob();
-                        break;
-                }
-                break;
-            case '5':
+                if (*msg == 'O')
+                    change_all(listTree, 1);
+                else
+                    change_all(listTree, 0);
                 msg++;
-                char *id = msg;
-                while(*msg != '\003')
-                    msg++;
-                *msg = 0;
-                msg++;
-                if (*msg == '\004') {
-                    msg++;
-                    complete(id, msg, "\004", NULL);
-                } else if (*msg == '\005') {
-                    msg++;
-                    char *base = msg;
-                    while (*msg != '\005')
-                        msg++;
-                    *msg = 0;
-                    msg++;
-                    complete(id, base, msg, NULL);
-                } else {
-                    complete(id, msg, NULL, NULL);
-                }
-                break;
-            case '6':
-                msg++;
-                char *wrd = msg;
-                while(*msg != '\002')
-                    msg++;
-                *msg = 0;
-                msg++;
-                if (strstr(wrd, "::"))
-                    wrd = strstr(wrd, "::") + 2;
-                completion_info(wrd, msg);
+                if (*msg == 'G')
+                    omni2ob();
+                else
+                    lib2ob();
                 break;
             case '7':
-                msg++;
-                char *p = msg;
-                while (*msg != '\002')
-                    msg++;
-                *msg = 0;
-                msg++;
-                char *f = msg;
-                while (*msg != '\002')
-                    msg++;
-                *msg = 0;
-                msg++;
-                resolve_arg_item(p, f, msg);
+                f = fopen("/tmp/listTree", "w");
+                print_listTree(listTree, f);
+                fclose(f);
                 break;
-#ifdef WIN32
-            case '8':
-                // Messages related with the Rgui on Windows
+            }
+            break;
+        case '4': // Miscellaneous commands
+            msg++;
+            switch (*msg) {
+            case '1':
+                read_args();
+                break;
+            case '2':
+                send_nrs_info();
+                break;
+            case '3':
+                update_glblenv_buffer("");
+                if (auto_obbr)
+                    omni2ob();
+                break;
+            }
+            break;
+        case '5':
+            msg++;
+            char *id = msg;
+            while (*msg != '\003')
                 msg++;
-                switch(*msg){
-                    case '1': // Check if R is running
-                        if(PostMessage(RConsole, WM_NULL, 0, 0)){
-                            printf("call RWarningMsg('R was already started')\n");
-                            fflush(stdout);
-                        } else {
-                            printf("call CleanNvimAndStartR()\n");
-                            fflush(stdout);
-                        }
-                        break;
-                    case '3': // SendToRConsole
-                        msg++;
-                        SendToRConsole(msg);
-                        break;
-                    case '4': // SaveWinPos
-                        msg++;
-                        SaveWinPos(msg);
-                        break;
-                    case '5': // ArrangeWindows
-                        msg++;
-                        ArrangeWindows(msg);
-                        break;
-                    case '6':
-                        RClearConsole();
-                        break;
-                    case '7': // RaiseNvimWindow
-                        if(NvimHwnd)
-                            SetForegroundWindow(NvimHwnd);
-                        break;
+            *msg = 0;
+            msg++;
+            if (*msg == '\004') {
+                msg++;
+                complete(id, msg, "\004", NULL);
+            } else if (*msg == '\005') {
+                msg++;
+                char *base = msg;
+                while (*msg != '\005')
+                    msg++;
+                *msg = 0;
+                msg++;
+                complete(id, base, msg, NULL);
+            } else {
+                complete(id, msg, NULL, NULL);
+            }
+            break;
+        case '6':
+            msg++;
+            char *wrd = msg;
+            while (*msg != '\002')
+                msg++;
+            *msg = 0;
+            msg++;
+            if (strstr(wrd, "::"))
+                wrd = strstr(wrd, "::") + 2;
+            completion_info(wrd, msg);
+            break;
+        case '7':
+            msg++;
+            char *p = msg;
+            while (*msg != '\002')
+                msg++;
+            *msg = 0;
+            msg++;
+            char *f = msg;
+            while (*msg != '\002')
+                msg++;
+            *msg = 0;
+            msg++;
+            resolve_arg_item(p, f, msg);
+            break;
+#ifdef WIN32
+        case '8':
+            // Messages related with the Rgui on Windows
+            msg++;
+            switch (*msg) {
+            case '1': // Check if R is running
+                if (PostMessage(RConsole, WM_NULL, 0, 0)) {
+                    printf("call RWarningMsg('R was already started')\n");
+                    fflush(stdout);
+                } else {
+                    printf("call CleanNvimAndStartR()\n");
+                    fflush(stdout);
                 }
                 break;
+            case '3': // SendToRConsole
+                msg++;
+                SendToRConsole(msg);
+                break;
+            case '4': // SaveWinPos
+                msg++;
+                SaveWinPos(msg);
+                break;
+            case '5': // ArrangeWindows
+                msg++;
+                ArrangeWindows(msg);
+                break;
+            case '6':
+                RClearConsole();
+                break;
+            case '7': // RaiseNvimWindow
+                if (NvimHwnd)
+                    SetForegroundWindow(NvimHwnd);
+                break;
+            }
+            break;
 #endif
-            case '9': // Quit now
-                exit(0);
-                break;
-            default:
-                fprintf(stderr, "Unknown command received: [%d] %s\n", line[0], msg);
-                fflush(stderr);
-                break;
+        case '9': // Quit now
+            exit(0);
+            break;
+        default:
+            fprintf(stderr, "Unknown command received: [%d] %s\n", line[0],
+                    msg);
+            fflush(stderr);
+            break;
         }
         memset(line, 0, 1024);
     }
 }
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
     init();
 #ifdef WIN32
     Windows_setup();
