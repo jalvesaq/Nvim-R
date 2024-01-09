@@ -31,6 +31,8 @@ HWND RConsole = NULL;
 #define PRI_SIZET "zu"
 #endif
 
+#include "utilities.h"
+
 static char strL[8];        // String for last element prefix in tree view
 static char strT[8];        // String for tree element prefix in tree view
 static int OpenDF;          // Flag for open data frames in tree view
@@ -143,16 +145,6 @@ Log(const char *fmt, ...) // Logging function for debugging
     va_end(argptr);
     fclose(f);
 #endif
-}
-
-static char *str_cat(char *dest,
-                     const char *src) // Function to concatenate strings
-{
-    while (*dest)
-        dest++;
-    while ((*dest++ = *src++))
-        ;
-    return --dest;
 }
 
 static int ascii_ic_cmp(const char *a,
