@@ -40,6 +40,9 @@ NvimcomEnv$pkgdescr <- list()
     if (interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != "") {
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)
         pd <- utils::packageDescription("nvimcom")
+        hascolor <- FALSE
+        if (length(grep("^package:colorout$", search())) == 1 || Sys.getenv("RADIAN_VERSION") != "")
+            hascolor <- TRUE
         .C("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
@@ -51,7 +54,7 @@ NvimcomEnv$pkgdescr <- list()
                  getOption("OutDec"),
                  gsub("\n", "#N#", getOption("prompt")),
                  getOption("continue"),
-                 as.integer(length(find.package("colorout", quiet = TRUE, verbose = FALSE)) > 0),
+                 as.integer(hascolor),
                  sep = "\x12"),
            PACKAGE = "nvimcom")
     }
