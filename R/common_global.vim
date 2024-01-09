@@ -670,9 +670,17 @@ function RVimLeave()
         call delete(fn)
     endfor
     if executable("rmdir")
-        call system("rmdir '" . g:rplugin.tmpdir . "'")
+        if has('nvim')
+            call jobstart("rmdir '" . g:rplugin.tmpdir . "'", {'detach': v:true})
+        else
+            call system("rmdir '" . g:rplugin.tmpdir . "'")
+        endif
         if g:rplugin.localtmpdir != g:rplugin.tmpdir
-            call system("rmdir '" . g:rplugin.localtmpdir . "'")
+            if has('nvim')
+                call jobstart("rmdir '" . g:rplugin.localtmpdir . "'", {'detach': v:true})
+            else
+                call system("rmdir '" . g:rplugin.localtmpdir . "'")
+            endif
         endif
     endif
 endfunction
