@@ -37,6 +37,7 @@ function CheckNvimcomVersion()
     if exists("g:R_remote_compldir")
         let scrptnm = g:R_remote_compldir . "/tmp/before_nrs.R"
     endif
+    let g:rplugin.debug_info['Time']['before_nrs.R'] = reltime()
     let g:rplugin.jobs["Init R"] = StartJob([g:rplugin.Rcmd, "--quiet", "--no-save", "--no-restore", "--slave", "-f", scrptnm], jobh)
     call AddForDeletion(g:rplugin.tmpdir . "/libPaths")
 endfunction
@@ -143,8 +144,10 @@ function RInitExit(...)
             call RWarningMsg("ERROR: R exit code = " . a:2 . "! Please, run :RDebugInfo for details.")
         endif
     endif
-    let g:rplugin.debug_info["RInitErr"] = join(s:RBerr, "\n")
-    let g:rplugin.debug_info["RInitOut"] = join(s:RBout, "\n")
+    let g:rplugin.debug_info["before_nrs.R stderr"] = join(s:RBerr, "\n")
+    let g:rplugin.debug_info["before_nrs.R stdout"] = join(s:RBout, "\n")
+    unlet s:RBerr
+    unlet s:RBout
     call AddForDeletion(g:rplugin.tmpdir . "/bo_code.R")
     call AddForDeletion(g:rplugin.localtmpdir . "/libs_in_nrs_" . $NVIMR_ID)
     call AddForDeletion(g:rplugin.tmpdir . "/libnames_" . $NVIMR_ID)
@@ -156,7 +159,7 @@ function RInitExit(...)
         endfor
     endif
     if cnv_again == 0
-        let g:rplugin.debug_info['Time']['R_before_nrs'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['R_before_nrs'], reltime()))
+        let g:rplugin.debug_info['Time']['before_nrs.R'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['before_nrs.R'], reltime()))
     endif
 endfunction
 
