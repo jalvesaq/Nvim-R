@@ -168,19 +168,6 @@ static int ascii_ic_cmp(const char *a,
     return 0;
 }
 
-static char *grow_buffer(char **b, unsigned long *sz,
-                         unsigned long inc) // Function to grow a buffer
-{
-    Log("grow_buffer(%lu, %lu) [%lu, %lu]", *sz, inc, compl_buffer_size,
-        fb_size);
-    *sz += inc;
-    char *tmp = calloc(*sz, sizeof(char));
-    strcpy(tmp, *b);
-    free(*b);
-    *b = tmp;
-    return tmp;
-}
-
 void fix_x13(char *s) // Replace all instances of '\x13' in the string with '\''
 {
     while (*s != 0) {
