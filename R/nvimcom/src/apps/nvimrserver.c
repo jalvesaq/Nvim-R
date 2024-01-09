@@ -12,8 +12,8 @@
 #include <inttypes.h>
 #include <process.h>
 #include <time.h>
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 HWND NvimHwnd = NULL;
 HWND RConsole = NULL;
 #define bzero(b, len) (memset((b), '\0', (len)), (void)0)
