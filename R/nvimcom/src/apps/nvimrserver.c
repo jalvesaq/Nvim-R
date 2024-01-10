@@ -583,8 +583,24 @@ void start_server(void) // Start server and listen for connections
 #endif
 }
 
-char *count_sep(char *b1, int *size) // Count separators in buffer
-{
+/**
+ * @brief Count the number of separator characters in a given buffer.
+ *
+ * This function scans a buffer and counts the number of occurrences of
+ * the separator character '\006'. It is primarily used to parse and validate
+ * data structure representations received from R. The function also checks if
+ * the size of the buffer is 1, indicating an empty package with no exported
+ * objects. In case of an unexpected number of separators, it logs an error,
+ * frees the buffer, and returns NULL.
+ *
+ * @param b1 Pointer to the buffer to be scanned.
+ * @param size Pointer to an integer where the size of the buffer will be
+ * stored.
+ * @return Returns the original buffer if the count of separators is as
+ * expected. Returns NULL in case of an error or if the count is not as
+ * expected.
+ */
+char *count_sep(char *b1, int *size) {
     *size = strlen(b1);
     // Some packages do not export any objects.
     if (*size == 1)
@@ -613,6 +629,22 @@ char *count_sep(char *b1, int *size) // Count separators in buffer
     return b1;
 }
 
+/**
+ * @brief Reads the entire contents of a specified file into a buffer.
+ *
+ * This function opens the file specified by the filename and reads its entire
+ * content into a dynamically allocated buffer. It ensures that the file is read
+ * in binary mode to preserve the data format. This function is typically used
+ * to load files containing data relevant to the Nvim-R plugin, such as
+ * completion lists or configuration data.
+ *
+ * @param fn The name of the file to be read.
+ * @param verbose Flag to indicate whether to print error messages. If set to a
+ * non-zero value, error messages are printed to stderr.
+ * @return Returns a pointer to a buffer containing the file's content if
+ * successful. Returns NULL if the file cannot be opened or in case of a read
+ * error.
+ */
 char *read_file(const char *fn, int verbose) {
     FILE *f = fopen(fn, "rb");
     if (!f) {
@@ -650,6 +682,23 @@ char *read_file(const char *fn, int verbose) {
     return buffer;
 }
 
+/**
+ * @brief Validates and prepares the buffer containing Omni completion data.
+ *
+ * This function processes a buffer that is expected to contain data for Omni
+ * completion, ensuring that there are exactly 7 '\006' separators between
+ * newline characters. It modifies the buffer in place, replacing certain
+ * control characters with their corresponding representations and ensuring the
+ * data is correctly formatted for subsequent processing. The function is part
+ * of the handling for Omni completion data in the Nvim-R plugin, facilitating
+ * the communication and data exchange between Neovim and R.
+ *
+ * @param buffer Pointer to the buffer containing Omni completion data.
+ * @param size Pointer to an integer representing the size of the buffer.
+ * @return Returns a pointer to the processed buffer if the validation is
+ * successful. Returns NULL if the buffer does not meet the expected format or
+ * validation fails.
+ */
 void *check_omils_buffer(char *buffer, int *size) {
     // Ensure that there are exactly 7 \006 between new line characters
     buffer = count_sep(buffer, size);
@@ -672,6 +721,23 @@ void *check_omils_buffer(char *buffer, int *size) {
     return buffer;
 }
 
+/**
+ * @brief Reads the contents of an Omni completion list file into a buffer.
+ *
+ * This function opens and reads the specified Omni completion file (typically
+ * named 'omnils_'). It allocates memory for the buffer and loads the file
+ * contents into it. The buffer is used to store completion items (like function
+ * names and variables) available in R packages for use in Omni completion in
+ * Neovim. If the file is empty, it indicates that no completion items are
+ * available or the file is yet to be populated.
+ *
+ * @param fn The name of the file to be read.
+ * @param size A pointer to an integer where the size of the read data will be
+ * stored.
+ * @return Returns a pointer to a buffer containing the file contents if
+ * successful. Returns NULL if the file cannot be opened, is empty, or in case
+ * of a read error.
+ */
 char *read_omnils_file(const char *fn, int *size) {
     Log("read_omnils_file(%s)", fn);
     char *buffer = read_file(fn, 1);
@@ -952,7 +1018,20 @@ int read_field_data(char *s, int i) {
     return i;
 }
 
-// Read the DESCRIPTION file to get Title and Description fields.
+/**
+ * @brief Parses the DESCRIPTION file of an R package to extract metadata.
+ *
+ * This function reads the DESCRIPTION file of an R package and extracts key
+ * metadata, including the Title and Description fields. It is used to provide
+ * more detailed information about R packages in the Neovim environment,
+ * particularly for features like auto-completion and package management within
+ * the Nvim-R plugin. The parsed information is used to update the data
+ * structures that represent installed R libraries.
+ *
+ * @param descr Pointer to a string containing the contents of a DESCRIPTION
+ * file.
+ * @param fnm The name of the R package whose DESCRIPTION file is being parsed.
+ */
 void parse_descr(char *descr, const char *fnm) {
     int m, n;
     int z = 0;
@@ -1605,6 +1684,18 @@ void hi_glbenv_fun(void) {
     fflush(stdout);
 }
 
+/**
+ * @brief Updates the buffer containing the global environment data from R.
+ *
+ * This function is responsible for updating the global environment buffer
+ * with new data received from R. It ensures the buffer is appropriately sized
+ * and formatted for further processing. The global environment buffer contains
+ * data about the R global environment, such as variables and functions, which
+ * are used for features like auto-completion in Neovim. The function also
+ * triggers a refresh of related UI components if necessary.
+ *
+ * @param g A string containing the new global environment data.
+ */
 void update_glblenv_buffer(char *g) {
     Log("update_glblenv_buffer()");
     int n = 0;
@@ -1795,6 +1886,11 @@ static void send_nrs_info(void) {
     fflush(stdout);
 }
 
+/*
+ * TODO:: Candidate for server_init.c
+ *
+ * @desc: used before stdin_loop() in main() to initialize the server.
+ */
 static void init(void) {
 #ifdef Debug_NRS
     time_t t;
@@ -1920,8 +2016,14 @@ int count_twice(const char *b1, const char *b2, const char ch) {
     return n1 == n2;
 }
 
-// Return user_data of a specific item with function usage, title and
-// description to be displayed in the float window
+/*
+ * TODO: Candidate for completion_services.c
+ *
+ * @desc: Return user_data of a specific item with function usage, title and
+ * description to be displayed in the float window
+ * @param wrd:
+ * @param pkg:
+ * */
 void completion_info(const char *wrd, const char *pkg) {
     int i;
     unsigned long nsz;
@@ -2153,6 +2255,13 @@ void resolve_arg_item(char *pkg, char *fnm, char *itm) {
     }
 }
 
+/*
+ * TODO: Candidate for completion_services.c
+ *
+ * @desc:
+ * @param p:
+ * @param funcnm:
+ * */
 char *complete_args(char *p, char *funcnm) {
     // Check if function is "pkg::fun"
     char *pkg = NULL;
@@ -2199,6 +2308,15 @@ char *complete_args(char *p, char *funcnm) {
     return p;
 }
 
+/*
+ * TODO: Candidate for completion_services.c
+ *
+ * @desc:
+ * @param id:
+ * @param base:
+ * @param funcnm:
+ * @param args:
+ */
 void complete(const char *id, char *base, char *funcnm, char *args) {
     if (args)
         Log("complete(%s, %s, %s, [%c%c%c%c...])", id, base, funcnm, args[0],
@@ -2278,6 +2396,11 @@ void complete(const char *id, char *base, char *funcnm, char *args) {
     fflush(stdout);
 }
 
+/*
+ * TODO: Candidate for message_handling.c
+ *
+ * @desc: Used in main() for continuous processing of stdin commands
+ */
 void stdin_loop() {
     char line[1024];
     FILE *f;
