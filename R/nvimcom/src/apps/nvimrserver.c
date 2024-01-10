@@ -147,60 +147,6 @@ Log(const char *fmt, ...) // Logging function for debugging
 #endif
 }
 
-static int ascii_ic_cmp(const char *a,
-                        const char *b) // ASCII case-insensitive compare
-{
-    int d;
-    unsigned x, y;
-    while (*a && *b) {
-        x = (unsigned char)*a;
-        y = (unsigned char)*b;
-        if (x <= 'Z')
-            x += 32;
-        if (y <= 'Z')
-            y += 32;
-        d = x - y;
-        if (d != 0)
-            return d;
-        a++;
-        b++;
-    }
-    return 0;
-}
-
-void fix_x13(char *s) // Replace all instances of '\x13' in the string with '\''
-{
-    while (*s != 0) {
-        if (*s == '\x13')
-            *s = '\'';
-        s++;
-    }
-}
-
-void fix_single_quote(
-    char *s) // Replace all instances of single quote in the string with '\x13'
-{
-    while (*s != 0) {
-        if (*s == '\'')
-            *s = '\x13';
-        s++;
-    }
-}
-
-int str_here(const char *o,
-             const char *b) // Check if string b is at the start of string o
-{
-    while (*b && *o) {
-        if (*o != *b)
-            return 0;
-        o++;
-        b++;
-    }
-    if (*b)
-        return 0;
-    return 1;
-}
-
 static void
 HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM
 {
