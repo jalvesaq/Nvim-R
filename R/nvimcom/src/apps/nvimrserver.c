@@ -31,6 +31,7 @@ HWND RConsole = NULL;
 #define PRI_SIZET "zu"
 #endif
 
+#include "data_structures.h"
 #include "utilities.h"
 
 static char strL[8];        // String for last element prefix in tree view
@@ -69,50 +70,11 @@ static void finish_bol();            // Finish building of lists
 void complete(const char *id, char *base, char *funcnm,
               char *args); // Perform completion
 
-// List of paths to libraries
-typedef struct libpaths_ {
-    char *path;             // Path to library
-    struct libpaths_ *next; // Next path
-} LibPath;
-
 LibPath *libpaths; // Pointer to first library path
-
-// List of installed libraries
-typedef struct instlibs_ {
-    char *name;             // Library name
-    char *title;            // Library title
-    char *descr;            // Library description
-    int si;                 // still installed flag
-    struct instlibs_ *next; // Next installed library
-} InstLibs;
 
 InstLibs *instlibs; // Pointer to first installed library
 
-// Is a list or library open or closed in the Object Browser?
-typedef struct liststatus_ {
-    char *key; // Name of the object or library. Library names are prefixed with
-               // "package:"
-    int status;                // 0: closed; 1: open
-    struct liststatus_ *left;  // Left node
-    struct liststatus_ *right; // Right node
-} ListStatus;
-
 static ListStatus *listTree = NULL; // Root node of the list status tree
-
-// Store information from an R library
-typedef struct pkg_data_ {
-    char *name;    // the package name
-    char *version; // the package version number
-    char *fname;   // omnils_ file name in the compldir
-    char *descr;   // the package short description
-    char *omnils;  // a copy of the omnils_ file
-    char *args;    // a copy of the args_ file
-    int nobjs;     // number of objects in the omnils_
-    int loaded;    // Loaded flag in libnames_
-    int to_build;  // Flag to indicate if the name is sent to build list
-    int built;     // Flag to indicate if omnils_ found
-    struct pkg_data_ *next; // Pointer to next package data
-} PkgData;
 
 PkgData *pkgList;    // Pointer to first package data
 static int nLibObjs; // Number of library objects
