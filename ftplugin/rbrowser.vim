@@ -237,7 +237,7 @@ function! RBrowserFindParent(word, curline, curpos)
             let suffix = '$'
         endif
         let thisword = substitute(line, '^.\{-}#', '', '')
-        if thisword =~ " " || thisword =~ '^[0-9]' || thisword =~ s:punct
+        if thisword =~ " " || thisword =~ '^[0-9_]' || thisword =~ s:punct
             let thisword = '`' . thisword . '`'
         endif
         let word = thisword . suffix . a:word
