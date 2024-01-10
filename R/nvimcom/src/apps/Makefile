@@ -1,10 +1,10 @@
 CC ?= gcc
-CFLAGS = -pthread -std=gnu99 -O2 -Wall
+CFLAGS = -pthread -std=gnu99 -O2 -Wall -Iinclude
 
-all: nvimrserver
+all: bin/nvimrserver
 
-nvimrserver: nvimrserver.c utilities.c data_structures.c
-	$(CC) $(CFLAGS) nvimrserver.c utilities.c data_structures.c -o nvimrserver
+bin/nvimrserver: src/nvimrserver.c src/utilities.c src/data_structures.c
+	$(CC) $(CFLAGS) src/nvimrserver.c src/utilities.c src/data_structures.c -o bin/nvimrserver
 
 clean:
 

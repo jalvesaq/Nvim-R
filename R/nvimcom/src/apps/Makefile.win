@@ -1,15 +1,15 @@
 CC=gcc
 ifeq "$(WIN)" "64"
-    CFLAGS+=-m64 -mwindows -std=gnu99 -O3 -Wall -DWIN32
+    CFLAGS+=-m64 -mwindows -std=gnu99 -O3 -Wall -DWIN32 -Iinclude
 else
-    CFLAGS+=-m32 -mwindows -std=gnu99 -O3 -Wall -DWIN32
+    CFLAGS+=-m32 -mwindows -std=gnu99 -O3 -Wall -DWIN32 -Iinclude
 endif
 
 # Note: -lWs2_32 must be after the object files
-all: nvimrserver.exe
+all: bin/nvimrserver.exe
 
-nvimrserver.exe: nvimrserver.c
-	$(CC) $(CFLAGS) nvimrserver.c -o nvimrserver.exe -lWs2_32
+bin/nvimrserver.exe: src/nvimrserver.c src/utilities.c src/data_structures.c
+	$(CC) $(CFLAGS) src/nvimrserver.c src/utilities.c src/data_structures.c -o nvimrserver.exe -lWs2_32
 
 clean:
 
