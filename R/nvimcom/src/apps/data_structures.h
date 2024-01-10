@@ -24,6 +24,9 @@ typedef struct liststatus_ {
     struct liststatus_ *left;  // Left node
     struct liststatus_ *right; // Right node
 } ListStatus;
+ListStatus *search(const char *s);
+ListStatus *new_ListStatus(const char *s, int stt);
+ListStatus *insert(ListStatus *root, const char *s, int stt);
 
 // Structure for package data
 typedef struct pkg_data_ {
