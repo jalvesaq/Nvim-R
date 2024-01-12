@@ -93,7 +93,7 @@ typedef struct pkg_info_ {
     struct pkg_info_ *next;
 } PkgInfo;
 
-PkgInfo *pkgList;
+static PkgInfo *pkgList;
 
 static int nvimcom_checklibs(void);
 static void send_to_nvim(char *msg);
@@ -446,13 +446,20 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
     p = nvimcom_strcat(p, "\006\n");
 
     if (xgroup > 1) {
-        if (1000 * ((double)clock() - tm) / CLOCKS_PER_SEC > 300.0) {
+        double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
+        if (tmdiff > 300.0) {
             maxdepth = curdepth;
             if (verbose > 3)
-                printf("nvimcom: slow at building list of objects (%g ms)\n",
-                       round(1000 * ((double)clock() - tm) / CLOCKS_PER_SEC >
-                             300.0));
+                REprintf("nvimcom: slow at building list of objects (%g ms); "
+                         "maxdepth = %d\n",
+                         tmdiff, maxdepth);
             return p;
+        } else if (tmdiff < 100.0 && maxdepth <= curdepth) {
+            maxdepth++;
+            if (verbose > 3)
+                REprintf("nvimcom: increased maxdepth to %d (time to build "
+                         "completion data = %g)\n",
+                         maxdepth, tmdiff);
         }
 
         if (xgroup == 4) {
@@ -569,20 +576,9 @@ static void nvimcom_globalenv_list(void) {
         needs_glbenv_msg = 1;
 
     double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
-    if (verbose && tmdiff > 1000.0)
+    if (verbose && tmdiff > 500.0)
         REprintf("Time to build GlobalEnv omnils [%lu bytes]: %f ms\n",
                  strlen(glbnvbuf2), tmdiff);
-    if (tmdiff > 300.0) {
-        maxdepth = curdepth - 1;
-    } else {
-        // NOTE: There is a high risk of zig zag effect. It would be
-        // better to have a smarter algorithm to decide when to
-        // increase maxdepth, but this is not feasible with the current
-        // nvimcom_glbnv_line() function.
-        if (tmdiff < 30.0 && maxdepth <= curdepth) {
-            maxdepth = curdepth + 1;
-        }
-    }
 }
 
 static void send_glb_env(void) {
