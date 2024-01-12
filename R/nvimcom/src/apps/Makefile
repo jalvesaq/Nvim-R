@@ -1,10 +1,12 @@
 CC ?= gcc
 CFLAGS = -pthread -std=gnu99 -O2 -Wall
+TARGET = nvimrserver
+SRCS = nvimrserver.c utilities.c data_structures.c logging.c
 
-all: nvimrserver
+all: $(TARGET)
 
-nvimrserver: nvimrserver.c utilities.c data_structures.c logging.c
-	$(CC) $(CFLAGS) nvimrserver.c utilities.c data_structures.c logging.c -o nvimrserver
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET)
 
 clean:
 
