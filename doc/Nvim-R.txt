@@ -45,11 +45,9 @@ people might be interested in, you can write a script to be sourced by Nvim-R
 							     *Nvim-R-features*
 2. Main features~
 
-  * Syntax highlighting for R code, including:
-      - Special characters in strings.
+  * Additional syntax highlighting for R code, including:
       - Functions of loaded packages.
       - Special highlighting for R output (.Rout files).
-      - Spell check only strings and comments.
   * Integrated communication with R:
       - Start/Close R.
       - Send lines, selection, paragraphs, functions, blocks, entire file.
@@ -60,6 +58,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - R objects (.GlobalEnv and loaded packages).
       - function arguments (if R is running).
       - knitr chunk options.
+      - Quarto cell options.
   * Limited support for debugging R functions.
   * Ability to see R's documentation in an editor buffer:
       - Automatic calculation of the best layout of the R documentation buffer
@@ -75,6 +74,7 @@ people might be interested in, you can write a script to be sourced by Nvim-R
       - Syntax highlighting of the Object Browser.
   * SyncTeX support for Rnoweb.
   * Most of the plugin's behavior is customizable.
+
 
 
 ==============================================================================
@@ -963,7 +963,7 @@ The compilation of `nvimcom` during R startup will fail on Windows if your
 
 It seems that if you put the command `syntax enable` in your `init.vim` on OS
 X, file type plugins are immediately sourced. Consequently, some Nvim-R
-variables (`R_disable_cmds`, `R_user_maps_only`, and `R_enable_comment`) will
+variables (`R_disable_cmds`, and `R_user_maps_only`) will
 be used at their default values even if their values have been set in
 the `init.vim`. The workaround is do not include the superfluous command
 `syntax enable` in the `init.vim`. For details, please, access:
@@ -1005,7 +1005,6 @@ the `init.vim`. The workaround is do not include the superfluous command
 |R_hi_fun|              Highlight R functions
 |R_hi_fun_paren|        Highlight R functions only if followed by a `(`
 |R_routnotab|           Show output of R CMD BATCH in new window
-|R_enable_comment|      Enable ability of commenting code
 |R_notmuxconf|          Don't use a specially built Tmux config file
 |R_rconsole_height|     Number of lines of R Console
 |R_rconsole_width|      Number of columns of R Console
@@ -1618,66 +1617,6 @@ that the file is open in a new split window, put in your |vimrc|:
 >
    let R_routnotab = 1
 <
-
-------------------------------------------------------------------------------
-							  *R_enable_comment*
-							  *R_indent_commented*
-							  *R_rcomment_string*
-6.12. Comment and uncomment code~
-
-Nvim-R can comment and uncomment code, but this feature is turned off by
-default because most people use a comment plugin for this task. To turn it on,
-put in your |vimrc|:
->
-   let R_enable_comment = 1
-<
-Then, you can toggle the state of a line as either commented or uncommented by
-typing <LocalLeader>xx. The string used to comment the line will be "# ", "##
-" or "### ", depending on the values of `R_indent_commented` and
-`r_indent_ess_comments`.
-
-You can also add the string "# " to the beginning of a line by typing
-<LocalLeader>xc and remove it with <LocalLeader>xu. In this case, you can set
-the value of `R_rcomment_string` to control what string will be added
-to the beginning of the line. Example:
->
-   let R_rcomment_string = '# '
-<
-Finally, you can also add comments to the right of a line with the
-<LocalLeader>; shortcut. By default, the comment starts at the 40th column,
-which can be changed by setting the value of r_indent_comment_column, as
-below:
->
-   let r_indent_comment_column = 20
-<
-If the line is longer than 38 characters, the comment will start two columns
-after the last character in the line. If you are running <LocalLeader>; over a
-selection of lines, the comments will be aligned according to the longest
-line.
-
-Note: While typing comments the leader comment string is automatically added
-to new lines when you reach 'textwidth' but not when you press <Enter>.
-Please, read the Vim help about 'formatoptions' and |fo-table|. For example,
-you can add the following line to your |vimrc| if you want the comment string
-being added after <Enter>:
->
-   autocmd FileType r setlocal formatoptions-=t formatoptions+=croql
-<
-To turn off the automatic indentation, put in your |vimrc|:
->
-   let R_indent_commented = 0
-<
-The string used to comment text with <LocalLeader>xc, <LocalLeader>xu,
-<LocalLeader>xx and <LocalLeader>o is defined by `R_rcomment_string`.
-Example:
->
-   let R_rcomment_string = '# '
-<
-If the value of `r_indent_ess_comments` is 1, `R_rcomment_string` will be
-overridden and the string used to comment the line will change according to
-the value of `R_indent_commented` ("## " if 0 and "### " if 1; see
-|ft-r-indent|).
-
 
 ------------------------------------------------------------------------------
 								*R_notmuxconf*
@@ -2622,10 +2561,6 @@ the list of the names for custom key bindings (the prefix RE means "echo"; RD,
    RClearConsole
 
    Edit R code~
-   RSimpleComment
-   RSimpleUnComment
-   RToggleComment
-   RRightComment
    RIndent
    RNextRChunk
    RPreviousRChunk

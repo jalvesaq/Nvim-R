@@ -344,26 +344,11 @@ function MakeRMenu()
     amenu R.Help\ (plugin).Options.R\ path :help R_path<CR>
     amenu R.Help\ (plugin).Options.Arguments\ to\ R :help R_args<CR>
     amenu R.Help\ (plugin).Options.Omni\ completion\ when\ R\ not\ running :help R_start_libs<CR>
-    amenu R.Help\ (plugin).Options.Syntax\ highlighting\ of\ \.Rout\ files :help R_routmorecolors<CR>
-    amenu R.Help\ (plugin).Options.Automatically\ open\ the\ \.Rout\ file :help R_routnotab<CR>
+    amenu R.Help\ (plugin).Options.Syntax\ highlighting\ of\ \.Rout\ files :help Rout_more_colors<CR>
     amenu R.Help\ (plugin).Options.Special\ R\ functions :help R_listmethods<CR>
-    amenu R.Help\ (plugin).Options.Indent\ commented\ lines :help R_indent_commented<CR>
-    amenu R.Help\ (plugin).Options.LaTeX\ command :help R_latexcmd<CR>
     amenu R.Help\ (plugin).Options.Never\ unmake\ the\ R\ menu :help R_never_unmake_menu<CR>
 
     amenu R.Help\ (plugin).Custom\ key\ bindings :help Nvim-R-key-bindings<CR>
-    amenu R.Help\ (plugin).Files :help Nvim-R-files<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.All\ tips :help Nvim-R-tips<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Indenting\ setup :help Nvim-R-indenting<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Folding\ setup :help Nvim-R-folding<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Remap\ LocalLeader :help Nvim-R-localleader<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Customize\ key\ bindings :help Nvim-R-bindings<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.ShowMarks :help Nvim-R-showmarks<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.SnipMate :help Nvim-R-snippets<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.LaTeX-Box :help Nvim-R-latex-box<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Highlight\ marks :help Nvim-R-showmarks<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Global\ plugin :help Nvim-R-global<CR>
-    amenu R.Help\ (plugin).FAQ\ and\ tips.Jump\ to\ function\ definitions :help Nvim-R-tagsfile<CR>
     amenu R.Help\ (plugin).News :help Nvim-R-news<CR>
 
     amenu R.Help\ (R)<Tab>:Rhelp :call g:SendCmdToR("help.start()")<CR>
