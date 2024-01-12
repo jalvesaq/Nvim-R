@@ -32,6 +32,7 @@ HWND RConsole = NULL;
 #endif
 
 #include "data_structures.h"
+#include "logging.h"
 #include "utilities.h"
 
 static char strL[8];        // String for last element prefix in tree view
@@ -93,21 +94,6 @@ static pthread_t Tid; // Thread ID
 struct sockaddr_in servaddr; // Server address structure
 static int sockfd;           // socket file descriptor
 static int connfd;           // Connection file descriptor
-
-#define Debug_NRS_
-__attribute__((format(printf, 1, 2))) static void
-Log(const char *fmt, ...) // Logging function for debugging
-{
-#ifdef Debug_NRS
-    va_list argptr;
-    FILE *f = fopen("/dev/shm/nvimrserver_log", "a");
-    va_start(argptr, fmt);
-    vfprintf(f, fmt, argptr);
-    fprintf(f, "\n");
-    va_end(argptr);
-    fclose(f);
-#endif
-}
 
 static void
 HandleSigTerm(__attribute__((unused)) int s) // Signal handler for SIGTERM

@@ -8,8 +8,8 @@ endif
 # Note: -lWs2_32 must be after the object files
 all: nvimrserver.exe
 
-nvimrserver.exe: nvimrserver.c utilities.c data_structures.c
-	$(CC) $(CFLAGS) nvimrserver.c utilities.c data_structures.c -o nvimrserver.exe -lWs2_32
+nvimrserver.exe: nvimrserver.c utilities.c data_structures.c logging.c
+	$(CC) $(CFLAGS) nvimrserver.c utilities.c data_structures.c logging.c -o nvimrserver.exe -lWs2_32
 
 clean:
 
