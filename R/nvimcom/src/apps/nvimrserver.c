@@ -163,69 +163,111 @@ static void ParseMsg(char *b) // Parse the message from R
     fflush(stdout);
 }
 
-// Adapted from
-// https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
-static void init_listening() // Initialise listening for incoming connections
-{
-    Log("init_listening()");
-#ifdef WIN32
-    int len;
-#else
-    socklen_t len;
-#endif
-    struct sockaddr_in cli;
-    int res = 1;
-    int port = 10101;
-
+/**
+ * @brief Initializes the socket for the server.
+ *
+ * This function creates a socket for the server and performs necessary
+ * initializations. On Windows, it also initializes Winsock. The function
+ * exits the program if socket creation fails.
+ *
+ * @note For Windows, WSAStartup is called to start the Winsock API.
+ */
+static void initialize_socket() {
+    Log("initialize_socket()");
 #ifdef WIN32
     WSADATA d;
     int wr = WSAStartup(MAKEWORD(2, 2), &d);
     if (wr != 0) {
         fprintf(stderr, "WSAStartup failed: %d\n", wr);
         fflush(stderr);
+        WSACleanup();
+        exit(1);
     }
 #endif
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd == -1) {
         fprintf(stderr, "socket creation failed...\n");
         fflush(stderr);
         exit(1);
     }
+}
+
+#define PORT_START 10101
+#define PORT_END 10199
+/**
+ * @brief Binds the server socket to an available port.
+ *
+ * This function initializes the server address structure and attempts to bind
+ * the server socket to an available port starting from 10101 up to 10199.
+ * It registers the port number for R to connect. The function exits the
+ * program if it fails to bind the socket to any of the ports in the specified
+ * range.
+ */
+static void bind_to_port() {
+    Log("bind_to_port()");
 
     bzero(&servaddr, sizeof(servaddr));
-
-    // assign IP, PORT
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    while (port < 10199) {
+    int res = 1;
+    for (int port = PORT_START; port <= PORT_END; port++) {
         servaddr.sin_port = htons(port);
         res = bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
-        if (res == 0)
+        if (res == 0) {
+            RegisterPort(port);
+            Log("bind_to_port: Bind succeeded on port %d", port);
             break;
-        port++;
+        }
     }
-    if (res == 0) {
-        RegisterPort(port);
-        Log("init_listening: RegisterPort");
-    } else {
-        fprintf(stderr, "Failed to bind to port %d\n", port);
+    if (res != 0) {
+        fprintf(stderr, "Failed to bind any port in the range %d-%d\n",
+                PORT_START, PORT_END);
         fflush(stderr);
+#ifdef WIN32
+        WSACleanup();
+#endif /* ifdef WIN32 */
         exit(2);
     }
+}
 
-    // Now server is ready to listen and verification
+/**
+ * @brief Sets the server to listen for incoming connections.
+ *
+ * This function sets the server to listen on the socket for incoming
+ * connections. It configures the socket to allow up to 5 pending connection
+ * requests in the queue. The function exits the program if it fails to set
+ * the socket to listen state.
+ */
+static void listening_for_connections() {
+    Log("listening_for_connections()");
+
     if ((listen(sockfd, 5)) != 0) {
         fprintf(stderr, "Listen failed...\n");
         fflush(stderr);
         exit(3);
     }
-    Log("init_listening: Listen succeeded");
+    Log("listening_for_connections: Listen succeeded");
+}
+
+/**
+ * @brief Accepts an incoming connection on the listening socket.
+ *
+ * This function waits for and accepts the first incoming connection request
+ * on the listening socket. It stores the connection file descriptor in
+ * 'connfd' and sets the 'r_conn' flag to indicate a successful connection.
+ * The function exits the program if it fails to accept a connection.
+ */
+static void accept_connection() {
+    Log("accept_connection()");
+#ifdef WIN32
+    int len;
+#else
+    socklen_t len;
+#endif
+    struct sockaddr_in cli;
 
     len = sizeof(cli);
-
-    // Accept the data packet from client and verification
     connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
     if (connfd < 0) {
         fprintf(stderr, "server accept failed...\n");
@@ -233,7 +275,28 @@ static void init_listening() // Initialise listening for incoming connections
         exit(4);
     }
     r_conn = 1;
-    Log("init_listening: accept succeeded");
+    Log("accept_connection: accept succeeded");
+}
+
+/**
+ * @brief Initializes listening for incoming connections.
+ *
+ * This function is responsible for the entire process of setting up the
+ * server to listen for and accept incoming connections. It calls a series of
+ * functions to initialize the socket, bind it to a port, set it to listen
+ * for connections, and then accept an incoming connection.
+ *
+ * @note A previous version of this function was adapted from
+ * https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+ */
+static void
+setup_server_socket() // Initialise listening for incoming connections
+{
+    Log("setup_server_socket()");
+    initialize_socket();
+    bind_to_port();
+    listening_for_connections();
+    accept_connection();
 }
 
 static void get_whole_msg(char *b) // Get the whole message from the socket
@@ -323,7 +386,7 @@ static void *receive_msg() // Thread function to receive messages on Unix
                 fflush(stderr);
                 break;
             }
-            init_listening();
+            setup_server_socket();
         }
     }
 #ifndef WIN32
@@ -559,7 +622,7 @@ void start_server(void) // Start server and listen for connections
     // Finish immediately with SIGTERM
     signal(SIGTERM, HandleSigTerm);
 
-    init_listening();
+    setup_server_socket();
 
     // Receive messages from TCP and output them to stdout
 #ifdef WIN32
