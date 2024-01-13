@@ -740,7 +740,7 @@ char *get_pkg_descr(const char *pkgnm) {
         if (strcmp(il->name, pkgnm) == 0) {
             char *s = malloc((strlen(il->title) + 1) * sizeof(char));
             strcpy(s, il->title);
-            fix_x13(s);
+            replace_char(s, '\x13', '\'');
             return s;
         }
         il = il->next;
@@ -1080,8 +1080,8 @@ void parse_descr(char *descr, const char *fnm) {
             m++;
             n++;
         }
-        fix_single_quote(lib->title);
-        fix_single_quote(lib->descr);
+        replace_char(lib->title, '\'', '\x13');
+        replace_char(lib->descr, '\'', '\x13');
     } else {
         if (ttl)
             fprintf(stderr, "Failed to get Description from %s. ", fnm);
