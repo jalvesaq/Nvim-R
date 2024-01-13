@@ -21,7 +21,6 @@
 #ifdef _WIN64
 #include <inttypes.h>
 #endif
-#define bzero(b, len) (memset((b), '\0', (len)), (void)0)
 #else
 #include <arpa/inet.h> // inet_addr()
 #include <netdb.h>
@@ -322,17 +321,12 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
         curdepth = depth;
 
     int xgroup = 0; // 1 = function, 2 = data.frame, 3 = list, 4 = s4
-    char newenv[576];
     char ebuf[64];
     int len = 0;
-    const char *ename;
-    SEXP listNames, txt, lablab, eexp, elmt = R_NilValue;
-    SEXP cmdSexp, cmdexpr, sn = R_NilValue;
-    ParseStatus status;
-    int er = 0;
+    SEXP txt, lablab;
+    SEXP sn = R_NilValue;
     char buf[576];
     char bbuf[512];
-    char *ptr;
 
     if ((strlen(glbnvbuf2 + lastglbnvbsz)) > 31744)
         p = nvimcom_grow_buffers();
@@ -394,6 +388,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
     PROTECT(txt = getAttrib(*x, lablab));
     if (length(txt) > 0) {
         if (Rf_isValidString(txt)) {
+            char *ptr;
             snprintf(buf, 159, "\006\006%s", CHAR(STRING_ELT(txt, 0)));
             ptr = buf;
             while (*ptr) {
@@ -419,6 +414,8 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
         snprintf(buf, 127, " [%d]", length(*x));
         p = nvimcom_strcat(p, buf);
     } else if (xgroup == 4) {
+        SEXP cmdSexp, cmdexpr;
+        ParseStatus status;
         snprintf(buf, 575, "%s%s", curenv, xname);
         nvimcom_backtick(buf, bbuf);
         snprintf(buf, 575, "slotNames(%s)", bbuf);
@@ -426,6 +423,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
         SET_STRING_ELT(cmdSexp, 0, mkChar(buf));
         PROTECT(cmdexpr = R_ParseVector(cmdSexp, -1, &status, R_NilValue));
         if (status == PARSE_OK) {
+            int er = 0;
             PROTECT(sn = R_tryEval(VECTOR_ELT(cmdexpr, 0), R_GlobalEnv, &er));
             if (er)
                 REprintf("nvimcom error executing command: slotNames(%s%s)\n",
@@ -446,6 +444,9 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
     p = nvimcom_strcat(p, "\006\n");
 
     if (xgroup > 1) {
+        char newenv[576];
+        SEXP elmt = R_NilValue;
+        const char *ename;
         double tmdiff = 1000 * ((double)clock() - tm) / CLOCKS_PER_SEC;
         if (tmdiff > 300.0) {
             maxdepth = curdepth;
@@ -473,6 +474,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
                 }
             }
         } else {
+            SEXP listNames;
             snprintf(newenv, 575, "%s%s$", curenv, xname);
             PROTECT(listNames = getAttrib(*x, R_NamesSymbol));
             len = length(listNames);
@@ -494,6 +496,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
                     UNPROTECT(1);
                 }
             } else { /* Named list */
+                SEXP eexp;
                 len -= 1;
                 for (int i = 0; i < len; i++) {
                     PROTECT(eexp = STRING_ELT(listNames, i));
@@ -969,7 +972,7 @@ static void *server_thread(__attribute__((unused)) void *arg)
     size_t len;
     for (;;) {
         char buff[1024];
-        bzero(buff, sizeof(buff));
+        memset(buff, '\0', sizeof(buff));
         len = recv(sfd, buff, sizeof(buff), 0);
 #ifdef WIN32
         if (len == 0 || buff[0] == 0 || buff[0] == EOF ||
@@ -1073,7 +1076,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
         // socket create and verification
         sfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sfd != -1) {
-            bzero(&servaddr, sizeof(servaddr));
+            memset(&servaddr, '\0', sizeof(servaddr));
 
             // assign IP, PORT
             servaddr.sin_family = AF_INET;
@@ -1099,8 +1102,7 @@ void nvimcom_Start(int *vrb, int *anm, int *swd, int *age, int *dbg, char **vcv,
                 nvimcom_failure = 1;
             }
         } else {
-            REprintf("nvimcom: socket creation failed (%u:%d)\n",
-                     servaddr.sin_addr.s_addr, atoi(nrs_port));
+            REprintf("nvimcom: socket creation failed (%d)\n", atoi(nrs_port));
             nvimcom_failure = 1;
         }
     }
