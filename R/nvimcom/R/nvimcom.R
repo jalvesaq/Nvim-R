@@ -61,10 +61,11 @@ NvimcomEnv$pkgdescr <- list()
            PACKAGE = "nvimcom")
     }
     if (!is.na(utils::localeToCharset()[1]) &&
-        utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin")
+        utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin") {
         NvimcomEnv$isAscii <- FALSE
-    else
+    } else {
         NvimcomEnv$isAscii <- TRUE
+    }
 }
 
 .onUnload <- function(libpath) {

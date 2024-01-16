@@ -67,10 +67,11 @@ gbRd.get_args <- function(rdo, arg) {
     if ("..." %in% arg || "\\dots" %in% arg) {  # since formals() represents ... by "..."
         f2 <- function(x) {
             if (is.list(x[[1]]) && length(x[[1]]) > 0 &&
-               attr(x[[1]][[1]], "Rd_tag") == "\\dots")
+               attr(x[[1]][[1]], "Rd_tag") == "\\dots") {
                 TRUE
-            else
+            } else {
                 FALSE
+            }
         }
         i2 <- sapply(rdargs, f2)
         sel[i2] <- FALSE
@@ -230,11 +231,12 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
             } else {
                 str2 <- paste0("\x12, \x12menu\x12: \x12 \x12")
             }
-            if (pkgname != ".GlobalEnv" && extrainfo && length(frm) > 0)
+            if (pkgname != ".GlobalEnv" && extrainfo && length(frm) > 0) {
                 res <- append(res, paste0(str1, str2, ", \x12user_data\x12: {\x12cls\x12: \x12a\x12, \x12argument\x12: \x12",
                                           arglist[[field]], "\x12}}, "))
-            else
+            } else {
                 res <- append(res, paste0(str1, str2, "}, "))
+            }
         } else {
             if (type == "symbol") {
                 res <- append(res, paste0("[\x12", field, "\x12], "))
@@ -338,15 +340,25 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
             x.class <- "flow-control"
         } else {
             x.class <- class(xx)[1]
-            if (is.function(xx)) x.group <- "f"
-            else if (is.numeric(xx)) x.group <- "{"
-            else if (is.factor(xx)) x.group <- "!"
-            else if (is.character(xx)) x.group <- "~"
-            else if (is.logical(xx)) x.group <- "%"
-            else if (is.data.frame(xx)) x.group <- "$"
-            else if (is.list(xx)) x.group <- "["
-            else if (is.environment(xx)) x.group <- ":"
-            else x.group <- "*"
+            if (is.function(xx)) {
+                x.group <- "f"
+            } else if (is.numeric(xx)) {
+                x.group <- "{"
+            } else if (is.factor(xx)) {
+                x.group <- "!"
+            } else if (is.character(xx)) {
+                x.group <- "~"
+            } else if (is.logical(xx)) {
+                x.group <- "%"
+            } else if (is.data.frame(xx)) {
+                x.group <- "$"
+            } else if (is.list(xx)) {
+                x.group <- "["
+            } else if (is.environment(xx)) {
+                x.group <- ":"
+            } else {
+                x.group <- "*"
+            }
         }
     }
 
@@ -370,15 +382,16 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
             if (is.list(xx) || is.environment(xx)) {
                 if (curlevel == 0) {
                     info <- nvim.getInfo(printenv, x)
-                    if (is.data.frame(xx))
+                    if (is.data.frame(xx)) {
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006[", nrow(xx), ", ", ncol(xx), "]", info, "\006\n", sep = "")
-                    else if (is.list(xx))
+                    } else if (is.list(xx)) {
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006", length(xx), info, "\006\n", sep = "")
-                    else
+                    } else {
                         cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006[]", info, "\006\n", sep = "")
+                    }
                 } else {
                     cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
                         "\006[]\006\006\006\n", sep = "")
@@ -489,8 +502,9 @@ nvim.buildargs <- function(afile, pkg) {
             if (is.null(a))
                 next
             frm <- formals(a)
-        } else
+        } else {
             frm <- formals(x)
+        }
         arglist <- gbRd.args2txt(pkg, obj, names(frm))
         arglist <- lapply(arglist, nvim.fix.string)
         cat(obj, "\006",
