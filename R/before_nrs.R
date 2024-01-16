@@ -49,10 +49,11 @@ check_nvimcom_installation <- function() {
         }
     } else {
         if (length(np) == 0) {
-            if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom")))
+            if (dir.exists(paste0(libp[1], "/00LOCK-nvimcom"))) {
                 out(paste0('RWarn: Failed to install nvimcom. Perhaps you should delete the directory "', libp[1], '/00LOCK-nvimcom"'))
-            else
+            } else {
                 out("RWarn: Failed to install nvimcom.")
+            }
             quit(save = "no", status = 61)
         } else {
             out("RWarn: More than one nvimcom versions installed.")

@@ -12,9 +12,9 @@ gbRd.set_sectag <- function(s, sectag, eltag) {
 
 gbRd.fun <- function(x, pkg) {
     rdo <- NULL # prepare the "Rd" object rdo
-    x <- do.call(utils::help, list(x, pkg, help_type = "text",
-                               verbose = FALSE,
-                               try.all.packages = FALSE))
+    x <- do.call(utils::help,
+                 list(x, pkg, help_type = "text", verbose = FALSE,
+                      try.all.packages = FALSE))
     if (length(x) == 0)
         return(NULL)
 
@@ -156,10 +156,11 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
         }
     }
 
-    if (is.null(pkg))
+    if (is.null(pkg)) {
         pkgname <- sub(".*:", "", find(funcname, mode = "function")[1])
-    else
+    } else {
         pkgname <- pkg
+    }
 
     if (is.na(frm[1])) {
         if (is.null(pkg)) {
@@ -292,8 +293,7 @@ nvim.getInfo <- function(printenv, x) {
     try(info <- NvimcomEnv$pkgdescr[[printenv]]$descr[[als]], silent = TRUE)
     if (length(info) == 1)
         return(info)
-    else
-        return("\006\006")
+    return("\006\006")
 }
 
 nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
@@ -511,10 +511,11 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
         GetFunDescription(packlist)
 
     loadpack <- search()
-    if (missing(packlist))
+    if (missing(packlist)) {
         listpack <- loadpack[grep("^package:", loadpack)]
-    else
+    } else {
         listpack <- paste0("package:", packlist)
+    }
 
     for (curpack in listpack) {
         curlib <- sub("^package:", "", curpack)
@@ -588,8 +589,7 @@ nvim.buildomnils <- function(p) {
             n <- n + nvim.buildomnils(pkg)
         if (n > 0)
             return(invisible(1))
-        else
-            return(invisible(0))
+        return(invisible(0))
     }
     # No verbosity because running as Neovim job
     options(nvimcom.verbose = 0)

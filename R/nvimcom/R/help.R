@@ -65,10 +65,11 @@ nvim.help <- function(topic, w, firstobj, package) {
         }
     }
 
-    if (missing(package))
+    if (missing(package)) {
         h <- utils::help(topic, help_type = "text")
-    else
+    } else {
         h <- utils::help(topic, package = as.character(package), help_type = "text")
+    }
 
     if (length(h) == 0) {
         msg <- paste0('No documentation for "', topic, '" in loaded packages and libraries.')

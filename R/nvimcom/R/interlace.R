@@ -149,10 +149,11 @@ ShowTexErrors <- function(texf, logf, l) {
         undef <- undef[!duplicated(undef)]
         idx[undef] <- TRUE
     }
-    if (sum(grepl("pdfTeX (error|warning)", l, useBytes = TRUE)) > 0)
+    if (sum(grepl("pdfTeX (error|warning)", l, useBytes = TRUE)) > 0) {
         has.pdfTeX.errors <- TRUE
-    else
+    } else {
         has.pdfTeX.errors <- FALSE
+    }
 
     if (sum(idx) > 0) {
         l <- l[idx]
@@ -325,10 +326,11 @@ nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...) {
             cfg <- quarto::quarto_inspect(Rmdfile)
             fmt <- names(cfg$formats)[1]
         } else {
-            if (outform == "beamer")
+            if (outform == "beamer") {
                 fmt <- "pdf"
-            else
+            } else {
                 fmt <- outform
+            }
         }
         res <- sub("qmd$", fmt, Rmdfile)
         mtime1 <- file.info(res)$mtime

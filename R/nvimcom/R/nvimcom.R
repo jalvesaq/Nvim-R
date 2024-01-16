@@ -32,10 +32,11 @@ NvimcomEnv$pkgdescr <- list()
 .onAttach <- function(libname, pkgname) {
     if (Sys.getenv("NVIMR_TMPDIR") == "")
         return(invisible(NULL))
-    if (version$os == "mingw32")
+    if (version$os == "mingw32") {
         termenv <- "MinGW"
-    else
+    } else {
         termenv <- Sys.getenv("TERM")
+    }
 
     if (interactive() && termenv != "" && termenv != "dumb" && Sys.getenv("NVIMR_COMPLDIR") != "") {
         dir.create(Sys.getenv("NVIMR_COMPLDIR"), showWarnings = FALSE)

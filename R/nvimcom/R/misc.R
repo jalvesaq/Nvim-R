@@ -277,20 +277,22 @@ nvim.plot <- function(x) {
 }
 
 nvim.names <- function(x) {
-    if (isS4(x))
+    if (isS4(x)) {
         slotNames(x)
-    else
+    } else {
         names(x)
+    }
 }
 
 nvim.getclass <- function(x) {
     if (missing(x) || length(charToRaw(x)) == 0)
         return("#E#")
 
-    if (x == "#c#")
+    if (x == "#c#") {
         return("character")
-    else if (x == "#n#")
+    } else if (x == "#n#") {
         return("numeric")
+    }
 
     if (!exists(x, where = .GlobalEnv)) {
         return("#E#")
@@ -311,10 +313,11 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
         res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
     } else {
         objclass <- nvim.getclass(firstobj)
-        if (objclass[1] == "#E#" || objclass[1] == "")
+        if (objclass[1] == "#E#" || objclass[1] == "") {
             res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
-        else
+        } else {
             res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
+        }
     }
     if (ldf && exists(firstobj)) {
         dtfrm <- get(firstobj)
