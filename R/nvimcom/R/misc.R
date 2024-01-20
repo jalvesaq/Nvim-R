@@ -1,4 +1,5 @@
-
+# Function called by R if options(editor = nvim.edit).
+# Nvim-R sets this option during nvimcom loading.
 nvim.edit <- function(name, file, title) {
     if (file != "")
         stop("Feature not implemented. Use nvim to edit files.")
@@ -28,10 +29,15 @@ nvim.edit <- function(name, file, title) {
     x
 }
 
+# Substitute for utils::vi
 vi <- function(name = NULL, file = "") {
     nvim.edit(name, file)
 }
 
+#' Function called by Nvim-R when the user wants to source a line of code and
+#' capture its output in a new Vim tab (default key binding `o`)
+#' @param s A string representing the line of code to be source.
+#' @param nm The name of the buffer to be created in the Vim tab.
 nvim_capture_source_output <- function(s, nm) {
     o <- capture.output(base::source(s, echo = TRUE), file = NULL)
     o <- paste0(o, collapse = "\x14")
@@ -40,6 +46,10 @@ nvim_capture_source_output <- function(s, nm) {
        PACKAGE = "nvimcom")
 }
 
+#' Function called by Nvim-R when the user wants to run the command `dput()`
+#' over the word under cursor and see its output in a new Vim tab.
+#' @param oname The name of the object under cursor.
+#' @param howto How to show the output (never included when called by Nvim-R).
 nvim_dput <- function(oname, howto = "tabnew") {
     o <- capture.output(eval(parse(text = paste0("dput(", oname, ")"))))
     o <- paste0(o, collapse = "\x14")
@@ -49,6 +59,14 @@ nvim_dput <- function(oname, howto = "tabnew") {
        PACKAGE = "nvimcom")
 }
 
+#' Function called by Nvim-R when the user wants to see a `data.frame` or
+#' `matrix` (default key bindings: `\rv`, `\vs`, `\vv`, and `\rh`).
+#' @param oname The name of the object (`data.frame` or `matrix`).
+#' @param fenc File encoding to be used.
+#' @param nrows How many lines to show.
+#' @param howto How to display the output in Vim.
+#' @param R_df_viewer R function to be called to show the `data.frame` or
+#' `matrix`.
 nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_viewer = NULL) {
     if (is.data.frame(oname) || is.matrix(oname)) {
         # Only when the rkeyword includes "::"
@@ -104,6 +122,10 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
     return(invisible(NULL))
 }
 
+#' Call base::source.
+#' @param ... Further arguments passed to base::source.
+#' @param print.eval See base::source.
+#' @param spaced See base::source.
 NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE) {
     if (with(R.Version(), paste(major, minor, sep = ".")) >= "3.4.0") {
         base::source(getOption("nvimcom.source.path"), ...,
@@ -113,21 +135,55 @@ NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE) {
     }
 }
 
+#' Call base::source.
+#' This function is sent to R Console when the user press `\ss`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 NvimR.selection <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
+#' Call base::source.
+#' This function is sent to R Console when the user press `\pp`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 NvimR.paragraph <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
+#' Call base::source.
+#' This function is sent to R Console when the user press `\bb`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 NvimR.block <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
+#' Call base::source.
+#' This function is sent to R Console when the user press `\ff`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 NvimR.function <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
+#' Call base::source.
+#' This function is sent to R Console when the user press `\cc`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 NvimR.chunk <- function(..., local = parent.frame()) NvimR.source(..., local = local)
 
+#' Creates a temporary copy of an R file, source it, and, finally, delete it.
+#' This function is sent to R Console when the user press `\aa`, `\ae`, or `\ao`.
+#' @param ... Further arguments passed to base::source.
+#' @param local See base::source.
 source.and.clean <- function(f, ...) {
     on.exit(unlink(f))
-    source(f, ...)
+    base::source(f, ...)
 }
 
+#' Format R code.
+#' Sent to nvimcom through nvimrserver by Nvim-R when the user runs the
+#' `Rformat` command.
+#' @param l1 First line of selection. Nvim-R needs the information to know
+#' what lines to replace.
+#' @param l2 Last line of selection. Nvim-R needs the information to know
+#' what lines to replace.
+#' @param wco Text width, based on Vim option 'textwidth'.
+#' @param sw Vim option 'shiftwidth'.
+#' @param txt Text to be formatted.
 nvim_format <- function(l1, l2, wco, sw, txt) {
     if (is.null(getOption("nvimcom.formatfun"))) {
         if (length(find.package("styler", quiet = TRUE, verbose = FALSE)) > 0) {
@@ -171,6 +227,10 @@ nvim_format <- function(l1, l2, wco, sw, txt) {
     return(invisible(NULL))
 }
 
+#' Returns the output of command to be inserted by Nvim-R.
+#' The function is called when the user runs the command `:Rinsert`.
+#' @param cmd Command to be executed.
+#' @param howto How Nvim-R should insert the result.
 nvim_insert <- function(cmd, howto = "tabnew") {
     try(o <- capture.output(cmd))
     if (inherits(o, "try-error")) {
@@ -187,6 +247,12 @@ nvim_insert <- function(cmd, howto = "tabnew") {
     return(invisible(NULL))
 }
 
+#' Output the arguments of a function as extra information to be shown during
+#' omni or auto-completion.
+#' Called by nvimrserver when the user selects a function created in the
+#' .GlobalEnv environment in the completion menu.
+#' menu.
+#' @param funcname Name of function selected in the completion menu.
 nvim.GlobalEnv.fun.args <- function(funcname) {
     txt <- nvim.args(funcname)
     txt <- gsub('\\\\\\"', '\005', txt)
@@ -202,6 +268,10 @@ nvim.GlobalEnv.fun.args <- function(funcname) {
     return(invisible(NULL))
 }
 
+#' Output the summary as extra information on an object during omni or
+#' auto-completion.
+#' @param obj Object selected in the completion menu.
+#' @param wdth Maximum width of lines in the output.
 nvim.get.summary <- function(obj, wdth) {
     isnull <- try(is.null(obj), silent = TRUE)
     if (class(isnull)[1] != "logical")
@@ -244,6 +314,10 @@ nvim.get.summary <- function(obj, wdth) {
     return(invisible(NULL))
 }
 
+#' List arguments of a function
+#' This function is sent to R Console by Nvim-R when the user press `\ra` over
+#' an R object.
+#' @param ff The object under cursor.
 nvim.list.args <- function(ff) {
     saved.warn <- getOption("warn")
     options(warn = -1)
@@ -262,6 +336,10 @@ nvim.list.args <- function(ff) {
     print(args(ff))
 }
 
+#' Plot an object.
+#' This function is sent to R Console by Nvim-R when the user press `\rg` over
+#' an R object.
+#' @param x The object under cursor.
 nvim.plot <- function(x) {
     xname <- deparse(substitute(x))
     if (length(grep("numeric", class(x))) > 0 || length(grep("integer", class(x))) > 0) {
@@ -276,6 +354,10 @@ nvim.plot <- function(x) {
     }
 }
 
+#' Output the names of an object.
+#' This function is sent to R Console by Nvim-R when the user press `\rn` over
+#' an R object.
+#' @param x The object under cursor.
 nvim.names <- function(x) {
     if (isS4(x)) {
         slotNames(x)
@@ -284,6 +366,8 @@ nvim.names <- function(x) {
     }
 }
 
+#' Get the class of object.
+#' @param x R object.
 nvim.getclass <- function(x) {
     if (missing(x) || length(charToRaw(x)) == 0)
         return("#E#")
@@ -308,15 +392,25 @@ nvim.getclass <- function(x) {
     return(cls)
 }
 
-nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL, ldf = FALSE) {
+#' Complete arguments of functions.
+#' Called during omni-completion or nvim-cmp completion with cmp-nvim-r as
+#' source.
+#' @param id Completion identification number.
+#' @param rkeyword0 Name of function whose arguments are being completed.
+#' @param argkey First characters of argument to be completed.
+#' @param firstobj First parameter of function being completed.
+#' @param lib Name of library preceding the name of the function
+#' (example: `library::function`).
+#' @param ldf Whether the function is in `R_fun_data_1` or not.
+nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", lib = NULL, ldf = FALSE) {
     if (firstobj == "") {
-        res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
+        res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, sdq = FALSE)
     } else {
         objclass <- nvim.getclass(firstobj)
         if (objclass[1] == "#E#" || objclass[1] == "") {
-            res <- nvim.args(rkeyword0, argkey, pkg, extrainfo = TRUE, sdq = FALSE)
+            res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, sdq = FALSE)
         } else {
-            res <- nvim.args(rkeyword0, argkey, pkg, objclass, extrainfo = TRUE, sdq = FALSE)
+            res <- nvim.args(rkeyword0, argkey, lib, objclass, extrainfo = TRUE, sdq = FALSE)
         }
     }
     if (ldf && exists(firstobj)) {
@@ -326,7 +420,7 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", pkg = NULL,
                 nlab <- attr(dtfrm[[n]], "label")
                 res <- append(res, paste0("{'word': '", n, "', 'menu': '[", firstobj,
                                           "]', 'user_data': {'word': '", firstobj, "$", n,
-                                          "', 'env': '", ifelse(is.null(pkg), ".GlobalEnv", pkg),
+                                          "', 'env': '", ifelse(is.null(lib), ".GlobalEnv", lib),
                                           "', 'cls': 'v', 'descr': '",
                                           ifelse(is.null(nlab), "", nvim.fix.string(nlab)),
                                           "'}},"))

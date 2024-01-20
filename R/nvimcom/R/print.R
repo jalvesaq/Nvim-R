@@ -1,4 +1,6 @@
-
+#' Command sent to R console after `\rp`.
+#' @param object Object under cursor.
+#' @param firstobj If `object` is a function, the the first function parameter.
 nvim.print <- function(object, firstobj) {
     if (!exists(object))
         stop("object '", object, "' not found")

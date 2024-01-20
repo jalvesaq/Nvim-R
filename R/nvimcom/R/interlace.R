@@ -1,3 +1,7 @@
+#' Read a Sweave concordance file to calculate the correspondence between the
+#' lines in the original Rnoweb file and the lines in the generated LaTeX file.
+#' @param texf LaTeX file.
+#' @param concf Concordance file.
 SyncTeX_readconc <- function(texf, concf) {
     texidx <- 1
     ntexln <- length(readLines(texf))
@@ -44,6 +48,11 @@ SyncTeX_readconc <- function(texf, concf) {
                       rnwline = lsrnwl, stringsAsFactors = FALSE))
 }
 
+#' Return the lines in the Rnoweb file corresponding to the generated LaTeX
+#' file.
+#' @param texf LaTeX file.
+#' @param concf Concordance file.
+#' @param l Lines in the LaTeX file.
 GetRnwLines <- function(texf, concf, l) {
     conc <- SyncTeX_readconc(texf, concf)
     for (ii in seq_along(l)) {
@@ -106,6 +115,11 @@ GetRnwLines <- function(texf, concf, l) {
     l
 }
 
+#' Print lines of errors from LaTeX log files after calculating the
+#' correspoding lines numbers in the original Rnoweb file.
+#' @param texf LaTeX file.
+#' @param logf LaTeX log file.
+#' @param l Lines in the original Rnoweb file.
 ShowTexErrors <- function(texf, logf, l) {
     llen <- length(l)
     lf <- character(llen)
@@ -173,6 +187,19 @@ ShowTexErrors <- function(texf, logf, l) {
     }
 }
 
+#' Knitr or Sweave an Rnoweb document.
+#' @param rnwf Rnoweb file.
+#' @param rnwdir Directory where the Rnoweb file is.
+#' @param latexcmd LaTeX command.
+#' @param latexargs LaTeX command arguments.
+#' @param synctex Whether to enable SyncTeX support.
+#' @param bibtex Bib file.
+#' @param knit Whether we should `knit` or `sweave` the document.
+#' @param buildpdf Whether to also generate the PDF or only `knit` or `sweave`
+# the document.
+#' @param view Whether to open the generated PDF.
+#' @param builddir Where the log file is expected to be found.
+#' @param ... Further arguments passed to `Sweave()`.
 nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
                                   latexargs, synctex = TRUE, bibtex = FALSE,
                                   knit = TRUE, buildpdf = TRUE, view = TRUE,
@@ -294,6 +321,11 @@ nvim.interlace.rnoweb <- function(rnwf, rnwdir, latexcmd = "latexmk",
     return(invisible(NULL))
 }
 
+#' Knitr an Rrst file.
+#' @param Rrstfile Rrst file.
+#' @param rrstdir Directory where the Rrst file is.
+#' @param compiler Compiler to be used.
+#' @param ... Further arguments passed to `knitr::knitr2pdf()`.
 nvim.interlace.rrst <- function(Rrstfile, rrstdir, compiler = "rst2pdf", ...) {
     if (!require(knitr))
         stop("Please, install the 'knitr' package.")
@@ -311,6 +343,11 @@ nvim.interlace.rrst <- function(Rrstfile, rrstdir, compiler = "rst2pdf", ...) {
        PACKAGE = "nvimcom")
 }
 
+#' Knitr an Rmarkdown file.
+#' @param Rmdfile Rmarkdown file.
+#' @param outform Format of output.
+#' @param rmddir Directory where the Rmd file is.
+#' @param ... Further arguments passed to `rmarkdown::render()`.
 nvim.interlace.rmd <- function(Rmdfile, outform = NULL, rmddir, ...) {
     if (!require(rmarkdown))
         stop("Please, install the 'rmarkdown' package.")

@@ -1,4 +1,5 @@
-
+# Function called by R if options(pager = nvim.hmsg).
+# Nvim-R sets this option during nvimcom loading.
 nvim.hmsg <- function(files, header, title, delete.file) {
     doc <- gsub("'", "\x13", paste(readLines(files[1]), collapse = "\x14"))
     ttl <- sub("R Help on '(.*)'", "\\1 (help)", title)
@@ -8,6 +9,16 @@ nvim.hmsg <- function(files, header, title, delete.file) {
     return(invisible(NULL))
 }
 
+#' Function called by Nvim-R after `\rh` or `:Rhelp`.
+#' Nvim-R sends the command through the nvimrserver TCP connection to nvimcom
+#' and R evaluates the command when idle.
+#' @param topic The word under cursor when `\rh` was pressed.
+#' @param w The width that lines should have in the formatted document.
+#' @param firstobj The first argument of `topic`, if any. There will be a first
+#' object if the user requests the documentation of `topic(firstobj)`.
+#' @param package The name of the package, if any. There will be a package if
+#' the user request the documentation from the Object Browser or the cursor is
+#' over `package::topic`.
 nvim.help <- function(topic, w, firstobj, package) {
     if (!missing(firstobj) && firstobj != "") {
         objclass <- nvim.getclass(firstobj)
@@ -98,6 +109,8 @@ nvim.help <- function(topic, w, firstobj, package) {
     return(invisible(NULL))
 }
 
+#' Function called by Nvim-R after `\re`.
+#' @param The word under cursor. Should be a function.
 nvim.example <- function(topic) {
     saved.warn <- getOption("warn")
     options(warn = -1)

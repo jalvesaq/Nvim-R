@@ -3,6 +3,10 @@
 # version 0.4-11 (released on 2012-01-04) and adapted to nvimcom.
 # The gbRd package was developed by Georgi N. Boshnakov.
 
+#' Get section of Rd data.
+#' @param s Section title.
+#' @param sectag Section.
+#' @param eltag Type of element.
 gbRd.set_sectag <- function(s, sectag, eltag) {
     attr(s, "Rd_tag") <- eltag  # using `structure' would be more elegant...
     res <- list(s)
@@ -10,6 +14,9 @@ gbRd.set_sectag <- function(s, sectag, eltag) {
     res
 }
 
+#' Get Rd information on a function.
+#' @param x Function name.
+#' @param pkg Library name.
 gbRd.fun <- function(x, pkg) {
     rdo <- NULL # prepare the "Rd" object rdo
     x <- do.call(utils::help,
@@ -39,6 +46,9 @@ gbRd.fun <- function(x, pkg) {
     rdo
 }
 
+#' Get information on function arguments from R documentation.
+#' @param rdo Rd object.
+#' @param arg Argument.
 gbRd.get_args <- function(rdo, arg) {
     tags <- tools:::RdTags(rdo)
     wtags <- which(tags == "\\arguments")
@@ -81,6 +91,10 @@ gbRd.get_args <- function(rdo, arg) {
     rdargs
 }
 
+#' Get and convert information from Rd data to plain text.
+#' @param pkg Library name.
+#' @param rdo Rd object.
+#' @param arglist List of arguments.
 gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
     rdo <- gbRd.fun(rdo, pkg)
 
@@ -120,12 +134,14 @@ gbRd.args2txt <- function(pkg = NULL, rdo, arglist) {
 
 
 # For building omnls files
-nvim.fix.string <- function(x, sdq = TRUE) {
+#' @param x
+#' @param edq Whether double quotes should be escaped.
+nvim.fix.string <- function(x, edq = TRUE) {
     x <- gsub("\n", "\\\\n", x)
     x <- gsub("\r", "\\\\r", x)
     x <- gsub("\t", "\\\\t", x)
     x <- gsub("'", "\x13", x)
-    if (sdq) {
+    if (edq) {
         x <- gsub('"', '\\\\"', x)
     } else {
         x <- sub("^\\s*", "", x)
@@ -134,8 +150,15 @@ nvim.fix.string <- function(x, sdq = TRUE) {
     x
 }
 
-# Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
-nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, sdq = TRUE) {
+#' Get the list of arguments of a function
+#' @param funcname Function name.
+#' @param txt Begin of parameter name.
+#' @param pkg Library name. If not NULL, restrict the search to `pkg`.
+#' @param objclass Class of first argument of the function.
+#' @param extrainfo Whether to include additional information for completion.
+#' @param edq Whether double quotes should be escaped.
+nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALSE, edq = TRUE) {
+    # Adapted from: https://stat.ethz.ch/pipermail/ess-help/2011-March/006791.html
     if (!exists(funcname))
         return("")
     frm <- NA
@@ -209,7 +232,7 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
 
     if (pkgname[1] != ".GlobalEnv" && extrainfo && length(frm) > 0) {
         arglist <- gbRd.args2txt(pkgname, funcname, names(frm))
-        arglist <- lapply(arglist, nvim.fix.string, sdq)
+        arglist <- lapply(arglist, nvim.fix.string, edq)
     }
 
     res <- NULL
@@ -280,6 +303,9 @@ nvim.args <- function(funcname, txt = "", pkg = NULL, objclass, extrainfo = FALS
 }
 
 
+#' Check if `pattern` is included in the vector `x`.
+#' @param Pattern.
+#' @param x Character vector.
 nvim.grepl <- function(pattern, x) {
     res <- grep(pattern, x)
     if (length(res) == 0) {
@@ -289,6 +315,9 @@ nvim.grepl <- function(pattern, x) {
     }
 }
 
+#' Get object description from R documentation.
+#' @param printenv Library name
+#' @param x Object name
 nvim.getInfo <- function(printenv, x) {
     info <- NULL
     als <- NvimcomEnv$pkgdescr[[printenv]]$alias[NvimcomEnv$pkgdescr[[printenv]]$alias[, "name"] == x, "alias"]
@@ -298,6 +327,15 @@ nvim.getInfo <- function(printenv, x) {
     return("\006\006")
 }
 
+#' Make a single line of the `omnils_` file with information for omni or auto
+#' completion of object names.
+#' @param x R object
+#' @param envir Current "environment" of object x. It will be
+#' `package:libname`.
+#' @param printenv The same as envir, but without the `package:` prefix.
+#' @param curlevel Current number of levels in lists and S4 objects.
+#' @param maxlevel Maximum number of levels in lists and S4 objects to parse,
+#' with 0 meanin no limit.
 nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     if (curlevel == 0) {
         xx <- try(get(x, envir), silent = TRUE)
@@ -431,8 +469,11 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
     }
 }
 
-# Code adapted from the gbRd package
+#' Store descriptions of all functions from a library in a internal
+#' environment.
+#' @param pkg Library name.
 GetFunDescription <- function(pkg) {
+    # Code adapted from the gbRd package
     pth <- attr(packageDescription(pkg), "file")
     pth <- sub("Meta/package.rds", "", pth)
     pth <- paste0(pth, "help/")
@@ -471,10 +512,15 @@ GetFunDescription <- function(pkg) {
                                        "alias" = als)
 }
 
+#' @param x
 filter.objlist <- function(x) {
     x[!grepl("^[\\[\\(\\{:-@%/=+\\$<>\\|~\\*&!\\^\\-]", x) & !grepl("^\\.__", x)]
 }
 
+#' Build in Nvim-R's cache directory the `args_` file with arguments of
+#' functions.
+#' @param afile Full path of the `args_` file.
+#' @param pkg Library name.
 nvim.buildargs <- function(afile, pkg) {
     ok <- try(require(pkg, warn.conflicts = FALSE,
                       quietly = TRUE, character.only = TRUE))
@@ -515,7 +561,11 @@ nvim.buildargs <- function(afile, pkg) {
     return(invisible(NULL))
 }
 
-# Build Omni List
+#' Build Omni List and list of functions for syntax highlighting in Nvim-R's
+#' cache directory.
+#' @param omnilist Full path of `omnils_` file to be built.
+#' @param packlist Library name.
+#' @param allnames Whether to include objects whose names begin with a dot.
 nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     nvim.OutDec <- getOption("OutDec")
     on.exit(options(nvim.OutDec))
@@ -593,9 +643,10 @@ nvim.bol <- function(omnilist, packlist, allnames = FALSE) {
     return(invisible(NULL))
 }
 
-# This function calls nvim.bol which writes three files in ~/.cache/Nvim-R:
-#   - fun_    : function names for syntax highlighting
-#   - omnils_ : data for omni completion and object browser
+#' This function calls nvim.bol which writes two files in `~/.cache/Nvim-R`:
+#'   - `fun_`    : function names for syntax highlighting
+#'   - `omnils_` : data for omni completion and object browser
+#' @param p Character vector with names of libraries.
 nvim.buildomnils <- function(p) {
     if (length(p) > 1) {
         n <- 0
