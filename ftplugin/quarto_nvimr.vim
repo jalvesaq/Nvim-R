@@ -9,10 +9,10 @@ let g:R_quarto_render_args = get(g:, 'R_quarto_render_args', '')
 function! RQuarto(what)
     if a:what == "render"
         update
-        call g:SendCmdToR('quarto::quarto_render("' . expand('%') . '"' . g:R_quarto_render_args . ')')
+        call g:SendCmdToR('quarto::quarto_render("' . substitute(expand('%'), '\\', '/', 'g') . '"' . g:R_quarto_render_args . ')')
     elseif a:what == "preview"
         update
-        call g:SendCmdToR('quarto::quarto_preview("' . expand('%') . '"' . g:R_quarto_preview_args . ')')
+        call g:SendCmdToR('quarto::quarto_preview("' . substitute(expand('%'), '\\', '/', 'g') . '"' . g:R_quarto_preview_args . ')')
     else
         call g:SendCmdToR('quarto::quarto_preview_stop()')
     endif

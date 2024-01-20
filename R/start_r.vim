@@ -197,6 +197,15 @@ function ReallyStartR(whatr)
         endif
     endif
 
+    if len(g:R_after_start) > 0
+        let extracmds = deepcopy(g:R_after_start)
+        call filter(extracmds, 'v:val =~ "^R:"')
+        if len(extracmds) > 0
+            call map(extracmds, 'substitute(v:val, "^R:", "", "")')
+            let start_options += extracmds
+        endif
+    endif
+
     if &encoding == "utf-8"
         call writefile(start_options, g:rplugin.tmpdir . "/start_options_utf8.R")
     else
