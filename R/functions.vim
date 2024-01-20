@@ -10,8 +10,8 @@ hi def link rGlobEnvFun  Function
 " Only source the remaining of this script once
 "==============================================================================
 if exists("*SourceRFunList")
-    if len(g:rplugin.libs_in_ncs) > 0
-        for s:lib in g:rplugin.libs_in_ncs
+    if len(g:rplugin.libs_in_nrs) > 0
+        for s:lib in g:rplugin.libs_in_nrs
             " Add rFunction keywords to r syntax
             call SourceRFunList(s:lib)
         endfor
@@ -25,8 +25,8 @@ endif
 "==============================================================================
 
 if !exists('g:rplugin')
-    " Also in common_global.vim
-    let g:rplugin = {'debug_info': {}, 'libs_in_ncs': []}
+    " Attention: also in common_global.vim because either of them might be sourced first.
+    let g:rplugin = {'debug_info': {}, 'libs_in_nrs': [], 'nrs_running': 0, 'myport': 0, 'R_pid': 0}
 endif
 
 " syntax/r.vim may have being called before ftplugin/r.vim
@@ -83,7 +83,10 @@ function FunHiOtherBf()
     " Syntax highlight other buffers
     if has("nvim")
         for bId in nvim_list_bufs()
-            call nvim_buf_set_option(bId, "syntax", nvim_buf_get_option(bId, "syntax"))
+            let bsyn = nvim_buf_get_option(bId, "syntax")
+            if bsyn == 'r' || bsyn == 'quarto' || bsyn == 'rhelp' || bsyn == 'rmd' || bsyn == 'rnoweb' || bsyn == 'rrst'
+                call nvim_set_option_value("syntax", bsyn, {'buf': bId})
+            endif
         endfor
     else
         silent exe 'set syntax=' . &syntax

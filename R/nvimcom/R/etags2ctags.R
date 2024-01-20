@@ -23,16 +23,7 @@
 # ctags" in Vim for details on the two file formats.
 # Note: This function only works with a tags file created by the R
 # function rtags().
-# Arguments:
-#   etagsfile = character string with path to original TAGS
-#   ctagsfile = character string with path to destination tags
-# Example:
-#   setwd("/path/to/R-2.11.1/src/library/base/R")
-#   rtags(ofile = "TAGS")
-#   etags2ctags("TAGS", "tags")
-# After the above commands you should be able to jump from on file
-# to another with Vim by hitting CTRL-] over function names.
-etags2ctags <- function(etagsfile, ctagsfile){
+etags2ctags <- function(etagsfile, ctagsfile) {
     elines <- readLines(etagsfile)
     filelen <- length(elines)
     nfread <- sum(elines == "\x0c")
@@ -41,12 +32,12 @@ etags2ctags <- function(etagsfile, ctagsfile){
     i <- 1
     k <- 1
     while (i < filelen) {
-        if(elines[i] == "\x0c"){
+        if (elines[i] == "\x0c") {
             i <- i + 1
             curfile <- sub(",.*", "", elines[i])
             i <- i + 1
             curflines <- readLines(curfile)
-            while(elines[i] != "\x0c" && i <= filelen){
+            while (elines[i] != "\x0c" && i <= filelen) {
                 curname <- sub(".\x7f(.*)\x01.*", "\\1", elines[i])
                 curlnum <- as.numeric(sub(".*\x01(.*),.*", "\\1", elines[i]))
                 curaddr <- curflines[as.numeric(curlnum)]

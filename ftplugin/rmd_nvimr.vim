@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin")
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'rmd') == -1
     finish
 endif
 
@@ -7,11 +7,13 @@ endif
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 " Bibliographic completion
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+if index(g:R_bib_compl, &filetype) > -1
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+endif
 
-let g:R_rmdchunk = get(g:, "R_rmdchunk", 1)
+let g:R_rmdchunk = get(g:, "R_rmdchunk", 2)
 
-if g:R_rmdchunk == 1
+if g:R_rmdchunk == 1 || g:R_rmdchunk == 2
     " Write code chunk in rnoweb files
     inoremap <buffer><silent> ` <Esc>:call RWriteRmdChunk()<CR>a
 elseif type(g:R_rmdchunk) == v:t_string
@@ -19,14 +21,26 @@ elseif type(g:R_rmdchunk) == v:t_string
 endif
 
 function! RWriteRmdChunk()
-    if getline(".") =~ "^\\s*$" && RmdIsInRCode(0) == 0
-        let curline = line(".")
-        call setline(curline, "```{r}")
-        call append(curline, ["```", ""])
-        call cursor(curline, 5)
-    else
-        exe "normal! a`"
+    if RmdIsInRCode(0) == 0
+        if getline(".") =~ "^\\s*$"
+            let curline = line(".")
+            call setline(curline, "```{r}")
+            if &filetype == 'quarto'
+                call append(curline, ["", "```", ""])
+                call cursor(curline + 1, 1)
+            else
+                call append(curline, ["```", ""])
+                call cursor(curline, 5)
+            endif
+            return
+        else
+            if g:R_rmdchunk == 2
+                exe "normal! a`r `\<Esc>i"
+                return
+            endif
+        endif
     endif
+    exe 'normal! a`'
 endfunction
 
 function! RmdGetYamlField(field)
@@ -219,7 +233,7 @@ if !exists('b:rplugin_bibf')
     let b:rplugin_bibf = ''
 endif
 
-if g:R_non_r_compl
+if g:R_non_r_compl && index(g:R_bib_compl, &filetype) > -1
     call timer_start(1, "CheckPyBTeX")
 endif
 
@@ -239,7 +253,7 @@ call RCreateSendMaps()
 call RControlMaps()
 call RCreateMaps('nvi', 'RSetwd', 'rd', ':call RSetWD()')
 
-" Only .Rmd files use these functions:
+" Only .Rmd and .qmd files use these functions:
 call RCreateMaps('nvi', 'RKnit',           'kn', ':call RKnit()')
 call RCreateMaps('ni',  'RSendChunk',      'cc', ':call b:SendChunkToR("silent", "stay")')
 call RCreateMaps('ni',  'RESendChunk',     'ce', ':call b:SendChunkToR("echo", "stay")')

@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin")
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'rhelp') == -1
     finish
 endif
 

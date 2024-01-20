@@ -17,20 +17,41 @@ else
 endif
 
 function ROpenPDF2(fullpath)
-    if !has_key(g:rplugin.zathura_pid, a:fullpath)
-        let g:rplugin.zathura_pid[a:fullpath] = 0
-    endif
-    let fname = substitute(a:fullpath, ".*/", "", "")
-    if system("wmctrl -xl") =~ 'Zathura.*' . fname &&
-                \ has_key(g:rplugin.zathura_pid, a:fullpath) &&
-                \ g:rplugin.zathura_pid[a:fullpath] != 0
-        call system("wmctrl -a '" . fname . "'")
-    else
+    if g:R_openpdf == 1
         call RStart_Zathura(a:fullpath)
+        return
     endif
 
-    if g:rplugin.has_wmctrl
-        call system("wmctrl -a '" . substitute(a:fullpath, ".*/", "", "") . "'")
+    " Time to Zathura reload the PDF
+    sleep 200m
+
+    let fname = substitute(a:fullpath, ".*/", "", "")
+
+    " Check if Zathura was already opened and is still running
+    if has_key(g:rplugin.zathura_pid, a:fullpath)
+        if g:rplugin.zathura_pid[a:fullpath] != 0
+            let zrun = system("ps -p " . g:rplugin.zathura_pid[a:fullpath])
+            if zrun =~ g:rplugin.zathura_pid[a:fullpath]
+                if RRaiseWindow(fname)
+                    return
+                else
+                    call RStart_Zathura(a:fullpath)
+                    return
+                endif
+            else
+                let g:rplugin.zathura_pid[a:fullpath] = 0
+                call RStart_Zathura(a:fullpath)
+                return
+            endif
+        endif
+    else
+        let g:rplugin.zathura_pid[a:fullpath] = 0
+    endif
+
+    " Check if Zathura was already running
+    if RRaiseWindow(fname) == 0
+        call RStart_Zathura(a:fullpath)
+        return
     endif
 endfunction
 
@@ -57,16 +78,22 @@ function SyncTeX_forward2(tpath, ppath, texln, tryagain)
         endif
     endif
 
-    if g:rplugin.has_wmctrl
-        call system("wmctrl -a '" . shortp . "'")
-    endif
+    call RRaiseWindow(shortp)
+endfunction
+
+function ZathuraJobStdout(job_id, data, etype)
+    for cmd in a:data
+        if cmd =~ "^call "
+            exe cmd
+        endif
+    endfor
 endfunction
 
 function StartZathuraNeovim(fullpath)
     let g:rplugin.jobs["Zathura"] = jobstart(["zathura",
                 \ "--synctex-editor-command",
-                \ "nclientserver %{input} %{line}", a:fullpath],
-                \ {"detach": 1, "on_stderr": function('ROnJobStderr')})
+                \ "echo 'call SyncTeX_backward(\"%{input}\",  \"%{line}\")'", a:fullpath],
+                \ {"detach": 1, "on_stderr": function('ROnJobStderr'), "on_stdout": function('ZathuraJobStdout')})
     if g:rplugin.jobs["Zathura"] < 1
         call RWarningMsg("Failed to run Zathura...")
     else
@@ -74,11 +101,19 @@ function StartZathuraNeovim(fullpath)
     endif
 endfunction
 
+function ZathuraJobstdoutV(job_id, msg)
+    let cmd = substitute(a:msg, '\n', '', 'g')
+    let cmd = substitute(cmd, '\r', '', 'g')
+    if cmd =~ "^call "
+        exe cmd
+    endif
+endfunction
+
 function StartZathuraVim(fullpath)
     let jobid = job_start(["zathura",
                 \ "--synctex-editor-command",
-                \ "nclientserver %{input} %{line}", a:fullpath],
-                \ {"stoponexit": "", "err_cb": function('ROnJobStderr')})
+                \ "echo 'call SyncTeX_backward(\"%{input}\",  \"%{line}\")'", a:fullpath],
+                \ {"stoponexit": "", "err_cb": function('ROnJobStderr'), "out_cb": function("ZathuraJobstdoutV")})
     if job_info(jobid)["status"] == "run"
         let g:rplugin.jobs["Zathura"] = job_getchannel(jobid)
         let g:rplugin.zathura_pid[a:fullpath] = job_info(jobid)["process"]
@@ -88,19 +123,19 @@ function StartZathuraVim(fullpath)
 endfunction
 
 function RStart_Zathura(fullpath)
-    " Use wmctrl to check if the pdf is already open and get Zathura's PID to
-    " close the document and kill Zathura.
     let fname = substitute(a:fullpath, ".*/", "", "")
-    if g:rplugin.has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
+
+    if has_key(g:rplugin.zathura_pid, a:fullpath) && g:rplugin.zathura_pid[a:fullpath] != 0
+        " Use the recorded pid to kill Zathura
+        call system('kill ' . g:rplugin.zathura_pid[a:fullpath])
+    elseif g:rplugin.has_wmctrl && s:has_dbus_send && filereadable("/proc/sys/kernel/pid_max")
+        " Use wmctrl to check if the pdf is already open and get Zathura's PID
+        " to close the document and kill Zathura.
         let info = filter(split(system("wmctrl -xpl"), "\n"), 'v:val =~ "Zathura.*' . fname . '"')
         if len(info) > 0
             let pid = split(info[0])[2] + 0     " + 0 to convert into number
             let max_pid = readfile("/proc/sys/kernel/pid_max")[0] + 0
             if pid > 0 && pid <= max_pid
-                " Instead of killing, it would be better to reset the backward
-                " command, but Zathura does not have a Dbus message for this,
-                " and we would have to change nclientserver to receive NVIMR_PORT
-                " and NVIMR_SECRET as part of argv[].
                 call system('dbus-send --print-reply --session --dest=org.pwmt.zathura.PID-' . pid . ' /org/pwmt/zathura org.pwmt.zathura.CloseDocument')
                 sleep 5m
                 call system('kill ' . pid)

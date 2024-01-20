@@ -42,7 +42,6 @@ syn match rbrowserLen " \[[0-9]\+, [0-9]\+\]$" contains=rbrowserEspSpc
 syn match rbrowserLen " \[[0-9]\+\]$" contains=rbrowserEspSpc
 syn match rbrowserErr /Error: label isn't "character"./
 syn match rbrowserDelim contained /!#\|\~#\|(#\|\$#\|\[#\|{#\|%#\|##\|<#\|:#\|;#\|&#\|\*#/ conceal
-syn match rbrowserEspSpc contained " " conceal
 
 hi def link rbrowserNmSpace	Title
 hi def link rbrowserNumeric	Number

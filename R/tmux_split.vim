@@ -29,7 +29,7 @@ function! StartR_ExternalTerm(rcmd)
                 \ 'set-environment NVIMR_COMPLDIR "' . substitute(g:rplugin.compldir, ' ', '\\ ', "g") . '"',
                 \ 'set-environment NVIMR_ID ' . $NVIMR_ID ,
                 \ 'set-environment NVIMR_SECRET ' . $NVIMR_SECRET ,
-                \ 'set-environment NVIMR_PORT ' . $NVIMR_PORT ,
+                \ 'set-environment NVIMR_PORT ' . g:rplugin.myport ,
                 \ 'set-environment R_DEFAULT_PACKAGES ' . $R_DEFAULT_PACKAGES ]
     if $NVIM_IP_ADDRESS != ""
         call extend(tmuxconf, ['set-environment NVIM_IP_ADDRESS ' . $NVIM_IP_ADDRESS ])
@@ -99,9 +99,9 @@ function SendCmdToR_TmuxSplit(...)
         let str = ' ' . str
     endif
     if a:0 == 2 && a:2 == 0
-        let scmd = "tmux set-buffer '" . str . "' && tmux paste-buffer -t " . g:rplugin.rconsole_pane
+        let scmd = "tmux set-buffer '" . str . "' ; tmux paste-buffer -t " . g:rplugin.rconsole_pane
     else
-        let scmd = "tmux set-buffer '" . str . "\<CR>' && tmux paste-buffer -t " . g:rplugin.rconsole_pane
+        let scmd = "tmux set-buffer '" . str . "\<CR>' ; tmux paste-buffer -t " . g:rplugin.rconsole_pane
     endif
     let rlog = system(scmd)
     if v:shell_error

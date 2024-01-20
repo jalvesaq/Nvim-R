@@ -35,7 +35,7 @@ function! s:GetBibFileName()
     if !exists('b:rplugin_bibf')
         let b:rplugin_bibf = ''
     endif
-    if &filetype == 'rmd'
+    if &filetype == 'rmd' || &filetype == 'quarto'
         let newbibf = RmdGetYamlField('bibliography')
         if newbibf == ''
             let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
@@ -43,7 +43,7 @@ function! s:GetBibFileName()
     else
         let newbibf = join(glob(expand("%:p:h") . '/*.bib', 0, 1), "\x06")
     endif
-    if newbibf != b:rplugin_bibf
+    if newbibf != b:rplugin_bibf && newbibf !~ 'zotcite.bib$'
         let b:rplugin_bibf = newbibf
         if IsJobRunning('BibComplete')
             call JobStdin(g:rplugin.jobs["BibComplete"], "\x04" . expand("%:p") . "\x05" . b:rplugin_bibf . "\n")
@@ -69,11 +69,11 @@ function s:HasPython3()
         endif
         return 0
     endif
-    let out = system('python3 --version')
+    silent let out = system('python3 --version')
     if v:shell_error == 0 && out =~ 'Python 3'
         let g:rplugin.py3 = 'python3'
     else
-        let out = system('python --version')
+        silent let out = system('python --version')
         if v:shell_error == 0 && out =~ 'Python 3'
             let g:rplugin.py3 = 'python'
         else
@@ -90,7 +90,7 @@ function CheckPyBTeX(...)
         if !s:HasPython3()
             return
         endif
-        call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
+        silent call system(g:rplugin.py3, "from pybtex.database import parse_file\n")
         if v:shell_error == 0
             let g:rplugin.debug_info['BibComplete'] = "PyBTex OK"
         else

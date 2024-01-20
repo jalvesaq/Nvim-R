@@ -20,21 +20,17 @@ If someone wants to maintain the code, then, the steps are:
 
   - Create a new repository.
 
-  - Copy both tmux_split.vim and tmux_split.md (renamed as README.md) to the
-    new repository.
+  - Copy both `tmux_split.vim` and `tmux_split.md` (renamed as README.md) to
+    the new repository.
 
   - Tell me the link to the repository, so I can add the link to the "R_source"
     section of the Nvim-R documentation.
 
-Currently, if you do want to try it, you should either use this development
-version of Nvim-R or download `tmux_split.vim` from
-<https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/R/tmux_split.vim>
-and, then, put in your `vimrc`:
+Currently, if you do want to try it, you should put in your `vimrc`:
 
 ```vim
 let R_source = '/path/to/Nvim-R/R/tmux_split.vim'
 ```
-
 
 Then, start Tmux before starting Vim:
 
@@ -98,7 +94,7 @@ Nvim-R sets the title of the window where Vim and R are running to "NvimR".
 This title will be visible only if Tmux status bar is "on", and it is useful
 only if you have created new windows with the
 <kbd>Ctrl</kbd>+<kbd>a</kbd>+<kbd>c</kbd> command. You can change the value of
-R_tmux_title to either set a different title or let Tmux set the title
+`R_tmux_title` to either set a different title or let Tmux set the title
 automatically. Examples:
 
 ```vim

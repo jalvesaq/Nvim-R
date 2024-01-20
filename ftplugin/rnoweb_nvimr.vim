@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin")
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'rnoweb') == -1
     finish
 endif
 
@@ -7,7 +7,9 @@ endif
 exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/common_buffer.vim"
 
 " Bibliographic completion
-exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+if index(g:R_bib_compl, 'rnoweb') > -1
+    exe "source " . substitute(expand("<sfile>:h:h"), ' ', '\ ', 'g') . "/R/bibcompl.vim"
+endif
 
 if exists('g:R_cite_pattern')
     let s:cite_ptrn = g:R_cite_pattern
@@ -214,7 +216,7 @@ endif
 
 call RSourceOtherScripts()
 
-if g:R_non_r_compl
+if g:R_non_r_compl && index(g:R_bib_compl, 'rnoweb') > -1
     call timer_start(1, "CheckPyBTeX")
 endif
 

@@ -16,7 +16,7 @@ function SendCmdToR_Buffer(...)
 
         " Update the width, if necessary
         try
-            let bwid = bufwinid(g:rplugin.R_bufname)
+            let bwid = bufwinid(g:rplugin.R_bufnr)
         catch /.*/
             let bwid = -1
         endtry
@@ -50,30 +50,21 @@ function SendCmdToR_Buffer(...)
 endfunction
 
 function CloseRTerm()
-    if has_key(g:rplugin, "R_bufname")
+    if has_key(g:rplugin, "R_bufnr")
         try
             " R migh have been killed by closing the terminal buffer with the :q command
-            exe "sbuffer " . g:rplugin.R_bufname
+            exe "sbuffer " . g:rplugin.R_bufnr
         catch /E94/
         endtry
-        if g:R_close_term && g:rplugin.R_bufname == bufname("%")
+        if g:R_close_term && g:rplugin.R_bufnr == bufnr("%")
             startinsert
             call feedkeys(' ')
         endif
-        unlet g:rplugin.R_bufname
+        unlet g:rplugin.R_bufnr
     endif
 endfunction
 
-function StartR_InBuffer()
-    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
-        return
-    endif
-
-    let g:SendCmdToR = function('SendCmdToR_NotYet')
-
-    let edbuf = bufname("%")
-    set switchbuf=useopen
-
+function SplitWindowToR()
     if g:R_rconsole_width > 0 && winwidth(0) > (g:R_rconsole_width + g:R_min_editor_width + 1 + (&number * &numberwidth))
         if g:R_rconsole_width > 16 && g:R_rconsole_width < (winwidth(0) - 17)
             silent exe "belowright " . g:R_rconsole_width . "vnew"
@@ -87,6 +78,34 @@ function StartR_InBuffer()
             silent belowright new
         endif
     endif
+endfunction
+
+function ReOpenRWin()
+    let wlist = nvim_list_wins()
+    for wnr in wlist
+        if nvim_win_get_buf(wnr) == g:rplugin.R_bufnr
+            " The R buffer is visible
+            return
+        endif
+    endfor
+    let edbuf = bufname("%")
+    call SplitWindowToR()
+    call nvim_win_set_buf(0, g:rplugin.R_bufnr)
+    exe "sbuffer " . edbuf
+endfunction
+
+function StartR_InBuffer()
+    if string(g:SendCmdToR) != "function('SendCmdToR_fake')"
+        call ReOpenRWin()
+        return
+    endif
+
+    let g:SendCmdToR = function('SendCmdToR_NotYet')
+
+    let edbuf = bufname("%")
+    set switchbuf=useopen
+
+    call SplitWindowToR()
 
     if has("win32")
         call SetRHome()
@@ -96,7 +115,17 @@ function StartR_InBuffer()
         redraw
         call UnsetRHome()
     endif
-    let g:rplugin.R_bufname = bufname("%")
+    let g:rplugin.R_bufnr = bufnr("%")
+    if exists("g:R_hl_term") && g:R_hl_term
+        silent set syntax=rout
+    endif
+    if g:R_esc_term
+        tnoremap <buffer> <Esc> <C-\><C-n>
+    endif
+    for optn in split(g:R_buffer_opts)
+        exe 'setlocal ' . optn
+    endfor
+
     let s:R_width = 0
     if &number
         if g:R_setwidth < 0 && g:R_setwidth > -17
@@ -107,15 +136,7 @@ function StartR_InBuffer()
     else
         let s:number_col = 0
     endif
-    if exists("g:R_hl_term") && g:R_hl_term
-        silent set syntax=rout
-    endif
-    if g:R_esc_term
-        tnoremap <buffer> <Esc> <C-\><C-n>
-    endif
-    for optn in split(g:R_buffer_opts)
-        exe 'setlocal ' . optn
-    endfor
+
     " Set b:pdf_is_open to avoid error when the user has to go to R Console to
     " deal with latex errors while compiling the pdf
     let b:pdf_is_open = 1

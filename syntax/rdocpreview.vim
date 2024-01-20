@@ -1,24 +1,26 @@
-
 syntax clear
 
-" The regions are delimited by non separable spaces (digraph NS)
-if g:rplugin.compl_cls == 'f'
-    runtime syntax/r.vim
-    syn match previewLstElmt "\$[a-zA-Z0-9\\._]*" contains=rDollar
-    syn match previewLstElmt "@[a-zA-Z0-9\\._]*" contains=rDollar
-    syn region previewNameWSpace start="`" end="`" contains=rSpaceFun
-    syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'
-elseif g:rplugin.compl_cls == 'a'
-    runtime syntax/rdoc.vim
-    syn match previewArg "^ \zs\S\{-}\ze:"
-else
-    runtime syntax/rout.vim
-    syn region previewDescr matchgroup=NONE start="^ " matchgroup=NONE end=' $'
-endif
-syn match previewSep "———*"
+syn match inLineCodeDelim /`/ conceal contained
+syn match mdIBDelim /*/ conceal contained
 
-hi def link previewDescr NormalFloat
-hi def link previewSep   NormalFloat
-hi def link previewArg Special
-hi def link previewLstElmt     NormalFloat
-hi def link previewNameWSpace  NormalFloat
+syn region markdownCode start="`" end="`" keepend contains=inLineCodeDelim concealends
+syn region mdItalic start="\*\ze\S" end="\S\zs\*\|^$" skip="\\\*" contains=mdIBDelim keepend concealends
+syn region mdBold start="\*\*\ze\S" end="\S\zs\*\*\|^$" skip="\\\*" contains=mdIBDelim keepend concealends
+syn region mdBoldItalic start="\*\*\*\ze\S" end="\S\zs\*\*\*\|^$" skip="\\\*" contains=mdIBDelim keepend concealends
+
+if g:rplugin.compl_cls == 'f'
+    syn include @R syntax/r.vim
+    syn region rCodeRegion start="^```{R} $" end="^\ze```$" contains=@R,docCodeDelim1,docCodeDelim2
+    syn match docCodeDelim2 /```/ contained conceal
+    syn match docCodeDelim1 /```{R}/ contained conceal
+else
+    syn include @Rout syntax/rout.vim
+    syn region rCodeRegion start="^```{Rout} $" end="^```$" contains=@Rout,docCodeDelim1,docCodeDelim2
+    syn match docCodeDelim2 /```/ contained conceal
+    syn match docCodeDelim1 /```{Rout}/ contained conceal
+endif
+
+hi link markdownCode Special
+hi mdItalic term=italic cterm=italic gui=italic
+hi mdBold term=bold cterm=bold gui=bold
+hi mdBoldItalic term=bold cterm=bold gui=bold

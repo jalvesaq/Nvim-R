@@ -135,9 +135,6 @@ function RWeave(bibtex, knit, pdf)
         endif
     endif
 
-    if g:rplugin.nvimcom_port == 0
-        call RWarningMsg("The nvimcom package is required to make and open the PDF.")
-    endif
     update
     let rnwdir = expand("%:p:h")
     if has("win32")
@@ -373,10 +370,12 @@ function SyncTeX_backward(fname, ln)
             elseif $WINDOWID != ""
                 call system("wmctrl -ia " . $WINDOWID)
             endif
+        elseif g:rplugin.has_awbt && exists('g:R_term_title')
+            call RRaiseWindow(g:R_term_title)
         elseif has("gui_running")
             if has("win32")
                 " Attempt 1
-                call JobStdin(g:rplugin.jobs["ClientServer"], "77\n")
+                call JobStdin(g:rplugin.jobs["Server"], "87\n")
 
                 " Attempt 2
                 " if has("nvim")

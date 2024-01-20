@@ -1,5 +1,5 @@
 
-if exists("g:disable_r_ftplugin")
+if exists("g:R_filetypes") && type(g:R_filetypes) == v:t_list && index(g:R_filetypes, 'rrst') == -1
     finish
 endif
 
@@ -94,9 +94,6 @@ function! RMakePDFrrst()
         call RSetPDFViewer()
     endif
 
-    if g:rplugin.nvimcom_port == 0
-        call RWarningMsg("The nvimcom package is required to make and open the PDF.")
-    endif
     update
     call RSetWD()
     if s:has_rst2pdf == 0

@@ -60,18 +60,20 @@ function! UpdateOB(what)
     endif
 
     if wht == "GlobalEnv"
-        let fcntt = readfile(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
     else
-        let fcntt = readfile(g:rplugin.tmpdir . "/liblist_" . $NVIMR_ID)
+        let fcntt = readfile(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
     endif
     if has("nvim")
-        let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
-        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:true)
+        if nvim_win_is_valid(g:rplugin.ob_winnr)
+            let obcur = nvim_win_get_cursor(g:rplugin.ob_winnr)
+        endif
+        call nvim_set_option_value("modifiable", v:true, {'buf': g:rplugin.ob_buf})
         call nvim_buf_set_lines(g:rplugin.ob_buf, 0, nvim_buf_line_count(g:rplugin.ob_buf), 0, fcntt)
-        if obcur[0] <= len(fcntt)
+        if nvim_win_is_valid(g:rplugin.ob_winnr) && obcur[0] <= len(fcntt)
             call nvim_win_set_cursor(g:rplugin.ob_winnr, obcur)
         endif
-        call nvim_buf_set_option(g:rplugin.ob_buf, "modifiable", v:false)
+        call nvim_set_option_value("modifiable", v:false, {'buf': g:rplugin.ob_buf})
     else
         if has_key(g:rplugin, "curbuf") && g:rplugin.curbuf != "Object_Browser"
             let savesb = &switchbuf
@@ -103,7 +105,6 @@ function! UpdateOB(what)
         endif
     endif
     let s:upobcnt = 0
-    return "End of UpdateOB()"
 endfunction
 
 function! RBrowserDoubleClick()
@@ -115,34 +116,34 @@ function! RBrowserDoubleClick()
     if line(".") == 1
         if g:rplugin.curview == "libraries"
             let g:rplugin.curview = "GlobalEnv"
-            call JobStdin(g:rplugin.jobs["ClientServer"], "31\n")
+            call JobStdin(g:rplugin.jobs["Server"], "31\n")
         else
             let g:rplugin.curview = "libraries"
-            call JobStdin(g:rplugin.jobs["ClientServer"], "321\n")
+            call JobStdin(g:rplugin.jobs["Server"], "321\n")
         endif
         return
     endif
 
     " Toggle state of list or data.frame: open X closed
-    let key = RBrowserGetName(1, 1)
+    let key = RBrowserGetName()
     let curline = getline(".")
     if g:rplugin.curview == "GlobalEnv"
         if curline =~ "&#.*\t"
             call SendToNvimcom("L", key)
         elseif curline =~ "\[#.*\t" || curline =~ "\$#.*\t" || curline =~ "<#.*\t" || curline =~ ":#.*\t"
-            call JobStdin(g:rplugin.jobs["ClientServer"], "33G" . key . "\n")
+            let key = substitute(key, '`', '', 'g')
+            call JobStdin(g:rplugin.jobs["Server"], "33G" . key . "\n")
         else
-            let key = RBrowserGetName(0, 0)
             call g:SendCmdToR("str(" . key . ")")
         endif
     else
         if curline =~ "(#.*\t"
+            let key = substitute(key, '`', '', 'g')
             call AskRDoc(key, RBGetPkgName(), 0)
         else
             if key =~ ":$" || curline =~ "\[#.*\t" || curline =~ "\$#.*\t" || curline =~ "<#.*\t" || curline =~ ":#.*\t"
-                call JobStdin(g:rplugin.jobs["ClientServer"], "33L" . key . "\n")
+                call JobStdin(g:rplugin.jobs["Server"], "33L" . key . "\n")
             else
-                let key = RBrowserGetName(0, 0)
                 call g:SendCmdToR("str(" . key . ")")
             endif
         endif
@@ -154,7 +155,7 @@ function! RBrowserRightClick()
         return
     endif
 
-    let key = RBrowserGetName(1, 0)
+    let key = RBrowserGetName()
     if key == ""
         return
     endif
@@ -230,18 +231,16 @@ function! RBrowserFindParent(word, curline, curpos)
         endif
     endif
     if curline > 1
-        let line = substitute(line, '^.\{-}\(.\)#', '\1#', "")
-        let line = substitute(line, '^ *', '', "")
-        if line =~ " " || line =~ '^.#[0-9]' || line =~ '-' || line =~ '^.#' . s:reserved
-            let line = substitute(line, '\(.\)#\(.*\)$', '\1#`\2`', "")
-        endif
-        if line =~ '<#'
-            let word = substitute(line, '.*<#', "", "") . '@' . a:word
-        elseif line =~ '\[#'
-            let word = substitute(line, '.*\[#', "", "") . '$' . a:word
+        if line =~ ' <#'
+            let suffix = '@'
         else
-            let word = substitute(line, '.*\$#', "", "") . '$' . a:word
+            let suffix = '$'
         endif
+        let thisword = substitute(line, '^.\{-}#', '', '')
+        if thisword =~ " " || thisword =~ '^[0-9_]' || thisword =~ s:punct
+            let thisword = '`' . thisword . '`'
+        endif
+        let word = thisword . suffix . a:word
         if curpos != spacelimit
             let word = RBrowserFindParent(word, line("."), curpos)
         endif
@@ -254,39 +253,22 @@ function! RBrowserFindParent(word, curline, curpos)
     return ""
 endfunction
 
-function! RBrowserCleanTailTick(word, cleantail, cleantick)
-    let nword = a:word
-    if a:cleantick
-        let nword = substitute(nword, "`", "", "g")
-    endif
-    if a:cleantail
-        let nword = substitute(nword, '[\$@]$', '', '')
-        let nword = substitute(nword, '[\$@]`$', '`', '')
-    endif
-    return nword
-endfunction
-
-function! RBrowserGetName(cleantail, cleantick)
+function! RBrowserGetName()
     let line = getline(".")
     if line =~ "^$" || line(".") < 3
         return ""
     endif
 
     let curpos = stridx(line, "#")
-    let word = substitute(line, '.\{-}\(.#\)\(.\{-}\)\t.*', '\2\1', '')
-    let word = substitute(word, '\[#$', '$', '')
-    let word = substitute(word, '\$#$', '$', '')
-    let word = substitute(word, '<#$', '@', '')
-    let word = substitute(word, '.#$', '', '')
+    let word = substitute(line, '.\{-}\(.#\)\(.\{-}\)\t.*', '\2', '')
 
-    if word =~ ' ' || word =~ '^[0-9]' || word =~ '-' || word =~ '^' . s:reserved . '$'
+    if word =~ ' ' || word =~ '^[0-9]' || word =~ s:punct || word =~ '^' . s:reserved . '$'
         let word = '`' . word . '`'
     endif
 
     if curpos == 4
         " top level object
         let word = substitute(word, '\$\[\[', '[[', "g")
-        let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
         if g:rplugin.curview == "libraries"
             return word . ':'
         else
@@ -296,12 +278,10 @@ function! RBrowserGetName(cleantail, cleantick)
         if g:rplugin.curview == "libraries"
             if s:isutf8
                 if curpos == 11
-                    let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
                     let word = substitute(word, '\$\[\[', '[[', "g")
                     return word
                 endif
             elseif curpos == 7
-                let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
                 let word = substitute(word, '\$\[\[', '[[', "g")
                 return word
             endif
@@ -309,7 +289,6 @@ function! RBrowserGetName(cleantail, cleantick)
         if curpos > 4
             " Find the parent data.frame or list
             let word = RBrowserFindParent(word, line("."), curpos - 1)
-            let word = RBrowserCleanTailTick(word, a:cleantail, a:cleantick)
             let word = substitute(word, '\$\[\[', '[[', "g")
             return word
         else
@@ -322,13 +301,13 @@ function! RBrowserGetName(cleantail, cleantick)
 endfunction
 
 function! OnOBBufUnload()
-    if g:R_hi_fun_globenv < 2
+    if g:rplugin.update_glbenv == 0
         call SendToNvimcom("N", "OnOBBufUnload")
     endif
 endfunction
 
 function! PrintListTree()
-    call JobStdin(g:rplugin.jobs["ClientServer"], "37\n")
+    call JobStdin(g:rplugin.jobs["Server"], "37\n")
 endfunction
 
 nnoremap <buffer><silent> <CR> :call RBrowserDoubleClick()<CR>
@@ -350,6 +329,8 @@ au BufEnter <buffer> stopinsert
 au BufUnload <buffer> call OnOBBufUnload()
 
 let s:reserved = '\(if\|else\|repeat\|while\|function\|for\|in\|next\|break\|TRUE\|FALSE\|NULL\|Inf\|NaN\|NA\|NA_integer_\|NA_real_\|NA_complex_\|NA_character_\)'
+let s:punct = '\(!\|''\|"\|#\|%\|&\|(\|)\|\*\|+\|,\|-\|/\|\\\|:\|;\|<\|=\|>\|?\|@\|[\|/\|]\|\^\|\$\|{\||\|}\|\~\)'
+
 
 let s:envstring = tolower($LC_MESSAGES . $LC_ALL . $LANG)
 if s:envstring =~ "utf-8" || s:envstring =~ "utf8"

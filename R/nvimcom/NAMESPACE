@@ -9,4 +9,4 @@ importFrom("graphics", "boxplot", "hist", "par", "plot")
 importFrom("stats", "runif")
 importFrom("utils", "browseURL", "capture.output", "example", "find",
            "getAnywhere", "installed.packages", "methods",
-           "packageDescription", "read.table", "Sweave", "write.table")
+           "packageDescription", "read.table", "str", "Sweave", "write.table")

@@ -16,19 +16,55 @@ function GetJobTitle(job_id)
     return "Job"
 endfunction
 
+function StopWaitingNCS(...)
+    if s:waiting_more_input
+        let s:waiting_more_input = 0
+        call RWarningMsg('Incomplete string received. Expected ' .
+                    \ s:incomplete_input['size'] . ' bytes; received ' .
+                    \ s:incomplete_input['received'] . '.')
+    endif
+    let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
+endfunction
+
+let s:incomplete_input = {'size': 0, 'received': 0, 'str': ''}
+let s:waiting_more_input = 0
 function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
-    if cmd[0] == "\005"
+    " DEBUG: call writefile([cmd], "/dev/shm/nvimrserver_vim_stdout", "a")
+
+    if cmd[0] == "\x11"
         " Check the size of possibly very big string (dictionary for menu completion).
-        let cmdsplt = split(cmd, "\005")
-        if str2nr(cmdsplt[0]) == strlen(cmdsplt[1])
-            exe cmdsplt[1]
+        let cmdsplt = split(cmd, "\x11")
+        let size = str2nr(cmdsplt[0])
+        let received = strlen(cmdsplt[1])
+        if size == received
+            let cmd = cmdsplt[1]
         else
-            call SetComplMenu(0, [])
-            call RWarningMsg("Wrong string length (menu for completion): " . str2nr(cmdsplt[0]) . " x " . strlen(cmdsplt[1]))
+            let s:waiting_more_input = 1
+            let s:incomplete_input['size'] = size
+            let s:incomplete_input['received'] = received
+            let s:incomplete_input['str'] = cmdsplt[1]
+            call timer_start(100, 'StopWaitingNCS')
+            return
         endif
-    elseif cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
+    endif
+
+    if s:waiting_more_input
+        let s:incomplete_input['received'] += strlen(cmd)
+        if s:incomplete_input['received'] == s:incomplete_input['size']
+            let s:waiting_more_input = 0
+            let cmd = s:incomplete_input['str'] . cmd
+        else
+            let s:incomplete_input['str'] .= cmd
+            if s:incomplete_input['received'] > s:incomplete_input['size']
+                call RWarningMsg('Received larger than expected message.')
+            endif
+            return
+        endif
+    endif
+
+    if cmd =~ "^call " || cmd  =~ "^let " || cmd =~ "^unlet "
         exe cmd
     elseif cmd != ""
         if len(cmd) > 128
@@ -53,6 +89,9 @@ function ROnJobExit(job_id, stts)
     if key ==# 'R'
         call ClearRInfo()
     endif
+    if key ==# 'Server'
+        let g:rplugin.nrs_running = 0
+    endif
 endfunction
 
 function IsJobRunning(key)
@@ -68,7 +107,7 @@ function IsJobRunning(key)
     endif
 endfunction
 
-let g:rplugin.jobs = {"ClientServer": "no", "R": "no", "Terminal emulator": "no", "BibComplete": "no"}
+let g:rplugin.jobs = {"Server": "no", "R": "no", "Terminal emulator": "no", "BibComplete": "no"}
 let g:rplugin.job_handlers = {
             \ 'out_cb':  'ROnJobStdout',
             \ 'err_cb':  'ROnJobStderr',
