@@ -410,7 +410,7 @@ nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", lib = NULL,
         if (objclass[1] == "#E#" || objclass[1] == "") {
             res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, edq = FALSE)
         } else {
-            res <- nvim.args(rkeyword0, argkey, lib, objclass, extrainfo = TRUE, sdq = FALSE)
+            res <- nvim.args(rkeyword0, argkey, lib, objclass, extrainfo = TRUE, edq = FALSE)
         }
     }
     if (ldf && exists(firstobj)) {
