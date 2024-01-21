@@ -404,11 +404,11 @@ nvim.getclass <- function(x) {
 #' @param ldf Whether the function is in `R_fun_data_1` or not.
 nvim_complete_args <- function(id, rkeyword0, argkey, firstobj = "", lib = NULL, ldf = FALSE) {
     if (firstobj == "") {
-        res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, sdq = FALSE)
+        res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, edq = FALSE)
     } else {
         objclass <- nvim.getclass(firstobj)
         if (objclass[1] == "#E#" || objclass[1] == "") {
-            res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, sdq = FALSE)
+            res <- nvim.args(rkeyword0, argkey, lib, extrainfo = TRUE, edq = FALSE)
         } else {
             res <- nvim.args(rkeyword0, argkey, lib, objclass, extrainfo = TRUE, sdq = FALSE)
         }
