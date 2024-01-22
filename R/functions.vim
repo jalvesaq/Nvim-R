@@ -85,7 +85,11 @@ function FunHiOtherBf()
         for bId in nvim_list_bufs()
             let bsyn = nvim_buf_get_option(bId, "syntax")
             if bsyn == 'r' || bsyn == 'quarto' || bsyn == 'rhelp' || bsyn == 'rmd' || bsyn == 'rnoweb' || bsyn == 'rrst'
-                call nvim_set_option_value("syntax", bsyn, {'buf': bId})
+                if has("nvim-0.7.0")
+                    call nvim_set_option_value("syntax", bsyn, {'buf': bId})
+                else
+                    call nvim_buf_set_option(bId, "syntax", bsyn)
+                endif
             endif
         endfor
     else
