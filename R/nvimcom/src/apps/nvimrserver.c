@@ -1083,7 +1083,6 @@ int read_field_data(char *s, int i) {
  */
 void parse_descr(char *descr, const char *fnm) {
     int titleCharIndex, descriptionCharIndex;
-    int z = 0;
     int linePosition = 0;
     int descriptionLength = strlen(descr);
     char *title, *description;
@@ -1134,7 +1133,7 @@ void parse_descr(char *descr, const char *fnm) {
         strcpy(lib->name, fnm);
         lib->title = calloc(strlen(title) + 1, sizeof(char));
         strcpy(lib->title, title);
-        lib->descr = calloc(strlen(description) + 1 - z, sizeof(char));
+        lib->descr = calloc(strlen(description) + 1, sizeof(char));
         lib->si = 1;
         titleCharIndex = 0;
         descriptionCharIndex = 0;
