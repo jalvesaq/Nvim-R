@@ -1068,6 +1068,31 @@ int read_field_data(char *s, int i) {
 }
 
 /**
+ * @brief Trims consecutive spaces in a string.
+ *
+ * This function takes an input string and produces an output string where
+ * consecutive spaces are reduced to a single space. The output string is
+ * null-terminated. The function does not modify the input string.
+ *
+ * @param input The input string with potential consecutive spaces.
+ * @param output The output buffer where the trimmed string will be stored.
+ *               This buffer should be large enough to hold the result.
+ */
+void trim_consecutive_spaces(const char *input, char *output) {
+    int inputIndex = 0, outputIndex = 0;
+    while (input[inputIndex] != '\0') {
+        output[outputIndex++] = input[inputIndex];
+        if (input[inputIndex] == ' ') {
+            // Skip over additional consecutive spaces
+            while (input[inputIndex + 1] == ' ') {
+                inputIndex++;
+            }
+        }
+        inputIndex++;
+    }
+    output[outputIndex] = '\0'; // Null-terminate the output string
+}
+/**
  * @brief Parses the DESCRIPTION file of an R package to extract metadata.
  *
  * This function reads the DESCRIPTION file of an R package and extracts key
@@ -1082,7 +1107,6 @@ int read_field_data(char *s, int i) {
  * @param fnm The name of the R package whose DESCRIPTION file is being parsed.
  */
 void parse_descr(char *descr, const char *fnm) {
-    int titleCharIndex, descriptionCharIndex;
     int linePosition = 0;
     int descriptionLength = strlen(descr);
     char *title, *description;
@@ -1135,15 +1159,8 @@ void parse_descr(char *descr, const char *fnm) {
         strcpy(lib->title, title);
         lib->descr = calloc(strlen(description) + 1, sizeof(char));
         lib->si = 1;
-        titleCharIndex = 0;
-        descriptionCharIndex = 0;
-        while (description[titleCharIndex] != 0) {
-            while (description[titleCharIndex] == ' ' &&
-                   description[titleCharIndex + 1] == ' ')
-                titleCharIndex++;
-            lib->descr[descriptionCharIndex] = description[titleCharIndex];
-            titleCharIndex++;
-            descriptionCharIndex++;
+        if (lib->descr != NULL) {
+            trim_consecutive_spaces(description, lib->descr);
         }
         replace_char(lib->title, '\'', '\x13');
         replace_char(lib->descr, '\'', '\x13');
