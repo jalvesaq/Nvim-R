@@ -1082,32 +1082,34 @@ int read_field_data(char *s, int i) {
  * @param fnm The name of the R package whose DESCRIPTION file is being parsed.
  */
 void parse_descr(char *descr, const char *fnm) {
-    int m, n;
+    int titleCharIndex, descriptionCharIndex;
     int z = 0;
-    int k = 0;
-    int l = strlen(descr);
-    char *ttl, *dsc;
-    ttl = NULL;
-    dsc = NULL;
+    int linePosition = 0;
+    int descriptionLength = strlen(descr);
+    char *title, *description;
+    title = NULL;
+    description = NULL;
     InstLibs *lib, *ptr, *prev;
-    while (k < l) {
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) &&
-            str_here(descr + k, "Title: ")) {
-            k += 7;
-            ttl = descr + k;
-            k = read_field_data(descr, k);
-            descr[k] = 0;
+    while (linePosition < descriptionLength) {
+        if ((linePosition == 0 || descr[linePosition - 1] == '\n' ||
+             descr[linePosition - 1] == 0) &&
+            str_here(descr + linePosition, "Title: ")) {
+            linePosition += 7;
+            title = descr + linePosition;
+            linePosition = read_field_data(descr, linePosition);
+            descr[linePosition] = 0;
         }
-        if ((k == 0 || descr[k - 1] == '\n' || descr[k - 1] == 0) &&
-            str_here(descr + k, "Description: ")) {
-            k += 13;
-            dsc = descr + k;
-            k = read_field_data(descr, k);
-            descr[k] = 0;
+        if ((linePosition == 0 || descr[linePosition - 1] == '\n' ||
+             descr[linePosition - 1] == 0) &&
+            str_here(descr + linePosition, "Description: ")) {
+            linePosition += 13;
+            description = descr + linePosition;
+            linePosition = read_field_data(descr, linePosition);
+            descr[linePosition] = 0;
         }
-        k++;
+        linePosition++;
     }
-    if (ttl && dsc) {
+    if (title && description) {
         if (instlibs == NULL) {
             instlibs = calloc(1, sizeof(InstLibs));
             lib = instlibs;
@@ -1130,23 +1132,24 @@ void parse_descr(char *descr, const char *fnm) {
         }
         lib->name = calloc(strlen(fnm) + 1, sizeof(char));
         strcpy(lib->name, fnm);
-        lib->title = calloc(strlen(ttl) + 1, sizeof(char));
-        strcpy(lib->title, ttl);
-        lib->descr = calloc(strlen(dsc) + 1 - z, sizeof(char));
+        lib->title = calloc(strlen(title) + 1, sizeof(char));
+        strcpy(lib->title, title);
+        lib->descr = calloc(strlen(description) + 1 - z, sizeof(char));
         lib->si = 1;
-        m = 0;
-        n = 0;
-        while (dsc[m] != 0) {
-            while (dsc[m] == ' ' && dsc[m + 1] == ' ')
-                m++;
-            lib->descr[n] = dsc[m];
-            m++;
-            n++;
+        titleCharIndex = 0;
+        descriptionCharIndex = 0;
+        while (description[titleCharIndex] != 0) {
+            while (description[titleCharIndex] == ' ' &&
+                   description[titleCharIndex + 1] == ' ')
+                titleCharIndex++;
+            lib->descr[descriptionCharIndex] = description[titleCharIndex];
+            titleCharIndex++;
+            descriptionCharIndex++;
         }
         replace_char(lib->title, '\'', '\x13');
         replace_char(lib->descr, '\'', '\x13');
     } else {
-        if (ttl)
+        if (title)
             fprintf(stderr, "Failed to get Description from %s. ", fnm);
         else
             fprintf(stderr, "Failed to get Title from %s. ", fnm);
