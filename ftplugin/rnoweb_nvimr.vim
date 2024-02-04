@@ -195,7 +195,6 @@ endif
 call RCreateMaps('nvi', 'RKnit',        'kn', ':call RWeave("nobib", 1, 0)')
 call RCreateMaps('nvi', 'RMakePDFK',    'kp', ':call RWeave("nobib", 1, 1)')
 call RCreateMaps('nvi', 'RBibTeXK',     'kb', ':call RWeave("bibtex", 1, 1)')
-call RCreateMaps('nvi', 'RIndent',      'si', ':call RnwToggleIndentSty()')
 call RCreateMaps('ni',  'RSendChunk',   'cc', ':call b:SendChunkToR("silent", "stay")')
 call RCreateMaps('ni',  'RESendChunk',  'ce', ':call b:SendChunkToR("echo", "stay")')
 call RCreateMaps('ni',  'RDSendChunk',  'cd', ':call b:SendChunkToR("silent", "down")')
