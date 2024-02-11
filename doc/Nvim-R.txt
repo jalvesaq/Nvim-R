@@ -432,14 +432,25 @@ follows <LocalLeader>m, e.g. <LocalLeader>m} (from the current line to the end
 of paragraph) or <LocalLeader>m3j (the next 3 lines including the current
 line).
 
-If the cursor is between any two marks, the plugin will send the lines between
-them to R if you press <LocalLeader>bb. If the cursor is above the first mark,
-the plugin will send from the beginning of the file to the mark. If the cursor
-is below the last mark, the plugin will send from the mark to the end of the
-file. The mark above the cursor is included and the mark below is excluded
-from the block to be sent to R. To create a mark, press m<letter> in Normal
-mode (see |mark|). Normally, Vim marks are no visible, but there are plugins
-that highlight them.
+If the cursor is between manually inserted marks, the plugin will send the
+lines between them to R if you press <LocalLeader>bb. If the cursor is above
+the first mark, the plugin will send from the beginning of the file to the
+mark. If the cursor is below the last mark, the plugin will send from the mark
+to the end of the file. The mark above the cursor is included and the mark
+below is excluded from the block to be sent to R. To create a mark, press
+m<letter> in Normal mode (see |mark|). For example, consider the following
+code (with line numbers):
+>
+   1
+   2  x <- 3
+   3  y <- 2
+   4
+   5  z <- x + y
+   6
+
+In Normal mode, go to line 1 and press `ma`; go to line 6 and press `mb`; go
+to line 4 and press `<LocalLeader>bb` to send lines 1 to 5 to R. Normally, Vim
+marks are not visible, but there are plugins that highlight them.
 
 You can also use the command `:RSend` to type and, then, send a line of code
 to R. If you use this command frequently, you may consider creating a map for
@@ -597,18 +608,7 @@ In any case, the pdf viewer must be started by the Nvim-R plugin. See
 
 
 ------------------------------------------------------------------------------
-4.3. Omni completion and syntax highlighting
-
-The plugin adds some features to the default syntax highlight of R code. One
-such feature is the highlight of R functions.
-
-Notes:
-
-  - If you have too many loaded packages Vim may be unable to load the list of
-    functions for syntax highlight.
-
-  - The features described in this section do not work when using treesitter
-    to highlight code on Neovim.
+4.3. Omni completion
 
 If `cmp-nvim-r` (a source for `nvim-cmp`) is installed, Neovim can
 automatically complete the names of R objects as you type them (but
@@ -1495,8 +1495,16 @@ the `(` is typed, put in your |vimrc|:
 >vim
    let R_hi_fun_paren = 1
 <
-Note: The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
-depending on your system configuration, the slowness might be noticeable.
+Notes:
+
+  - The syntax highlighting is slower when `R_hi_fun_paren` is 1, and,
+    depending on your system configuration, the slowness might be noticeable.
+
+  - If you have too many loaded packages Vim may be unable to load the list of
+    functions for syntax highlight.
+
+  - Nvim-R does not control the syntax highlighting of functions when
+    `nvim-treesitter` is enabled to highlight code on Neovim.
 
 By default, functions from `.GlobalEnv` and other environments in the
 `search()` path whose names do not start with `"package:"` are immediately
@@ -1509,14 +1517,11 @@ command for them in your |vimrc|, as in the example below:
 >vim
    hi rGlobEnvFun ctermfg=117 guifg=#87d7ff cterm=italic gui=italic
 <
-                                                                    *R_hi_fun*
-If you prefer to completely disable the syntax highlighting of R functions put
-in your |vimrc|:
+If you prefer to completely disable the syntax highlighting of R functions by
+Nvim-R put in your |vimrc|:
 >vim
    let R_hi_fun = 0
 <
-A float window with addtional information is shown during omni completion.
-
 
 ------------------------------------------------------------------------------
 6.11. How to automatically open the .Rout file                   *R_routnotab*
@@ -2261,7 +2266,7 @@ the parent function included in the completion menu. You have to set the value
 of `R_fun_data_2` in your |vimrc| to include more functions. `R_fun_data_2` is a
 dictionary with parent functions as keys. The value of each key is a list of
 functions that are expected to be nested in the parent function. If the name
-of the nested function is `*`, it will match name. Example:
+of the nested function is `*`, it will match any name. Example:
 >vim
    let R_fun_data_2 = {'ggplot': ['aes'], 'with': ['*']}
 <
