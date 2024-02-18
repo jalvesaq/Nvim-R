@@ -157,6 +157,18 @@ function RWarningMsg(wmsg)
     echohl None
 endfunction
 
+" Mostly disables itself if R.nvim is installed
+if has('nvim')
+    if exists("g:R_Nvim_status")
+        " R.nvim was loaded first
+        finish
+    endif
+    " R.nvim might be installed, but wasn't loaded yet
+    lua if pcall(require, 'r') then vim.g.has_Rnvim = 1 end
+    if exists("g:has_Rnvim")
+        finish
+    endif
+endif
 
 "==============================================================================
 " Check Vim/Neovim version
