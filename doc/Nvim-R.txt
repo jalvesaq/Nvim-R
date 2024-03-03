@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.19
+Version: 0.9.20
 For Neovim >= 0.6.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
@@ -21,23 +21,17 @@ For Neovim >= 0.6.0 and Vim >= 8.2.84
 ==============================================================================
 1. Overview                                                  *Nvim-R-overview*
 
-This plugin improves the support for editing R code with both Vim and Neovim,
-integrating them with R. Stable versions of this plugin are available
-available at:
+This plugin improves the support for editing R code in Vim. It is available
+at:
 
-    https://github.com/jalvesaq/Nvim-R/releases
-
-Feedback is welcomed. Please submit bug reports to the developers. Do not like
-a feature? Tell us and we may add an option to disable it.
+    https://github.com/jalvesaq/Nvim-R
 
 The plugin should emit useful warnings if you do things it was not programmed
-to deal with. Cryptic error message are bugs... Please report them at:
+to deal with. Please report critical bugs to:
 
     https://github.com/jalvesaq/Nvim-R/issues
 
-Patches and git pull requests are welcome. If you want a feature that only few
-people might be interested in, you can write a script to be sourced by Nvim-R
-(see |R_source|).
+Pull requests fixing bugs are welcome.
 
 
 ==============================================================================
@@ -93,17 +87,17 @@ Before installing the plugin, you should install its dependencies:
 
 Main dependencies:
 
-   Neovim >= 0.6.0
+   Vim >= 8.2.84:
+      http://www.vim.org/download.php
+      Vim must be compiled with |+channel|, |+job| and |+conceal| features.
+      In Normal mode, do `:version` to check if your Vim has these features.
+
+   or Neovim >= 0.6.0
       https://github.com/neovim/neovim/releases
       See also: https://github.com/neovim/neovim/wiki/Installing-Neovim
 
       Also cmp-nvim-r if you want auto omni completion from Nvim-R:
       https://github.com/jalvesaq/cmp-nvim-r
-
-   or Vim >= 8.2.84:
-      http://www.vim.org/download.php
-      Vim must be compiled with |+channel|, |+job| and |+conceal| features.
-      In Normal mode, do `:version` to check if your Vim has these features.
 
 
    R >= 4.0.0:
@@ -125,11 +119,6 @@ Main dependencies:
      - On Windows, you have to install Rtools to be able to build the
        package: https://cran.r-project.org/bin/windows/Rtools/
 
-
-Additional dependencies for automatic code completion (Neovim only):
-
-   - https://github.com/hrsh7th/nvim-cmp
-   - https://github.com/jalvesaq/cmp-nvim-r
 
 Additional dependencies for editing Rnoweb documents:
 
@@ -189,7 +178,7 @@ file) released at:
 Note: The <LocalLeader> is '\' by default.
 
 The plugin is a |file-type| plugin. It will be active only if you are editing
-a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The the key bindings will not be
+a .R, .Rnw, .Rd, .Rmd, .Rrst or .qmd file. The key bindings will not be
 active while editing either unnamed files or files with name extensions other
 than the mentioned above: Hhowever, see:
 
@@ -205,9 +194,9 @@ common issues.
 
 To see messages received by `nvimcom`, put in your `~/.Rprofile`:
 >r
-  options(nvimcom.verbose = 4)
+  options(nvimcom.verbose = 5)
 <
-To see messages received by Neovim, uncomment the first line of the function
+To see messages received by Vim, uncomment the first line of the function
 `ROnJobStdout()` at `R/nvimrcom.vim` and delete the string "DEBUG:". It will
 become:
 >vim
@@ -229,7 +218,7 @@ If you see the following message in the R console:
                  logical.return = TRUE, : there is no package called ‘nvimcom’
    2: package ‘nvimcom’ in options("defaultPackages") was not found
 <
-Try quitting both R and Vim/Neovim and starting them again.
+Try quitting both R and Vim and starting them again.
 
 If you still see the message "The package nvimcom wasn't loaded yet" after
 starting R, then Nvim-R could not induce R to load nvimcom. Nvim-R sets the
@@ -920,7 +909,7 @@ the `init.vim`. The workaround is do not include the superfluous command
 
 |R_auto_start|          Start R automatically
 |R_objbr_auto_start|    Start the Object Browser automatically
-|R-built-in-terminal|   Options to control Vim/Neovim's built-in terminal
+|R-built-in-terminal|   Options to control Vim's built-in terminal
 |R_external_term|       Command to run R in an external terminal emulator
 |R_silent_term|         Do not show terminal errors
 |R_set_home_env|        Set the value of $HOME for R (Windows only)
@@ -1027,9 +1016,9 @@ See also: |R_after_ob_open|.
 
 
 ------------------------------------------------------------------------------
-6.2. R in Vim/Neovim built-in terminal                   *R-built-in-terminal*
+6.2. R in Vim built-in terminal                   *R-built-in-terminal*
                                                                   *R_esc_term*
-By default, R runs in a Vim/Neovim buffer created with the command |:term|,
+By default, R runs in a Vim buffer created with the command |:term|,
 and the <Esc> key is mapped to stop the Terminal mode and go to Normal mode.
 In Terminal mode, What you type is passed directly to R while in Normal mode
 Vim's navigation commands work as usual (see |motion.txt|).
@@ -1089,9 +1078,9 @@ should put in your |vimrc|:
 <
                                                                   *R_setwidth*
 On Unix systems, BEFORE sending a command to R Console, if the terminal width
-has changed, Vim/Neovim will send to nvimcom the command `options(width=X)`,
-where X is the new terminal width. You can set the value of `R_setwidth` to 0 to
-avoid the width being set. Example:
+has changed, Vim will send to nvimcom the command `options(width=X)`, where X
+is the new terminal width. You can set the value of `R_setwidth` to 0 to avoid
+the width being set. Example:
 >vim
    let R_setwidth = 0
 <
@@ -1123,14 +1112,14 @@ value:
 >vim
    let R_buffer_opts = "winfixwidth winfixheight nobuflisted"
 <
-If you do not want to run R in Vim/Neovim's built in terminal emulator, you
-have to install Tmux >= 2.0, and then put in your |vimrc|:
+If you do not want to run R in Vim's built in terminal emulator, you have to
+install Tmux >= 2.0, and then put in your |vimrc|:
 >vim
    let R_external_term = 1
 <
 Then, R will start in an external terminal emulator (useful if you use two
-monitors and want Vim/Neovim and R separate from each other), and Tmux will be
-used to send commands from Vim/Neovim to R.
+monitors and want Vim and R separate from each other), and Tmux will be used
+to send commands from Vim to R.
 
 
 ------------------------------------------------------------------------------
@@ -1141,11 +1130,11 @@ used to send commands from Vim/Neovim to R.
 Note: The options of this section are ignored on Mac OS X, where the command
 `open` is called to run the default application used to run shell scripts.
 
-R will run in Vim/Neovim's built-in terminal emulator, unless you set the
-value of `R_external_term`, which can be a numeric value (either `0` or `1`),
-the name of the terminal emulator or the complete command to run the terminal
-emulator. On Windows, the only valid value is `1`, which will make Nvim-R to
-run `Rgui.exe`, and not really a terminal emulator.
+R will run in Vim's built-in terminal emulator, unless you set the value of
+`R_external_term`, which can be a numeric value (either `0` or `1`), the name
+of the terminal emulator or the complete command to run the terminal emulator.
+On Windows, the only valid value is `1`, which will make Nvim-R to run
+`Rgui.exe`, and not really a terminal emulator.
 
 On Linux, the complete command for running the terminal is predefined for the
 following options:
@@ -1425,11 +1414,11 @@ If it is necessary to call a different application to run the above commands
 in your system, you should set the value of `R_cmd` in your |vimrc|.
 
 By default the value of `R_app` is `"R"` on Unix systems (such as Linux and
-Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Neovim
-buffer and `"Rgui.exe"` otherwise. Nvim-R cannot send messages to `Rterm.exe`
-in an external `cmd` window. If your R binary has a different name (for
-example, if it is called by a custom script), you should set the value of
-`R_app` in your |vimrc| (and, perhaps, `R_cmd` too). Example:
+Mac OS X). On Windows, it is `Rterm.exe` if R is going to run in a Vim buffer
+and `"Rgui.exe"` otherwise. Nvim-R cannot send messages to `Rterm.exe` in an
+external `cmd` window. If your R binary has a different name (for example, if
+it is called by a custom script), you should set the value of `R_app` in your
+|vimrc| (and, perhaps, `R_cmd` too). Example:
 >vim
    let R_app = 'radian'
    let R_cmd = 'R'
@@ -1556,8 +1545,7 @@ file (~/.tmux.conf).
                                                           *R_rconsole_width*
                                                           *R_min_editor_width*
 
-When starting R, Neovim's buffer is split vertically if its width is larger
-than:
+When starting R, Vim's window is split vertically if its width is larger than:
 >
    R_min_editor_width + R_rconsole_width + 1 + (&number * &numberwidth)
 <
@@ -2084,13 +2072,8 @@ include in `R_after_start` R commands that should be executed during R startup
 >vim
    let R_after_start = ['R: cat("R_after_start: R was called by Nvim-R\n", file = stderr())']
 <
-If using `init.lua`:
->lua
-   vim.g.R_after_start = {'R: cat("R_after_start: R was called by Nvim-R\\n", file = stderr())'}
-<
 Note: The loading of `nvimcom` will fail if the command to be executed is
-invalid. In the example above, we have had to use `\n` in VimScript but `\\n`
-in Lua.
+invalid. In the example above, we have had to use `\n` to indicate a new line.
 
 For an example of Vim command, if you want that the R script window is hidden
 right after R startup, put in your |vimrc|:
@@ -2115,7 +2098,7 @@ Then, make the script executable, and put in your |vimrc|:
    let R_after_start = ['!after_R_start']
 <
 Similarly, on Mac OS X, the script below (developed by songcai) will bring the
-focus to Neovim terminal window:
+focus to Vim terminal window:
 >
    #!/usr/bin/env osascript
 
@@ -2336,7 +2319,7 @@ Visidata to see tabular data, put in your |vimrc|:
 >vim
    let R_csv_app = 'terminal:vd'
 <
-If you are running Vim/Neovim within Tmux, you may prefer:
+If you are running Vim within Tmux, you may prefer:
 >vim
    let R_csv_app = 'tmux new-window vd'
 <
@@ -2608,6 +2591,10 @@ See also: |R_source|.
 
 ==============================================================================
 8. News                                                          *Nvim-R-news*
+
+0.9.20 (2024-03-03)
+
+ * Minor bug fixes.
 
 0.9.19 (2023-11-22)
 

@@ -527,3 +527,8 @@ endif
 if exists('g:R_hi_fun_globenv')
     call RWarningMsg('R_hi_fun_globenv no longer exists.')
 endif
+
+" 2024-03-03
+if has("nvim-0.10") && ((rand(srand()) % 16 ) == 7)
+    call RWarningMsg('Nvim-R was superseded by https://github.com/R-nvim/R.nvim')
+endif

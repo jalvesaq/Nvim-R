@@ -1,12 +1,12 @@
 # Nvim-R
 
 This is Nvim-R which improves Vim's support to edit R scripts.
+For Neovim users, this plugin was superseded by [R.nvim](https://github.com/R-nvim/R.nvim).
 
 ## Installation
 
 If you use a plugin manager, follow its instructions on how to install plugins
-from GitHub. Users of [lazy.nvim](https://github.com/folke/lazy.nvim) who
-opted for `defaults.lazy=true` have to configure Nvim-R with `lazy=false`.
+from GitHub.
 
 James Eapen maintains an online version of the plugin's
 [documentation](https://github.com/jamespeapen/Nvim-R/wiki).

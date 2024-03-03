@@ -88,9 +88,6 @@ if s:need_readme
     let s:flist += split(glob(g:rplugin.compldir . '/omnils_*'), "\n")
     let s:flist += split(glob(g:rplugin.compldir . '/args_*'), "\n")
 
-    " TODO: Delete the line below after the release of a stable version (2022-12-08)
-    let s:flist += split(glob(g:rplugin.compldir . '/descr_*'), "\n")
-
     if len(s:flist)
         for s:f in s:flist
             call delete(s:f)
