@@ -56,7 +56,7 @@ note:
 The diagram below shows how the communication between Vim/Neovim and R works.
 ![Neovim-R communication](https://raw.githubusercontent.com/jalvesaq/Nvim-R/master/nvimrcom.svg "Neovim-R communication")
 
-The black arrow represents all commands that you trigger in the editor and
+The black arrows represent all commands that you trigger in the editor and
 that you can see being pasted into R Console.
 There are three different ways of sending the commands to R Console:
 

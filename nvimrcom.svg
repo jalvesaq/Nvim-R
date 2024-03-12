@@ -4,67 +4,76 @@
 
 <!-- Neovim box -->
 <rect width="200" height="280" x="50" y="10" rx="10" ry="10" fill="#e6ffe6"
-stroke-width="2" stroke="black"/>
+  stroke-width="2" stroke="black"/>
 <path d="M 50,130 L 250,130" stroke-width="1" stroke="black"/>
 
 <!-- R box -->
-<rect width="200" height="280" x="590" y="10" rx="10" ry="10" fill="#e6e6ff"
-stroke-width="2" stroke="black" />
-<path d="M 590,130 L 790,130" stroke-width="1" stroke="black"/>
+<rect width="200" height="280" x="550" y="10" rx="10" ry="10" fill="#e6e6ff"
+  stroke-width="2" stroke="black" />
+<path d="M 550,130 L 750,130" stroke-width="1" stroke="black"/>
 
 <!-- Arrow from Neovim to nvimrserver -->
 <path d="M 40,180  c -30,0 -30,-100  0,-100"
-      stroke-width="2" stroke="#00aa00" fill="none" />
+  stroke-width="2" stroke="#00aa00" fill="none" />
 <path d="M 42,78 l -8,-4 l 4,6, -4,6 12,-6" fill="#00aa00" stroke="none" />
 
+<!-- Arrow from nvimcom to R Console -->
+<path d="M 760,180  c 30,0 30,-100  0,-100"
+  stroke-width="2" stroke="black" fill="none" />
+<path d="M 758,182 l 8,4 l -4,-6, 4,-6 -12,6" fill="black" stroke="none" />
+
 <!-- Arrow from nvimrserver to nvimcom -->
-<path d="M 260,40  L 580,40"
-      stroke-width="2" stroke="red" fill="none" />
-<path d="M 582,38 l -8,-4 l 4,6, -4,6 12,-6" fill="red" stroke="none" />
+<path d="M 260,40 L 540,40" stroke-width="2" stroke="red" fill="none" />
+<path d="M 542,38 l -8,-4 l 4,6, -4,6 12,-6" fill="red" stroke="none" />
 
 <!-- Arrow from nvimcom to nvimrserver -->
-<path d="M 260,60  L 580,60"
-      stroke-width="2" stroke="red" fill="none" />
+<path d="M 260,60 L 540,60" stroke-width="2" stroke="red" fill="none" />
 <path d="M 258,62 l 8,4 l -4,-6, 4,-6 -12,6" fill="red" stroke="none" />
 
 <!-- Arrow from Neovim to R -->
-<path d="M 260,250  L 580,250"
-      stroke-width="2" stroke="black" fill="none" />
-<path d="M 582,248 l -8,-4 l 4,6, -4,6 12,-6" fill="black" stroke="none" />
+<path d="M 260,250 L 540,250" stroke-width="2" stroke="black" fill="none" />
+<path d="M 542,248 l -8,-4 l 4,6, -4,6 12,-6" fill="black" stroke="none" />
+
+<!-- Arrow from Neovim to nvimcom -->
+<path d="M 260,220 C 450,220 450,110 540,110"
+  stroke-width="2" stroke="black" fill="none" />
+<path d="M 542,108 l -8,-4 l 4,6, -4,6 12,-6" fill="black" stroke="none" />
 
 <!-- Arrows from nvimcom to Neovim -->
-<path d="M 260,230  L 380,165"
-      stroke-width="2" stroke="blue" fill="none" />
-<path d="M 258,231 l 14,0 l -6,-4, 2,-8 z" fill="blue" stroke="none" />
+<path d="M 260,185 C 280,185 320,185 370,165"
+  stroke-width="2" stroke="blue" fill="none" />
+<path d="M 258,187 l 8,4 l -4,-6, 4,-6 -12,6" fill="blue" stroke="none" />
 
-<path d="M 460,135  L 580,80"
-      stroke-width="2" stroke="blue" fill="none" />
-<path d="M 458,136 l 14,0 l -6,-4, 2,-8 z" fill="blue" stroke="none" />
+<path d="M 440,135 C 490,95 520,85 540,85"
+  stroke-width="2" stroke="blue" fill="none" />
+<path d="M 442,136 l 8,4 l -4,-6, 4,-6 -12,6" transform="rotate(-35, 442, 136)"
+  fill="blue" stroke="none" />
 
 
 <!-- Text -->
 <g font-size="20" font-family="sans-serif" fill="#008800" text-anchor="middle">
-<text x="150" y="50">nvimrserver</text>
-<text x="150" y="70">TCP server</text>
+  <text x="150" y="50">nvimrserver</text>
+  <text x="150" y="70">TCP server</text>
 </g>
 <g font-size="25" font-family="sans-serif" fill="#008800" text-anchor="middle">
-<text x="150" y="200">Neovim Editor</text>
+  <text x="150" y="200">Neovim Editor</text>
 </g>
 <g font-size="20" font-family="sans-serif" fill="#000088" text-anchor="middle">
-<text x="690" y="50">nvimcom</text>
-<text x="690" y="70">TCP client</text>
+  <text x="650" y="50">nvimcom</text>
+  <text x="650" y="70">TCP client</text>
 </g>
 <g font-size="25" font-family="sans-serif" fill="#000088" text-anchor="middle">
-<text x="690" y="200">R Console</text>
+  <text x="650" y="200">R Console</text>
 </g>
 
 <g font-size="15" font-family="sans-serif" fill="blue" text-anchor="middle">
-<text x="420" y="150">temporary</text>
-<text x="420" y="170">files</text>
+<text x="400" y="150">temporary</text>
+<text x="400" y="170">files</text>
 </g>
 <g font-size="15" font-family="sans-serif" fill="black" text-anchor="middle">
-<text x="420" y="220">via</text>
-<text x="420" y="240">chansend(), Tmux or Rgui API</text>
+<text x="400" y="240">via chansend() or Tmux</text>
+<text x="415" y="202" transform="rotate(-30, 415, 202)">with</text>
+<text x="445" y="182" transform="rotate(-40, 445, 182)">Rgui</text>
 </g>
 
 </svg>

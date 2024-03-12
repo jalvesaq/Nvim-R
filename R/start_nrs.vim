@@ -529,6 +529,6 @@ if exists('g:R_hi_fun_globenv')
 endif
 
 " 2024-03-03
-if has("nvim-0.10") && ((rand(srand()) % 16 ) == 7)
+if has("nvim-0.10") && $MYVIMRC =~ "init.lua" && ((rand(srand()) % 7 ) == 4)
     call RWarningMsg('Nvim-R was superseded by https://github.com/R-nvim/R.nvim')
 endif
