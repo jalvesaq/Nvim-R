@@ -1,7 +1,9 @@
 # Nvim-R
 
 This is Nvim-R which improves Vim's support to edit R scripts.
-For Neovim users, this plugin was superseded by [R.nvim](https://github.com/R-nvim/R.nvim).
+
+> [!Note]
+> For Neovim users, this plugin is superseded by [R.nvim](https://github.com/R-nvim/R.nvim).
 
 ## Installation
 
