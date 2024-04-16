@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <netinet/in.h>
 #include <unistd.h>
 
 #ifdef WIN32
