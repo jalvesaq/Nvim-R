@@ -13,7 +13,11 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+
+#ifdef __FreeBSD__
 #include <netinet/in.h>
+#endif
+
 #include <unistd.h>
 
 #ifdef WIN32

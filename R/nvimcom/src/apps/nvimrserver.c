@@ -7,7 +7,11 @@
 #include <string.h>     // String handling functions
 #include <sys/stat.h>   // Data returned by the stat() function
 #include <sys/types.h>  // Data types
+
+#ifdef __FreeBSD__
 #include <netinet/in.h> // BSD network library
+#endif
+
 #include <unistd.h>     // POSIX operating system API
 #ifdef WIN32
 #include <inttypes.h>
