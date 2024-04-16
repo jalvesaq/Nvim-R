@@ -1,13 +1,18 @@
-#include <ctype.h>     // Character type functions
-#include <dirent.h>    // Directory entry
-#include <signal.h>    // Signal handling
-#include <stdarg.h>    // Variable argument functions
-#include <stdio.h>     // Standard input/output definitions
-#include <stdlib.h>    // Standard library
-#include <string.h>    // String handling functions
-#include <sys/stat.h>  // Data returned by the stat() function
-#include <sys/types.h> // Data types
-#include <unistd.h>    // POSIX operating system API
+#include <ctype.h>      // Character type functions
+#include <dirent.h>     // Directory entry
+#include <signal.h>     // Signal handling
+#include <stdarg.h>     // Variable argument functions
+#include <stdio.h>      // Standard input/output definitions
+#include <stdlib.h>     // Standard library
+#include <string.h>     // String handling functions
+#include <sys/stat.h>   // Data returned by the stat() function
+#include <sys/types.h>  // Data types
+
+#ifdef __FreeBSD__
+#include <netinet/in.h> // BSD network library
+#endif
+
+#include <unistd.h>     // POSIX operating system API
 #ifdef WIN32
 #include <inttypes.h>
 #include <process.h>
