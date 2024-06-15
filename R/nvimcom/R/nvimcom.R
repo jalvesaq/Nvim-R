@@ -26,6 +26,9 @@ NvimcomEnv$pkgdescr <- list()
         options(nvimcom.autoglbenv = FALSE)
         options(nvimcom.debug_r = TRUE)
         options(nvimcom.nvimpager = TRUE)
+        options(nvimcom.max_depth = 12)
+        options(nvimcom.max_size = 1000000)
+        options(nvimcom.max_time = 100)
         options(nvimcom.delim = "\t")
     }
     if (getOption("nvimcom.nvimpager"))
@@ -56,6 +59,9 @@ NvimcomEnv$pkgdescr <- list()
            as.integer(getOption("nvimcom.setwidth")),
            as.integer(getOption("nvimcom.autoglbenv")),
            as.integer(getOption("nvimcom.debug_r")),
+           as.integer(getOption("nvimcom.max_depth")),
+           as.integer(getOption("nvimcom.max_size")),
+           as.integer(getOption("nvimcom.max_time")),
            pd$Version,
            paste(sub("R ([^;]*).*", "\\1", pd$Built),
                  getOption("OutDec"),

@@ -139,6 +139,10 @@ function ReallyStartR(whatr)
     " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
     let start_options = ['Sys.setenv("R_DEFAULT_PACKAGES" = "' . s:r_default_pkgs . '")']
 
+    let start_options += ['options(nvimcom.max_depth = ' . g:R_compl_data.max_depth . ')']
+    let start_options += ['options(nvimcom.max_size = '  . g:R_compl_data.max_size . ')']
+    let start_options += ['options(nvimcom.max_time = '  . g:R_compl_data.max_time . ')']
+
     if g:R_objbr_allnames
         let start_options += ['options(nvimcom.allnames = TRUE)']
     else
@@ -2114,6 +2118,7 @@ let g:R_open_example      = get(g:, "R_open_example",       1)
 let g:R_bracketed_paste   = get(g:, "R_bracketed_paste",    0)
 let g:R_clear_console     = get(g:, "R_clear_console",      1)
 let g:R_objbr_auto_start  = get(g:, "R_objbr_auto_start",   0)
+let g:R_compl_data        = get(g:, "R_compl_data", {'max_depth': 12, 'max_size': 1000000, 'max_time': 100})
 
 " ^K (\013) cleans from cursor to the right and ^U (\025) cleans from cursor
 " to the left. However, ^U causes a beep if there is nothing to clean. The
