@@ -1,6 +1,7 @@
 
 NvimcomEnv <- new.env()
 NvimcomEnv$pkgdescr <- list()
+NvimcomEnv$tcb <- FALSE
 
 #' Function called by R when nvimcom is being loaded.
 #' Nvim-R creates environment variables and the start_options.R file to set
@@ -53,7 +54,7 @@ NvimcomEnv$pkgdescr <- list()
         if ((length(find.package("colorout", quiet = TRUE, verbose = FALSE)) > 0 && colorout::isColorOut()) ||
             Sys.getenv("RADIAN_VERSION") != "")
             hascolor <- TRUE
-        .C("nvimcom_Start",
+        ok <- .Call("nvimcom_Start",
            as.integer(getOption("nvimcom.verbose")),
            as.integer(getOption("nvimcom.allnames")),
            as.integer(getOption("nvimcom.setwidth")),
@@ -70,6 +71,8 @@ NvimcomEnv$pkgdescr <- list()
                  as.integer(hascolor),
                  sep = "\x12"),
            PACKAGE = "nvimcom")
+        if (ok)
+            add_tcb()
     }
     if (!is.na(utils::localeToCharset()[1]) &&
         utils::localeToCharset()[1] == "UTF-8" && version$os != "cygwin") {
@@ -84,6 +87,7 @@ NvimcomEnv$pkgdescr <- list()
 #' This function is called by the command:
 #' detach("package:nvimcom", unload = TRUE)
 .onUnload <- function(libpath) {
+    NvimcomEnv$tcb <- FALSE
     if (is.loaded("nvimcom_Stop", PACKAGE = "nvimcom")) {
         .C("nvimcom_Stop", PACKAGE = "nvimcom")
         if (Sys.getenv("NVIMR_TMPDIR") != "" && .Platform$OS.type == "windows") {
@@ -93,4 +97,16 @@ NvimcomEnv$pkgdescr <- list()
         Sys.sleep(0.2)
         library.dynam.unload("nvimcom", libpath)
     }
+}
+
+run_tcb <- function(...) {
+    if (!NvimcomEnv$tcb)
+        return(invisible(FALSE))
+    .C("nvimcom_task", PACKAGE = "nvimcom")
+    return(invisible(TRUE))
+}
+
+add_tcb <- function() {
+    NvimcomEnv$tcb <- TRUE
+    addTaskCallback(run_tcb)
 }
