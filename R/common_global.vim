@@ -572,8 +572,11 @@ function RCreateEditMaps()
         call RCreateCommentMaps()
     endif
     " Replace 'underline' with '<-'
-    if g:R_assign == 1 || g:R_assign == 2
+    if g:R_assign == 1
         silent exe 'inoremap <buffer><silent> ' . g:R_assign_map . ' <Esc>:call ReplaceUnderS()<CR>a'
+    endif
+    if  g:R_assign == 2
+        silent exe 'inoremap <buffer><silent> ' . g:R_assign_map . g:R_assign_map . ' ' . g:R_assign_map . '<Esc>:call ReplaceUnderS()<CR>a'
     endif
 endfunction
 
