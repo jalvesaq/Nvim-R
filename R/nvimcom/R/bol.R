@@ -400,20 +400,22 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
         }
     }
 
+    n <- nvim.fix.string(x)
+
     if (curlevel == maxlevel || maxlevel == 0) {
         if (x.group == "f") {
             if (curlevel == 0) {
                 if (nvim.grepl("GlobalEnv", printenv)) {
-                    cat(x, "\006\003\006\006", printenv, "\006",
+                    cat(n, "\006\003\006\006", printenv, "\006",
                         nvim.args(x), "\n", sep = "")
                 } else {
                     info <- nvim.getInfo(printenv, x)
-                    cat(x, "\006\003\006\006", printenv, "\006",
+                    cat(n, "\006\003\006\006", printenv, "\006",
                         nvim.args(x, pkg = printenv), info, "\006\n", sep = "")
                 }
             } else {
                 # some libraries have functions as list elements
-                cat(x, "\006\003\006\006", printenv,
+                cat(n, "\006\003\006\006", printenv,
                     "\006Unknown arguments\006\006\006\n", sep = "")
             }
         } else {
@@ -421,17 +423,17 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                 if (curlevel == 0) {
                     info <- nvim.getInfo(printenv, x)
                     if (is.data.frame(xx)) {
-                        cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
+                        cat(n, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006[", nrow(xx), ", ", ncol(xx), "]", info, "\006\n", sep = "")
                     } else if (is.list(xx)) {
-                        cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
+                        cat(n, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006", length(xx), info, "\006\n", sep = "")
                     } else {
-                        cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
+                        cat(n, "\006", x.group, "\006", x.class, "\006", printenv,
                             "\006[]", info, "\006\n", sep = "")
                     }
                 } else {
-                    cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
+                    cat(n, "\006", x.group, "\006", x.class, "\006", printenv,
                         "\006[]\006\006\006\n", sep = "")
                 }
             } else {
@@ -442,7 +444,7 @@ nvim.omni.line <- function(x, envir, printenv, curlevel, maxlevel = 0) {
                         if (!is.null(xattr) && length(xattr) == 1)
                             info <- paste0("\006\006", .Call("rd2md", xattr, PACKAGE = "nvimcom"))
                 }
-                cat(x, "\006", x.group, "\006", x.class, "\006", printenv,
+                cat(n, "\006", x.group, "\006", x.class, "\006", printenv,
                     "\006[]", info, "\006\n", sep = "")
             }
         }

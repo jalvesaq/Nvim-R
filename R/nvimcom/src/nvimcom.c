@@ -142,6 +142,14 @@ static int sfd = -1;  // File descriptor of socket used in the TCP connection
 static pthread_t tid; // Identifier of thread running TCP connection loop.
 #endif
 
+static void escape_str(char *s) {
+    while (*s) {
+        if (*s == '\n')
+            *s = ' ';
+        s++;
+    }
+}
+
 /**
  * @brief Concatenate two strings.
  *
@@ -454,6 +462,7 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
 
     p = nvimcom_strcat(p, curenv);
     snprintf(ebuf, 63, "%s", xname);
+    escape_str(ebuf);
     p = nvimcom_strcat(p, ebuf);
 
     if (Rf_isLogical(*x)) {
@@ -509,14 +518,8 @@ static char *nvimcom_glbnv_line(SEXP *x, const char *xname, const char *curenv,
     PROTECT(txt = getAttrib(*x, lablab));
     if (length(txt) > 0) {
         if (Rf_isValidString(txt)) {
-            char *ptr;
             snprintf(buf, 159, "\006\006%s", CHAR(STRING_ELT(txt, 0)));
-            ptr = buf;
-            while (*ptr) {
-                if (*ptr == '\n') // A new line will make nvimrserver crash
-                    *ptr = ' ';
-                ptr++;
-            }
+            escape_str(buf);
             p = nvimcom_strcat(p, buf);
         } else {
             p = nvimcom_strcat(p,

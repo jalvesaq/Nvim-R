@@ -72,7 +72,7 @@ endif
 " Create or update the README (omnils_ files will be regenerated if older than
 " the README).
 let s:need_readme = 0
-let s:first_line = 'Last change in this file: 2023-12-24'
+let s:first_line = 'Last change in this file: 2024-08-15'
 if !filereadable(g:rplugin.compldir . "/README")
     let s:need_readme = 1
 else
