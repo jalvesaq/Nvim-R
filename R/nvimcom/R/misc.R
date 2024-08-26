@@ -127,12 +127,8 @@ nvim_viewobj <- function(oname, fenc = "", nrows = NULL, howto = "tabnew", R_df_
 #' @param print.eval See base::source.
 #' @param spaced See base::source.
 NvimR.source <- function(..., print.eval = TRUE, spaced = FALSE) {
-    if (with(R.Version(), paste(major, minor, sep = ".")) >= "3.4.0") {
-        base::source(getOption("nvimcom.source.path"), ...,
-                     print.eval = print.eval, spaced = spaced)
-    } else {
-        base::source(getOption("nvimcom.source.path"), ..., print.eval = print.eval)
-    }
+    base::source(getOption("nvimcom.source.path"), ...,
+                 print.eval = print.eval, spaced = spaced)
 }
 
 #' Call base::source.
@@ -169,9 +165,9 @@ NvimR.chunk <- function(..., local = parent.frame()) NvimR.source(..., local = l
 #' This function is sent to R Console when the user press `\aa`, `\ae`, or `\ao`.
 #' @param ... Further arguments passed to base::source.
 #' @param local See base::source.
-source.and.clean <- function(f, ...) {
+source.and.clean <- function(f, print.eval = TRUE, spaced = FALSE, ...) {
     on.exit(unlink(f))
-    base::source(f, ...)
+    base::source(f, print.eval = print.eval, spaced = spaced, ...)
 }
 
 #' Format R code.

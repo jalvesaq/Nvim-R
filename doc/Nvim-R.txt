@@ -828,18 +828,7 @@ of
 
 
 ------------------------------------------------------------------------------
-5.2. R's source() issues
-
-The R's `source()` function of the base package prints an extra new line
-between commands if the option `echo = TRUE`, and error and warning messages
-are printed only after the entire code is sourced. This makes it more
-difficult to find errors in the code sent to R. Details:
-
-   https://stat.ethz.ch/pipermail/r-devel/2012-December/065352.html
-
-
-------------------------------------------------------------------------------
-5.3. The menu may not reflect some of your custom key bindings
+5.2. The menu may not reflect some of your custom key bindings
 
 If you have created a custom key binding for Nvim-R, the menu in GVim will not
 always reflect the correct key binding if it is not the same for Normal,
@@ -847,7 +836,7 @@ Visual and Insert modes.
 
 
 ------------------------------------------------------------------------------
-5.4. Functions are not always correctly sent to R
+5.3. Functions are not always correctly sent to R
 
 The plugin is only capable of recognizing functions defined using the `<-`
 operator. Also, only the current function scope is sent to R. See:
@@ -856,7 +845,7 @@ operator. Also, only the current function scope is sent to R. See:
 
 
 ------------------------------------------------------------------------------
-5.5. Wrong message that "R is busy" (Windows only)
+5.4. Wrong message that "R is busy" (Windows only)
 
 On Windows, when code is sent from Vim to R Console, the nvimcom library
 sets the value of the internal variable `r_is_busy` to 1. The value is set
@@ -871,7 +860,7 @@ as expected again after any valid code is executed in the R Console.
 
 
 ------------------------------------------------------------------------------
-5.6. Error if there is no package installed (Neovim on Windows only)
+5.5. Error if there is no package installed (Neovim on Windows only)
 
 On Windows, Neovim fails to recognize that a directory is not writable, and
 this is required by Nvim-R to detect if it is necessary to create the
@@ -883,7 +872,7 @@ command before using Nvim-R.
 
 
 ------------------------------------------------------------------------------
-5.7. ~/.Rprofile should not output anything (Windows only)
+5.6. ~/.Rprofile should not output anything (Windows only)
 
 The compilation of `nvimcom` during R startup will fail on Windows if your
 `~/.Rprofile` outputs anything. Example of how to replicate the bug:
@@ -892,7 +881,7 @@ The compilation of `nvimcom` during R startup will fail on Windows if your
 <
 
 ------------------------------------------------------------------------------
-5.8 You can't put `syntax enable` in your `init.vim` (OS X only)
+5.7 You can't put `syntax enable` in your `init.vim` (OS X only)
 
 It seems that if you put the command `syntax enable` in your `init.vim` on OS
 X, file type plugins are immediately sourced. Consequently, some Nvim-R
