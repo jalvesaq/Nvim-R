@@ -678,11 +678,16 @@ void Windows_setup() // Setup Windows-specific configurations
         if (!NvimHwnd) {
             NvimHwnd = FindWindow(NULL, "nvim");
             if (!NvimHwnd) {
-                fprintf(stderr, "\"Neovim\" window not found\n");
-                fflush(stderr);
+		    if (!NvimHwnd) {
+			    // as last option find vim window
+			    NvimHwnd = FindWindow(NULL, "vim");
+			    if (!NvimHwnd) {
+		    		    fprintf(stderr, "\"Neovim\" window not found\n");
+				    fflush(stderr);
             }
         }
     }
+}
 }
 #endif
 
