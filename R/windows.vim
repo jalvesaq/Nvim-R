@@ -30,16 +30,16 @@ else
         let $PATH = 'C:\rtools40\mingw64\bin;' . $PATH
     endif
 
-    call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
+    call writefile(['reg.exe QUERY "HKCU\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
     let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
     let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
     if len(rip) == 0
         " Normally, 32 bit applications access only 32 bit registry and...
         " We have to try again if the user has installed R only in the other architecture.
         if has("win64")
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin.tmpdir . "/run_cmd.bat")
+            call writefile(['reg.exe QUERY "HKCU\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin.tmpdir . "/run_cmd.bat")
         else
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin.tmpdir . "/run_cmd.bat")
+            call writefile(['reg.exe QUERY "HKCU\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin.tmpdir . "/run_cmd.bat")
         endif
         let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
         let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
