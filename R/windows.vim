@@ -30,22 +30,28 @@ else
         let $PATH = 'C:\rtools40\mingw64\bin;' . $PATH
     endif
 
-    call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
-    let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
-    let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
-    if len(rip) == 0
-        " Normally, 32 bit applications access only 32 bit registry and...
-        " We have to try again if the user has installed R only in the other architecture.
-        if has("win64")
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin.tmpdir . "/run_cmd.bat")
-        else
-            call writefile(['reg.exe QUERY "HKLM\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin.tmpdir . "/run_cmd.bat")
+    let s:reg_roots = ["HKLM", "HKCU"]
+    for s:rr in s:reg_roots
+        call writefile(['reg.exe QUERY "' . s:rr . '\SOFTWARE\R-core\R" /s'], g:rplugin.tmpdir . "/run_cmd.bat")
+        let s:ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
+        let s:rip = filter(split(s:ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
+        if len(s:rip) == 0
+            " Normally, 32 bit applications access only 32 bit registry and...
+            " We have to try again if the user has installed R only in the other architecture.
+            if has("win64")
+                call writefile(['reg.exe QUERY "' . s:rr . '\SOFTWARE\R-core\R" /s /reg:32'], g:rplugin.tmpdir . "/run_cmd.bat")
+            else
+                call writefile(['reg.exe QUERY "' . s:rr . '\SOFTWARE\R-core\R" /s /reg:64'], g:rplugin.tmpdir . "/run_cmd.bat")
+            endif
+            let s:ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
+            let s:rip = filter(split(s:ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
         endif
-        let ripl = system(g:rplugin.tmpdir . "/run_cmd.bat")
-        let rip = filter(split(ripl, "\n"), 'v:val =~ ".*InstallPath.*REG_SZ"')
-    endif
-    if len(rip) > 0
-        let s:rinstallpath = substitute(rip[0], '.*InstallPath.*REG_SZ\s*', '', '')
+        if len(s:rip) > 0
+            break
+        endif
+    endfor
+    if len(s:rip) > 0
+        let s:rinstallpath = substitute(s:rip[0], '.*InstallPath.*REG_SZ\s*', '', '')
         let s:rinstallpath = substitute(s:rinstallpath, '\n', '', 'g')
         let s:rinstallpath = substitute(s:rinstallpath, '\s*$', '', 'g')
     endif
