@@ -5,7 +5,7 @@
 Authors: Jakson A. Aquino   <jalvesaq@gmail.com>
          Jose Claudio Faria <joseclaudio.faria@gmail.com>
 
-Version: 0.9.20
+Version: 0.9.21
 For Neovim >= 0.6.0 and Vim >= 8.2.84
 
  1. Overview                                    |Nvim-R-overview|
@@ -2610,6 +2610,10 @@ See also: |R_source|.
 
 ==============================================================================
 8. News                                                          *Nvim-R-news*
+
+0.9.21 (2025-04-15)
+
+ * Bug fixes.
 
 0.9.20 (2024-03-03)
 
