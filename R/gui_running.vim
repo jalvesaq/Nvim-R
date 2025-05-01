@@ -194,7 +194,7 @@ function MakeRMenu()
         menu R.Send.-Sep5- <nul>
         call RCreateMenuItem('ni', 'Send.Quarto\ render\ (cur\ file)', 'RQuartoRender', 'qr', ':call RQuarto("render")')
         call RCreateMenuItem('ni', 'Send.Quarto\ preview\ (cur\ file)', 'RQuartoPreview', 'qp', ':call RQuarto("preview")')
-        call RCreateMenuItem('ni', 'Send.Quarto\ stop\ preview\ (all\ files)', 'qs', ':call RQuarto("stop")')
+        call RCreateMenuItem('ni', 'Send.Quarto\ stop\ preview\ (all\ files)', 'RQuartoStop', 'qs', ':call RQuarto("stop")')
     endif
     "-------------------------------
     menu R.Send.-Sep6- <nul>
