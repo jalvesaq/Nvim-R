@@ -2,7 +2,7 @@
 " Functions that might be called even before R is started.
 "
 " The functions and variables defined here are common for all buffers of all
-" file types supported by Nvim-R and must be defined only once.
+" file types supported by Vim-R and must be defined only once.
 "==============================================================================
 
 
@@ -23,12 +23,12 @@ endif
 let g:rplugin.debug_info['Time'] = {'common_global.vim': reltime()}
 
 "==============================================================================
-" Check if there is more than one copy of Nvim-R
+" Check if there is more than one copy of Vim-R
 " (e.g. from the Vimballl and from a plugin manager)
 "==============================================================================
 
 if exists("*RWarningMsg")
-    " A common_global.vim script was sourced from another version of NvimR.
+    " A common_global.vim script was sourced from another version of Vim-R.
     finish
 endif
 
@@ -80,7 +80,7 @@ endif
 function RFloatWarn(wmsg)
     if g:rplugin.has_notify
         let qmsg = substitute(a:wmsg, "'", "\\\\'", "g")
-        exe "lua require('notify')('" . qmsg . "', 'warn', {title = 'Nvim-R'})"
+        exe "lua require('notify')('" . qmsg . "', 'warn', {title = 'Vim-R'})"
         return
     endif
 
@@ -180,16 +180,16 @@ endif
 
 if has("nvim")
     if !has("nvim-0.6.0")
-        call RWarningMsg("Nvim-R requires Neovim >= 0.6.0.")
+        call RWarningMsg("Vim-R requires Neovim >= 0.6.0.")
         let g:rplugin.failed = 1
         finish
     endif
 elseif v:version < "802"
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.6.0 or Vim >= 8.2.84")
+    call RWarningMsg("Vim-R requires either Neovim >= 0.6.0 or Vim >= 8.2.84")
     let g:rplugin.failed = 1
     finish
 elseif !has("channel") || !has("job") || !has('patch-8.2.84')
-    call RWarningMsg("Nvim-R requires either Neovim >= 0.6.0 or Vim >= 8.2.84\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
+    call RWarningMsg("Vim-R requires either Neovim >= 0.6.0 or Vim >= 8.2.84\nIf using Vim, it must have been compiled with both +channel and +job features.\n")
     let g:rplugin.failed = 1
     finish
 endif
@@ -197,7 +197,7 @@ endif
 " Convert _ into <-
 function ReplaceUnderS()
     if g:R_assign == 0
-        " See https://github.com/jalvesaq/Nvim-R/issues/668
+        " See https://github.com/jalvesaq/Vim-R/issues/668
         exe 'iunmap <buffer> ' g:R_assign_map
         exe "normal! a" . g:R_assign_map
         return
@@ -494,7 +494,7 @@ function RControlMaps()
     " Print, names, structure
     "-------------------------------------
     call RCreateMaps('ni', 'RObjectPr',    'rp', ':call RAction("print")')
-    call RCreateMaps('ni', 'RObjectNames', 'rn', ':call RAction("nvim.names")')
+    call RCreateMaps('ni', 'RObjectNames', 'rn', ':call RAction("vim.names")')
     call RCreateMaps('ni', 'RObjectStr',   'rt', ':call RAction("str")')
     call RCreateMaps('ni', 'RViewDF',      'rv', ':call RAction("viewobj")')
     call RCreateMaps('ni', 'RViewDFs',     'vs', ':call RAction("viewobj", ", howto=''split''")')
@@ -503,7 +503,7 @@ function RControlMaps()
     call RCreateMaps('ni', 'RDputObj',     'td', ':call RAction("dputtab")')
 
     call RCreateMaps('v', 'RObjectPr',     'rp', ':call RAction("print", "v")')
-    call RCreateMaps('v', 'RObjectNames',  'rn', ':call RAction("nvim.names", "v")')
+    call RCreateMaps('v', 'RObjectNames',  'rn', ':call RAction("vim.names", "v")')
     call RCreateMaps('v', 'RObjectStr',    'rt', ':call RAction("str", "v")')
     call RCreateMaps('v', 'RViewDF',       'rv', ':call RAction("viewobj", "v")')
     call RCreateMaps('v', 'RViewDFs',      'vs', ':call RAction("viewobj", "v", ", howto=''split''")')
@@ -729,7 +729,7 @@ function ShowRDebugInfo()
         echohl Title
         echo key
         echohl None
-        if key == 'Time' || key == 'nvimcom_info'
+        if key == 'Time' || key == 'vimcom_info'
             for step in keys(g:rplugin.debug_info[key])
                 echohl Identifier
                 echo '  ' . step . ': '
@@ -825,9 +825,9 @@ if exists("g:R_tmpdir")
 else
     if has("win32")
         if isdirectory($TMP)
-            let g:rplugin.tmpdir = $TMP . "/NvimR-" . g:rplugin.userlogin
+            let g:rplugin.tmpdir = $TMP . "/Vim-R-" . g:rplugin.userlogin
         elseif isdirectory($TEMP)
-            let g:rplugin.tmpdir = $TEMP . "/Nvim-R-" . g:rplugin.userlogin
+            let g:rplugin.tmpdir = $TEMP . "/Vim-R-" . g:rplugin.userlogin
         else
             let g:rplugin.tmpdir = g:rplugin.uservimfiles . "/R/tmp"
         endif
@@ -835,14 +835,14 @@ else
     else
         if isdirectory($TMPDIR)
             if $TMPDIR =~ "/$"
-                let g:rplugin.tmpdir = $TMPDIR . "Nvim-R-" . g:rplugin.userlogin
+                let g:rplugin.tmpdir = $TMPDIR . "Vim-R-" . g:rplugin.userlogin
             else
-                let g:rplugin.tmpdir = $TMPDIR . "/Nvim-R-" . g:rplugin.userlogin
+                let g:rplugin.tmpdir = $TMPDIR . "/Vim-R-" . g:rplugin.userlogin
             endif
         elseif isdirectory("/dev/shm")
-            let g:rplugin.tmpdir = "/dev/shm/Nvim-R-" . g:rplugin.userlogin
+            let g:rplugin.tmpdir = "/dev/shm/Vim-R-" . g:rplugin.userlogin
         elseif isdirectory("/tmp")
-            let g:rplugin.tmpdir = "/tmp/Nvim-R-" . g:rplugin.userlogin
+            let g:rplugin.tmpdir = "/tmp/Vim-R-" . g:rplugin.userlogin
         else
             let g:rplugin.tmpdir = g:rplugin.uservimfiles . "/R/tmp"
         endif
@@ -850,25 +850,25 @@ else
 endif
 
 " When accessing R remotely, a local tmp directory is used by the
-" nvimrserver to save the contents of the ObjectBrowser to avoid traffic
+" vimrserver to save the contents of the ObjectBrowser to avoid traffic
 " over the ssh connection
 let g:rplugin.localtmpdir = g:rplugin.tmpdir
 
 if exists("g:R_remote_compldir")
-    let $NVIMR_REMOTE_COMPLDIR = g:R_remote_compldir
-    let $NVIMR_REMOTE_TMPDIR = g:R_remote_compldir . '/tmp'
+    let $VIMR_REMOTE_COMPLDIR = g:R_remote_compldir
+    let $VIMR_REMOTE_TMPDIR = g:R_remote_compldir . '/tmp'
     let g:rplugin.tmpdir = g:R_compldir . '/tmp'
     if !isdirectory(g:rplugin.tmpdir)
         call mkdir(g:rplugin.tmpdir, "p", 0700)
     endif
 else
-    let $NVIMR_REMOTE_COMPLDIR = g:rplugin.compldir
-    let $NVIMR_REMOTE_TMPDIR = g:rplugin.tmpdir
+    let $VIMR_REMOTE_COMPLDIR = g:rplugin.compldir
+    let $VIMR_REMOTE_TMPDIR = g:rplugin.tmpdir
 endif
 if !isdirectory(g:rplugin.localtmpdir)
     call mkdir(g:rplugin.localtmpdir, "p", 0700)
 endif
-let $NVIMR_TMPDIR = g:rplugin.tmpdir
+let $VIMR_TMPDIR = g:rplugin.tmpdir
 
 " Delete options with invalid values
 if exists("g:R_set_omnifunc") && type(g:R_set_omnifunc) != v:t_list
@@ -886,7 +886,7 @@ let g:R_assign_map        = get(g:, "R_assign_map",       "_")
 
 let g:R_synctex           = get(g:, "R_synctex",            1)
 let g:R_non_r_compl       = get(g:, "R_non_r_compl",        1)
-let g:R_nvim_wd           = get(g:, "R_nvim_wd",            0)
+let g:R_vim_wd            = get(g:, "R_vim_wd",            0)
 let g:R_auto_start        = get(g:, "R_auto_start",         0)
 let g:R_routnotab         = get(g:, "R_routnotab",          0)
 let g:R_objbr_w           = get(g:, "R_objbr_w",           40)
@@ -940,9 +940,9 @@ else
 endif
 
 if type(g:R_external_term) == v:t_number && g:R_external_term == 0
-    let g:R_nvimpager = get(g:, 'R_nvimpager', 'vertical')
+    let g:R_vimpager = get(g:, 'R_vimpager', 'vertical')
 else
-    let g:R_nvimpager = get(g:, 'R_nvimpager', 'tab')
+    let g:R_vimpager = get(g:, 'R_vimpager', 'tab')
 endif
 
 let g:R_objbr_place      = get(g:, "R_objbr_place",    "script,right")
@@ -965,18 +965,21 @@ else
     let g:R_arrange_windows = get(g:, "R_arrange_windows", 0)
 endif
 
-" The environment variables NVIMR_COMPLCB and NVIMR_COMPLInfo must be defined
-" before starting the nvimrserver because it needs them at startup.
+" The environment variables VIMR_COMPLCB and VIMR_COMPLInfo must be defined
+" before starting the vimrserver because it needs them at startup.
 " The R_set_omnifunc must be defined before finalizing the source of common_buffer.vim.
 let g:rplugin.update_glbenv = 0
-if has('nvim') && type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict
-    let $NVIMR_COMPLCB = "v:lua.require'cmp_nvim_r'.asynccb"
-    let $NVIMR_COMPLInfo = "v:lua.require'cmp_nvim_r'.complinfo"
+if has('nvim') && (type(luaeval("package.loaded['cmp_nvim_r']")) == v:t_dict)
+    call RWarningMsg("Please, update your cmp config: cmp_nvim_r was renamed as cmp_vim_r")
+endif
+if has('nvim') && (type(luaeval("package.loaded['cmp_vim_r']")) == v:t_dict)
+    let $VIMR_COMPLCB = "v:lua.require'cmp_vim_r'.asynccb"
+    let $VIMR_COMPLInfo = "v:lua.require'cmp_vim_r'.complinfo"
     let g:R_set_omnifunc = []
     let g:rplugin.update_glbenv = 1
 else
-    let $NVIMR_COMPLCB = 'SetComplMenu'
-    let $NVIMR_COMPLInfo = "SetComplInfo"
+    let $VIMR_COMPLCB = 'SetComplMenu'
+    let $VIMR_COMPLInfo = "SetComplInfo"
     let g:R_set_omnifunc = get(g:, "R_set_omnifunc", ["r",  "rmd", "quarto", "rnoweb", "rhelp", "rrst"])
 endif
 
@@ -998,7 +1001,7 @@ for pos in objbrplace
                 \ pos !=# 'LEFT' && pos !=# 'RIGHT' &&
                 \ pos !=# 'above' && pos !=# 'below' &&
                 \ pos !=# 'TOP' && pos !=# 'BOTTOM'
-        call RWarningMsg('Invalid value for R_objbr_place: "' . pos . ". Please see Nvim-R's documentation.")
+        call RWarningMsg('Invalid value for R_objbr_place: "' . pos . ". Please see Vim-R's documentation.")
         let g:rplugin.failed = 1
         finish
     endif
@@ -1038,7 +1041,7 @@ endif
 let g:rplugin.curview = "None"
 
 if has("nvim")
-    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/nvimrcom.vim"
+    exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/vimrcom.vim"
 else
     exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/vimrcom.vim"
 endif
@@ -1110,16 +1113,16 @@ autocmd FuncUndefined StartR exe "source " . substitute(g:rplugin.home, " ", "\\
 
 function GlobalRInit(...)
     let g:rplugin.debug_info['Time']['GlobalRInit'] = reltime()
-    exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_nrs.vim"
+    exe 'source ' . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/start_server.vim"
     " Set security variables
     if has('nvim') && !has("nvim-0.7.0")
-        let $NVIMR_ID = substitute(string(reltimefloat(reltime())), '.*\.', '', '')
-        let $NVIMR_SECRET = substitute(string(reltimefloat(reltime())), '.*\.', '', '')
+        let $VIMR_ID = substitute(string(reltimefloat(reltime())), '.*\.', '', '')
+        let $VIMR_SECRET = substitute(string(reltimefloat(reltime())), '.*\.', '', '')
     else
-        let $NVIMR_ID = rand(srand())
-        let $NVIMR_SECRET = rand()
+        let $VIMR_ID = rand(srand())
+        let $VIMR_SECRET = rand()
     end
-    call CheckNvimcomVersion()
+    call CheckVimcomVersion()
     let g:rplugin.debug_info['Time']['GlobalRInit'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['GlobalRInit'], reltime()))
 endfunction
 

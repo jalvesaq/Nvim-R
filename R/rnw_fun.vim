@@ -140,7 +140,7 @@ function RWeave(bibtex, knit, pdf)
     if has("win32")
         let rnwdir = substitute(rnwdir, '\\', '/', 'g')
     endif
-    let pdfcmd = 'nvim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '"'
+    let pdfcmd = 'vim.interlace.rnoweb("' . expand("%:t") . '", rnwdir = "' . rnwdir . '"'
 
     if a:knit == 0
         let pdfcmd = pdfcmd . ', knit = FALSE'
@@ -328,7 +328,7 @@ function SyncTeX_backward(fname, ln)
     endif
     if filereadable(basenm . "-concordance.tex")
         if !filereadable(basenm . ".tex")
-            call RWarningMsg('SyncTeX [Nvim-R]: "' . basenm . '.tex" not found.')
+            call RWarningMsg('SyncTeX [Vim-R]: "' . basenm . '.tex" not found.')
             return
         endif
         let concdata = SyncTeX_readconc(basenm)
@@ -349,7 +349,7 @@ function SyncTeX_backward(fname, ln)
         endif
     else
         if filereadable(basenm . ".Rnw") || filereadable(basenm . ".rnw")
-            call RWarningMsg('SyncTeX [Nvim-R]: "' . basenm . '-concordance.tex" not found.')
+            call RWarningMsg('SyncTeX [Vim-R]: "' . basenm . '-concordance.tex" not found.')
             return
         elseif filereadable(flnm)
             let rnwf = flnm
@@ -421,11 +421,11 @@ function SyncTeX_forward(...)
                     return
                 endif
             else
-                call RWarningMsg('Nvim-R [SyncTeX]: "' . basenm . '-concordance.tex" not found.')
+                call RWarningMsg('Vim-R [SyncTeX]: "' . basenm . '-concordance.tex" not found.')
                 return
             endif
         else
-            call RWarningMsg('SyncTeX [Nvim-R]: "' . basenm . '-concordance.tex" not found.')
+            call RWarningMsg('SyncTeX [Vim-R]: "' . basenm . '-concordance.tex" not found.')
             return
         endif
     endif

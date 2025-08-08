@@ -24,12 +24,12 @@ If someone wants to maintain the code, then, the steps are:
     the new repository.
 
   - Tell me the link to the repository, so I can add the link to the "R_source"
-    section of the Nvim-R documentation.
+    section of the Vim-R documentation.
 
 Currently, if you do want to try it, you should put in your `vimrc`:
 
 ```vim
-let R_source = '/path/to/Nvim-R/R/tmux_split.vim'
+let R_source = '/path/to/Vim-R/R/tmux_split.vim'
 ```
 
 Then, start Tmux before starting Vim:
@@ -90,7 +90,7 @@ bind -t vi-copy y copy-selection
 ```
 
 Tmux automatically renames window titles to the command currently running.
-Nvim-R sets the title of the window where Vim and R are running to "NvimR".
+Vim-R sets the title of the window where Vim and R are running to "VimR".
 This title will be visible only if Tmux status bar is "on", and it is useful
 only if you have created new windows with the
 <kbd>Ctrl</kbd>+<kbd>a</kbd>+<kbd>c</kbd> command. You can change the value of
@@ -98,12 +98,12 @@ only if you have created new windows with the
 automatically. Examples:
 
 ```vim
-let R_tmux_title = 'Nvim-R'
+let R_tmux_title = 'Vim-R'
 let R_tmux_title = 'automatic'
 ```
 
 When R quits, Tmux will automatically close its pane. If you want that the
-pane remains open, see <https://github.com/jalvesaq/Nvim-R/issues/229>
+pane remains open, see <https://github.com/jalvesaq/Vim-R/issues/229>
 
 
 ## Key bindings and mouse support

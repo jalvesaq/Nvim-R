@@ -72,7 +72,7 @@ endfunction
 
 
 "==============================================================================
-" Function called when nvimcom updates the list of loaded libraries
+" Function called when vimcom updates the list of loaded libraries
 "==============================================================================
 
 function FunHiOtherBf()

@@ -1,0 +1,12 @@
+PKG_CFLAGS=-D`${R_HOME}/bin/R --slave -e 'cat(Sys.info()[[1]])'` -DLWS_NO_FORK  -DWIN32
+PKG_LIBS=-lWs2_32
+
+.PHONY: all vimapps
+
+all: $(SHLIB) vimapps
+
+$(SHLIB):
+
+vimapps:
+	(cd apps; make -f Makefile.win)
+

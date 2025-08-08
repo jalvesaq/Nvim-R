@@ -2,9 +2,9 @@
 " Define a function to retrieve tmux settings
 function TmuxOption(option, isglobal)
 	if a:isglobal == "global"
-		let result = system("tmux -L NvimR show-options -gv ". a:option)
+		let result = system("tmux -L VimR show-options -gv ". a:option)
 	else
-		let result = system("tmux -L NvimR show-window-options -gv ". a:option)
+		let result = system("tmux -L VimR show-window-options -gv ". a:option)
 	endif
 	return substitute(result, '\n\+$', '', '')
 endfunction
@@ -41,11 +41,11 @@ function StartR_ExternalTerm(rcmd)
         let tmuxcnf = '-f "' . g:rplugin.tmpdir . "/tmux.conf" . '"'
     endif
 
-    let rcmd = 'NVIMR_TMPDIR=' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') .
-                \ ' NVIMR_COMPLDIR=' . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
-                \ ' NVIMR_ID=' . $NVIMR_ID .
-                \ ' NVIMR_SECRET=' . $NVIMR_SECRET .
-                \ ' NVIMR_PORT=' . g:rplugin.myport .
+    let rcmd = 'VIMR_TMPDIR=' . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') .
+                \ ' VIMR_COMPLDIR=' . substitute(g:rplugin.compldir, ' ', '\\ ', 'g') .
+                \ ' VIMR_ID=' . $VIMR_ID .
+                \ ' VIMR_SECRET=' . $VIMR_SECRET .
+                \ ' VIMR_PORT=' . g:rplugin.myport .
                 \ ' R_DEFAULT_PACKAGES=' . $R_DEFAULT_PACKAGES
 
     if $NVIM_IP_ADDRESS != ""
@@ -55,20 +55,20 @@ function StartR_ExternalTerm(rcmd)
     let rcmd .= ' ' . a:rcmd
 
 
-    call system("tmux -L NvimR has-session -t " . g:rplugin.tmuxsname)
+    call system("tmux -L VimR has-session -t " . g:rplugin.tmuxsname)
     if v:shell_error
         if g:rplugin.is_darwin
             let rcmd = 'TERM=screen-256color ' . rcmd
-            let opencmd = printf("tmux -L NvimR -2 %s new-session -s %s '%s'",
+            let opencmd = printf("tmux -L VimR -2 %s new-session -s %s '%s'",
                         \ tmuxcnf, g:rplugin.tmuxsname, rcmd)
-            call writefile(["#!/bin/sh", opencmd], $NVIMR_TMPDIR . "/openR")
-            call system("chmod +x '" . $NVIMR_TMPDIR . "/openR'")
-            let opencmd = "open '" . $NVIMR_TMPDIR . "/openR'"
+            call writefile(["#!/bin/sh", opencmd], $VIMR_TMPDIR . "/openR")
+            call system("chmod +x '" . $VIMR_TMPDIR . "/openR'")
+            let opencmd = "open '" . $VIMR_TMPDIR . "/openR'"
         elseif s:term_name == "konsole"
-            let opencmd = printf("%s 'tmux -L NvimR -2 %s new-session -s %s \"%s\"'",
+            let opencmd = printf("%s 'tmux -L VimR -2 %s new-session -s %s \"%s\"'",
                         \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname, rcmd)
         else
-            let opencmd = printf("%s tmux -L NvimR -2 %s new-session -s %s \"%s\"",
+            let opencmd = printf("%s tmux -L VimR -2 %s new-session -s %s \"%s\"",
                         \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname, rcmd)
         endif
     else
@@ -76,7 +76,7 @@ function StartR_ExternalTerm(rcmd)
             call RWarningMsg("Tmux session with R is already running")
             return
         endif
-        let opencmd = printf("%s tmux -L NvimR -2 %s attach-session -d -t %s",
+        let opencmd = printf("%s tmux -L VimR -2 %s attach-session -d -t %s",
                     \ s:term_cmd, tmuxcnf, g:rplugin.tmuxsname)
     endif
 
@@ -90,20 +90,20 @@ function StartR_ExternalTerm(rcmd)
     else
         let initterm = ['cd "' . getcwd() . '"',
                     \ opencmd ]
-        call writefile(initterm, g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call writefile(initterm, g:rplugin.tmpdir . "/initterm_" . $VIMR_ID . ".sh")
         if has("nvim")
-            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
+            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $VIMR_ID . ".sh"],
                         \ {'on_stderr': function('ROnJobStderr'), 'on_exit': function('ROnJobExit'), 'detach': 1})
         else
-            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh"],
+            let g:rplugin.jobs["Terminal emulator"] = StartJob(["sh", g:rplugin.tmpdir . "/initterm_" . $VIMR_ID . ".sh"],
                         \ {'err_cb': 'ROnJobStderr', 'exit_cb': 'ROnJobExit'})
         endif
-        call AddForDeletion(g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call AddForDeletion(g:rplugin.tmpdir . "/initterm_" . $VIMR_ID . ".sh")
     endif
     let g:rplugin.debug_info['R open command'] = opencmd
 
     let g:SendCmdToR = function('SendCmdToR_Term')
-    call WaitNvimcomStart()
+    call WaitVimcomStart()
 endfunction
 
 function SendCmdToR_Term(...)
@@ -123,9 +123,9 @@ function SendCmdToR_Term(...)
         let str = ' ' . str
     endif
     if a:0 == 2 && a:2 == 0
-        let scmd = "tmux -L NvimR set-buffer '" . str . "' ; tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L VimR set-buffer '" . str . "' ; tmux -L VimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     else
-        let scmd = "tmux -L NvimR set-buffer '" . str . "\<CR>' ; tmux -L NvimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
+        let scmd = "tmux -L VimR set-buffer '" . str . "\<CR>' ; tmux -L VimR paste-buffer -t " . g:rplugin.tmuxsname . '.' . TmuxOption("pane-base-index", "window")
     endif
     let rlog = system(scmd)
     if v:shell_error
@@ -138,7 +138,7 @@ function SendCmdToR_Term(...)
     return 1
 endfunction
 
-" The Object Browser can run in a Tmux pane only if Neovim is inside a Tmux session
+" The Object Browser can run in a Tmux pane only if Vim is inside a Tmux session
 let g:R_objbr_place = substitute(g:R_objbr_place, "console", "script", "")
 
 let g:R_silent_term = get(g:, "R_silent_term", 0)
@@ -198,7 +198,7 @@ if s:term_name == 'foot'
     let s:term_cmd .= ' --log-level error'
 endif
 
-if !g:R_nvim_wd
+if !g:R_vim_wd
     if s:term_name =~ '^\(gnome-terminal\|xfce4-terminal\|lxterminal\)$'
         let s:term_cmd .= " --working-directory='" . expand("%:p:h") . "'"
     elseif s:term_name == "konsole"

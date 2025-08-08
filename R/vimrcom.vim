@@ -31,7 +31,7 @@ let s:waiting_more_input = 0
 function ROnJobStdout(job_id, msg)
     let cmd = substitute(a:msg, '\n', '', 'g')
     let cmd = substitute(cmd, '\r', '', 'g')
-    " DEBUG: call writefile([cmd], "/dev/shm/nvimrserver_vim_stdout", "a")
+    " DEBUG: call writefile([cmd], "/dev/shm/vimrserver_vim_stdout", "a")
 
     if cmd[0] == "\x11"
         " Check the size of possibly very big string (dictionary for menu completion).
@@ -119,7 +119,7 @@ let s:ff = globpath(&rtp, "r-plugin/functions.vim")
 let s:ft = globpath(&rtp, "ftplugin/r*_rplugin.vim")
 if s:ff != "" || s:ft != ""
     let s:ff = substitute(s:ff, "functions.vim", "", "g")
-    call RWarningMsg("Nvim-R conflicts with Vim-R-plugin. Please, uninstall Vim-R-plugin.\n" .
+    call RWarningMsg("Vim-R conflicts with Vim-R-plugin. Please, uninstall Vim-R-plugin.\n" .
                 \ "At least the following directories and files are from a Vim-R-plugin installation:\n" . s:ff . "\n" . s:ft . "\n")
 endif
 unlet s:ff

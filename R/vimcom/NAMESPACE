@@ -1,0 +1,12 @@
+export("VimR.source", "VimR.selection", "VimR.block", "VimR.paragraph",
+       "VimR.function", "VimR.chunk", "vim.list.args", "vim.srcdir",
+       "vim.plot", "vim.interlace.rnoweb", "vim.interlace.rrst",
+       "vim.print", "vim.names", "etags2ctags", "vim.interlace.rmd", "vi")
+
+importFrom("tools", "Rd2txt_options", "texi2dvi")
+importFrom("methods", "existsFunction", "slotNames")
+importFrom("graphics", "boxplot", "hist", "par", "plot")
+importFrom("stats", "runif")
+importFrom("utils", "browseURL", "capture.output", "example", "find",
+           "getAnywhere", "installed.packages", "methods",
+           "packageDescription", "read.table", "str", "Sweave", "write.table")

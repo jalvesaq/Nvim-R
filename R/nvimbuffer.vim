@@ -28,7 +28,7 @@ function SendCmdToR_Buffer(...)
                 if has("win32")
                     let cmd = "options(width=" . Rwidth . "); ". cmd
                 else
-                    call SendToNvimcom("E", "options(width=" . Rwidth . ")")
+                    call SendToVimcom("E", "options(width=" . Rwidth . ")")
                     sleep 10m
                 endif
             endif
@@ -142,7 +142,7 @@ function StartR_InBuffer()
     let b:pdf_is_open = 1
     exe "sbuffer " . edbuf
     stopinsert
-    call WaitNvimcomStart()
+    call WaitVimcomStart()
 endfunction
 
 let g:R_setwidth = get(g:, 'R_setwidth', 1)

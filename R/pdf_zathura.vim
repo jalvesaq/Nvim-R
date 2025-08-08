@@ -144,7 +144,7 @@ function RStart_Zathura(fullpath)
         endif
     endif
 
-    let $NVIMR_PORT = g:rplugin.myport
+    let $VIMR_PORT = g:rplugin.myport
     if has("nvim")
         call StartZathuraNeovim(a:fullpath)
     else

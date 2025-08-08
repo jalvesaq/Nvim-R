@@ -9,8 +9,8 @@ function ROpenPDF2(fullpath)
         let pname = substitute(a:fullpath, '.*/\(.*\)', '\1', '')
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . pdir
-        let $NVIMR_PORT = g:rplugin.myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "nvimrserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        let $VIMR_PORT = g:rplugin.myport
+        call writefile(['start SumatraPDF.exe -reuse-instance -inverse-search "vimrserver.exe %%f %%l" "' . a:fullpath . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
         call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif
@@ -51,8 +51,8 @@ function SyncTeX_forward2(tpath, ppath, texln, unused)
         let pname = substitute(a:ppath, tdir . '/', '', '')
         let olddir = substitute(substitute(getcwd(), '\\', '/', 'g'), ' ', '\\ ', 'g')
         exe "cd " . substitute(tdir, ' ', '\\ ', 'g')
-        let $NVIMR_PORT = g:rplugin.myport
-        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "nvimrserver.exe %%f %%l" "' . pname . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
+        let $VIMR_PORT = g:rplugin.myport
+        call writefile(['start SumatraPDF.exe -reuse-instance -forward-search "' . tname . '" ' . a:texln . ' -inverse-search "vimrserver.exe %%f %%l" "' . pname . '"'], g:rplugin.tmpdir . "/run_cmd.bat")
         call system(g:rplugin.tmpdir . "/run_cmd.bat")
         exe "cd " . olddir
     endif

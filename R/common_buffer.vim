@@ -1,6 +1,6 @@
 "==============================================================================
 " The variables defined here are not in the ftplugin directory because they
-" are common for all file types supported by Nvim-R.
+" are common for all file types supported by Vim-R.
 "==============================================================================
 
 " Source scripts common to R, Rnoweb, Rhelp and rdoc files:

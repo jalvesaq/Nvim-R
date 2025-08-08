@@ -1,9 +1,9 @@
 " This file contains code used only if has("gui_running")
 
-if exists("g:did_nvimr_gui_running")
+if exists("g:did_vimr_gui_running")
     finish
 endif
-let g:did_nvimr_gui_running = 1
+let g:did_vimr_gui_running = 1
 
 if exists('g:maplocalleader')
     let s:tll = '<Tab>' . g:maplocalleader
@@ -126,7 +126,7 @@ function RControlMenu()
     "-------------------------------
     menu R.Command.-Sep01- <nul>
     call RCreateMenuItem('nvi', 'Command.Print\ (cur)', 'RObjectPr', 'rp', ':call RAction("print")')
-    call RCreateMenuItem('nvi', 'Command.Names\ (cur)', 'RObjectNames', 'rn', ':call RAction("nvim.names")')
+    call RCreateMenuItem('nvi', 'Command.Names\ (cur)', 'RObjectNames', 'rn', ':call RAction("vim.names")')
     call RCreateMenuItem('nvi', 'Command.Structure\ (cur)', 'RObjectStr', 'rt', ':call RAction("str")')
     call RCreateMenuItem('nvi', 'Command.View\ data\.frame\ (cur)', 'RViewDF', 'rv', ':call RAction("viewobj")')
     call RCreateMenuItem('nvi', 'Command.View\ data\.frame\ (cur)\ in\ horizontal\ split', 'RViewDF', 'vs', ':call RAction("viewobj", ", howto=''split''")')
@@ -329,15 +329,15 @@ function MakeRMenu()
     " Help
     "----------------------------------------------------------------------------
     menu R.-Sep51- <nul>
-    amenu R.Help\ (plugin).Overview :help Nvim-R-overview<CR>
-    amenu R.Help\ (plugin).Main\ features :help Nvim-R-features<CR>
-    amenu R.Help\ (plugin).Installation :help Nvim-R-installation<CR>
-    amenu R.Help\ (plugin).Use :help Nvim-R-use<CR>
-    amenu R.Help\ (plugin).Known\ bugs\ and\ workarounds :help Nvim-R-known-bugs<CR>
+    amenu R.Help\ (plugin).Overview :help Vim-R-overview<CR>
+    amenu R.Help\ (plugin).Main\ features :help Vim-R-features<CR>
+    amenu R.Help\ (plugin).Installation :help Vim-R-installation<CR>
+    amenu R.Help\ (plugin).Use :help Vim-R-use<CR>
+    amenu R.Help\ (plugin).Known\ bugs\ and\ workarounds :help Vim-R-known-bugs<CR>
 
     amenu R.Help\ (plugin).Options.Assignment\ operator\ and\ Rnoweb\ code :help R_assign<CR>
     amenu R.Help\ (plugin).Options.Object\ Browser :help R_objbr_place<CR>
-    amenu R.Help\ (plugin).Options.Vim\ as\ pager\ for\ R\ help :help R_nvimpager<CR>
+    amenu R.Help\ (plugin).Options.Vim\ as\ pager\ for\ R\ help :help R_vimpager<CR>
     if g:rplugin.is_darwin
         amenu R.Help\ (plugin).Options.Integration\ with\ Apple\ Script :help R_applescript<CR>
     endif
@@ -348,8 +348,8 @@ function MakeRMenu()
     amenu R.Help\ (plugin).Options.Special\ R\ functions :help R_listmethods<CR>
     amenu R.Help\ (plugin).Options.Never\ unmake\ the\ R\ menu :help R_never_unmake_menu<CR>
 
-    amenu R.Help\ (plugin).Custom\ key\ bindings :help Nvim-R-key-bindings<CR>
-    amenu R.Help\ (plugin).News :help Nvim-R-news<CR>
+    amenu R.Help\ (plugin).Custom\ key\ bindings :help Vim-R-key-bindings<CR>
+    amenu R.Help\ (plugin).News :help Vim-R-news<CR>
 
     amenu R.Help\ (R)<Tab>:Rhelp :call g:SendCmdToR("help.start()")<CR>
     let g:rplugin.hasmenu = 1

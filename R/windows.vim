@@ -132,10 +132,10 @@ function StartR_Windows()
     endif
     call UnsetRHome()
 
-    call WaitNvimcomStart()
+    call WaitVimcomStart()
 endfunction
 
-function CleanNvimAndStartR()
+function CleanVimAndStartR()
     call ClearRInfo()
     call StartR_Windows()
 endfunction

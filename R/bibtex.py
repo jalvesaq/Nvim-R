@@ -3,7 +3,7 @@ import sys
 import os
 import re
 from pybtex.database import parse_file
-from nvimr import nvimr_cmd, nvimr_warn
+from vimr import vimr_cmd, vimr_warn
 
 class BibEntries:
     """ Create an object storing all references from bib files """
@@ -50,7 +50,7 @@ class BibEntries:
         try:
             bib = parse_file(b)
         except Exception as ERR:
-            nvimr_warn('Error parsing ' + b + ': ' + str(ERR))
+            vimr_warn('Error parsing ' + b + ': ' + str(ERR))
             return
 
         for k in bib.entries:
@@ -98,10 +98,10 @@ class BibEntries:
                 elif self.E[b][k]['title'].lower().find(ptrn) > 0:
                     p6.append(self._get_compl_line(k, self.E[b][k]))
         resp = p1 + p2 + p3 + p4 + p5 + p6
-        with open(os.environ['NVIMR_TMPDIR'] + '/bibcompl', 'w') as f:
+        with open(os.environ['VIMR_TMPDIR'] + '/bibcompl', 'w') as f:
             if resp:
                 f.write('\n'.join(resp) + '\n')
-        nvimr_cmd('let g:rplugin.bib_finished = 1')
+        vimr_cmd('let g:rplugin.bib_finished = 1')
 
     def SetBibfiles(self, d, bibls):
         """ Define which bib files each Rmarkdown document uses """
@@ -112,7 +112,7 @@ class BibEntries:
                     self._parse_bib(b)
                     self.D[d].append(b)
                 else:
-                    nvimr_warn('File "' + b + '" not found.')
+                    vimr_warn('File "' + b + '" not found.')
 
     def GetAttachment(self, d, citekey):
         """ Tell Vim what attachment is associated with the citation key """
@@ -123,18 +123,18 @@ class BibEntries:
                     self._parse_bib(b)
             else:
                 self.D[d].remove(b)
-                nvimr_cmd('let g:rplugin.last_attach = "nObIb:' + b + '"')
+                vimr_cmd('let g:rplugin.last_attach = "nObIb:' + b + '"')
                 return
 
         for b in self.D[d]:
             for k in self.E[b]:
                 if self.E[b][k]['citekey'] == citekey:
                     if 'file' in self.E[b][k]:
-                        nvimr_cmd('let g:rplugin.last_attach = "' + self.E[b][k]['file'] + '"')
+                        vimr_cmd('let g:rplugin.last_attach = "' + self.E[b][k]['file'] + '"')
                         return
-                    nvimr_cmd('let g:rplugin.last_attach = "nOaTtAChMeNt"')
+                    vimr_cmd('let g:rplugin.last_attach = "nOaTtAChMeNt"')
                     return
-        nvimr_cmd('let g:rplugin.last_attach = "nOcItEkEy"')
+        vimr_cmd('let g:rplugin.last_attach = "nOcItEkEy"')
 
 if __name__ == "__main__":
     B = BibEntries()

@@ -1,0 +1,10 @@
+
+.PHONY: all vimapps
+
+all: $(SHLIB) vimapps
+
+$(SHLIB):
+
+vimapps:
+	(cd apps; make)
+

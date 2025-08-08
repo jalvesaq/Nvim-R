@@ -1,11 +1,11 @@
 " Functions that are called only after omni completion is triggered
 "
 " The menu must be built and rendered very quickly (< 100ms) to make auto
-" completion feasible. That is, the data must be cached (OK, nvim.bol.R),
-" indexed (not yet) and processed quickly (OK, nvimrserver.c).
+" completion feasible. That is, the data must be cached (OK, vim.bol.R),
+" indexed (not yet) and processed quickly (OK, vimrserver.c).
 "
 " The float window that appears when an item is selected can be slower.
-" That is, we can call a function in nvimcom to get the contents of the float
+" That is, we can call a function in vimcom to get the contents of the float
 " window.
 
 if exists("*CompleteR")
@@ -331,7 +331,7 @@ function SetComplInfo(dctnr)
         let usage = join(usage, ", ")
         let s:usage = a:dctnr['word'] . '(' . usage . ')'
     elseif has_key(a:dctnr, 'word') && a:dctnr['word'] =~ '\k\{-}\$\k\{-}'
-        call SendToNvimcom("E", 'nvimcom:::nvim.get.summary(' . a:dctnr['word'] . ', 59)')
+        call SendToVimcom("E", 'vimcom:::vim.get.summary(' . a:dctnr['word'] . ', 59)')
         return
     endif
 
@@ -342,14 +342,14 @@ function SetComplInfo(dctnr)
     endif
 endfunction
 
-" We can't transfer this function to the nvimrserver because
-" nvimcom:::nvim_complete_args runs the function methods(), and we couldn't do
-" something similar in the nvimrserver.
+" We can't transfer this function to the vimrserver because
+" vimcom:::vim_complete_args runs the function methods(), and we couldn't do
+" something similar in the vimrserver.
 function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     if a:rkeyword0 == ""
         return
     endif
-    let msg = 'nvimcom:::nvim_complete_args("' . a:id . '", "' . a:rkeyword0 . '", "' . a:base . '"'
+    let msg = 'vimcom:::vim_complete_args("' . a:id . '", "' . a:rkeyword0 . '", "' . a:base . '"'
     if a:firstobj != ""
         let msg .= ', firstobj = "' . a:firstobj . '"'
     elseif a:pkg != ""
@@ -360,8 +360,8 @@ function GetRArgs(id, base, rkeyword0, listdf, firstobj, pkg, isfarg)
     endif
     let msg .= ')'
 
-    " Save documentation of arguments to be used by nvimrserver
-    call SendToNvimcom("E", msg)
+    " Save documentation of arguments to be used by vimrserver
+    call SendToVimcom("E", msg)
 endfunction
 
 function FindStartRObj()

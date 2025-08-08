@@ -68,11 +68,11 @@ function SendCmdToR_NotYet(...)
     return 0
 endfunction
 
-" This function is called by nvimrserver when its server binds to a specific port.
+" This function is called by vimrserver when its server binds to a specific port.
 let s:waiting_to_start_r = ''
 function RSetMyPort(p)
     let g:rplugin.myport = a:p
-    let $NVIMR_PORT = a:p
+    let $VIMR_PORT = a:p
     if s:waiting_to_start_r != ''
         call StartR(s:waiting_to_start_r)
         let s:waiting_to_start_r = ''
@@ -86,15 +86,15 @@ endfunction
 
 " Start R
 function ReallyStartR(whatr)
-    let s:wait_nvimcom = 1
+    let s:wait_vimcom = 1
 
     if g:rplugin.myport == 0
         if IsJobRunning("Server") == 0
-            call RWarningMsg("Cannot start R: nvimrserver not running")
+            call RWarningMsg("Cannot start R: vimrserver not running")
             return
         endif
         if g:rplugin.nrs_running == 0
-            call RWarningMsg("nvimrserver not ready yet")
+            call RWarningMsg("vimrserver not ready yet")
             return
         endif
         let s:waiting_to_start_r = a:whatr
@@ -106,7 +106,7 @@ function ReallyStartR(whatr)
         let g:R_objbr_place = substitute(g:R_objbr_place, 'console', 'script', '')
     endif
 
-    " https://github.com/jalvesaq/Nvim-R/issues/157
+    " https://github.com/jalvesaq/Vim-R/issues/157
     if !exists("*FunHiOtherBf")
         exe "source " . substitute(g:rplugin.home, " ", "\\ ", "g") . "/R/functions.vim"
     endif
@@ -124,11 +124,11 @@ function ReallyStartR(whatr)
         endif
     endif
 
-    call writefile([], g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
-    call writefile([], g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
+    call writefile([], g:rplugin.localtmpdir . "/globenv_" . $VIMR_ID)
+    call writefile([], g:rplugin.localtmpdir . "/liblist_" . $VIMR_ID)
 
-    call AddForDeletion(g:rplugin.localtmpdir . "/globenv_" . $NVIMR_ID)
-    call AddForDeletion(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/globenv_" . $VIMR_ID)
+    call AddForDeletion(g:rplugin.localtmpdir . "/liblist_" . $VIMR_ID)
 
     if &encoding == "utf-8"
         call AddForDeletion(g:rplugin.tmpdir . "/start_options_utf8.R")
@@ -136,57 +136,57 @@ function ReallyStartR(whatr)
         call AddForDeletion(g:rplugin.tmpdir . "/start_options.R")
     endif
 
-    " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Nvim-R/issues/554):
+    " Reset R_DEFAULT_PACKAGES to its original value (see https://github.com/jalvesaq/Vim-R/issues/554):
     let start_options = ['Sys.setenv("R_DEFAULT_PACKAGES" = "' . s:r_default_pkgs . '")']
 
-    let start_options += ['options(nvimcom.max_depth = ' . g:R_compl_data.max_depth . ')']
-    let start_options += ['options(nvimcom.max_size = '  . g:R_compl_data.max_size . ')']
-    let start_options += ['options(nvimcom.max_time = '  . g:R_compl_data.max_time . ')']
+    let start_options += ['options(vimcom.max_depth = ' . g:R_compl_data.max_depth . ')']
+    let start_options += ['options(vimcom.max_size = '  . g:R_compl_data.max_size . ')']
+    let start_options += ['options(vimcom.max_time = '  . g:R_compl_data.max_time . ')']
 
     if g:R_objbr_allnames
-        let start_options += ['options(nvimcom.allnames = TRUE)']
+        let start_options += ['options(vimcom.allnames = TRUE)']
     else
-        let start_options += ['options(nvimcom.allnames = FALSE)']
+        let start_options += ['options(vimcom.allnames = FALSE)']
     endif
     if g:R_texerr
-        let start_options += ['options(nvimcom.texerrs = TRUE)']
+        let start_options += ['options(vimcom.texerrs = TRUE)']
     else
-        let start_options += ['options(nvimcom.texerrs = FALSE)']
+        let start_options += ['options(vimcom.texerrs = FALSE)']
     endif
     if g:rplugin.update_glbenv
-        let start_options += ['options(nvimcom.autoglbenv = TRUE)']
+        let start_options += ['options(vimcom.autoglbenv = TRUE)']
     else
-        let start_options += ['options(nvimcom.autoglbenv = FALSE)']
+        let start_options += ['options(vimcom.autoglbenv = FALSE)']
     endif
     if g:R_debug
-        let start_options += ['options(nvimcom.debug_r = TRUE)']
+        let start_options += ['options(vimcom.debug_r = TRUE)']
     else
-        let start_options += ['options(nvimcom.debug_r = FALSE)']
+        let start_options += ['options(vimcom.debug_r = FALSE)']
     endif
     if exists('g:R_setwidth') && g:R_setwidth == 2
-        let start_options += ['options(nvimcom.setwidth = TRUE)']
+        let start_options += ['options(vimcom.setwidth = TRUE)']
     else
-        let start_options += ['options(nvimcom.setwidth = FALSE)']
+        let start_options += ['options(vimcom.setwidth = FALSE)']
     endif
-    if g:R_nvimpager == "no"
-        let start_options += ['options(nvimcom.nvimpager = FALSE)']
+    if g:R_vimpager == "no"
+        let start_options += ['options(vimcom.vimpager = FALSE)']
     else
-        let start_options += ['options(nvimcom.nvimpager = TRUE)']
+        let start_options += ['options(vimcom.vimpager = TRUE)']
     endif
     if type(g:R_external_term) == v:t_number && g:R_external_term == 0 && g:R_esc_term
-        let start_options += ['options(editor = nvimcom:::nvim.edit)']
+        let start_options += ['options(editor = vimcom:::vim.edit)']
     endif
     if exists("g:R_csv_delim") && (g:R_csv_delim == "," || g:R_csv_delim == ";")
-        let start_options += ['options(nvimcom.delim = "' . g:R_csv_delim. '")']
+        let start_options += ['options(vimcom.delim = "' . g:R_csv_delim. '")']
     else
-        let start_options += ['options(nvimcom.delim = "\t")']
+        let start_options += ['options(vimcom.delim = "\t")']
     endif
-    let start_options += ['options(nvimcom.source.path = "' . s:Rsource_read . '")']
+    let start_options += ['options(vimcom.source.path = "' . s:Rsource_read . '")']
 
     let rwd = ""
-    if g:R_nvim_wd == 0
+    if g:R_vim_wd == 0
         let rwd = s:RGetBufDir()
-    elseif g:R_nvim_wd == 1
+    elseif g:R_vim_wd == 1
         let rwd = getcwd()
     endif
     if rwd != "" && !exists("g:R_remote_compldir")
@@ -216,12 +216,12 @@ function ReallyStartR(whatr)
         call writefile(start_options, g:rplugin.tmpdir . "/start_options.R")
     endif
 
-    " Required to make R load nvimcom without the need of the user including
-    " library(nvimcom) in his or her ~/.Rprofile.
+    " Required to make R load vimcom without the need of the user including
+    " library(vimcom) in his or her ~/.Rprofile.
     if $R_DEFAULT_PACKAGES == ""
-        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,nvimcom"
-    elseif $R_DEFAULT_PACKAGES !~ "nvimcom"
-        let $R_DEFAULT_PACKAGES .= ",nvimcom"
+        let $R_DEFAULT_PACKAGES = "datasets,utils,grDevices,graphics,stats,methods,vimcom"
+    elseif $R_DEFAULT_PACKAGES !~ "vimcom"
+        let $R_DEFAULT_PACKAGES .= ",vimcom"
     endif
 
     if exists("g:RStudio_cmd")
@@ -267,20 +267,20 @@ function SignalToR(signal)
 endfunction
 
 
-function CheckIfNvimcomIsRunning(...)
+function CheckIfVimcomIsRunning(...)
     let s:nseconds = s:nseconds - 1
     if g:rplugin.R_pid == 0
         if s:nseconds > 0
-            call timer_start(1000, "CheckIfNvimcomIsRunning")
+            call timer_start(1000, "CheckIfVimcomIsRunning")
         else
-            let msg = "The package nvimcom wasn't loaded yet. Please, quit R and try again."
+            let msg = "The package vimcom wasn't loaded yet. Please, quit R and try again."
             call RWarningMsg(msg)
             sleep 500m
         endif
     endif
 endfunction
 
-function WaitNvimcomStart()
+function WaitVimcomStart()
     let args_str = join(g:rplugin.r_args)
     if args_str =~ "vanilla"
         return 0
@@ -290,16 +290,16 @@ function WaitNvimcomStart()
     endif
 
     let s:nseconds = g:R_wait
-    call timer_start(1000, "CheckIfNvimcomIsRunning")
+    call timer_start(1000, "CheckIfVimcomIsRunning")
 endfunction
 
-function SetNvimcomInfo(nvimcomversion, rpid, wid, r_info)
+function SetVimcomInfo(vimcomversion, rpid, wid, r_info)
     let g:rplugin.debug_info['Time']['start_R'] = reltimefloat(reltime(g:rplugin.debug_info['Time']['start_R'], reltime()))
-    if filereadable(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
-        let ndesc = readfile(g:rplugin.home . '/R/nvimcom/DESCRIPTION')
+    if filereadable(g:rplugin.home . '/R/vimcom/DESCRIPTION')
+        let ndesc = readfile(g:rplugin.home . '/R/vimcom/DESCRIPTION')
         let current = substitute(matchstr(ndesc, '^Version: '), 'Version: ', '', '')
-        if a:nvimcomversion != current
-            call RWarningMsg('Mismatch in nvimcom versions: R (' . a:nvimcomversion . ') and Vim (' . current . ')')
+        if a:vimcomversion != current
+            call RWarningMsg('Mismatch in vimcom versions: R (' . a:vimcomversion . ') and Vim (' . current . ')')
             sleep 1
         endif
     endif
@@ -345,14 +345,14 @@ function SetNvimcomInfo(nvimcomversion, rpid, wid, r_info)
     endif
 
     if IsJobRunning("Server")
-        " Set RConsole window ID in nvimrserver to ArrangeWindows()
+        " Set RConsole window ID in vimrserver to ArrangeWindows()
         if has("win32")
             if $RCONSOLE == "0"
-                call RWarningMsg("nvimcom did not save R window ID")
+                call RWarningMsg("vimcom did not save R window ID")
             endif
         endif
     else
-        call RWarningMsg("nvimcom is not running")
+        call RWarningMsg("vimcom is not running")
     endif
 
     if exists("g:RStudio_cmd")
@@ -369,7 +369,7 @@ function SetNvimcomInfo(nvimcomversion, rpid, wid, r_info)
         call foreground()
         sleep 200m
     else
-        call delete(g:rplugin.tmpdir . "/initterm_" . $NVIMR_ID . ".sh")
+        call delete(g:rplugin.tmpdir . "/initterm_" . $VIMR_ID . ".sh")
         call delete(g:rplugin.tmpdir . "/openR")
     endif
 
@@ -399,7 +399,7 @@ function SetSendCmdToR(...)
     elseif has("win32")
         let g:SendCmdToR = function('SendCmdToR_Windows')
     endif
-    let s:wait_nvimcom = 0
+    let s:wait_vimcom = 0
 endfunction
 
 " Quit R
@@ -417,7 +417,7 @@ function RQuit(how)
     if has("win32")
 	if type(g:R_external_term) == v:t_number && g:R_external_term == 1
 	    " SaveWinPos
-	    call JobStdin(g:rplugin.jobs["Server"], "84" . $NVIMR_COMPLDIR . "\n")
+	    call JobStdin(g:rplugin.jobs["Server"], "84" . $VIMR_COMPLDIR . "\n")
 	endif
 	call JobStdin(g:rplugin.jobs["Server"], "2QuitNow\n")
     endif
@@ -438,8 +438,8 @@ function RQuit(how)
 endfunction
 
 function ClearRInfo()
-    call delete(g:rplugin.tmpdir . "/globenv_" . $NVIMR_ID)
-    call delete(g:rplugin.localtmpdir . "/liblist_" . $NVIMR_ID)
+    call delete(g:rplugin.tmpdir . "/globenv_" . $VIMR_ID)
+    call delete(g:rplugin.localtmpdir . "/liblist_" . $VIMR_ID)
     for fn in g:rplugin.del_list
         call delete(fn)
     endfor
@@ -458,21 +458,21 @@ function ClearRInfo()
     call JobStdin(g:rplugin.jobs["Server"], "43\n")
 endfunction
 
-let s:wait_nvimcom = 0
+let s:wait_vimcom = 0
 
 
 "==============================================================================
 " Internal communication with R
 "==============================================================================
 
-" Send a message to nvimrserver job which will send the message to nvimcom
+" Send a message to vimrserver job which will send the message to vimcom
 " through a TCP connection.
-function SendToNvimcom(code, attch)
+function SendToVimcom(code, attch)
     if string(g:SendCmdToR) == "function('SendCmdToR_fake')"
         call RWarningMsg("R is not running")
         return
     endif
-    if s:wait_nvimcom && string(g:SendCmdToR) == "function('SendCmdToR_NotYet')"
+    if s:wait_vimcom && string(g:SendCmdToR) == "function('SendCmdToR_NotYet')"
         call RWarningMsg("R is not ready yet")
         return
     endif
@@ -481,7 +481,7 @@ function SendToNvimcom(code, attch)
         call RWarningMsg("Server not running.")
         return
     endif
-    call JobStdin(g:rplugin.jobs["Server"], "2" . a:code . $NVIMR_ID . a:attch . "\n")
+    call JobStdin(g:rplugin.jobs["Server"], "2" . a:code . $VIMR_ID . a:attch . "\n")
 endfunction
 
 
@@ -490,7 +490,7 @@ endfunction
 " date
 "==============================================================================
 
-" Called by nvimrserver. When g:rplugin has the key 'localfun', the function
+" Called by vimrserver. When g:rplugin has the key 'localfun', the function
 " is also called by SourceRFunList() (R/functions.vim)
 function UpdateLocalFunctions(funnames)
     let g:rplugin.localfun = a:funnames
@@ -511,7 +511,7 @@ endfunction
 
 
 "==============================================================================
-"  Functions triggered by nvimcom after user action on R Console
+"  Functions triggered by vimcom after user action on R Console
 "==============================================================================
 
 function ShowRObj(howto, bname, ftype, txt)
@@ -523,14 +523,14 @@ function ShowRObj(howto, bname, ftype, txt)
     set nomodified
 endfunction
 
-" This function is called by nvimcom
+" This function is called by vimcom
 function EditRObject(fname)
     let fcont = readfile(a:fname)
-    exe "tabnew " . substitute($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID, ' ', '\\ ', 'g')
+    exe "tabnew " . substitute($VIMR_TMPDIR . "/edit_" . $VIMR_ID, ' ', '\\ ', 'g')
     call setline(".", fcont)
     set filetype=r
     stopinsert
-    autocmd BufUnload <buffer> call delete($NVIMR_TMPDIR . "/edit_" . $NVIMR_ID . "_wait") | startinsert
+    autocmd BufUnload <buffer> call delete($VIMR_TMPDIR . "/edit_" . $VIMR_ID . "_wait") | startinsert
 endfunction
 
 
@@ -620,7 +620,7 @@ function RObjBrowser(...)
 
     " call RealUpdateRGlbEnv(1)
     call JobStdin(g:rplugin.jobs["Server"], "31\n")
-    call SendToNvimcom("A", "RObjBrowser")
+    call SendToVimcom("A", "RObjBrowser")
 
     call StartObjBrowser()
     let s:running_objbr = 0
@@ -684,7 +684,7 @@ function FindDebugFunc(srcref)
         let rlines = getline(1, "$")
         exe 'sb ' . g:rplugin.rscript_name
     elseif string(g:SendCmdToR) == "function('SendCmdToR_Term')"
-        let tout = system('tmux -L NvimR capture-pane -p -t ' . g:rplugin.tmuxsname)
+        let tout = system('tmux -L VimR capture-pane -p -t ' . g:rplugin.tmuxsname)
         let rlines = split(tout, "\n")
     elseif string(g:SendCmdToR) == "function('SendCmdToR_TmuxSplit')"
         let tout = system('tmux capture-pane -p -t ' . g:rplugin.rconsole_pane)
@@ -818,7 +818,7 @@ function RFormatCode() range
 
     let lns = getline(a:firstline, a:lastline)
     let txt = substitute(substitute(join(lns, "\x14"), '\\', '\\\\', 'g'), "'", "\x13", "g")
-    call SendToNvimcom("E", "nvimcom:::nvim_format(" . a:firstline . ", " . a:lastline . ", " . wco . ", " . &shiftwidth. ", '" . txt . "')")
+    call SendToVimcom("E", "vimcom:::vim_format(" . a:firstline . ", " . a:lastline . ", " . wco . ", " . &shiftwidth. ", '" . txt . "')")
 endfunction
 
 function FinishRFormatCode(lnum1, lnum2, txt)
@@ -832,7 +832,7 @@ function RInsert(cmd, type)
     if g:rplugin.R_pid == 0
         return
     endif
-    call SendToNvimcom("E", 'nvimcom:::nvim_insert(' . a:cmd . ', "' . a:type . '")')
+    call SendToVimcom("E", 'vimcom:::vim_insert(' . a:cmd . ', "' . a:type . '")')
 endfunction
 
 function SendLineToRAndInsertOutput()
@@ -926,11 +926,11 @@ endfunction
 "==============================================================================
 
 function SetRTextWidth(rkeyword)
-    if g:R_nvimpager == "tabnew"
+    if g:R_vimpager == "tabnew"
         let s:rdoctitle = a:rkeyword
     else
         let s:tnr = tabpagenr()
-        if g:R_nvimpager != "tab" && s:tnr > 1
+        if g:R_vimpager != "tab" && s:tnr > 1
             let s:rdoctitle = "R_doc" . s:tnr
         else
             let s:rdoctitle = "R_doc"
@@ -941,20 +941,20 @@ function SetRTextWidth(rkeyword)
         let g:R_newsize = 0
 
         " s:vimpager is used to calculate the width of the R help documentation
-        " and to decide whether to obey R_nvimpager = 'vertical'
-        let s:vimpager = g:R_nvimpager
+        " and to decide whether to obey R_vimpager = 'vertical'
+        let s:vimpager = g:R_vimpager
 
         let wwidth = winwidth(0)
 
         " Not enough room to split vertically
-        if g:R_nvimpager == "vertical" && wwidth <= (g:R_help_w + g:R_editor_w)
+        if g:R_vimpager == "vertical" && wwidth <= (g:R_help_w + g:R_editor_w)
             let s:vimpager = "horizontal"
         endif
 
         if s:vimpager == "horizontal"
             " Use the window width (at most 80 columns)
             let htwf = (wwidth > 80) ? 88.1 : ((wwidth - 1) / 0.9)
-        elseif g:R_nvimpager == "tab" || g:R_nvimpager == "tabnew"
+        elseif g:R_vimpager == "tab" || g:R_vimpager == "tabnew"
             let wwidth = &columns
             let htwf = (wwidth > 80) ? 88.1 : ((wwidth - 1) / 0.9)
         else
@@ -983,14 +983,14 @@ function RAskHelp(...)
         call g:SendCmdToR("help.start()")
         return
     endif
-    if g:R_nvimpager == "no"
+    if g:R_vimpager == "no"
         call g:SendCmdToR("help(" . a:1. ")")
     else
         call AskRDoc(a:1, "", 0)
     endif
 endfunction
 
-" Show R's help doc in Nvim's buffer
+" Show R's help doc in Vim's buffer
 " (based  on pydoc plugin)
 function AskRDoc(rkeyword, package, getclass)
     let firstobj = ""
@@ -1008,17 +1008,17 @@ function AskRDoc(rkeyword, package, getclass)
     call SetRTextWidth(a:rkeyword)
 
     if firstobj == "" && a:package == ""
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L)'
+        let rcmd = 'vimcom:::vim.help("' . a:rkeyword . '", ' . s:htw . 'L)'
     elseif a:package != ""
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L, package="' . a:package  . '")'
+        let rcmd = 'vimcom:::vim.help("' . a:rkeyword . '", ' . s:htw . 'L, package="' . a:package  . '")'
     else
-        let rcmd = 'nvimcom:::nvim.help("' . a:rkeyword . '", ' . s:htw . 'L, "' . firstobj . '")'
+        let rcmd = 'vimcom:::vim.help("' . a:rkeyword . '", ' . s:htw . 'L, "' . firstobj . '")'
     endif
 
-    call SendToNvimcom("E", rcmd)
+    call SendToVimcom("E", rcmd)
 endfunction
 
-" Function called by nvimcom
+" Function called by vimcom
 function ShowRDoc(rkeyword, txt)
     let rkeyw = a:rkeyword
     if a:rkeyword =~ "^MULTILIB"
@@ -1031,7 +1031,7 @@ function ShowRDoc(rkeyword, txt)
         redraw
         let chn = input(msg . "Please, select one of them: ")
         if chn > 0 && chn <= len(libs)
-            call SendToNvimcom("E", 'nvimcom:::nvim.help("' . topic . '", ' . s:htw . 'L, package="' . libs[chn - 1] . '")')
+            call SendToVimcom("E", 'vimcom:::vim.help("' . topic . '", ' . s:htw . 'L, package="' . libs[chn - 1] . '")')
         endif
         return
     endif
@@ -1070,11 +1070,11 @@ function ShowRDoc(rkeyword, txt)
         set switchbuf=useopen,usetab
         exe "sb ". s:rdoctitle
         exe "set switchbuf=" . savesb
-        if g:R_nvimpager == "tabnew"
+        if g:R_vimpager == "tabnew"
             exe "tabmove " . curtabnr
         endif
     else
-        if g:R_nvimpager == "tab" || g:R_nvimpager == "tabnew"
+        if g:R_vimpager == "tab" || g:R_vimpager == "tabnew"
             exe 'tabnew ' . s:rdoctitle
         elseif s:vimpager == "vertical"
             let splr = &splitright
@@ -1087,19 +1087,19 @@ function ShowRDoc(rkeyword, txt)
                 resize 20
             endif
         elseif s:vimpager == "no"
-            " The only way of ShowRDoc() being called when R_nvimpager=="no"
-            " is the user setting the value of R_nvimpager to 'no' after
-            " Neovim startup. It should be set in the vimrc.
+            " The only way of ShowRDoc() being called when R_vimpager=="no"
+            " is the user setting the value of R_vimpager to 'no' after
+            " Vim startup. It should be set in the vimrc.
             if type(g:R_external_term) == v:t_number && g:R_external_term == 0
-                let g:R_nvimpager = "vertical"
+                let g:R_vimpager = "vertical"
             else
-                let g:R_nvimpager = "tab"
+                let g:R_vimpager = "tab"
             endif
             call ShowRDoc(a:rkeyword)
             return
         else
             echohl WarningMsg
-            echomsg 'Invalid R_nvimpager value: "' . g:R_nvimpager . '". Valid values are: "tab", "vertical", "horizontal", "tabnew" and "no".'
+            echomsg 'Invalid R_vimpager value: "' . g:R_vimpager . '". Valid values are: "tab", "vertical", "horizontal", "tabnew" and "no".'
             echohl None
             return
         endif
@@ -1121,7 +1121,7 @@ function ShowRDoc(rkeyword, txt)
         call cursor(1, 1)
     elseif a:rkeyword =~? '\.Rd$'
         " Called by devtools::load_all().
-        " See https://github.com/jalvesaq/Nvim-R/issues/482
+        " See https://github.com/jalvesaq/Vim-R/issues/482
         set filetype=rhelp
         call cursor(1, 1)
     else
@@ -1167,7 +1167,7 @@ function RSourceLines(...)
 
     if a:0 == 3 && a:3 == "NewtabInsert"
         call writefile(lines, s:Rsource_write)
-        call SendToNvimcom("E", 'nvimcom:::nvim_capture_source_output("' . s:Rsource_read . '", "NewtabInsert")')
+        call SendToVimcom("E", 'vimcom:::vim_capture_source_output("' . s:Rsource_read . '", "NewtabInsert")')
         return 1
     endif
 
@@ -1179,9 +1179,9 @@ function RSourceLines(...)
         call writefile(lines, s:Rsource_write)
         let sargs = substitute(GetSourceArgs(a:2), '^, ', '', '')
         if a:0 == 3
-            let rcmd = 'NvimR.' . a:3 . '(' . sargs . ')'
+            let rcmd = 'VimR.' . a:3 . '(' . sargs . ')'
         else
-            let rcmd = 'NvimR.source(' . sargs . ')'
+            let rcmd = 'VimR.source(' . sargs . ')'
         endif
     endif
 
@@ -1276,7 +1276,7 @@ function SendFileToR(e)
     call writefile(getline(1, "$"), fpath)
     call AddForDeletion(fpath)
     let sargs = GetSourceArgs(a:e)
-    let ok = g:SendCmdToR('nvimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
+    let ok = g:SendCmdToR('vimcom:::source.and.clean("' . fpath .  '"' . sargs . ')')
     if !ok
         call delete(fpath)
     endif
@@ -1842,7 +1842,7 @@ endfunction
 " knit the current buffer content
 function RKnit()
     update
-    call g:SendCmdToR('require(knitr); .nvim_oldwd <- getwd(); setwd("' . s:RGetBufDir() . '"); knit("' . expand("%:t") . '"); setwd(.nvim_oldwd); rm(.nvim_oldwd)')
+    call g:SendCmdToR('require(knitr); .vim_oldwd <- getwd(); setwd("' . s:RGetBufDir() . '"); knit("' . expand("%:t") . '"); setwd(.vim_oldwd); rm(.vim_oldwd)')
 endfunction
 
 function StartTxtBrowser(brwsr, url)
@@ -1862,9 +1862,9 @@ function RSourceDirectory(...)
         let dir = a:1
     endif
     if dir == ""
-        call g:SendCmdToR("nvim.srcdir()")
+        call g:SendCmdToR("vim.srcdir()")
     else
-        call g:SendCmdToR("nvim.srcdir('" . dir . "')")
+        call g:SendCmdToR("vim.srcdir('" . dir . "')")
     endif
 endfunction
 
@@ -1877,7 +1877,7 @@ function PrintRObject(rkeyword)
     if firstobj == ""
         call g:SendCmdToR("print(" . a:rkeyword . ")")
     else
-        call g:SendCmdToR('nvim.print("' . a:rkeyword . '", "' . firstobj . '")')
+        call g:SendCmdToR('vim.print("' . a:rkeyword . '", "' . firstobj . '")')
     endif
 endfunction
 
@@ -1885,19 +1885,19 @@ function OpenRExample()
     if bufloaded(g:rplugin.tmpdir . "/example.R")
         exe "bunload! " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g')
     endif
-    if g:R_nvimpager == "tabnew" || g:R_nvimpager == "tab"
+    if g:R_vimpager == "tabnew" || g:R_vimpager == "tab"
         exe "tabnew " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/example.R"
     else
-        let nvimpager = g:R_nvimpager
-        if g:R_nvimpager == "vertical"
+        let vimpager = g:R_vimpager
+        if g:R_vimpager == "vertical"
             let wwidth = winwidth(0)
             let min_e = (g:R_editor_w > 78) ? g:R_editor_w : 78
             let min_h = (g:R_help_w > 78) ? g:R_help_w : 78
             if wwidth < (min_e + min_h)
-                let nvimpager = "horizontal"
+                let vimpager = "horizontal"
             endif
         endif
-        if nvimpager == "vertical"
+        if vimpager == "vertical"
             exe "belowright vsplit " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/example.R"
         else
             exe "belowright split " . substitute(g:rplugin.tmpdir, ' ', '\\ ', 'g') . "/example.R"
@@ -1934,7 +1934,7 @@ function RAction(rcmd, ...)
                 let rhelptopic = rkeyword
             endif
             let s:running_rhelp = 1
-            if g:R_nvimpager == "no"
+            if g:R_vimpager == "no"
                 call g:SendCmdToR("help(" . rkeyword . ")")
             else
                 if bufname("%") =~ "Object_Browser"
@@ -1955,18 +1955,18 @@ function RAction(rcmd, ...)
         let rfun = a:rcmd
         if a:rcmd == "args"
             if g:R_listmethods == 1 && rkeyword !~ '::'
-                call g:SendCmdToR('nvim.list.args("' . rkeyword . '")')
+                call g:SendCmdToR('vim.list.args("' . rkeyword . '")')
             else
                 call g:SendCmdToR('args(' . rkeyword . ')')
             endif
             return
         endif
         if a:rcmd == "plot" && g:R_specialplot == 1
-            let rfun = "nvim.plot"
+            let rfun = "vim.plot"
         endif
         if a:rcmd == "plotsumm"
             if g:R_specialplot == 1
-                let raction = "nvim.plot(" . rkeyword . "); summary(" . rkeyword . ")"
+                let raction = "vim.plot(" . rkeyword . "); summary(" . rkeyword . ")"
             else
                 let raction = "plot(" . rkeyword . "); summary(" . rkeyword . ")"
             endif
@@ -1975,7 +1975,7 @@ function RAction(rcmd, ...)
         endif
 
         if g:R_open_example && a:rcmd == "example"
-            call SendToNvimcom("E", 'nvimcom:::nvim.example("' . rkeyword . '")')
+            call SendToVimcom("E", 'vimcom:::vim.example("' . rkeyword . '")')
             return
         endif
 
@@ -1993,21 +1993,21 @@ function RAction(rcmd, ...)
                     let argmnts .= ', R_df_viewer = "' . g:R_df_viewer . '"'
                 endif
                 if rkeyword =~ '::'
-                    call SendToNvimcom("E",
-                                \'nvimcom:::nvim_viewobj(' . rkeyword . argmnts . ')')
+                    call SendToVimcom("E",
+                                \'vimcom:::vim_viewobj(' . rkeyword . argmnts . ')')
                 else
                     if has("win32") && &encoding == "utf-8"
-                        call SendToNvimcom("E",
-                                    \'nvimcom:::nvim_viewobj("' . rkeyword . '"' . argmnts .
+                        call SendToVimcom("E",
+                                    \'vimcom:::vim_viewobj("' . rkeyword . '"' . argmnts .
                                     \', fenc="UTF-8"' . ')')
                     else
-                        call SendToNvimcom("E",
-                                    \'nvimcom:::nvim_viewobj("' . rkeyword . '"' . argmnts . ')')
+                        call SendToVimcom("E",
+                                    \'vimcom:::vim_viewobj("' . rkeyword . '"' . argmnts . ')')
                     endif
                 endif
             else
-                call SendToNvimcom("E",
-                            \'nvimcom:::nvim_dput("' . rkeyword . '"' . argmnts . ')')
+                call SendToVimcom("E",
+                            \'vimcom:::vim_dput("' . rkeyword . '"' . argmnts . ')')
             endif
             return
         endif
@@ -2054,7 +2054,7 @@ function ROpenDoc(fullpath, browser)
     elseif a:fullpath =~ '.html$'
         call RLoadHTML(a:fullpath, a:browser)
     else
-        call RWarningMsg("Unknown file type from nvim.interlace: " . a:fullpath)
+        call RWarningMsg("Unknown file type from vim.interlace: " . a:fullpath)
     endif
 endfunction
 
@@ -2068,9 +2068,9 @@ function RMakeRmd(t)
 
     let rmddir = s:RGetBufDir()
     if a:t == "default"
-        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
+        let rcmd = 'vim.interlace.rmd("' . expand("%:t") . '", rmddir = "' . rmddir . '"'
     else
-        let rcmd = 'nvim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
+        let rcmd = 'vim.interlace.rmd("' . expand("%:t") . '", outform = "' . a:t .'", rmddir = "' . rmddir . '"'
     endif
 
     if g:R_rmarkdown_args == ''
@@ -2130,7 +2130,7 @@ let g:R_clear_line = get(g:, "R_clear_line", 0)
 let s:r_default_pkgs  = $R_DEFAULT_PACKAGES
 
 " Avoid problems if either R_rconsole_width or R_rconsole_height is a float
-" number (https://github.com/jalvesaq/Nvim-R/issues/751#issuecomment-1742784447).
+" number (https://github.com/jalvesaq/Vim-R/issues/751#issuecomment-1742784447).
 if type(g:R_rconsole_width) == v:t_float
     let R_rconsole_width = float2nr(g:R_rconsole_width)
 endif

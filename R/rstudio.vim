@@ -24,7 +24,7 @@ function StartRStudio()
         call UnsetRHome()
     endif
 
-    call WaitNvimcomStart()
+    call WaitVimcomStart()
 endfunction
 
 function SendCmdToRStudio(...)
@@ -33,7 +33,7 @@ function SendCmdToRStudio(...)
         return 0
     endif
     let cmd = substitute(a:1, '"', '\\"', "g")
-    call SendToNvimcom("E", 'sendToConsole("' . cmd . '", execute=TRUE)')
+    call SendToVimcom("E", 'sendToConsole("' . cmd . '", execute=TRUE)')
     return 1
 endfunction
 
